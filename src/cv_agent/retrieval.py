@@ -6,6 +6,7 @@ from collections import Counter, defaultdict, deque
 from collections.abc import Iterable
 from typing import Literal
 
+from .harness import RetrievalBudget, RetrievalMode
 from .types import Candidate, CodeDocument, Evidence
 
 
@@ -224,3 +225,48 @@ class RepositoryIndex:
             top_k=top_k,
             retrieval="hybrid",
         )
+
+    def retrieve_context(
+        self,
+        candidate: Candidate,
+        *,
+        mode: RetrievalMode,
+        budget: RetrievalBudget,
+    ) -> list[Evidence]:
+        """Assemble a fixed local base plus a separately budgeted augmentation."""
+
+        base = limit_evidence_context(
+            self.local(candidate),
+            token_budget=budget.base_context_tokens,
+        )
+        if mode == RetrievalMode.LOCAL:
+            return base
+
+        requested = budget.top_k + 1
+        if mode == RetrievalMode.TEXT:
+            raw_augmentation = self.text_search(candidate.query, top_k=requested)
+        elif mode == RetrievalMode.GRAPH:
+            raw_augmentation = self.graph_search(
+                candidate,
+                top_k=requested,
+                max_hops=budget.graph_hops,
+            )
+        elif mode == RetrievalMode.HYBRID:
+            raw_augmentation = self.hybrid_search(
+                candidate,
+                top_k=requested,
+                max_hops=budget.graph_hops,
+            )
+        else:
+            raise ValueError(f"unsupported retrieval mode: {mode}")
+
+        augmentation = [
+            item for item in raw_augmentation if item.path != candidate.path
+        ][: budget.top_k]
+        if not augmentation or budget.augmentation_context_tokens == 0:
+            return base
+        limited_augmentation = limit_evidence_context(
+            augmentation,
+            token_budget=budget.augmentation_context_tokens,
+        )
+        return [*base, *limited_augmentation]

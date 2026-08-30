@@ -3,20 +3,18 @@ from __future__ import annotations
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from .consensus import QuorumPolicy, SingleExpertPolicy
 from .experts import EXPERTS
-from .retrieval import RepositoryIndex, context_token_count, limit_evidence_context
+from .harness import OWASP_HARNESS, SystemHarness
+from .retrieval import RepositoryIndex, context_token_count
 from .types import Candidate, Evidence, ExpertVote, SystemVersion, Verdict
 
 
 class PipelineConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     system: SystemVersion
-    top_k: int = Field(default=6, ge=1, le=50)
-    graph_hops: int = Field(default=2, ge=0, le=6)
-    context_token_budget: int = Field(default=2000, ge=32, le=100_000)
 
 
 class WorkflowState(TypedDict):
@@ -32,6 +30,7 @@ class AgentPipeline:
     def __init__(self, index: RepositoryIndex, config: PipelineConfig) -> None:
         self.index = index
         self.config = config
+        self.system_spec: SystemHarness = OWASP_HARNESS.system_spec(config.system)
         self.graph = self._build_graph()
 
     def _build_graph(self):
@@ -66,23 +65,14 @@ class AgentPipeline:
         return builder.compile()
 
     def _plan(self, state: WorkflowState) -> dict:
-        if self.config.system in {SystemVersion.V1_LOCAL_SINGLE, SystemVersion.V2_TEXT_SINGLE, SystemVersion.V3_GRAPH_SINGLE}:
-            experts = ["scan"]
-        else:
-            experts = ["scan", "taint", "authz"]
-        return {"plan": experts}
+        return {"plan": list(self.system_spec.expert_order)}
 
     def _retrieve(self, state: WorkflowState) -> dict:
         candidate = state["candidate"]
-        if self.config.system == SystemVersion.V1_LOCAL_SINGLE:
-            evidence = self.index.local(candidate)
-        elif self.config.system == SystemVersion.V2_TEXT_SINGLE:
-            evidence = self.index.text_search(candidate.query, top_k=self.config.top_k)
-        else:
-            evidence = self.index.graph_search(candidate, top_k=self.config.top_k, max_hops=self.config.graph_hops)
-        evidence = limit_evidence_context(
-            evidence,
-            token_budget=self.config.context_token_budget,
+        evidence = self.index.retrieve_context(
+            candidate,
+            mode=self.system_spec.retrieval,
+            budget=self.system_spec.budget,
         )
         return {
             "evidence": evidence,
@@ -104,22 +94,19 @@ class AgentPipeline:
         return self._run_expert(state, "authz")
 
     def _route_after_scan(self, state: WorkflowState) -> str:
-        if self.config.system in {
-            SystemVersion.V1_LOCAL_SINGLE,
-            SystemVersion.V2_TEXT_SINGLE,
-            SystemVersion.V3_GRAPH_SINGLE,
-        }:
-            return "single"
-        return "multi"
+        return "single" if self.system_spec.full_review_policy == "single" else "multi"
 
     def _route_after_taint(self, state: WorkflowState) -> str:
-        if self.config.system == SystemVersion.V5_GRAPH_FAST_SLOW:
+        if self.system_spec.early_quorum_after == len(state["votes"]):
             return "fast_candidate"
         return "slow"
 
-    @staticmethod
-    def _try_fast(state: WorkflowState) -> dict:
-        verdict = QuorumPolicy(fast_enabled=True).try_fast(state["votes"])
+    def _try_fast(self, state: WorkflowState) -> dict:
+        verdict = QuorumPolicy(
+            fast_enabled=True,
+            quorum=self.system_spec.quorum,
+            fast_confidence=self.system_spec.fast_score,
+        ).try_fast(state["votes"])
         if verdict is not None:
             verdict = verdict.model_copy(
                 update={"context_token_count": state["context_token_count"]}
@@ -131,12 +118,16 @@ class AgentPipeline:
         return "done" if state["verdict"] is not None else "continue"
 
     def _adjudicate(self, state: WorkflowState) -> dict:
-        if self.config.system in {SystemVersion.V1_LOCAL_SINGLE, SystemVersion.V2_TEXT_SINGLE, SystemVersion.V3_GRAPH_SINGLE}:
+        if self.system_spec.full_review_policy == "single":
             verdict = SingleExpertPolicy().decide(state["votes"])
         else:
             # V5 reaches this node only when the two-vote early quorum failed;
             # after the third expert it uses the same full-review policy as V4.
-            verdict = QuorumPolicy(fast_enabled=False).decide(state["votes"])
+            verdict = QuorumPolicy(
+                fast_enabled=False,
+                quorum=self.system_spec.quorum,
+                fast_confidence=self.system_spec.fast_score,
+            ).decide(state["votes"])
         return {
             "verdict": verdict.model_copy(
                 update={"context_token_count": state["context_token_count"]}

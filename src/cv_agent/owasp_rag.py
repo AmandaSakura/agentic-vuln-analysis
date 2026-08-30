@@ -5,23 +5,25 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from .datasets import load_owasp_expected_results
+from .harness import (
+    OWASP_HARNESS,
+    validate_owasp_result_payload,
+    validate_project_harness,
+)
 from .java_ast import parse_java_source
 from .metrics import TernaryEvaluation, evaluate_ternary
+from .provenance import (
+    assess_claim_eligibility,
+    build_run_identity,
+    find_project_root,
+)
 from .retrieval import RepositoryIndex
 from .types import Candidate, OwaspLabel, SystemVersion, VerdictLabel
 from .workflow import AgentPipeline, PipelineConfig
 
 
-EXPERIMENT_SYSTEMS = tuple(SystemVersion)
-PRIMARY_CATEGORIES = frozenset({"cmdi", "ldapi", "pathtraver", "sqli", "xpathi"})
-PRIMARY_CATEGORY_RATIONALE = (
-    "Predeclared API families covered by the current command, LDAP, path, SQL, and XPath sink rules."
-)
-CANDIDATE_PROTOCOL = (
-    "One source-derived servlet doGet method per BenchmarkTest case; no truth fields are used."
-)
-RETRIEVAL_TOP_K = 6
-CONTEXT_TOKEN_BUDGET = 2000
+EXPERIMENT_SYSTEMS = tuple(spec.system for spec in OWASP_HARNESS.systems)
+PRIMARY_CATEGORIES = frozenset(OWASP_HARNESS.primary_scope)
 
 
 def _entry_document(documents, class_name: str):
@@ -34,6 +36,7 @@ def predict_owasp_rag(
 ) -> tuple[dict[str, dict[str, VerdictLabel]], dict[str, object]]:
     """Run retrieval variants using Java source only; no labels enter this function."""
 
+    validate_project_harness()
     source_files = sorted(source_root.glob("BenchmarkTest*.java"))
     if not source_files:
         raise ValueError(f"no OWASP Benchmark Java cases found under {source_root}")
@@ -42,7 +45,14 @@ def predict_owasp_rag(
     evidence_documents = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
     verdict_paths = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
     verdict_labels = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
+    verdict_path_labels = {
+        system.value: defaultdict(Counter) for system in EXPERIMENT_SYSTEMS
+    }
     expert_calls = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
+    expert_calls_by_name = {
+        system.value: Counter({"scan": 0, "taint": 0, "authz": 0})
+        for system in EXPERIMENT_SYSTEMS
+    }
     context_tokens = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
     max_context_tokens = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
     parse_error_cases: list[str] = []
@@ -64,6 +74,7 @@ def predict_owasp_rag(
                 predictions[system.value][case_id] = "ABSTAIN"
                 verdict_paths[system.value]["missing_entry"] += 1
                 verdict_labels[system.value]["ABSTAIN"] += 1
+                verdict_path_labels[system.value]["missing_entry"]["ABSTAIN"] += 1
             continue
 
         index = RepositoryIndex(result.documents)
@@ -76,18 +87,14 @@ def predict_owasp_rag(
             query=entry.text,
         )
         for system in EXPERIMENT_SYSTEMS:
-            verdict = AgentPipeline(
-                index,
-                PipelineConfig(
-                    system=system,
-                    top_k=RETRIEVAL_TOP_K,
-                    context_token_budget=CONTEXT_TOKEN_BUDGET,
-                ),
-            ).run(candidate)
+            verdict = AgentPipeline(index, PipelineConfig(system=system)).run(candidate)
             predictions[system.value][case_id] = verdict.label
             verdict_paths[system.value][verdict.path] += 1
             verdict_labels[system.value][verdict.label] += 1
+            verdict_path_labels[system.value][verdict.path][verdict.label] += 1
             expert_calls[system.value] += len(verdict.votes)
+            for vote in verdict.votes:
+                expert_calls_by_name[system.value][vote.expert] += 1
             context_tokens[system.value] += verdict.context_token_count
             max_context_tokens[system.value] = max(
                 max_context_tokens[system.value],
@@ -112,9 +119,26 @@ def predict_owasp_rag(
         "verdict_label_count": {
             system: dict(sorted(counts.items())) for system, counts in verdict_labels.items()
         },
+        "verdict_path_by_label_count": {
+            system: {
+                path: dict(sorted(labels.items()))
+                for path, labels in sorted(paths.items())
+            }
+            for system, paths in verdict_path_labels.items()
+        },
         "expert_call_count": dict(sorted(expert_calls.items())),
-        "retrieval_top_k": RETRIEVAL_TOP_K,
-        "context_token_budget_per_case": CONTEXT_TOKEN_BUDGET,
+        "expert_call_count_by_name": {
+            system: dict(sorted(counts.items()))
+            for system, counts in expert_calls_by_name.items()
+        },
+        "retrieval_contract": {
+            spec.system.value: {
+                "mode": spec.retrieval.value,
+                **spec.budget.model_dump(mode="json"),
+                "total_context_tokens": spec.budget.total_context_tokens,
+            }
+            for spec in OWASP_HARNESS.systems
+        },
         "context_tokenizer": "deterministic word-or-punctuation units",
         "context_token_count": dict(sorted(context_tokens.items())),
         "max_context_token_count_per_case": dict(sorted(max_context_tokens.items())),
@@ -219,7 +243,7 @@ def evaluate_owasp_rag(
     )
     return {
         "primary_categories": sorted(PRIMARY_CATEGORIES),
-        "primary_category_rationale": PRIMARY_CATEGORY_RATIONALE,
+        "primary_category_rationale": OWASP_HARNESS.primary_scope_rationale,
         "primary_case_count": len(primary_ids),
         "systems": systems,
         "primary_v3_vs_v2_strict_recall_gain_percentage_points": retrieval_gain,
@@ -232,18 +256,31 @@ def evaluate_owasp_rag(
 
 
 def run_owasp_rag_experiment(raw_root: Path) -> dict[str, object]:
+    validate_project_harness()
     benchmark_root = raw_root / "BenchmarkJava"
     source_root = benchmark_root / "src" / "main" / "java" / "org" / "owasp" / "benchmark" / "testcode"
     predictions, diagnostics = predict_owasp_rag(source_root)
 
     # Evaluator-only truth is loaded after all five systems have predicted every case.
     labels = load_owasp_expected_results(benchmark_root / "expectedresults-1.2beta.csv")
-    return {
-        "dataset": "OWASP BenchmarkJava 1.2beta",
-        "dataset_role": "development benchmark previously inspected during rule iteration",
-        "claim_eligible": False,
-        "candidate_protocol": CANDIDATE_PROTOCOL,
+    run_identity = build_run_identity(
+        find_project_root(raw_root),
+        {"BenchmarkJava": benchmark_root},
+    )
+    result = {
+        "dataset": OWASP_HARNESS.dataset_name,
+        "harness_id": OWASP_HARNESS.harness_id,
+        "dataset_role": OWASP_HARNESS.dataset_role.value,
+        "claim_eligible": OWASP_HARNESS.claim_eligible,
+        "candidate_protocol": OWASP_HARNESS.candidate_protocol,
+        "run_identity": run_identity,
+        "claim_assessment": assess_claim_eligibility(
+            OWASP_HARNESS.claim_eligible,
+            run_identity,
+        ),
         "experiment": "local-vs-text-vs-ast-call-graph retrieval",
         "diagnostics": diagnostics,
         **evaluate_owasp_rag(labels, predictions),
     }
+    validate_owasp_result_payload(result)
+    return result

@@ -4,36 +4,52 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from .datasets import load_vulngym_entries
-from .python_ast import PythonDocumentSpan, load_python_repository
-from .retrieval import (
-    RepositoryIndex,
-    context_token_count,
-    limit_evidence_context,
+from .harness import (
+    VULNGYM_RETRIEVAL_HARNESS,
+    validate_project_harness,
+    validate_vulngym_result_payload,
 )
+from .python_ast import PythonDocumentSpan, load_python_repository
+from .provenance import (
+    assess_claim_eligibility,
+    build_run_identity,
+    find_project_root,
+)
+from .retrieval import RepositoryIndex, context_token_count
 from .types import Candidate, Evidence
 from .vulngym_subset import select_vulngym_subjects
 
 
-RETRIEVAL_SYSTEMS = ("local", "text", "graph", "hybrid")
-RETRIEVAL_TOP_K = 8
-GRAPH_MAX_HOPS = 4
-CONTEXT_TOKEN_BUDGET = 4000
+RETRIEVAL_SYSTEMS = tuple(
+    mode.value for mode in VULNGYM_RETRIEVAL_HARNESS.retrieval_modes
+)
 
 
 def _line_start(value: int | str) -> int:
     return int(str(value).split("-", 1)[0])
 
 
+def _line_bounds(value: int | str) -> tuple[int, int]:
+    parts = str(value).split("-", 1)
+    start = int(parts[0])
+    end = int(parts[1]) if len(parts) == 2 else start
+    return start, end
+
+
 def _hit(
     evidence: list[Evidence],
     target: PythonDocumentSpan,
-    target_line: int,
+    target_end_line: int,
 ) -> bool:
+    relative_end = target_end_line - target.start_line
+    lines = target.document.text.splitlines(keepends=True)
+    if relative_end < 0 or relative_end >= len(lines):
+        return False
+    required_characters = sum(len(line) for line in lines[: relative_end + 1])
     for item in evidence:
         if item.path != target.document.path:
             continue
-        last_included_line = target.start_line + item.text.count("\n")
-        if target_line <= last_included_line:
+        if len(item.text) >= required_characters:
             return True
     return False
 
@@ -43,11 +59,16 @@ def _rate(hit_count: int, total: int) -> float | None:
 
 
 def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
+    validate_project_harness()
     data_root = data_root.resolve()
     entries_path = data_root / "raw" / "VulnGym" / "data" / "entries.jsonl"
     cases, labels = load_vulngym_entries(entries_path)
     cases_by_id = {case.case_id: case for case in cases}
     selections = select_vulngym_subjects(entries_path)
+    subject_roots = {
+        selection.slug: data_root / "subjects" / selection.slug / selection.commit
+        for selection in selections
+    }
 
     records: list[dict[str, object]] = []
     repository_profiles: list[dict[str, object]] = []
@@ -98,34 +119,21 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
                     query=query,
                     metadata={"seed": "VulnGym verified entry point"},
                 )
-                raw_evidence = {
-                    "local": index.local(candidate),
-                    "text": index.text_search(query, top_k=RETRIEVAL_TOP_K),
-                    "graph": index.graph_search(
-                        candidate,
-                        top_k=RETRIEVAL_TOP_K,
-                        max_hops=GRAPH_MAX_HOPS,
-                    ),
-                    "hybrid": index.hybrid_search(
-                        candidate,
-                        top_k=RETRIEVAL_TOP_K,
-                        max_hops=GRAPH_MAX_HOPS,
-                    ),
-                }
                 evidence_by_system = {
-                    system: limit_evidence_context(
-                        system_evidence,
-                        token_budget=CONTEXT_TOKEN_BUDGET,
+                    mode.value: index.retrieve_context(
+                        candidate,
+                        mode=mode,
+                        budget=VULNGYM_RETRIEVAL_HARNESS.budget,
                     )
-                    for system, system_evidence in raw_evidence.items()
+                    for mode in VULNGYM_RETRIEVAL_HARNESS.retrieval_modes
                 }
                 for system, system_evidence in evidence_by_system.items():
                     used = context_token_count(system_evidence)
                     context_tokens[system] += used
                     max_context_tokens[system] = max(max_context_tokens[system], used)
-                critical_line = _line_start(critical_operation["line"])
+                _, critical_end_line = _line_bounds(critical_operation["line"])
                 hits = {
-                    system: _hit(evidence, critical_span, critical_line)
+                    system: _hit(evidence, critical_span, critical_end_line)
                     for system, evidence in evidence_by_system.items()
                 }
             records.append(
@@ -171,17 +179,36 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
         graph_vs_text_gain = 100.0 * (graph_rate - text_rate)
     if text_rate is not None and hybrid_rate is not None:
         hybrid_vs_text_gain = 100.0 * (hybrid_rate - text_rate)
-    return {
-        "dataset": "VulnGym v0.1.4 verified Python subset",
+    run_identity = build_run_identity(
+        find_project_root(data_root),
+        {
+            "VulnGym": data_root / "raw" / "VulnGym",
+            **subject_roots,
+        },
+    )
+    result = {
+        "dataset": VULNGYM_RETRIEVAL_HARNESS.dataset_name,
+        "harness_id": VULNGYM_RETRIEVAL_HARNESS.harness_id,
+        "dataset_role": VULNGYM_RETRIEVAL_HARNESS.dataset_role.value,
+        "claim_eligible": VULNGYM_RETRIEVAL_HARNESS.claim_eligible,
         "experiment": "oracle-seeded critical-context retrieval coverage",
+        "candidate_protocol": VULNGYM_RETRIEVAL_HARNESS.candidate_protocol,
+        "run_identity": run_identity,
+        "claim_assessment": assess_claim_eligibility(
+            VULNGYM_RETRIEVAL_HARNESS.claim_eligible,
+            run_identity,
+        ),
         "limitation": "VulnGym entry_point is used only as the retrieval seed; this is not end-to-end vulnerability recall.",
         "entry_count": len(records),
         "cross_file_entry_count": len(cross_file_records),
         "resolved_entry_count": sum(bool(record["entry_resolved"]) for record in records),
         "resolved_critical_count": sum(bool(record["critical_resolved"]) for record in records),
-        "retrieval_top_k": RETRIEVAL_TOP_K,
-        "graph_max_hops": GRAPH_MAX_HOPS,
-        "context_token_budget_per_entry": CONTEXT_TOKEN_BUDGET,
+        "retrieval_contract": {
+            **VULNGYM_RETRIEVAL_HARNESS.budget.model_dump(mode="json"),
+            "total_context_tokens": VULNGYM_RETRIEVAL_HARNESS.budget.total_context_tokens,
+            "modes": [mode.value for mode in VULNGYM_RETRIEVAL_HARNESS.retrieval_modes],
+            "critical_hit_policy": VULNGYM_RETRIEVAL_HARNESS.critical_hit_policy,
+        },
         "context_tokenizer": "deterministic word-or-punctuation units",
         "context_token_count": dict(sorted(context_tokens.items())),
         "max_context_token_count_per_entry": dict(sorted(max_context_tokens.items())),
@@ -205,3 +232,5 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
             for system in RETRIEVAL_SYSTEMS
         },
     }
+    validate_vulngym_result_payload(result)
+    return result

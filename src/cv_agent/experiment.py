@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .harness import validate_project_harness
 from .metrics import evaluate_ternary
 from .synthetic import cross_file_fixture, guarded_delete_fixture
 from .types import SystemVersion, VerdictLabel
@@ -7,6 +8,7 @@ from .workflow import AgentPipeline, PipelineConfig
 
 
 def run_synthetic_experiment() -> dict:
+    validate_project_harness()
     fixtures = [cross_file_fixture(), guarded_delete_fixture()]
     labels = {
         fixtures[0][1].case_id: True,

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .experiment import run_synthetic_experiment
+from .harness import command_policy, describe_project_harness
 from .java_ast import profile_owasp_java_ast
 from .owasp import run_owasp_static_baseline
 from .owasp_rag import run_owasp_rag_experiment
@@ -16,6 +17,7 @@ from .vulngym_retrieval import run_vulngym_retrieval_experiment
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cv-agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("harness-check", help="validate and print the project experiment contract")
     subparsers.add_parser("synthetic", help="run the deterministic two-case wiring experiment")
     profile = subparsers.add_parser("profile", help="report aggregate public-dataset metadata without row labels")
     profile.add_argument("--raw", type=Path, default=Path("data/raw"))
@@ -34,30 +36,35 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _emit(command: str, payload: dict[str, object]) -> int:
+    policy = command_policy(command)
+    output = {
+        **payload,
+        "command_policy": policy.model_dump(mode="json"),
+    }
+    print(json.dumps(output, indent=2, sort_keys=True))
+    return 0
+
+
 def main() -> int:
     arguments = build_parser().parse_args()
+    command_policy(arguments.command)
+    if arguments.command == "harness-check":
+        return _emit(arguments.command, describe_project_harness())
     if arguments.command == "synthetic":
-        print(json.dumps(run_synthetic_experiment(), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, run_synthetic_experiment())
     if arguments.command == "profile":
-        print(json.dumps(profile_public_data(arguments.raw), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, profile_public_data(arguments.raw))
     if arguments.command == "owasp-baseline":
-        print(json.dumps(run_owasp_static_baseline(arguments.raw), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, run_owasp_static_baseline(arguments.raw))
     if arguments.command == "owasp-ast-profile":
-        print(json.dumps(profile_owasp_java_ast(arguments.raw), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, profile_owasp_java_ast(arguments.raw))
     if arguments.command == "owasp-rag":
-        print(json.dumps(run_owasp_rag_experiment(arguments.raw), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, run_owasp_rag_experiment(arguments.raw))
     if arguments.command == "vulngym-subset":
-        print(json.dumps(describe_vulngym_subjects(arguments.raw), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, describe_vulngym_subjects(arguments.raw))
     if arguments.command == "vulngym-fetch":
-        print(json.dumps(fetch_vulngym_subjects(arguments.data), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, fetch_vulngym_subjects(arguments.data))
     if arguments.command == "vulngym-retrieval":
-        print(json.dumps(run_vulngym_retrieval_experiment(arguments.data), indent=2, sort_keys=True))
-        return 0
+        return _emit(arguments.command, run_vulngym_retrieval_experiment(arguments.data))
     raise AssertionError(f"unhandled command: {arguments.command}")

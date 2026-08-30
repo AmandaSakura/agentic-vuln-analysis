@@ -30,12 +30,29 @@ def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
         "V5": 2,
     }
     assert diagnostics["v5_vs_v4_expert_calls_saved"] == 1
-    assert diagnostics["retrieval_top_k"] == 6
-    assert diagnostics["context_token_budget_per_case"] == 2000
-    assert all(
-        count <= diagnostics["context_token_budget_per_case"]
-        for count in diagnostics["max_context_token_count_per_case"].values()
-    )
+    assert diagnostics["expert_call_count_by_name"]["V4"] == {
+        "authz": 1,
+        "scan": 1,
+        "taint": 1,
+    }
+    assert diagnostics["expert_call_count_by_name"]["V5"] == {
+        "authz": 0,
+        "scan": 1,
+        "taint": 1,
+    }
+    assert diagnostics["verdict_path_by_label_count"]["V5"] == {
+        "fast": {"VULNERABLE": 1}
+    }
+    assert diagnostics["retrieval_contract"]["V2"] == {
+        "mode": "text",
+        "top_k": 6,
+        "base_context_tokens": 512,
+        "augmentation_context_tokens": 1488,
+        "graph_hops": 0,
+        "total_context_tokens": 2000,
+    }
+    for system, count in diagnostics["max_context_token_count_per_case"].items():
+        assert count <= diagnostics["retrieval_contract"][system]["total_context_tokens"]
     assert diagnostics["verdict_path_count"] == {
         "V1": {"single": 1},
         "V2": {"single": 1},

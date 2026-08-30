@@ -5,7 +5,13 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from .datasets import load_owasp_expected_results
+from .harness import OWASP_HARNESS, validate_project_harness
 from .metrics import ConfusionMatrix, evaluate_binary
+from .provenance import (
+    assess_claim_eligibility,
+    build_run_identity,
+    find_project_root,
+)
 from .scanner import StaticScanner
 from .types import CodeDocument, OwaspLabel
 
@@ -121,6 +127,7 @@ def evaluate_owasp_predictions(
 
 
 def run_owasp_static_baseline(raw_root: Path) -> dict[str, object]:
+    validate_project_harness()
     benchmark_root = raw_root / "BenchmarkJava"
     source_root = benchmark_root / "src" / "main" / "java" / "org" / "owasp" / "benchmark" / "testcode"
     predictions, rule_hits = detect_owasp_sources(source_root)
@@ -128,8 +135,20 @@ def run_owasp_static_baseline(raw_root: Path) -> dict[str, object]:
     # Ground truth enters only after every detector prediction has been produced.
     labels = load_owasp_expected_results(benchmark_root / "expectedresults-1.2beta.csv")
     metrics = evaluate_owasp_predictions(labels, predictions)
+    run_identity = build_run_identity(
+        find_project_root(raw_root),
+        {"BenchmarkJava": benchmark_root},
+    )
     return {
         "dataset": "OWASP BenchmarkJava 1.2beta",
+        "harness_id": OWASP_HARNESS.harness_id,
+        "dataset_role": OWASP_HARNESS.dataset_role.value,
+        "claim_eligible": OWASP_HARNESS.claim_eligible,
+        "run_identity": run_identity,
+        "claim_assessment": assess_claim_eligibility(
+            OWASP_HARNESS.claim_eligible,
+            run_identity,
+        ),
         "system": "static-sink-baseline",
         "case_count": len(predictions),
         "predicted_vulnerable_count": sum(predictions.values()),

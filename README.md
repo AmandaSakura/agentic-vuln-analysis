@@ -25,6 +25,8 @@ Interpretation rules:
 - OWASP BenchmarkJava 1.2beta is a development benchmark and is not eligible for a final unseen-test claim.
 - The VulnGym retrieval command is explicitly oracle-seeded and is not end-to-end vulnerability recall.
 
-The graph implementation keeps forward and reverse edges separate. Pure graph retrieval starts only from the candidate. A separate hybrid retriever is available when a lexical seed is intentionally desired. All variants share one deterministic context-token cap across their ranked evidence documents.
+The graph implementation keeps forward and reverse edges separate. Pure graph retrieval starts only from the candidate. A separate hybrid retriever is available when a lexical seed is intentionally desired. All systems receive the same fixed local base context; retrieval variants receive a separate shared augmentation budget.
+
+Budgets, dataset roles, candidate protocols, expert order, adjudication policy, early-exit position, and required metrics live only in the typed project contract at `src/cv_agent/harness.py`. Run `cv-agent harness-check` to inspect it. Experiment results include code and dataset Git identities without introducing separate lock hashes.
 
 See `docs/HARNESS.md` for experiment constraints and metric attribution.
