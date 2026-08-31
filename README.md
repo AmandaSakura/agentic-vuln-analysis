@@ -29,4 +29,4 @@ The graph implementation keeps forward and reverse edges separate. Pure graph re
 
 Budgets, dataset roles, candidate protocols, expert order, adjudication policy, early-exit position, and required metrics live only in the typed project contract at `src/cv_agent/harness.py`. Run `cv-agent harness-check` to inspect it. Experiment results include code and dataset Git identities without introducing separate lock hashes.
 
-See `docs/HARNESS.md` for experiment constraints and metric attribution. The audited development-only OWASP outcome and its rejected retrieval interpretation are recorded in `docs/OWASP_DEVELOPMENT_RESULT.md`.
+See `docs/HARNESS.md` for experiment constraints and metric attribution. The audited development-only OWASP outcome and its rejected retrieval interpretation are recorded in `docs/OWASP_DEVELOPMENT_RESULT.md`. The accepted oracle-only cross-file retrieval result is recorded in `docs/VULNGYM_RETRIEVAL_RESULT.md`.
