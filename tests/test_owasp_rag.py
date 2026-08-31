@@ -1,7 +1,31 @@
 from pathlib import Path
 
-from cv_agent.owasp_rag import evaluate_owasp_rag, predict_owasp_rag
+from cv_agent.owasp_rag import (
+    _sink_evidence_origin,
+    evaluate_owasp_rag,
+    predict_owasp_rag,
+)
 from cv_agent.types import OwaspLabel
+
+
+def test_sink_evidence_origin_distinguishes_candidate_case_and_shared_code():
+    candidate = "org/owasp/testcode/BenchmarkTest99999.java::BenchmarkTest99999.doGet@1"
+
+    assert _sink_evidence_origin(f"graph:{candidate}", candidate) == "candidate_file"
+    assert (
+        _sink_evidence_origin(
+            "text:org/owasp/testcode/BenchmarkTest00001.java::BenchmarkTest00001.doPost@2",
+            candidate,
+        )
+        == "other_benchmark_case"
+    )
+    assert (
+        _sink_evidence_origin(
+            "graph:org/owasp/helpers/Utils.java::Utils.run@3",
+            candidate,
+        )
+        == "shared_helper_or_framework"
+    )
 
 
 def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
@@ -39,6 +63,11 @@ def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
         "authz": 0,
         "scan": 1,
         "taint": 1,
+    }
+    assert diagnostics["matched_sink_evidence_origin_count"]["V2"] == {
+        "candidate_file": 1,
+        "other_benchmark_case": 0,
+        "shared_helper_or_framework": 0,
     }
     assert diagnostics["verdict_path_by_label_count"]["V5"] == {
         "fast": {"VULNERABLE": 1}
@@ -109,6 +138,11 @@ def test_repository_wide_graph_reaches_cross_file_helper_without_lexical_shortcu
     assert predictions["V1"]["BenchmarkTest99999"] == "ABSTAIN"
     assert predictions["V2"]["BenchmarkTest99999"] == "ABSTAIN"
     assert predictions["V3"]["BenchmarkTest99999"] == "VULNERABLE"
+    assert diagnostics["matched_sink_evidence_origin_count"]["V3"] == {
+        "candidate_file": 0,
+        "other_benchmark_case": 0,
+        "shared_helper_or_framework": 1,
+    }
 
 
 def test_missing_entry_is_counted_for_every_system(tmp_path: Path):

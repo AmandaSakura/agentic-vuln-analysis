@@ -24,11 +24,27 @@ from .workflow import AgentPipeline, PipelineConfig
 
 EXPERIMENT_SYSTEMS = tuple(spec.system for spec in OWASP_HARNESS.systems)
 PRIMARY_CATEGORIES = frozenset(OWASP_HARNESS.primary_scope)
+SINK_EVIDENCE_ORIGINS = (
+    "candidate_file",
+    "other_benchmark_case",
+    "shared_helper_or_framework",
+)
 
 
 def _entry_document(documents, class_name: str):
     expected = f"{class_name}.doGet"
     return next((document for document in documents if expected in document.defines), None)
+
+
+def _sink_evidence_origin(evidence_id: str, candidate_path: str) -> str:
+    evidence_path = evidence_id.partition(":")[2]
+    evidence_source = evidence_path.split("::", 1)[0]
+    candidate_source = candidate_path.split("::", 1)[0]
+    if evidence_source == candidate_source:
+        return "candidate_file"
+    if Path(evidence_source).name.startswith("BenchmarkTest"):
+        return "other_benchmark_case"
+    return "shared_helper_or_framework"
 
 
 def predict_owasp_rag(
@@ -57,6 +73,10 @@ def predict_owasp_rag(
 
     predictions = {system.value: {} for system in EXPERIMENT_SYSTEMS}
     evidence_documents = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
+    sink_evidence_origins = {
+        system.value: Counter({origin: 0 for origin in SINK_EVIDENCE_ORIGINS})
+        for system in EXPERIMENT_SYSTEMS
+    }
     verdict_paths = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
     verdict_labels = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
     verdict_path_labels = {
@@ -115,6 +135,10 @@ def predict_owasp_rag(
             evidence_documents[system.value].update(
                 {"retrieved": len(verdict.votes[0].evidence_ids)}
             )
+            for evidence_id in verdict.votes[0].evidence_ids:
+                sink_evidence_origins[system.value][
+                    _sink_evidence_origin(evidence_id, candidate.path)
+                ] += 1
 
     diagnostics: dict[str, object] = {
         "source_case_count": len(source_files),
@@ -129,6 +153,10 @@ def predict_owasp_rag(
         "missing_entry_cases": missing_entry_cases,
         "matched_sink_evidence_count": {
             system: counts["retrieved"] for system, counts in evidence_documents.items()
+        },
+        "matched_sink_evidence_origin_count": {
+            system: dict(sorted(counts.items()))
+            for system, counts in sink_evidence_origins.items()
         },
         "verdict_path_count": {
             system: dict(sorted(counts.items())) for system, counts in verdict_paths.items()

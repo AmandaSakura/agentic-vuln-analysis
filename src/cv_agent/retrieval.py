@@ -4,6 +4,7 @@ import math
 import re
 from collections import Counter, defaultdict, deque
 from collections.abc import Iterable
+from functools import lru_cache
 from typing import Literal
 
 from .harness import RetrievalBudget, RetrievalMode
@@ -88,7 +89,10 @@ class RepositoryIndex:
                         reverse[callee_path].add(caller.path)
         return forward, reverse
 
+    @lru_cache(maxsize=1)
     def _lexical_scores(self, query: str) -> dict[str, float]:
+        """Score one candidate query and reuse it across its V2-V5 retrieval calls."""
+
         query_terms = Counter(tokenize(query))
         scores: dict[str, float] = {}
         for path, terms in self._term_frequency.items():

@@ -28,6 +28,7 @@ The deterministic slice validates retrieval and adjudication mechanics. It does 
 - Pure graph retrieval starts only from the candidate and follows forward call edges.
 - Lexical seeding plus graph expansion is a separate `hybrid` variant.
 - Ambiguous unqualified symbols do not create graph edges.
+- OWASP diagnostics separate matched sink evidence originating in the candidate file, another benchmark case, or a shared helper/framework file so repository-wide lexical contamination remains visible.
 
 ## Adjudication attribution
 
