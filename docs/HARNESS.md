@@ -24,6 +24,7 @@ The deterministic slice validates retrieval and adjudication mechanics. It does 
 - Text and graph variants use the same `top_k` and total context-token budget.
 - Context tokens use the repository's deterministic word-or-punctuation tokenizer; the budget is shared across ranked documents rather than applied once per document.
 - Every system receives the same separately budgeted local candidate context. Text, graph, and hybrid retrieval may add evidence only through a second augmentation budget, and the candidate document is excluded from augmentation.
+- OWASP uses one repository-wide method corpus containing every BenchmarkJava main-source file, including shared helpers. It must not rebuild a two-method index independently for each test case, because that makes the templated `doGet -> doPost` text and graph retrieval paths structurally non-discriminating.
 - Pure graph retrieval starts only from the candidate and follows forward call edges.
 - Lexical seeding plus graph expansion is a separate `hybrid` variant.
 - Ambiguous unqualified symbols do not create graph edges.

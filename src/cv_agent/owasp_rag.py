@@ -10,7 +10,7 @@ from .harness import (
     validate_owasp_result_payload,
     validate_project_harness,
 )
-from .java_ast import parse_java_source
+from .java_ast import load_java_repository
 from .metrics import TernaryEvaluation, evaluate_ternary
 from .provenance import (
     assess_claim_eligibility,
@@ -18,7 +18,7 @@ from .provenance import (
     find_project_root,
 )
 from .retrieval import RepositoryIndex
-from .types import Candidate, OwaspLabel, SystemVersion, VerdictLabel
+from .types import Candidate, CodeDocument, OwaspLabel, SystemVersion, VerdictLabel
 from .workflow import AgentPipeline, PipelineConfig
 
 
@@ -37,9 +37,23 @@ def predict_owasp_rag(
     """Run retrieval variants using Java source only; no labels enter this function."""
 
     validate_project_harness()
-    source_files = sorted(source_root.glob("BenchmarkTest*.java"))
+    source_files = sorted(source_root.rglob("BenchmarkTest*.java"))
     if not source_files:
         raise ValueError(f"no OWASP Benchmark Java cases found under {source_root}")
+
+    repository_id = "OWASP:BenchmarkJava-1.2beta"
+    corpus_source_files = sorted(source_root.rglob("*.java"))
+    documents, corpus_parse_error_paths = load_java_repository(
+        repository_id,
+        source_root,
+    )
+    if not documents:
+        raise ValueError(f"no Java methods found under {source_root}")
+    documents_by_source: dict[str, list[CodeDocument]] = defaultdict(list)
+    for document in documents:
+        relative_path = document.path.split("::", 1)[0]
+        documents_by_source[relative_path].append(document)
+    index = RepositoryIndex(documents)
 
     predictions = {system.value: {} for system in EXPERIMENT_SYSTEMS}
     evidence_documents = {system.value: Counter() for system in EXPERIMENT_SYSTEMS}
@@ -55,19 +69,18 @@ def predict_owasp_rag(
     }
     context_tokens = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
     max_context_tokens = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
-    parse_error_cases: list[str] = []
+    parse_error_cases = sorted(
+        {
+            Path(relative_path).stem
+            for relative_path in corpus_parse_error_paths
+            if Path(relative_path).stem.startswith("BenchmarkTest")
+        }
+    )
     missing_entry_cases: list[str] = []
     for source_file in source_files:
         case_id = source_file.stem
-        repository_id = f"OWASP:{case_id}"
-        result = parse_java_source(
-            repository_id,
-            source_file.name,
-            source_file.read_text(encoding="utf-8"),
-        )
-        if result.has_error:
-            parse_error_cases.append(case_id)
-        entry = _entry_document(result.documents, case_id)
+        relative_path = source_file.relative_to(source_root).as_posix()
+        entry = _entry_document(documents_by_source.get(relative_path, ()), case_id)
         if entry is None:
             missing_entry_cases.append(case_id)
             for system in EXPERIMENT_SYSTEMS:
@@ -77,7 +90,6 @@ def predict_owasp_rag(
                 verdict_path_labels[system.value]["missing_entry"]["ABSTAIN"] += 1
             continue
 
-        index = RepositoryIndex(result.documents)
         candidate = Candidate(
             candidate_id=f"{case_id}:doGet",
             case_id=case_id,
@@ -106,6 +118,11 @@ def predict_owasp_rag(
 
     diagnostics: dict[str, object] = {
         "source_case_count": len(source_files),
+        "corpus_source_file_count": len(corpus_source_files),
+        "corpus_method_document_count": len(documents),
+        "corpus_scope": "all BenchmarkJava main-source Java methods",
+        "corpus_parse_error_count": len(corpus_parse_error_paths),
+        "corpus_parse_error_paths": corpus_parse_error_paths,
         "parse_error_count": len(parse_error_cases),
         "parse_error_cases": parse_error_cases,
         "missing_entry_count": len(missing_entry_cases),
@@ -258,7 +275,7 @@ def evaluate_owasp_rag(
 def run_owasp_rag_experiment(raw_root: Path) -> dict[str, object]:
     validate_project_harness()
     benchmark_root = raw_root / "BenchmarkJava"
-    source_root = benchmark_root / "src" / "main" / "java" / "org" / "owasp" / "benchmark" / "testcode"
+    source_root = benchmark_root / "src" / "main" / "java"
     predictions, diagnostics = predict_owasp_rag(source_root)
 
     # Evaluator-only truth is loaded after all five systems have predicted every case.

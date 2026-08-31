@@ -120,12 +120,14 @@ OWASP_HARNESS = ExperimentHarness(
     dataset_role=DatasetRole.DEVELOPMENT,
     claim_eligible=False,
     candidate_protocol=(
-        "One source-derived servlet doGet method per BenchmarkTest case; "
-        "the identical local method is the base context for every system."
+        "One source-derived servlet doGet method per BenchmarkTest case, retrieved against "
+        "one repository-wide method corpus containing every BenchmarkJava main-source file, "
+        "including shared helpers; the identical local method is the base context for every system."
     ),
     primary_scope=("cmdi", "ldapi", "pathtraver", "sqli", "xpathi"),
     primary_scope_rationale=(
-        "Predeclared API families covered by command, LDAP, path, SQL, and XPath sink rules."
+        "Predeclared API families targeted by the current command, LDAP, path, SQL, and XPath "
+        "sink patterns; pattern coverage within those families is intentionally incomplete."
     ),
     systems=(
         _system(

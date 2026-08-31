@@ -69,6 +69,48 @@ def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
     }
 
 
+def test_repository_wide_graph_reaches_cross_file_helper_without_lexical_shortcut(
+    tmp_path: Path,
+):
+    for number in range(1, 8):
+        class_name = f"BenchmarkTest{number:05d}"
+        (tmp_path / f"{class_name}.java").write_text(
+            f"""
+            class {class_name} {{
+                void doGet(Object request, Object response) {{ doPost(request, response); }}
+                void doPost(Object request, Object response) {{ int value = 1; }}
+            }}
+            """,
+            encoding="utf-8",
+        )
+    (tmp_path / "BenchmarkTest99999.java").write_text(
+        """
+        class BenchmarkTest99999 {
+            void doGet(Object request, Object response) { doPost(request, response); }
+            void doPost(Object request, Object response) { Shared.run("constant"); }
+        }
+        """,
+        encoding="utf-8",
+    )
+    (tmp_path / "Shared.java").write_text(
+        """
+        class Shared {
+            static void run(String value) { new ProcessBuilder(value).start(); }
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    predictions, diagnostics = predict_owasp_rag(tmp_path)
+
+    assert diagnostics["source_case_count"] == 8
+    assert diagnostics["corpus_source_file_count"] == 9
+    assert diagnostics["corpus_method_document_count"] == 17
+    assert predictions["V1"]["BenchmarkTest99999"] == "ABSTAIN"
+    assert predictions["V2"]["BenchmarkTest99999"] == "ABSTAIN"
+    assert predictions["V3"]["BenchmarkTest99999"] == "VULNERABLE"
+
+
 def test_missing_entry_is_counted_for_every_system(tmp_path: Path):
     (tmp_path / "BenchmarkTest00002.java").write_text(
         "class BenchmarkTest00002 { void doPost() {} }",
