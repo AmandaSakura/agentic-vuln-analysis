@@ -38,6 +38,71 @@ def test_python_ast_call_graph_retrieves_imported_function(tmp_path: Path):
     assert any(item.path == target.document.path for item in graph)
 
 
+def test_python_ast_resolves_typed_self_field_to_concrete_override(tmp_path: Path):
+    (tmp_path / "base_loader.py").write_text(
+        """
+class BaseLoader:
+    def load(self, name):
+        raise NotImplementedError
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "loader.py").write_text(
+        """
+from base_loader import BaseLoader
+
+class Loader(BaseLoader):
+    def load(self, name):
+        return critical(name)
+
+def critical(value):
+    return eval(value)
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "web.py").write_text(
+        """
+from base_loader import BaseLoader
+
+class Web:
+    def __init__(self, loader: BaseLoader):
+        self.loader = loader
+
+    def entry(self, name):
+        return self.loader.load(name)
+""",
+        encoding="utf-8",
+    )
+
+    repository = load_python_repository("repo", tmp_path)
+    entry = repository.locate("web.py", 8)
+    concrete = repository.locate("loader.py", 5)
+    critical = repository.locate("loader.py", 8)
+    assert entry is not None
+    assert concrete is not None
+    assert critical is not None
+    assert "BaseLoader.load" in entry.document.calls
+    assert "Web.load" not in entry.document.calls
+    assert "BaseLoader.load" in concrete.document.defines
+
+    candidate = Candidate(
+        candidate_id="entry",
+        case_id="entry",
+        repository_id="repo",
+        path=entry.document.path,
+        line=8,
+        query=" ".join([*entry.document.defines, *entry.document.calls]),
+    )
+    graph = RepositoryIndex(repository.documents).graph_search(
+        candidate,
+        top_k=8,
+        max_hops=4,
+    )
+    paths = {item.path for item in graph}
+    assert concrete.document.path in paths
+    assert critical.document.path in paths
+
+
 def test_python_span_locator_prefers_nested_function(tmp_path: Path):
     (tmp_path / "nested.py").write_text(
         "def outer():\n    def inner():\n        return 1\n    return inner()\n",

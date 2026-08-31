@@ -51,4 +51,6 @@ The deterministic slice validates retrieval and adjudication mechanics. It does 
 
 Every experiment result records the code Git revision/dirty state and each dataset Git revision/dirty state. `uv.lock` is covered by the code revision; no second lock hash is added.
 
+The VulnGym result includes the complete 11-entry hit manifest. Runtime validation recomputes overall, cross-file, same-file, and repository summaries from that manifest, checks missed-entry and gain arithmetic, enforces context limits for all four modes, and binds every subject profile to the selected and actual Git revision before parsing.
+
 No output hashes, frozen result baselines, or unrelated execution gates are required. The import-time typed-contract validation is narrowly scoped to the demonstrated configuration-drift failures. Git, `uv.lock`, dataset revisions, types, and ordinary tests remain the underlying mechanisms.

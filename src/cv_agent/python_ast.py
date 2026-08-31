@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import tokenize
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -53,6 +54,135 @@ def _attribute_parts(node: ast.expr) -> list[str]:
     return []
 
 
+def _annotation_types(
+    node: ast.expr | None,
+    aliases: dict[str, str],
+) -> set[str]:
+    if node is None:
+        return set()
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        return _annotation_types(node.left, aliases) | _annotation_types(
+            node.right,
+            aliases,
+        )
+    if isinstance(node, ast.Subscript):
+        return _annotation_types(node.slice, aliases)
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return {
+            name
+            for element in node.elts
+            for name in _annotation_types(element, aliases)
+        }
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        try:
+            parsed = ast.parse(node.value, mode="eval").body
+        except SyntaxError:
+            return set()
+        return _annotation_types(parsed, aliases)
+    parts = _attribute_parts(node)
+    if not parts:
+        return set()
+    raw = ".".join(parts)
+    resolved_parts = parts
+    if parts[0] in aliases:
+        resolved_parts = [*aliases[parts[0]].split("."), *parts[1:]]
+    resolved = ".".join(resolved_parts)
+    return {
+        name
+        for name in (raw, parts[-1], resolved, resolved_parts[-1])
+        if name not in {"None", "NoneType"}
+    }
+
+
+def _self_field_name(node: ast.expr) -> str | None:
+    if (
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "self"
+    ):
+        return node.attr
+    return None
+
+
+class _FieldTypeCollector(ast.NodeVisitor):
+    def __init__(
+        self,
+        parameter_types: dict[str, set[str]],
+        aliases: dict[str, str],
+    ) -> None:
+        self.parameter_types = parameter_types
+        self.aliases = aliases
+        self.field_types: dict[str, set[str]] = defaultdict(set)
+
+    def _value_types(self, value: ast.expr | None) -> set[str]:
+        if isinstance(value, ast.Name):
+            return self.parameter_types.get(value.id, set())
+        if isinstance(value, ast.Call):
+            return _annotation_types(value.func, self.aliases)
+        return set()
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        value_types = self._value_types(node.value)
+        for target in node.targets:
+            field = _self_field_name(target)
+            if field:
+                self.field_types[field].update(value_types)
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        field = _self_field_name(node.target)
+        if field:
+            self.field_types[field].update(
+                _annotation_types(node.annotation, self.aliases)
+            )
+            self.field_types[field].update(self._value_types(node.value))
+        self.generic_visit(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        return
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        return
+
+
+def _class_field_types(
+    node: ast.ClassDef,
+    aliases: dict[str, str],
+) -> dict[str, tuple[str, ...]]:
+    collected: dict[str, set[str]] = defaultdict(set)
+    for statement in node.body:
+        if isinstance(statement, ast.AnnAssign) and isinstance(
+            statement.target,
+            ast.Name,
+        ):
+            collected[statement.target.id].update(
+                _annotation_types(statement.annotation, aliases)
+            )
+        if not isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if statement.name != "__init__":
+            continue
+        arguments = [
+            *statement.args.posonlyargs,
+            *statement.args.args,
+            *statement.args.kwonlyargs,
+        ]
+        parameter_types = {
+            argument.arg: _annotation_types(argument.annotation, aliases)
+            for argument in arguments
+        }
+        collector = _FieldTypeCollector(parameter_types, aliases)
+        for body_statement in statement.body:
+            collector.visit(body_statement)
+        for field, types in collector.field_types.items():
+            collected[field].update(types)
+    return {
+        field: tuple(sorted(types))
+        for field, types in collected.items()
+        if types
+    }
+
+
 def _import_aliases(tree: ast.AST, canonical_module: str) -> dict[str, str]:
     aliases: dict[str, str] = {}
     # Only module-level imports are globally valid. Function-local imports are
@@ -82,10 +212,12 @@ class _CallCollector(ast.NodeVisitor):
         aliases: dict[str, str],
         modules: tuple[str, ...],
         class_name: str | None,
+        field_types: dict[str, tuple[str, ...]],
     ) -> None:
         self.aliases = aliases
         self.modules = modules
         self.class_name = class_name
+        self.field_types = field_types
         self.calls: set[str] = set()
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
@@ -104,9 +236,13 @@ class _CallCollector(ast.NodeVisitor):
                 parts = [*self.aliases[parts[0]].split("."), *parts[1:]]
             if parts[0] in {"self", "cls"} and self.class_name and len(parts) > 1:
                 method = parts[-1]
-                self.calls.add(f"{self.class_name}.{method}")
-                for module in self.modules:
-                    self.calls.add(f"{module}.{self.class_name}.{method}")
+                if len(parts) == 2:
+                    self.calls.add(f"{self.class_name}.{method}")
+                    for module in self.modules:
+                        self.calls.add(f"{module}.{self.class_name}.{method}")
+                elif parts[0] == "self" and len(parts) == 3:
+                    for receiver_type in self.field_types.get(parts[1], ()):
+                        self.calls.add(f"{receiver_type}.{method}")
             else:
                 self.calls.add(".".join(parts))
                 self.calls.add(parts[-1])
@@ -131,6 +267,8 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
         self.aliases = _import_aliases(tree, self.modules[0])
         self.scope: list[str] = []
         self.class_scope: list[str] = []
+        self.class_bases: list[tuple[str, ...]] = []
+        self.class_field_types: list[dict[str, tuple[str, ...]]] = []
         self.spans: list[PythonDocumentSpan] = []
 
     def _add_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
@@ -144,11 +282,14 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
             definitions.add(".".join([module, *qualified_parts]))
         if self.class_scope:
             definitions.add(f"{self.class_scope[-1]}.{node.name}")
+            for base in self.class_bases[-1]:
+                definitions.add(f"{base}.{node.name}")
 
         collector = _CallCollector(
             self.aliases,
             self.modules,
             self.class_scope[-1] if self.class_scope else None,
+            self.class_field_types[-1] if self.class_field_types else {},
         )
         for decorator in node.decorator_list:
             collector.visit(decorator)
@@ -186,8 +327,22 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self.scope.append(node.name)
         self.class_scope.append(node.name)
+        self.class_bases.append(
+            tuple(
+                sorted(
+                    {
+                        base
+                        for expression in node.bases
+                        for base in _annotation_types(expression, self.aliases)
+                    }
+                )
+            )
+        )
+        self.class_field_types.append(_class_field_types(node, self.aliases))
         for statement in node.body:
             self.visit(statement)
+        self.class_field_types.pop()
+        self.class_bases.pop()
         self.class_scope.pop()
         self.scope.pop()
 

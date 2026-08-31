@@ -11,9 +11,11 @@ from .harness import (
 )
 from .python_ast import PythonDocumentSpan, load_python_repository
 from .provenance import (
+    GitIdentity,
     assess_claim_eligibility,
     build_run_identity,
     find_project_root,
+    git_identity,
 )
 from .retrieval import RepositoryIndex, context_token_count
 from .types import Candidate, Evidence
@@ -58,6 +60,16 @@ def _rate(hit_count: int, total: int) -> float | None:
     return hit_count / total if total else None
 
 
+def _verified_subject_identity(checkout: Path, expected_commit: str) -> GitIdentity:
+    identity = git_identity(checkout)
+    if identity.revision != expected_commit:
+        raise ValueError(
+            f"VulnGym subject checkout has wrong revision: {checkout}: "
+            f"expected {expected_commit}, found {identity.revision}"
+        )
+    return identity
+
+
 def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
     validate_project_harness()
     data_root = data_root.resolve()
@@ -69,6 +81,19 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
         selection.slug: data_root / "subjects" / selection.slug / selection.commit
         for selection in selections
     }
+    expected_entries = {
+        entry_id: {
+            "subject_key": selection.slug,
+            "repository_url": selection.repository_url,
+            "cross_file": labels[entry_id].entry_point["file"]
+            != labels[entry_id].critical_operation["file"],
+        }
+        for selection in selections
+        for entry_id in selection.entry_ids
+    }
+    expected_subject_revisions = {
+        selection.slug: selection.commit for selection in selections
+    }
 
     records: list[dict[str, object]] = []
     repository_profiles: list[dict[str, object]] = []
@@ -78,14 +103,17 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
         checkout = data_root / "subjects" / selection.slug / selection.commit
         if not checkout.is_dir():
             raise ValueError(f"VulnGym subject checkout not found: {checkout}")
+        subject_identity = _verified_subject_identity(checkout, selection.commit)
         repository = load_python_repository(selection.slug, checkout)
         if not repository.documents:
             raise ValueError(f"subject has no Python function documents: {checkout}")
         index = RepositoryIndex(repository.documents)
         repository_profiles.append(
             {
+                "subject_key": selection.slug,
                 "repository_url": selection.repository_url,
-                "commit": selection.commit,
+                "commit": subject_identity.revision,
+                "dirty": subject_identity.dirty,
                 "source_file_count": repository.source_file_count,
                 "function_document_count": len(repository.documents),
                 "parse_error_count": len(repository.parse_error_paths),
@@ -140,6 +168,7 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
                 {
                     "entry_id": entry_id,
                     "repository_url": selection.repository_url,
+                    "subject_key": selection.slug,
                     "cross_file": entry_point["file"] != critical_operation["file"],
                     "entry_resolved": entry_span is not None,
                     "critical_resolved": critical_span is not None,
@@ -191,16 +220,17 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
         "harness_id": VULNGYM_RETRIEVAL_HARNESS.harness_id,
         "dataset_role": VULNGYM_RETRIEVAL_HARNESS.dataset_role.value,
         "claim_eligible": VULNGYM_RETRIEVAL_HARNESS.claim_eligible,
-        "experiment": "oracle-seeded critical-context retrieval coverage",
+        "experiment": VULNGYM_RETRIEVAL_HARNESS.experiment_name,
         "candidate_protocol": VULNGYM_RETRIEVAL_HARNESS.candidate_protocol,
         "run_identity": run_identity,
         "claim_assessment": assess_claim_eligibility(
             VULNGYM_RETRIEVAL_HARNESS.claim_eligible,
             run_identity,
         ),
-        "limitation": "VulnGym entry_point is used only as the retrieval seed; this is not end-to-end vulnerability recall.",
+        "limitation": VULNGYM_RETRIEVAL_HARNESS.limitation,
         "entry_count": len(records),
         "cross_file_entry_count": len(cross_file_records),
+        "entries": records,
         "resolved_entry_count": sum(bool(record["entry_resolved"]) for record in records),
         "resolved_critical_count": sum(bool(record["critical_resolved"]) for record in records),
         "retrieval_contract": {
@@ -232,5 +262,9 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
             for system in RETRIEVAL_SYSTEMS
         },
     }
-    validate_vulngym_result_payload(result)
+    validate_vulngym_result_payload(
+        result,
+        expected_entries=expected_entries,
+        expected_subject_revisions=expected_subject_revisions,
+    )
     return result

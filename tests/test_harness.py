@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 from pydantic import ValidationError
 
@@ -205,12 +207,84 @@ def test_owasp_result_schema_rejects_missing_headline_companion():
         validate_owasp_result_payload(payload)
 
 
-def test_vulngym_result_schema_requires_all_retrieval_modes():
-    payload = {
+VULNGYM_MODES = ("local", "text", "graph", "hybrid")
+VULNGYM_EXPECTED_ENTRIES = {
+    "entry-1": {
+        "subject_key": "example__project",
+        "repository_url": "https://github.com/example/project",
+        "cross_file": True,
+    },
+    "entry-2": {
+        "subject_key": "second__project",
+        "repository_url": "https://github.com/second/project",
+        "cross_file": False,
+    },
+}
+VULNGYM_SUBJECTS = {
+    "example__project": "subject-revision",
+    "second__project": "second-revision",
+}
+
+
+def _retrieval_summary(records: list[dict[str, object]]) -> dict[str, object]:
+    return {
+        mode: {
+            "hit_count": sum(bool(record["hits"][mode]) for record in records),
+            "hit_rate": sum(bool(record["hits"][mode]) for record in records)
+            / len(records),
+        }
+        for mode in VULNGYM_MODES
+    }
+
+
+def _valid_vulngym_payload() -> dict[str, object]:
+    entries = [
+        {
+            "entry_id": "entry-1",
+            "repository_url": "https://github.com/example/project",
+            "subject_key": "example__project",
+            "cross_file": True,
+            "entry_resolved": True,
+            "critical_resolved": True,
+            "hits": {
+                "local": False,
+                "text": False,
+                "graph": True,
+                "hybrid": True,
+            },
+        },
+        {
+            "entry_id": "entry-2",
+            "repository_url": "https://github.com/second/project",
+            "subject_key": "second__project",
+            "cross_file": False,
+            "entry_resolved": True,
+            "critical_resolved": True,
+            "hits": {mode: True for mode in VULNGYM_MODES},
+        },
+    ]
+    return {
+        "dataset": VULNGYM_RETRIEVAL_HARNESS.dataset_name,
         "harness_id": VULNGYM_RETRIEVAL_HARNESS.harness_id,
         "claim_eligible": False,
         "dataset_role": "oracle-diagnostic",
-        "run_identity": _run_identity(),
+        "experiment": VULNGYM_RETRIEVAL_HARNESS.experiment_name,
+        "limitation": VULNGYM_RETRIEVAL_HARNESS.limitation,
+        "run_identity": {
+            "code": {"revision": "code-revision", "dirty": False},
+            "datasets": {
+                "VulnGym": {"revision": "vulngym-revision", "dirty": False},
+                "example__project": {
+                    "revision": "subject-revision",
+                    "dirty": False,
+                },
+                "second__project": {
+                    "revision": "second-revision",
+                    "dirty": False,
+                },
+            },
+            "uv_lock_tracked_by_code_revision": True,
+        },
         "claim_assessment": {
             "eligible": False,
             "reasons": ["oracle"],
@@ -224,16 +298,120 @@ def test_vulngym_result_schema_requires_all_retrieval_modes():
             ],
             "critical_hit_policy": VULNGYM_RETRIEVAL_HARNESS.critical_hit_policy,
         },
-        "overall": {
-            mode: {"hit_count": 0, "hit_rate": 0.0}
-            for mode in ("local", "text", "graph", "hybrid")
+        "entry_count": 2,
+        "cross_file_entry_count": 1,
+        "resolved_entry_count": 2,
+        "resolved_critical_count": 2,
+        "context_tokenizer": "deterministic word-or-punctuation units",
+        "entries": entries,
+        "overall": _retrieval_summary(entries),
+        "cross_file": _retrieval_summary([entries[0]]),
+        "same_file": _retrieval_summary([entries[1]]),
+        "by_repository": {
+            "https://github.com/example/project": _retrieval_summary([entries[0]]),
+            "https://github.com/second/project": _retrieval_summary([entries[1]]),
         },
-        "cross_file": {},
-        "same_file": {},
-        "resolved_entry_count": 0,
-        "resolved_critical_count": 0,
+        "context_token_count": {
+            "local": 100,
+            "text": 200,
+            "graph": 300,
+            "hybrid": 400,
+        },
+        "max_context_token_count_per_entry": {
+            "local": 100,
+            "text": 200,
+            "graph": 300,
+            "hybrid": 400,
+        },
+        "repository_profiles": [
+            {
+                "subject_key": "example__project",
+                "repository_url": "https://github.com/example/project",
+                "commit": "subject-revision",
+                "dirty": False,
+                "source_file_count": 10,
+                "function_document_count": 20,
+                "parse_error_count": 0,
+            },
+            {
+                "subject_key": "second__project",
+                "repository_url": "https://github.com/second/project",
+                "commit": "second-revision",
+                "dirty": False,
+                "source_file_count": 5,
+                "function_document_count": 10,
+                "parse_error_count": 0,
+            },
+        ],
+        "graph_vs_local_hit_gain_percentage_points": 50.0,
+        "graph_vs_text_hit_gain_percentage_points": 50.0,
+        "hybrid_vs_text_hit_gain_percentage_points": 50.0,
+        "missed_entry_ids": {
+            "local": ["entry-1"],
+            "text": ["entry-1"],
+            "graph": [],
+            "hybrid": [],
+        },
     }
-    validate_vulngym_result_payload(payload)
+
+
+def _validate_vulngym_fixture(payload: dict[str, object]) -> None:
+    validate_vulngym_result_payload(
+        payload,
+        expected_entries=VULNGYM_EXPECTED_ENTRIES,
+        expected_subject_revisions=VULNGYM_SUBJECTS,
+    )
+
+
+def test_vulngym_result_schema_accepts_consistent_payload():
+    _validate_vulngym_fixture(_valid_vulngym_payload())
+
+
+def test_vulngym_result_schema_requires_all_retrieval_modes():
+    payload = _valid_vulngym_payload()
     payload["overall"].pop("hybrid")
-    with pytest.raises(ValueError, match="every registered retrieval mode"):
-        validate_vulngym_result_payload(payload)
+    with pytest.raises(ValueError, match="summary overall"):
+        _validate_vulngym_fixture(payload)
+
+
+def test_vulngym_result_schema_rejects_summary_arithmetic_drift():
+    payload = _valid_vulngym_payload()
+    payload["cross_file"]["graph"]["hit_count"] = 0
+    with pytest.raises(ValueError, match="summary cross_file"):
+        _validate_vulngym_fixture(payload)
+
+
+def test_vulngym_result_schema_rejects_context_budget_overrun():
+    payload = _valid_vulngym_payload()
+    payload["max_context_token_count_per_entry"]["graph"] = 4_001
+    with pytest.raises(ValueError, match="context budget"):
+        _validate_vulngym_fixture(payload)
+
+
+def test_vulngym_result_schema_rejects_missing_selected_entry():
+    payload = _valid_vulngym_payload()
+    payload["entries"] = payload["entries"][:-1]
+    with pytest.raises(ValueError, match="selected entry identities"):
+        _validate_vulngym_fixture(payload)
+
+
+def test_vulngym_result_schema_rejects_wrong_subject_revision():
+    payload = deepcopy(_valid_vulngym_payload())
+    payload["run_identity"]["datasets"]["example__project"]["revision"] = "wrong"
+    with pytest.raises(ValueError, match="wrong revision"):
+        _validate_vulngym_fixture(payload)
+
+
+def test_vulngym_result_schema_rejects_entries_swapped_between_subjects():
+    payload = deepcopy(_valid_vulngym_payload())
+    first, second = payload["entries"]
+    first["subject_key"], second["subject_key"] = (
+        second["subject_key"],
+        first["subject_key"],
+    )
+    first["repository_url"], second["repository_url"] = (
+        second["repository_url"],
+        first["repository_url"],
+    )
+    with pytest.raises(ValueError, match="selected repository mapping"):
+        _validate_vulngym_fixture(payload)
