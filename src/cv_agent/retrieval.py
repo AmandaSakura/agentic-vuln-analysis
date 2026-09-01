@@ -16,6 +16,26 @@ CONTEXT_TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 DOCUMENT_SPAN_RE = re.compile(
     r"^(?P<file>.+)::(?P<symbol>.+)@(?P<start>\d+)-(?P<end>\d+)$"
 )
+SECURITY_SINK_FOCUS_RE = re.compile(
+    r"(?<![\w.])(?:eval|exec)\s*\(|"
+    r"Runtime\.getRuntime\(\)\.exec|"
+    r"\bProcessBuilder\s*\(|"
+    r"\bsubprocess\.(?:run|popen|call)|"
+    r"\.(?:execute|executeQuery|executeUpdate|prepareStatement|prepareCall)\s*\(|"
+    r"\.search\s*\(|"
+    r"\b(?:FileInputStream|FileOutputStream|FileReader|FileWriter)\s*\(|"
+    r"\.delete\s*\(|"
+    r"shell\s*=\s*True",
+    re.IGNORECASE,
+)
+SECURITY_SOURCE_FOCUS_RE = re.compile(
+    r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b|"
+    r"\brequest\.get(?:Header|Headers|Parameter|ParameterValues|"
+    r"Cookies?|QueryString)\s*\(|"
+    r"\.getTheParameter\s*\(|"
+    r"\b(?:input\s*\(|sys\.argv\b|os\.environ\b|process\.env\b)",
+    re.IGNORECASE,
+)
 
 
 def tokenize(text: str) -> list[str]:
@@ -28,6 +48,15 @@ def context_token_count(evidence: Iterable[Evidence]) -> int:
 
 def context_text_token_count(text: str) -> int:
     return len(CONTEXT_TOKEN_RE.findall(text))
+
+
+def _security_focus_score(line: str) -> int:
+    score = 0
+    if SECURITY_SINK_FOCUS_RE.search(line):
+        score += 3
+    if SECURITY_SOURCE_FOCUS_RE.search(line):
+        score += 1
+    return score
 
 
 def fit_text_to_serialized_context(
@@ -156,14 +185,15 @@ def _focused_text(
     )
     scored = [
         (
+            _security_focus_score(line),
             len(set(tokenize(line)) & query_terms),
             -abs(index - fallback_index),
             index,
         )
         for index, line in enumerate(lines)
     ]
-    best_score, _, best_index = max(scored)
-    center = best_index if best_score > 0 else fallback_index
+    best_security_score, best_query_score, _, best_index = max(scored)
+    center = best_index if best_security_score > 0 or best_query_score > 0 else fallback_index
     return _line_window_around(lines, center, token_budget)
 
 

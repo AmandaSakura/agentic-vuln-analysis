@@ -162,6 +162,59 @@ def test_focused_local_context_prefers_distinct_query_terms_over_repetition():
     assert context_token_count(context) <= budget.base_context_tokens
 
 
+def test_focused_graph_context_prefers_security_sink_over_source_only_line():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00012.java::BenchmarkTest00012.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00012.doGet",),
+        calls=("BenchmarkTest00012.doPost",),
+    )
+    filler = "\n".join(f"    int filler{index} = {index};" for index in range(80))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00012.java::BenchmarkTest00012.doPost@5-92",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            '    String param = request.getHeader("vector");\n'
+            f"{filler}\n"
+            '    String filter = "(&(uid=" + param + "))";\n'
+            "    ctx.search(base, filter, sc);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00012.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=48,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "ctx.search(base, filter, sc)" in augmentation.text
+    assert "request.getHeader" not in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_hybrid_context_budget_does_not_starve_graph_neighbor_after_long_seed():
     entry = CodeDocument(
         repository_id="repo",
