@@ -401,25 +401,60 @@ class RepositoryIndex:
         top_k: int = 8,
         max_hops: int = 2,
     ) -> list[Evidence]:
-        """Combine one lexical seed with forward call-graph expansion."""
+        """Combine text retrieval with entry- and lexical-seeded graph retrieval."""
 
         lexical = self._lexical_scores(candidate.query)
-        seeds = [candidate.path] if candidate.path in self.documents else []
+        combined: list[Evidence] = []
+        seen: set[str] = set()
+
+        def branch_cap(items: Iterable[Evidence]) -> list[Evidence]:
+            return [item for item in items if item.path != candidate.path][:top_k]
+
+        def append(items: Iterable[Evidence]) -> None:
+            for item in items:
+                if item.path in seen:
+                    continue
+                seen.add(item.path)
+                combined.append(
+                    item.model_copy(
+                        update={
+                            "evidence_id": f"hybrid:{item.path}",
+                            "retrieval": "hybrid",
+                        }
+                    )
+                )
+
+        if candidate.path in self.documents:
+            append(
+                branch_cap(
+                    self.graph_search(
+                        candidate,
+                        top_k=top_k + 1,
+                        max_hops=max_hops,
+                    )
+                )
+            )
+
+        append(branch_cap(self.text_search(candidate.query, top_k=top_k + 1)))
+
         lexical_seeds = [
             path
             for path in sorted(lexical, key=lambda item: (-lexical[item], item))
-            if lexical[path] > 0 and path not in seeds
+            if lexical[path] > 0 and path != candidate.path
         ]
-        seeds.extend(lexical_seeds[:1])
-        if not seeds:
-            return []
-        distances = self._walk_graph(seeds, self._forward_graph, max_hops=max_hops)
-        return self._rank_graph_evidence(
-            distances,
-            lexical,
-            top_k=top_k,
-            retrieval="hybrid",
-        )
+        for seed in lexical_seeds[:1]:
+            distances = self._walk_graph([seed], self._forward_graph, max_hops=max_hops)
+            append(
+                branch_cap(
+                    self._rank_graph_evidence(
+                        distances,
+                        lexical,
+                        top_k=top_k + 1,
+                        retrieval="hybrid",
+                    )
+                )
+            )
+        return combined
 
     def retrieve_context(
         self,
@@ -439,6 +474,8 @@ class RepositoryIndex:
         )
         if mode == RetrievalMode.LOCAL:
             return base
+        if budget.top_k == 0:
+            return base
 
         requested = budget.top_k + 1
         if mode == RetrievalMode.TEXT:
@@ -452,15 +489,20 @@ class RepositoryIndex:
         elif mode == RetrievalMode.HYBRID:
             raw_augmentation = self.hybrid_search(
                 candidate,
-                top_k=requested,
+                top_k=budget.top_k,
                 max_hops=budget.graph_hops,
             )
         else:
             raise ValueError(f"unsupported retrieval mode: {mode}")
 
-        augmentation = [
+        filtered_augmentation = [
             item for item in raw_augmentation if item.path != candidate.path
-        ][: budget.top_k]
+        ]
+        augmentation = (
+            filtered_augmentation
+            if mode == RetrievalMode.HYBRID
+            else filtered_augmentation[: budget.top_k]
+        )
         if not augmentation or budget.augmentation_context_tokens == 0:
             return base
         limited_augmentation = limit_evidence_context(

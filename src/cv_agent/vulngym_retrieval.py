@@ -101,6 +101,8 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
     repository_profiles: list[dict[str, object]] = []
     context_tokens = Counter({system: 0 for system in RETRIEVAL_SYSTEMS})
     max_context_tokens = Counter({system: 0 for system in RETRIEVAL_SYSTEMS})
+    context_evidence_counts = Counter({system: 0 for system in RETRIEVAL_SYSTEMS})
+    max_context_evidence_counts = Counter({system: 0 for system in RETRIEVAL_SYSTEMS})
     for selection in selections:
         checkout = data_root / "subjects" / selection.slug / selection.commit
         if not checkout.is_dir():
@@ -138,6 +140,7 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
                 _line_start(critical_operation["line"]),
             )
             hits = {system: False for system in RETRIEVAL_SYSTEMS}
+            evidence_counts = {system: 0 for system in RETRIEVAL_SYSTEMS}
             if entry_span is not None and critical_span is not None:
                 query = " ".join([*entry_span.document.defines, *entry_span.document.calls])
                 candidate = Candidate(
@@ -161,6 +164,13 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
                     used = context_token_count(system_evidence)
                     context_tokens[system] += used
                     max_context_tokens[system] = max(max_context_tokens[system], used)
+                    evidence_count = len(system_evidence)
+                    evidence_counts[system] = evidence_count
+                    context_evidence_counts[system] += evidence_count
+                    max_context_evidence_counts[system] = max(
+                        max_context_evidence_counts[system],
+                        evidence_count,
+                    )
                 _, critical_end_line = _line_bounds(critical_operation["line"])
                 hits = {
                     system: _hit(evidence, critical_span, critical_end_line)
@@ -175,6 +185,7 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
                     "entry_resolved": entry_span is not None,
                     "critical_resolved": critical_span is not None,
                     "hits": hits,
+                    "evidence_counts": evidence_counts,
                 }
             )
 
@@ -239,11 +250,16 @@ def run_vulngym_retrieval_experiment(data_root: Path) -> dict[str, object]:
             **VULNGYM_RETRIEVAL_HARNESS.budget.model_dump(mode="json"),
             "total_context_tokens": VULNGYM_RETRIEVAL_HARNESS.budget.total_context_tokens,
             "modes": [mode.value for mode in VULNGYM_RETRIEVAL_HARNESS.retrieval_modes],
+            "hybrid_aggregation": VULNGYM_RETRIEVAL_HARNESS.hybrid_aggregation,
             "critical_hit_policy": VULNGYM_RETRIEVAL_HARNESS.critical_hit_policy,
         },
         "context_tokenizer": "deterministic word-or-punctuation units",
         "context_token_count": dict(sorted(context_tokens.items())),
         "max_context_token_count_per_entry": dict(sorted(max_context_tokens.items())),
+        "context_evidence_count": dict(sorted(context_evidence_counts.items())),
+        "max_context_evidence_count_per_entry": dict(
+            sorted(max_context_evidence_counts.items())
+        ),
         "repository_profiles": repository_profiles,
         "overall": overall,
         "cross_file": summarize(cross_file_records),

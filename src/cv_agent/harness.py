@@ -88,6 +88,7 @@ class RetrievalEvaluationHarness(FrozenModel):
     candidate_protocol: str
     retrieval_modes: tuple[RetrievalMode, ...]
     budget: RetrievalBudget
+    hybrid_aggregation: Literal["per-branch-union-under-shared-token-budget"]
     critical_hit_policy: Literal["full-critical-line-retained"]
 
 
@@ -281,7 +282,7 @@ OWASP_HARNESS = ExperimentHarness(
 
 
 VULNGYM_RETRIEVAL_HARNESS = RetrievalEvaluationHarness(
-    harness_id="vulngym-oracle-retrieval-v2",
+    harness_id="vulngym-oracle-retrieval-v3",
     dataset_name="VulnGym v0.1.4 verified Python subset",
     dataset_role=DatasetRole.ORACLE_DIAGNOSTIC,
     claim_eligible=False,
@@ -292,7 +293,9 @@ VULNGYM_RETRIEVAL_HARNESS = RetrievalEvaluationHarness(
     ),
     candidate_protocol=(
         "A verified VulnGym entry point is an explicit oracle seed; the identical containing "
-        "function is the base context for local, text, graph, and hybrid retrieval."
+        "function is the base context for local, text, graph, and hybrid retrieval. Hybrid "
+        "retrieval unions text, entry-graph, and lexical-seed graph branches under the same "
+        "total token budget; top_k is a per-branch cap for hybrid."
     ),
     retrieval_modes=(
         RetrievalMode.LOCAL,
@@ -306,6 +309,7 @@ VULNGYM_RETRIEVAL_HARNESS = RetrievalEvaluationHarness(
         augmentation_context_tokens=3488,
         graph_hops=4,
     ),
+    hybrid_aggregation="per-branch-union-under-shared-token-budget",
     critical_hit_policy="full-critical-line-retained",
 )
 
@@ -1024,6 +1028,8 @@ def validate_vulngym_result_payload(
             "context_tokenizer",
             "context_token_count",
             "max_context_token_count_per_entry",
+            "context_evidence_count",
+            "max_context_evidence_count_per_entry",
             "repository_profiles",
             "by_repository",
             "graph_vs_local_hit_gain_percentage_points",
@@ -1037,6 +1043,7 @@ def validate_vulngym_result_payload(
         **VULNGYM_RETRIEVAL_HARNESS.budget.model_dump(mode="json"),
         "total_context_tokens": VULNGYM_RETRIEVAL_HARNESS.budget.total_context_tokens,
         "modes": list(modes),
+        "hybrid_aggregation": VULNGYM_RETRIEVAL_HARNESS.hybrid_aggregation,
         "critical_hit_policy": VULNGYM_RETRIEVAL_HARNESS.critical_hit_policy,
     }
     if payload["retrieval_contract"] != expected_contract:
@@ -1059,6 +1066,7 @@ def validate_vulngym_result_payload(
                 "entry_resolved",
                 "critical_resolved",
                 "hits",
+                "evidence_counts",
             },
             f"entries[{index}]",
         )
@@ -1096,6 +1104,16 @@ def validate_vulngym_result_payload(
             bool(hits[mode]) for mode in modes
         ):
             raise ValueError(f"unresolved VulnGym entry {entry_id} cannot be a retrieval hit")
+        evidence_counts = _mapping(
+            record["evidence_counts"],
+            f"entries[{index}].evidence_counts",
+        )
+        if set(evidence_counts) != set(modes):
+            raise ValueError(f"VulnGym entry {entry_id} has an invalid evidence-count vector")
+        for mode in modes:
+            value = evidence_counts[mode]
+            if type(value) is not int or int(value) < 0:
+                raise ValueError(f"VulnGym entry {entry_id} has invalid evidence count for {mode}")
         records.append(record)
         entry_ids.append(entry_id)
 
@@ -1184,8 +1202,15 @@ def validate_vulngym_result_payload(
         payload["max_context_token_count_per_entry"],
         "max_context_token_count_per_entry",
     )
+    evidence_totals = _mapping(payload["context_evidence_count"], "context_evidence_count")
+    evidence_maxima = _mapping(
+        payload["max_context_evidence_count_per_entry"],
+        "max_context_evidence_count_per_entry",
+    )
     if set(context_totals) != set(modes) or set(context_maxima) != set(modes):
         raise ValueError("VulnGym context diagnostics must cover every retrieval mode")
+    if set(evidence_totals) != set(modes) or set(evidence_maxima) != set(modes):
+        raise ValueError("VulnGym evidence-count diagnostics must cover every retrieval mode")
     for mode in modes:
         total = context_totals[mode]
         maximum = context_maxima[mode]
@@ -1198,6 +1223,19 @@ def validate_vulngym_result_payload(
         )
         if maximum > limit or total > len(records) * limit or total < maximum:
             raise ValueError(f"VulnGym context budget was exceeded for {mode}")
+        evidence_total = evidence_totals[mode]
+        evidence_maximum = evidence_maxima[mode]
+        expected_counts = [
+            int(_mapping(record["evidence_counts"], "entries.evidence_counts")[mode])
+            for record in records
+        ]
+        if (
+            type(evidence_total) is not int
+            or type(evidence_maximum) is not int
+            or evidence_total != sum(expected_counts)
+            or evidence_maximum != max(expected_counts, default=0)
+        ):
+            raise ValueError(f"VulnGym evidence-count diagnostics are inconsistent for {mode}")
 
     profiles_raw = _list(payload["repository_profiles"], "repository_profiles")
     profiles: dict[str, Mapping[str, object]] = {}

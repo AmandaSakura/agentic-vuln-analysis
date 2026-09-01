@@ -252,6 +252,12 @@ def _valid_vulngym_payload() -> dict[str, object]:
                 "graph": True,
                 "hybrid": True,
             },
+            "evidence_counts": {
+                "local": 1,
+                "text": 3,
+                "graph": 4,
+                "hybrid": 5,
+            },
         },
         {
             "entry_id": "entry-2",
@@ -261,6 +267,12 @@ def _valid_vulngym_payload() -> dict[str, object]:
             "entry_resolved": True,
             "critical_resolved": True,
             "hits": {mode: True for mode in VULNGYM_MODES},
+            "evidence_counts": {
+                "local": 1,
+                "text": 2,
+                "graph": 3,
+                "hybrid": 4,
+            },
         },
     ]
     return {
@@ -296,6 +308,7 @@ def _valid_vulngym_payload() -> dict[str, object]:
             "modes": [
                 mode.value for mode in VULNGYM_RETRIEVAL_HARNESS.retrieval_modes
             ],
+            "hybrid_aggregation": VULNGYM_RETRIEVAL_HARNESS.hybrid_aggregation,
             "critical_hit_policy": VULNGYM_RETRIEVAL_HARNESS.critical_hit_policy,
         },
         "entry_count": 2,
@@ -322,6 +335,18 @@ def _valid_vulngym_payload() -> dict[str, object]:
             "text": 200,
             "graph": 300,
             "hybrid": 400,
+        },
+        "context_evidence_count": {
+            "local": 2,
+            "text": 5,
+            "graph": 7,
+            "hybrid": 9,
+        },
+        "max_context_evidence_count_per_entry": {
+            "local": 1,
+            "text": 3,
+            "graph": 4,
+            "hybrid": 5,
         },
         "repository_profiles": [
             {
@@ -385,6 +410,13 @@ def test_vulngym_result_schema_rejects_context_budget_overrun():
     payload = _valid_vulngym_payload()
     payload["max_context_token_count_per_entry"]["graph"] = 4_001
     with pytest.raises(ValueError, match="context budget"):
+        _validate_vulngym_fixture(payload)
+
+
+def test_vulngym_result_schema_rejects_evidence_count_drift():
+    payload = _valid_vulngym_payload()
+    payload["entries"][0]["evidence_counts"]["hybrid"] += 1
+    with pytest.raises(ValueError, match="evidence-count diagnostics"):
         _validate_vulngym_fixture(payload)
 
 

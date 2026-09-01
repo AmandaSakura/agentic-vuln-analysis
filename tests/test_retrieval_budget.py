@@ -206,3 +206,133 @@ def test_hybrid_context_budget_does_not_starve_graph_neighbor_after_long_seed():
     assert "target.py" in {item.path for item in context}
     assert any("critical_sink" in item.text for item in context)
     assert context_token_count(context) <= budget.total_context_tokens
+
+
+def test_hybrid_context_combines_text_and_graph_under_shared_budget():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="entry.py",
+        text="def entry():\n    return graph_target()\n",
+        defines=("entry",),
+        calls=("graph_target",),
+    )
+    graph_target = CodeDocument(
+        repository_id="repo",
+        path="graph_target.py",
+        text="def graph_target():\n    return graph_sink()\n",
+        defines=("graph_target",),
+    )
+    text_only = CodeDocument(
+        repository_id="repo",
+        path="text_only.py",
+        text="def disconnected():\n    return text_sink(needle)\n",
+        defines=("disconnected",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path="entry.py",
+        line=1,
+        query="graph_target needle",
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=48,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, graph_target, text_only]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.HYBRID,
+        budget=budget,
+    )
+
+    assert "graph_target.py" in {item.path for item in context}
+    assert "text_only.py" in {item.path for item in context}
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
+def test_hybrid_top_k_zero_keeps_only_base_context():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="entry.py",
+        text="def entry():\n    return graph_target()\n",
+        defines=("entry",),
+        calls=("graph_target",),
+    )
+    graph_target = CodeDocument(
+        repository_id="repo",
+        path="graph_target.py",
+        text="def graph_target():\n    return graph_sink()\n",
+        defines=("graph_target",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path="entry.py",
+        line=1,
+        query="graph_target",
+    )
+    budget = RetrievalBudget(
+        top_k=0,
+        base_context_tokens=32,
+        augmentation_context_tokens=48,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, graph_target]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.HYBRID,
+        budget=budget,
+    )
+
+    assert [item.path for item in context] == ["entry.py"]
+    assert context_token_count(context) <= budget.base_context_tokens
+
+
+def test_hybrid_branch_top_k_is_applied_after_candidate_filtering():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="entry.py",
+        text="def entry():\n    return None\n",
+        defines=("entry",),
+    )
+    first_text = CodeDocument(
+        repository_id="repo",
+        path="a_text.py",
+        text="def first():\n    return needle\n",
+        defines=("first",),
+    )
+    second_text = CodeDocument(
+        repository_id="repo",
+        path="b_text.py",
+        text="def second():\n    return needle\n",
+        defines=("second",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path="entry.py",
+        line=1,
+        query="needle",
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=48,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, first_text, second_text]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.HYBRID,
+        budget=budget,
+    )
+
+    assert "a_text.py" in {item.path for item in context}
+    assert "b_text.py" not in {item.path for item in context}
+    assert context_token_count(context) <= budget.total_context_tokens
