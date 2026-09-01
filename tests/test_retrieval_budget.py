@@ -424,6 +424,73 @@ def test_focused_graph_context_keeps_parameter_map_dependencies_into_switch():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_focused_graph_context_compacts_many_assignment_dependencies():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00839.java::BenchmarkTest00839.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00839.doGet",),
+        calls=("BenchmarkTest00839.doPost",),
+    )
+    filler = "\n".join(f"    int filler{index} = {index};" for index in range(80))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00839.java::BenchmarkTest00839.doPost@5-120",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    String queryString = request.getQueryString();\n"
+            '    String paramval = "vector"+"=";\n'
+            "    int paramLoc = -1;\n"
+            "    if (queryString != null) paramLoc = queryString.indexOf(paramval);\n"
+            "    String param = queryString.substring(paramLoc + paramval.length());\n"
+            "    int ampersandLoc = queryString.indexOf(\"&\", paramLoc);\n"
+            "    if (ampersandLoc != -1) {\n"
+            "        param = queryString.substring(paramLoc + paramval.length(), ampersandLoc);\n"
+            "    }\n"
+            "    param = java.net.URLDecoder.decode(param, \"UTF-8\");\n"
+            f"{filler}\n"
+            "    int num = 106;\n"
+            '    bar = (7*42) - num > 200 ? "never" : param;\n'
+            "    String sql = \"SELECT * FROM users WHERE name='\" + bar + \"'\";\n"
+            "    statement.execute(sql);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00839.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=192,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "request.getQueryString()" in augmentation.text
+    assert "queryString.substring" in augmentation.text
+    assert "URLDecoder.decode" in augmentation.text
+    assert "bar = (7*42) - num > 200" in augmentation.text
+    assert "statement.execute(sql)" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_text_context_keeps_query_focus_without_security_sink_boost():
     entry = CodeDocument(
         repository_id="repo",

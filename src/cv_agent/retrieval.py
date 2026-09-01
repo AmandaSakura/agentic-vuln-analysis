@@ -25,6 +25,14 @@ INLINE_IF_RE = re.compile(r"^\s*if\s*\([^)]*\)\s*(?P<trailing>.+)$")
 SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{?\s*$")
 CALL_ARGUMENT_RE = re.compile(r"\((?P<arguments>[^()]*)\)")
 MAP_GET_RE = re.compile(r"\b(?P<receiver>[A-Za-z_$][\w$]*)\.get\s*\(")
+METHOD_RECEIVER_RE = re.compile(
+    r"\b(?P<receiver>[A-Za-z_$][\w$]*)\.[A-Za-z_$][\w$]*\s*\("
+)
+VALUE_TRANSFORM_RECEIVER_RE = re.compile(
+    r"\b(?P<receiver>[A-Za-z_$][\w$]*)\."
+    r"(?:substring|trim|toString|toLowerCase|toUpperCase|replace|split)\s*\(",
+    re.IGNORECASE,
+)
 STRING_LITERAL_RE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
 IDENTIFIER_RE = re.compile(r"\b[A-Za-z_$][\w$]*\b")
 NON_VALUE_IDENTIFIERS = frozenset(
@@ -102,16 +110,26 @@ def _sink_value_identifiers(line: str) -> set[str]:
 
 
 def _assignment_value_dependencies(value: str) -> set[str]:
+    expression = STRING_LITERAL_RE.sub("", value)
     dependencies: set[str] = set()
-    if map_get := MAP_GET_RE.search(value):
+    if transform := VALUE_TRANSFORM_RECEIVER_RE.search(expression):
+        receiver = transform.group("receiver")
+        if not receiver[:1].isupper():
+            dependencies.add(receiver)
+            return dependencies
+    for receiver_match in METHOD_RECEIVER_RE.finditer(expression):
+        receiver = receiver_match.group("receiver")
+        if not receiver[:1].isupper():
+            dependencies.add(receiver)
+    if map_get := MAP_GET_RE.search(expression):
         dependencies.add(map_get.group("receiver"))
-    call_arguments = CALL_ARGUMENT_RE.findall(value)
+    call_arguments = CALL_ARGUMENT_RE.findall(expression)
     if call_arguments:
         argument_identifiers = _value_identifiers(" ".join(call_arguments))
         if argument_identifiers:
             dependencies.update(argument_identifiers)
             return dependencies
-    dependencies.update(_value_identifiers(value))
+    dependencies.update(_value_identifiers(expression))
     return dependencies
 
 
@@ -298,6 +316,13 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
     focused = _render_non_overlapping_ranges(lines, ranges)
     if context_text_token_count(focused) <= token_budget:
         return focused
+    compact_ranges = [
+        *dependency_ranges,
+        *((anchor, anchor + 1) for anchor in anchors),
+    ]
+    compact = _render_non_overlapping_ranges(lines, compact_ranges)
+    if context_text_token_count(compact) <= token_budget:
+        return compact
     return None
 
 
