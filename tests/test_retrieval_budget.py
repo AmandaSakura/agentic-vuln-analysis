@@ -215,6 +215,58 @@ def test_focused_graph_context_prefers_security_sink_over_source_only_line():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_text_context_keeps_query_focus_without_security_sink_boost():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="entry.java::Entry.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    response.getWriter();\n"
+            "}\n"
+        ),
+        defines=("Entry.doGet",),
+    )
+    filler = "\n".join(f"    int filler{index} = {index};" for index in range(80))
+    similar_text = CodeDocument(
+        repository_id="repo",
+        path="similar.java::Similar.doPost@5-92",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            '    String param = request.getHeader("vector");\n'
+            f"{filler}\n"
+            '    String filter = "(&(uid=" + param + "))";\n'
+            "    ctx.search(base, filter, sc);\n"
+            "}\n"
+        ),
+        defines=("Similar.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=48,
+        graph_hops=0,
+    )
+
+    context = RepositoryIndex([entry, similar_text]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.TEXT,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == similar_text.path][0]
+
+    assert "request.getHeader" in augmentation.text
+    assert "ctx.search(base, filter, sc)" not in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_hybrid_context_budget_does_not_starve_graph_neighbor_after_long_seed():
     entry = CodeDocument(
         repository_id="repo",

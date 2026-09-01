@@ -171,6 +171,7 @@ def _focused_text(
     query: str,
     token_budget: int,
     fallback_relative_line: int | None = None,
+    security_focus: bool = False,
 ) -> str:
     if context_text_token_count(text) <= token_budget:
         return text
@@ -185,7 +186,7 @@ def _focused_text(
     )
     scored = [
         (
-            _security_focus_score(line),
+            _security_focus_score(line) if security_focus else 0,
             len(set(tokenize(line)) & query_terms),
             -abs(index - fallback_index),
             index,
@@ -304,6 +305,10 @@ class RepositoryIndex:
                         item.text,
                         query=candidate.query,
                         token_budget=per_item_budget,
+                        security_focus=(
+                            item.retrieval in {"graph", "hybrid"}
+                            and item.graph_distance is not None
+                        ),
                     )
                 }
             )
