@@ -155,6 +155,35 @@ def test_taint_evaluates_simple_java_if_tainted_branch():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_treats_unknown_helper_result_as_clean_only_when_arguments_are_clean():
+    safe = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                'String g = "constant";\n'
+                "String bar = thing.doSomething(g);\n"
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+    vulnerable = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                "String bar = thing.doSomething(param);\n"
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert safe.label == "SAFE"
+    assert vulnerable.label == "VULNERABLE"
+
+
 def test_taint_does_not_treat_ldap_filters_array_as_clean_filter():
     vote = TaintExpert().evaluate(
         _candidate(),

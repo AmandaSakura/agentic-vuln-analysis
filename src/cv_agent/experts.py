@@ -257,6 +257,11 @@ class TaintExpert:
     ) -> bool:
         if any(pattern.search(value) for pattern in self.sources):
             return False
+        call_arguments = re.search(r"\((?P<arguments>.*)\)", value)
+        if call_arguments:
+            argument_identifiers = _value_identifiers(call_arguments.group("arguments"))
+            if argument_identifiers and argument_identifiers.issubset(clean):
+                return True
         identifiers = _value_identifiers(value)
         sink_value_identifiers = {
             name for name in identifiers if name.casefold() in SINK_VALUE_NAMES
