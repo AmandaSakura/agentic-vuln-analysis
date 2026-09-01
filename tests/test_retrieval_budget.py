@@ -116,6 +116,52 @@ def test_focused_local_context_expands_around_selected_line():
     assert context_token_count(context) <= budget.base_context_tokens
 
 
+def test_focused_local_context_prefers_distinct_query_terms_over_repetition():
+    before = "\n".join(f"    pre_filler_{index} = 0" for index in range(40))
+    after = "\n".join(f"    post_filler_{index} = 0" for index in range(40))
+    text = (
+        "def configure():\n"
+        f"{before}\n"
+        "    redirect_path = redirect_path.startswith(redirect_path)\n"
+        f"{after}\n"
+        "    self._jwt_issuer = JWTIssuer(\n"
+        "        audience=f\"{str(self.base_url).rstrip('/')}/mcp\",\n"
+        "    )\n"
+    )
+    document = CodeDocument(
+        repository_id="repo",
+        path="long.py::configure@1-85",
+        text=text,
+        defines=("configure",),
+        calls=("JWTIssuer", "rstrip", "startswith"),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=document.path,
+        line=1,
+        query="redirect_path JWTIssuer audience rstrip base_url",
+    )
+    budget = RetrievalBudget(
+        top_k=0,
+        base_context_tokens=40,
+        augmentation_context_tokens=0,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([document]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.LOCAL,
+        budget=budget,
+    )
+
+    assert "self._jwt_issuer = JWTIssuer" in context[0].text
+    assert "audience=" in context[0].text
+    assert "redirect_path = redirect_path.startswith" not in context[0].text
+    assert context_token_count(context) <= budget.base_context_tokens
+
+
 def test_hybrid_context_budget_does_not_starve_graph_neighbor_after_long_seed():
     entry = CodeDocument(
         repository_id="repo",

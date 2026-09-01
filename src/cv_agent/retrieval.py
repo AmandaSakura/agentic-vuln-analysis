@@ -156,7 +156,7 @@ def _focused_text(
     )
     scored = [
         (
-            sum(1 for term in tokenize(line) if term in query_terms),
+            len(set(tokenize(line)) & query_terms),
             -abs(index - fallback_index),
             index,
         )
