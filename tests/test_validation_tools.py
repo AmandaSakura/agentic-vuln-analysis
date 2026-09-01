@@ -218,6 +218,80 @@ def test_static_source_sink_and_cross_file_taint_tools_confirm_fixture():
     ]
 
 
+def test_java_servlet_sources_and_sinks_are_detected():
+    document = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00043.java::BenchmarkTest00043.doPost@1",
+        text=(
+            "public void doPost(HttpServletRequest request) throws Exception {\n"
+            '    String param = scr.getTheParameter("vector");\n'
+            "    String sql = \"SELECT * FROM users WHERE name='\" + param + \"'\";\n"
+            "    statement.executeUpdate(sql);\n"
+            "}\n"
+        ),
+        language="java",
+        defines=("BenchmarkTest00043.doPost",),
+    )
+    registry = _registry(RepositoryIndex([document]))
+    scope = _scope(document.path)
+
+    sources = _invoke(registry, "find_sources", {"path": document.path}, scope)
+    sinks = _invoke(registry, "find_sinks", {"path": document.path}, scope)
+    trace = _invoke(
+        registry,
+        "trace_dataflow",
+        {"source_path": document.path, "sink_path": document.path},
+        scope,
+    )
+
+    assert json.loads(sources.content)["finding_count"] == 1
+    assert json.loads(sinks.content)["findings"][0]["category"] == "sql"
+    assert json.loads(trace.content)["status"] == "CONFIRMED"
+
+
+def test_java_taint_trace_propagates_through_typed_method_parameter():
+    source = CodeDocument(
+        repository_id="repo",
+        path="Controller.java::Controller.doGet@1",
+        text=(
+            "public void doGet(HttpServletRequest request) throws Exception {\n"
+            '    String value = request.getHeader("vector");\n'
+            "    Service.run(value);\n"
+            "}\n"
+        ),
+        language="java",
+        defines=("Controller.doGet",),
+        calls=("Service.run",),
+    )
+    service = CodeDocument(
+        repository_id="repo",
+        path="Service.java::Service.run@1",
+        text=(
+            "public static void run(String value) throws Exception {\n"
+            "    Runtime.getRuntime().exec(value);\n"
+            "}\n"
+        ),
+        language="java",
+        defines=("Service.run",),
+    )
+    index = RepositoryIndex([source, service])
+
+    trace = _invoke(
+        _registry(index),
+        "trace_dataflow",
+        {
+            "source_path": source.path,
+            "sink_path": service.path,
+            "max_hops": 4,
+        },
+        _scope(source.path, service.path),
+    )
+    payload = json.loads(trace.content)
+
+    assert payload["status"] == "CONFIRMED"
+    assert [step["path"] for step in payload["trace"]] == [source.path, service.path]
+
+
 def test_sanitizer_prevents_false_taint_confirmation():
     document = CodeDocument(
         repository_id="repo",

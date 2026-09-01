@@ -52,6 +52,55 @@ def test_taint_accepts_only_an_intervening_sanitizer_as_safe_evidence():
     assert vote.label == "SAFE"
 
 
+def test_taint_tracks_java_helper_source_to_sql_sink():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = scr.getTheParameter("vector");\n'
+                'String sql = "SELECT * FROM users WHERE name=\'" + param + "\'";\n'
+                "statement.executeQuery(sql);"
+            )
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
+def test_taint_does_not_treat_overwritten_java_constant_as_source_flow():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                'String bar = "safe";\n'
+                'String filter = "(&(uid=" + bar + "))";\n'
+                "ctx.search(base, filter, sc);"
+            )
+        ],
+    )
+
+    assert vote.label == "SAFE"
+
+
+def test_taint_propagates_java_collection_round_trip():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String[] values = request.getParameterValues("vector");\n'
+                "String param = values[0];\n"
+                "map.put(\"key\", param);\n"
+                'String bar = (String) map.get("key");\n'
+                'String filter = "(&(uid=" + bar + "))";\n'
+                "ctx.search(base, filter, sc);"
+            )
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
 def test_authorization_guard_must_precede_operation_in_same_function():
     guarded = AuthorizationExpert().evaluate(
         _candidate(),

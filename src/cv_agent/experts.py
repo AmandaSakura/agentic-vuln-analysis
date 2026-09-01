@@ -21,6 +21,20 @@ def _positions(text: str, patterns: Sequence[re.Pattern[str]]) -> list[int]:
     return sorted(match.start() for pattern in patterns for match in pattern.finditer(text))
 
 
+ASSIGNMENT_RE = re.compile(
+    r"^\s*(?:(?:final\s+)?(?:[\w.$<>\[\],?]+\s+)+)?"
+    r"(?P<name>[A-Za-z_$][\w$]*)\s*(?::=|=(?!=))\s*"
+    r"(?P<value>.+?)\s*;?\s*(?://.*)?$"
+)
+COLLECTION_PUT_RE = re.compile(
+    r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
+)
+
+
+def _contains_identifier(text: str, names: Sequence[str] | set[str]) -> bool:
+    return any(re.search(rf"\b{re.escape(name)}\b", text) for name in names)
+
+
 class ScanExpert:
     name = "scan"
     sinks = tuple(
@@ -61,7 +75,16 @@ class ScanExpert:
 
 class TaintExpert:
     name = "taint"
-    sources = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (r"request\.", r"request\.args", r"getParameter\s*\(", r"user_input", r"\binput\s*\("))
+    sources = tuple(
+        re.compile(pattern, re.IGNORECASE)
+        for pattern in (
+            r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b",
+            r"\brequest\.get(?:Header|Headers|Parameter|ParameterValues|Cookies?|QueryString)\s*\(",
+            r"\.getTheParameter\s*\(",
+            r"\buser_input\b",
+            r"\binput\s*\(",
+        )
+    )
     sinks = ScanExpert.sinks
     sanitizers = tuple(
         re.compile(pattern, re.IGNORECASE)
@@ -74,25 +97,71 @@ class TaintExpert:
         )
     )
 
+    def _value_is_tainted(
+        self,
+        value: str,
+        tainted: set[str],
+        tainted_containers: set[str],
+    ) -> bool:
+        return (
+            any(pattern.search(value) for pattern in self.sources)
+            or _contains_identifier(value, tainted)
+            or _contains_identifier(value, tainted_containers)
+        )
+
     def evaluate(self, candidate: Candidate, evidence: Sequence[Evidence]) -> ExpertVote:
         vulnerable_ids: list[str] = []
-        guarded_ids: list[str] = []
+        safe_ids: list[str] = []
         partial_ids: list[str] = []
         for item in evidence:
-            sources = _positions(item.text, self.sources)
-            sinks = _positions(item.text, self.sinks)
-            sanitizers = _positions(item.text, self.sanitizers)
-            if sources or sinks or sanitizers:
+            tainted: set[str] = set()
+            tainted_containers: set[str] = set()
+            source_seen = False
+            sink_seen = False
+            sanitizer_seen = False
+
+            for raw_line in item.text.splitlines():
+                line = raw_line.split("//", 1)[0]
+                source_hits = any(pattern.search(line) for pattern in self.sources)
+                sanitizer_hits = any(pattern.search(line) for pattern in self.sanitizers)
+                assignment = ASSIGNMENT_RE.match(line)
+                if source_hits:
+                    source_seen = True
+                if sanitizer_hits:
+                    sanitizer_seen = True
+
+                for put in COLLECTION_PUT_RE.finditer(line):
+                    if self._value_is_tainted(
+                        put.group("arguments"),
+                        tainted,
+                        tainted_containers,
+                    ):
+                        tainted_containers.add(put.group("name"))
+
+                if assignment:
+                    name = assignment.group("name")
+                    value = assignment.group("value")
+                    if sanitizer_hits:
+                        tainted.discard(name)
+                    elif self._value_is_tainted(value, tainted, tainted_containers):
+                        tainted.add(name)
+                    else:
+                        tainted.discard(name)
+
+                line_is_tainted = (
+                    source_hits
+                    or _contains_identifier(line, tainted)
+                    or _contains_identifier(line, tainted_containers)
+                )
+                if any(pattern.search(line) for pattern in self.sinks):
+                    sink_seen = True
+                    if line_is_tainted and not sanitizer_hits:
+                        vulnerable_ids.append(item.evidence_id)
+                    elif source_seen or sanitizer_seen:
+                        safe_ids.append(item.evidence_id)
+
+            if source_seen or sink_seen or sanitizer_seen:
                 partial_ids.append(item.evidence_id)
-            for sink in sinks:
-                preceding_sources = [source for source in sources if source < sink]
-                if not preceding_sources:
-                    continue
-                source = max(preceding_sources)
-                if any(source < sanitizer < sink for sanitizer in sanitizers):
-                    guarded_ids.append(item.evidence_id)
-                else:
-                    vulnerable_ids.append(item.evidence_id)
 
         if vulnerable_ids:
             return ExpertVote(
@@ -105,14 +174,22 @@ class TaintExpert:
                     ReasoningStep(action="order_source_to_sink", observation=f"{len(set(vulnerable_ids))} unguarded function path(s)"),
                 ),
             )
-        if guarded_ids:
+        if safe_ids:
             return ExpertVote(
                 expert="taint",
                 label="SAFE",
                 confidence=0.82,
-                evidence_ids=tuple(dict.fromkeys(guarded_ids)),
-                rationale="A sanitizer appears between the source and sink in the same function.",
-                trace=(ReasoningStep(action="order_source_sanitizer_sink", observation="ordered sanitizer found"),),
+                evidence_ids=tuple(dict.fromkeys(safe_ids)),
+                rationale=(
+                    "A sink is present, but the local taint flow is cut by sanitization "
+                    "or by assignment from non-source data."
+                ),
+                trace=(
+                    ReasoningStep(
+                        action="track_local_taint_to_sink",
+                        observation="sink reached without a tracked tainted value",
+                    ),
+                ),
             )
         return ExpertVote(
             expert="taint",

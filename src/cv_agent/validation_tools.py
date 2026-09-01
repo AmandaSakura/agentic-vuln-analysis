@@ -40,6 +40,9 @@ SOURCE_RULES = (
         "http-input",
         re.compile(
             r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b|"
+            r"\brequest\.get(?:Header|Headers|Parameter|ParameterValues|"
+            r"Cookies?|QueryString)\s*\(|"
+            r"\.getTheParameter\s*\(|"
             r"\br\.URL\.Query\s*\(|\bmux\.Vars\s*\(|\bctx\.Param\s*\(",
             re.IGNORECASE,
         ),
@@ -56,12 +59,21 @@ SINK_RULES = (
         "command-execution",
         re.compile(
             r"\b(?:os\.system|subprocess\.(?:run|call|Popen)|"
-            r"child_process\.(?:exec|execSync|spawn)|exec\.Command)\s*\("
+            r"child_process\.(?:exec|execSync|spawn)|exec\.Command|"
+            r"Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\s*\("
         ),
     ),
     PatternRule(
         "sql",
-        re.compile(r"\.(?:execute|executemany|query|raw)\s*\(", re.IGNORECASE),
+        re.compile(
+            r"\.(?:execute|executeQuery|executeUpdate|executemany|"
+            r"prepareStatement|prepareCall|query|raw)\s*\(",
+            re.IGNORECASE,
+        ),
+    ),
+    PatternRule(
+        "ldap",
+        re.compile(r"\.search\s*\(", re.IGNORECASE),
     ),
     PatternRule(
         "path-access",
@@ -113,8 +125,13 @@ SENSITIVE_ACTION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 ASSIGNMENT_RE = re.compile(
-    r"^\s*(?:(?:const|let|var)\s+)?(?P<name>[A-Za-z_$][\w$]*)"
-    r"(?:\s*:[^=]+)?\s*(?P<operator>:=|=(?!=))\s*(?P<value>.+)$"
+    r"^\s*(?:(?:final\s+)?(?:[\w.$<>\[\],?]+\s+)+)?"
+    r"(?P<name>[A-Za-z_$][\w$]*)"
+    r"(?:\s*:[^=]+)?\s*(?P<operator>:=|=(?!=))\s*"
+    r"(?P<value>.+?)\s*;?\s*(?://.*)?$"
+)
+COLLECTION_PUT_RE = re.compile(
+    r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
 )
 CALL_RE = re.compile(
     r"(?P<name>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*"
@@ -235,7 +252,10 @@ def _parameters(document: CodeDocument) -> tuple[str, ...]:
         raw = raw.strip()
         if not raw:
             continue
-        name_match = re.match(r"(?:self\s*,\s*)?([A-Za-z_$][\w$]*)", raw)
+        name_match = re.search(
+            r"([A-Za-z_$][\w$]*)\s*$",
+            raw.split("=", maxsplit=1)[0].strip(),
+        )
         if name_match and name_match.group(1) not in {"self", "cls"}:
             parameters.append(name_match.group(1))
     return tuple(parameters)
@@ -245,25 +265,41 @@ def _contains_identifier(text: str, names: Iterable[str]) -> bool:
     return any(re.search(rf"\b{re.escape(name)}\b", text) for name in names)
 
 
+def _value_is_tainted(
+    value: str,
+    *,
+    tainted: set[str],
+    tainted_containers: set[str],
+    source_hits: Iterable[str] = (),
+) -> bool:
+    return (
+        bool(tuple(source_hits))
+        or _contains_identifier(value, tainted)
+        or _contains_identifier(value, tainted_containers)
+    )
+
+
 def _document_flow(
     document: CodeDocument,
     *,
     initial_tainted: Iterable[str] = (),
 ) -> _DocumentFlow:
     tainted = set(initial_tainted)
+    tainted_containers: set[str] = set()
     sources: list[dict[str, Any]] = []
     sinks: list[dict[str, Any]] = []
     sanitizers: list[dict[str, Any]] = []
     tainted_calls: set[str] = set()
 
     for line_number, line in enumerate(document.text.splitlines(), start=1):
+        code_line = line.split("//", maxsplit=1)[0]
         source_hits = [
-            rule.category for rule in SOURCE_RULES if rule.pattern.search(line)
+            rule.category for rule in SOURCE_RULES if rule.pattern.search(code_line)
         ]
         sanitizer_hits = [
-            rule.category for rule in SANITIZER_RULES if rule.pattern.search(line)
+            rule.category for rule in SANITIZER_RULES if rule.pattern.search(code_line)
         ]
-        assignment = ASSIGNMENT_RE.match(line)
+        assignment = ASSIGNMENT_RE.match(code_line)
         if source_hits:
             sources.append(
                 {
@@ -283,14 +319,42 @@ def _document_flow(
         if assignment:
             name = assignment.group("name")
             value = assignment.group("value")
+            for put in COLLECTION_PUT_RE.finditer(code_line):
+                if _value_is_tainted(
+                    put.group("arguments"),
+                    tainted=tainted,
+                    tainted_containers=tainted_containers,
+                    source_hits=source_hits,
+                ):
+                    tainted_containers.add(put.group("name"))
             if sanitizer_hits:
                 tainted.discard(name)
-            elif source_hits or _contains_identifier(value, tainted):
+            elif _value_is_tainted(
+                value,
+                tainted=tainted,
+                tainted_containers=tainted_containers,
+                source_hits=source_hits,
+            ):
                 tainted.add(name)
+            else:
+                tainted.discard(name)
+        else:
+            for put in COLLECTION_PUT_RE.finditer(code_line):
+                if _value_is_tainted(
+                    put.group("arguments"),
+                    tainted=tainted,
+                    tainted_containers=tainted_containers,
+                    source_hits=source_hits,
+                ):
+                    tainted_containers.add(put.group("name"))
 
-        line_is_tainted = bool(source_hits) or _contains_identifier(line, tainted)
+        line_is_tainted = (
+            bool(source_hits)
+            or _contains_identifier(code_line, tainted)
+            or _contains_identifier(code_line, tainted_containers)
+        )
         for rule in SINK_RULES:
-            match = rule.pattern.search(line)
+            match = rule.pattern.search(code_line)
             if match:
                 sinks.append(
                     {
@@ -302,7 +366,7 @@ def _document_flow(
                     }
                 )
         if line_is_tainted and not sanitizer_hits:
-            for call in CALL_RE.finditer(line):
+            for call in CALL_RE.finditer(code_line):
                 tainted_calls.add(call.group("name"))
 
     return _DocumentFlow(
