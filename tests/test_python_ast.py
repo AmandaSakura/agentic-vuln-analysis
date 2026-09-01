@@ -125,3 +125,24 @@ def test_python_span_includes_decorator_lines(tmp_path: Path):
     assert located.start_line == 1
     assert "list_items" in located.document.defines
     assert located.document.text.startswith("@router.get")
+
+
+def test_python_ast_records_route_guard_and_import_context(tmp_path: Path):
+    (tmp_path / "api.py").write_text(
+        "from security import authorize\n\n"
+        "@router.post('/items')\n"
+        "async def create_item(request):\n"
+        "    authorize(request.user)\n"
+        "    return save(request.body)\n",
+        encoding="utf-8",
+    )
+
+    repository = load_python_repository("repo", tmp_path)
+    located = repository.locate("api.py", 4)
+
+    assert located is not None
+    assert located.document.language == "python"
+    assert located.document.adapter_tier == "ast"
+    assert located.document.routes == ("POST:/items",)
+    assert "security.authorize" in located.document.guards
+    assert "security.authorize" in located.document.imports

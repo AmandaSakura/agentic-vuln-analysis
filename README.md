@@ -5,7 +5,7 @@ Deterministic research harness for two directional questions:
 1. does forward AST/call-graph retrieval recover security context that a lexical retriever misses under the same retrieval budget?
 2. can specialist evidence reduce false alerts, and can an early quorum preserve the full-review label while skipping an expert call?
 
-The repository contains the original deterministic retrieval/adjudication slice plus the first scripted foundation of the full agentic system: a provider-neutral model protocol, typed model/tool/observation ReAct loops, a dynamic planner, and a LangGraph full/fast workflow. `agentic-smoke` is wiring-only and cannot produce research claims. No live model or real-project exploit validator has run yet, so the end-to-end reproduction remains in progress.
+The repository contains the original deterministic retrieval/adjudication slice plus the audited foundation of the full agentic system: a provider-neutral model protocol, typed model/tool/observation ReAct loops, a dynamic planner, a LangGraph full/fast workflow, and AST Code-RAG adapters for Python, TypeScript/JavaScript, and Go. Explicit fallback documents cover the remaining declared suffixes. `agentic-smoke` is wiring-only and cannot produce research claims. The multi-language adapters currently pass cross-file fixtures but have not yet been profiled on independent real repositories. No live model or real-project exploit validator has run yet, so the end-to-end reproduction remains in progress.
 
 System variants:
 

@@ -77,6 +77,8 @@ def _method_document(
         repository_id=repository_id,
         path=f"{relative_path}::{class_name}.{symbol_name}@{line}",
         text=_node_text(source, method),
+        language="java",
+        adapter_tier="ast",
         defines=tuple(sorted(definitions)),
         calls=_method_calls(source, method, class_name),
     )

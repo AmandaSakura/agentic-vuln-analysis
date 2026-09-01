@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import tokenize
 from collections import defaultdict
 from dataclasses import dataclass
@@ -296,13 +297,38 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
         for statement in node.body:
             collector.visit(statement)
         source = "".join(self.lines[start_line - 1 : end_line])
+        routes = {
+            f"{match.group(1).upper()}:{match.group(2)}"
+            for match in re.finditer(
+                r"@(?:[A-Za-z_]\w*\.)?(get|post|put|patch|delete)\(\s*"
+                r"['\"]([^'\"]*)['\"]",
+                source,
+                flags=re.IGNORECASE,
+            )
+        }
+        guards = {
+            call
+            for call in collector.calls
+            if re.search(
+                r"(?:^|[._])(?:auth(?:enticate|orize|orization)?|"
+                r"check_?permission|has_?permission|require_?(?:role|auth)|"
+                r"guard|policy|tenant|principal|owner)(?:$|[._])",
+                call,
+                flags=re.IGNORECASE,
+            )
+        }
         display_name = ".".join(qualified_parts)
         document = CodeDocument(
             repository_id=self.repository_id,
             path=f"{self.relative_path}::{display_name}@{start_line}-{end_line}",
             text=source,
+            language="python",
+            adapter_tier="ast",
             defines=tuple(sorted(definitions)),
             calls=tuple(sorted(collector.calls)),
+            imports=tuple(sorted(set(self.aliases.values()))),
+            routes=tuple(sorted(routes)),
+            guards=tuple(sorted(guards)),
         )
         self.spans.append(
             PythonDocumentSpan(

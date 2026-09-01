@@ -35,8 +35,13 @@ class CodeDocument(FrozenModel):
     repository_id: str
     path: str
     text: str
+    language: str = "unknown"
+    adapter_tier: Literal["ast", "fallback", "unknown"] = "unknown"
     defines: tuple[str, ...] = ()
     calls: tuple[str, ...] = ()
+    imports: tuple[str, ...] = ()
+    routes: tuple[str, ...] = ()
+    guards: tuple[str, ...] = ()
 
 
 class Evidence(FrozenModel):
