@@ -181,4 +181,8 @@ def test_owasp_metrics_keep_abstention_and_separate_attribution():
     assert result["primary_v4_vs_v3_fpr_reduction_percent"] == 100.0
     assert result["systems"]["V4"]["primary_subset"]["coverage"] == 0.5
     assert result["primary_v4_vs_v3_coverage_delta_percentage_points"] == -50.0
+    assert result["primary_v4_vs_v3_transition_count"] == {
+        "negative": {"VULNERABLE->ABSTAIN": 1},
+        "positive": {"VULNERABLE->VULNERABLE": 1},
+    }
     assert result["v5_vs_v4_label_disagreement_count"] == 0

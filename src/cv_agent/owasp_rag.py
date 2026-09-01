@@ -223,6 +223,25 @@ def _evaluate_subset(
     return _matrix_dict(evaluate_ternary(truth, subset_predictions))
 
 
+def _transition_count(
+    labels: Mapping[str, OwaspLabel],
+    before: Mapping[str, VerdictLabel],
+    after: Mapping[str, VerdictLabel],
+    case_ids: list[str],
+) -> dict[str, dict[str, int]]:
+    transitions: dict[str, Counter[str]] = {
+        "positive": Counter(),
+        "negative": Counter(),
+    }
+    for case_id in case_ids:
+        polarity = "positive" if labels[case_id].vulnerable else "negative"
+        transitions[polarity][f"{before[case_id]}->{after[case_id]}"] += 1
+    return {
+        polarity: dict(sorted(counts.items()))
+        for polarity, counts in transitions.items()
+    }
+
+
 def evaluate_owasp_rag(
     labels: Mapping[str, OwaspLabel],
     predictions: Mapping[str, Mapping[str, VerdictLabel]],
@@ -296,6 +315,12 @@ def evaluate_owasp_rag(
         "primary_v4_vs_v3_fpr_reduction_percentage_points": fpr_reduction_points,
         "primary_v4_vs_v3_strict_recall_delta_percentage_points": multi_recall_delta,
         "primary_v4_vs_v3_coverage_delta_percentage_points": multi_coverage_delta,
+        "primary_v4_vs_v3_transition_count": _transition_count(
+            labels,
+            predictions[SystemVersion.V3_GRAPH_SINGLE.value],
+            predictions[SystemVersion.V4_GRAPH_MULTI.value],
+            primary_ids,
+        ),
         "v5_vs_v4_label_disagreement_count": fast_disagreements,
     }
 
