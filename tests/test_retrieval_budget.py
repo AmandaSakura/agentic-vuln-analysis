@@ -216,6 +216,66 @@ def test_focused_graph_context_prefers_security_sink_over_source_only_line():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_focused_graph_context_keeps_sink_assignment_dependencies():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00107.java::BenchmarkTest00107.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00107.doGet",),
+        calls=("BenchmarkTest00107.doPost",),
+    )
+    first_filler = "\n".join(f"    int firstFiller{index} = {index};" for index in range(60))
+    second_filler = "\n".join(f"    int secondFiller{index} = {index};" for index in range(60))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00107.java::BenchmarkTest00107.doPost@5-132",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            '    String param = request.getHeader("vector");\n'
+            f"{first_filler}\n"
+            '    String g17188 = "barbarians_at_the_gate";\n'
+            "    String bar = thing.doSomething(g17188);\n"
+            f"{second_filler}\n"
+            "    String sql = \"SELECT * FROM users WHERE name='\" + bar + \"'\";\n"
+            "    statement.execute(sql);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00107.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=144,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "request.getHeader" in augmentation.text
+    assert 'String g17188 = "barbarians_at_the_gate"' in augmentation.text
+    assert "String bar = thing.doSomething(g17188)" in augmentation.text
+    assert "String sql =" in augmentation.text
+    assert "statement.execute(sql)" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_text_context_keeps_query_focus_without_security_sink_boost():
     entry = CodeDocument(
         repository_id="repo",

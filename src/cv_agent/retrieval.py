@@ -16,6 +16,45 @@ CONTEXT_TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 DOCUMENT_SPAN_RE = re.compile(
     r"^(?P<file>.+)::(?P<symbol>.+)@(?P<start>\d+)-(?P<end>\d+)$"
 )
+ASSIGNMENT_RE = re.compile(
+    r"^\s*(?:(?:final\s+)?(?:[\w.$<>\[\],?]+\s+)+)?"
+    r"(?P<name>[A-Za-z_$][\w$]*)\s*(?::=|=(?!=))\s*"
+    r"(?P<value>.+?)\s*;?\s*(?://.*)?$"
+)
+CALL_ARGUMENT_RE = re.compile(r"\((?P<arguments>[^()]*)\)")
+STRING_LITERAL_RE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
+IDENTIFIER_RE = re.compile(r"\b[A-Za-z_$][\w$]*\b")
+NON_VALUE_IDENTIFIERS = frozenset(
+    {
+        "String",
+        "Object",
+        "Integer",
+        "Boolean",
+        "Long",
+        "Double",
+        "Float",
+        "new",
+        "null",
+        "true",
+        "false",
+    }
+)
+SINK_VALUE_NAMES = frozenset(
+    {
+        "bar",
+        "cmd",
+        "command",
+        "file",
+        "filename",
+        "filter",
+        "name",
+        "param",
+        "path",
+        "query",
+        "sql",
+        "value",
+    }
+)
 SECURITY_SINK_FOCUS_RE = re.compile(
     r"(?<![\w.])(?:eval|exec)\s*\(|"
     r"Runtime\.getRuntime\(\)\.exec|"
@@ -41,6 +80,68 @@ NON_ADJACENT_CONTEXT_MARKER = "\n[... omitted non-adjacent context ...]\n"
 
 def tokenize(text: str) -> list[str]:
     return [token.casefold() for token in TOKEN_RE.findall(text)]
+
+
+def _value_identifiers(value: str) -> set[str]:
+    without_literals = STRING_LITERAL_RE.sub("", value)
+    return {
+        name
+        for name in IDENTIFIER_RE.findall(without_literals)
+        if name not in NON_VALUE_IDENTIFIERS and not name[:1].isupper()
+    }
+
+
+def _sink_value_identifiers(line: str) -> set[str]:
+    call_arguments = CALL_ARGUMENT_RE.findall(line)
+    identifiers = _value_identifiers(" ".join(call_arguments) if call_arguments else line)
+    focused = {name for name in identifiers if name.casefold() in SINK_VALUE_NAMES}
+    return focused or identifiers
+
+
+def _assignment_value_dependencies(value: str) -> set[str]:
+    call_arguments = CALL_ARGUMENT_RE.findall(value)
+    if call_arguments:
+        argument_identifiers = _value_identifiers(" ".join(call_arguments))
+        if argument_identifiers:
+            return argument_identifiers
+    return _value_identifiers(value)
+
+
+def _assignment_dependency_indices(
+    lines: list[str],
+    sink_indices: list[int],
+    *,
+    max_depth: int = 4,
+) -> list[int]:
+    if not sink_indices:
+        return []
+    first_sink = min(sink_indices)
+    needed: set[str] = set()
+    for sink_index in sink_indices:
+        needed.update(_sink_value_identifiers(lines[sink_index]))
+    anchors: set[int] = set()
+    resolved: set[str] = set()
+    for _ in range(max_depth):
+        unresolved = needed - resolved
+        if not unresolved:
+            break
+        found_names: set[str] = set()
+        discovered: set[str] = set()
+        for index in range(first_sink - 1, -1, -1):
+            match = ASSIGNMENT_RE.match(lines[index].strip())
+            if not match:
+                continue
+            name = match.group("name")
+            if name not in unresolved:
+                continue
+            anchors.add(index)
+            found_names.add(name)
+            discovered.update(_assignment_value_dependencies(match.group("value")))
+        if not found_names:
+            break
+        resolved.update(found_names)
+        needed.update(discovered)
+    return sorted(anchors)
 
 
 def context_token_count(evidence: Iterable[Evidence]) -> int:
@@ -125,7 +226,8 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
         sink_index = sink_indices[0]
         preceding_sources = [index for index in source_indices if index <= sink_index]
         source_index = preceding_sources[-1] if preceding_sources else source_indices[0]
-        anchors = sorted({source_index, sink_index})
+        dependency_indices = _assignment_dependency_indices(lines, sink_indices)
+        anchors = sorted({source_index, *dependency_indices, sink_index})
     else:
         anchors = [source_indices[0] if source_indices else sink_indices[0]]
 
