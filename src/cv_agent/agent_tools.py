@@ -3,12 +3,16 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from pydantic import Field, ValidationError
 
 from .agent_types import ModelToolCall, ToolObservation
-from .retrieval import RepositoryIndex, fit_text_to_serialized_context
+from .retrieval import (
+    RepositoryIndex,
+    context_text_token_count,
+    fit_text_to_serialized_context,
+)
 from .types import FrozenModel
 
 
@@ -48,6 +52,7 @@ class AgentTool:
     description: str
     input_model: type[FrozenModel]
     handler: Callable[[FrozenModel, ToolExecutionScope], ToolObservation]
+    content_type: Literal["text", "json"] = "text"
 
     def definition(self) -> dict[str, Any]:
         return {
@@ -71,6 +76,13 @@ class ToolRegistry:
         self._tools = {tool.name: tool for tool in registered}
         if len(self._tools) != len(registered):
             raise ValueError("tool registry contains duplicate names")
+        if (
+            any(tool.content_type == "json" for tool in registered)
+            and max_output_bytes < self._json_marker_byte_floor()
+        ):
+            raise ValueError(
+                "json tool output budget cannot fit the required truncation marker"
+            )
         self.max_output_bytes = max_output_bytes
 
     @property
@@ -84,10 +96,66 @@ class ToolRegistry:
             raise ValueError(f"allowed tools are not registered: {missing}")
         return tuple(self._tools[name].definition() for name in allowed_names)
 
-    def _bounded(self, observation: ToolObservation) -> ToolObservation:
+    @staticmethod
+    def _minimal_json_truncation(reason: str) -> str:
+        return json.dumps(
+            {
+                "observation_truncated": True,
+                "reason": reason,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
+    @classmethod
+    def _json_marker_byte_floor(cls) -> int:
+        return max(
+            len(cls._minimal_json_truncation(reason).encode("utf-8"))
+            for reason in ("byte_budget", "invalid_json", "token_budget")
+        )
+
+    @classmethod
+    def _json_truncation(
+        cls,
+        reason: str,
+        original_size: int,
+        *,
+        byte_budget: int | None = None,
+    ) -> str:
+        full = json.dumps(
+            {
+                "observation_truncated": True,
+                "original_size": original_size,
+                "reason": reason,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        if byte_budget is None or len(full.encode("utf-8")) <= byte_budget:
+            return full
+        minimal = cls._minimal_json_truncation(reason)
+        if len(minimal.encode("utf-8")) <= byte_budget:
+            return minimal
+        raise ValueError("json truncation marker does not fit output byte budget")
+
+    def _bounded(
+        self,
+        observation: ToolObservation,
+        *,
+        content_type: Literal["text", "json"],
+    ) -> ToolObservation:
         encoded = observation.content.encode("utf-8")
         if len(encoded) <= self.max_output_bytes:
             return observation
+        if content_type == "json" and observation.status == "ok":
+            marker = self._json_truncation(
+                "byte_budget",
+                len(encoded),
+                byte_budget=self.max_output_bytes,
+            )
+            return observation.model_copy(
+                update={"content": marker, "status": "error"}
+            )
         suffix = "\n[tool output truncated by Harness]"
         available = max(0, self.max_output_bytes - len(suffix.encode("utf-8")))
         content = encoded[:available].decode("utf-8", errors="ignore") + suffix
@@ -97,17 +165,88 @@ class ToolRegistry:
         self,
         observation: ToolObservation,
         scope: ToolExecutionScope,
+        *,
+        content_type: Literal["text", "json"] = "text",
     ) -> ToolObservation:
-        bounded = self._bounded(observation)
-        fitted = fit_text_to_serialized_context(
-            bounded.content,
-            token_budget=scope.remaining_tokens,
-            render=lambda content: self._render_prompt_payload(
-                bounded,
-                content=content,
-            ),
+        effective_content_type = (
+            content_type if observation.status == "ok" else "text"
         )
+        bounded = self._bounded(
+            observation,
+            content_type=effective_content_type,
+        )
+        structural_truncation = (
+            bounded.content != observation.content
+            or bounded.status != observation.status
+        )
+        if effective_content_type == "json":
+            try:
+                json.loads(bounded.content)
+            except (json.JSONDecodeError, TypeError):
+                bounded = bounded.model_copy(
+                    update={
+                        "content": self._json_truncation(
+                            "invalid_json",
+                            len(bounded.content.encode("utf-8")),
+                            byte_budget=self.max_output_bytes,
+                        ),
+                        "status": "error",
+                    }
+                )
+                structural_truncation = True
+            payload = self._render_prompt_payload(
+                bounded,
+                content=bounded.content,
+            )
+            if context_text_token_count(payload) <= scope.remaining_tokens:
+                fitted = (
+                    bounded.content,
+                    payload,
+                    context_text_token_count(payload),
+                )
+            else:
+                marker = self._json_truncation(
+                    "token_budget",
+                    context_text_token_count(payload),
+                    byte_budget=self.max_output_bytes,
+                )
+                truncated = bounded.model_copy(
+                    update={"content": marker, "status": "error"}
+                )
+                marker_payload = self._render_prompt_payload(
+                    truncated,
+                    content=marker,
+                )
+                marker_tokens = context_text_token_count(marker_payload)
+                bounded = truncated
+                structural_truncation = True
+                fitted = (
+                    (marker, marker_payload, marker_tokens)
+                    if marker_tokens <= scope.remaining_tokens
+                    else None
+                )
+        else:
+            fitted = fit_text_to_serialized_context(
+                bounded.content,
+                token_budget=scope.remaining_tokens,
+                render=lambda content: self._render_prompt_payload(
+                    bounded,
+                    content=content,
+                ),
+            )
         if fitted is None:
+            if effective_content_type == "json":
+                return bounded.model_copy(
+                    update={
+                        "status": "error",
+                        "metadata": {
+                            **bounded.metadata,
+                            "observation_token_count": 0,
+                            "observation_truncated": True,
+                            "model_payload_suppressed": True,
+                        },
+                    }
+                )
             return bounded.model_copy(
                 update={
                     "status": "blocked" if bounded.status == "ok" else bounded.status,
@@ -134,7 +273,7 @@ class ToolRegistry:
                     },
                 }
             )
-        truncated = content != bounded.content
+        truncated = structural_truncation or content != bounded.content
         scope.observed_tokens += token_count
         return bounded.model_copy(
             update={
@@ -225,7 +364,11 @@ class ToolRegistry:
             raise ValueError(
                 f"tool handler returned observation for {observation.tool}, expected {call.name}"
             )
-        return self._finalize(observation, scope)
+        return self._finalize(
+            observation,
+            scope,
+            content_type=tool.content_type,
+        )
 
 
 def repository_tools(index: RepositoryIndex) -> tuple[AgentTool, ...]:
@@ -275,9 +418,14 @@ def repository_tools(index: RepositoryIndex) -> tuple[AgentTool, ...]:
             content=document.text,
             evidence_ids=(f"span:{document.path}",),
             metadata={
+                "adapter_tier": document.adapter_tier,
+                "language": document.language,
                 "path": document.path,
                 "defines": list(document.defines),
                 "calls": list(document.calls),
+                "imports": list(document.imports),
+                "routes": list(document.routes),
+                "guards": list(document.guards),
             },
         )
 
