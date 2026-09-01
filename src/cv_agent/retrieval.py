@@ -36,6 +36,7 @@ SECURITY_SOURCE_FOCUS_RE = re.compile(
     r"\b(?:input\s*\(|sys\.argv\b|os\.environ\b|process\.env\b)",
     re.IGNORECASE,
 )
+NON_ADJACENT_CONTEXT_MARKER = "\n[... omitted non-adjacent context ...]\n"
 
 
 def tokenize(text: str) -> list[str]:
@@ -57,6 +58,86 @@ def _security_focus_score(line: str) -> int:
     if SECURITY_SOURCE_FOCUS_RE.search(line):
         score += 1
     return score
+
+
+def _render_non_overlapping_ranges(
+    lines: list[str],
+    ranges: list[tuple[int, int]],
+) -> str:
+    if not ranges:
+        return ""
+    merged: list[tuple[int, int]] = []
+    for start, end in sorted(ranges):
+        if not merged or start > merged[-1][1]:
+            merged.append((start, end))
+        else:
+            previous_start, previous_end = merged[-1]
+            merged[-1] = (previous_start, max(previous_end, end))
+    return NON_ADJACENT_CONTEXT_MARKER.join(
+        "".join(lines[start:end]).strip("\n") for start, end in merged
+    )
+
+
+def _line_window_range(
+    lines: list[str],
+    center_index: int,
+    token_budget: int,
+) -> tuple[int, int]:
+    if not lines:
+        return (0, 0)
+    center_index = min(max(center_index, 0), len(lines) - 1)
+    start = center_index
+    end = center_index + 1
+
+    def rendered(next_start: int, next_end: int) -> str:
+        return "".join(lines[next_start:next_end])
+
+    if context_text_token_count(rendered(start, end)) >= token_budget:
+        return start, end
+
+    while True:
+        changed = False
+        if start > 0:
+            candidate = rendered(start - 1, end)
+            if context_text_token_count(candidate) <= token_budget:
+                start -= 1
+                changed = True
+        if end < len(lines):
+            candidate = rendered(start, end + 1)
+            if context_text_token_count(candidate) <= token_budget:
+                end += 1
+                changed = True
+        if not changed:
+            break
+    return start, end
+
+
+def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
+    source_indices = [
+        index for index, line in enumerate(lines) if SECURITY_SOURCE_FOCUS_RE.search(line)
+    ]
+    sink_indices = [
+        index for index, line in enumerate(lines) if SECURITY_SINK_FOCUS_RE.search(line)
+    ]
+    if not source_indices and not sink_indices:
+        return None
+    if source_indices and sink_indices:
+        sink_index = sink_indices[0]
+        preceding_sources = [index for index in source_indices if index <= sink_index]
+        source_index = preceding_sources[-1] if preceding_sources else source_indices[0]
+        anchors = sorted({source_index, sink_index})
+    else:
+        anchors = [source_indices[0] if source_indices else sink_indices[0]]
+
+    marker_budget = (
+        context_text_token_count(NON_ADJACENT_CONTEXT_MARKER) * (len(anchors) - 1)
+    )
+    chunk_budget = max(1, (token_budget - marker_budget) // len(anchors))
+    ranges = [_line_window_range(lines, anchor, chunk_budget) for anchor in anchors]
+    focused = _render_non_overlapping_ranges(lines, ranges)
+    if context_text_token_count(focused) <= token_budget:
+        return focused
+    return None
 
 
 def fit_text_to_serialized_context(
@@ -134,35 +215,12 @@ def _line_window_around(
     center_index: int,
     token_budget: int,
 ) -> str:
-    if not lines:
-        return ""
-    center_index = min(max(center_index, 0), len(lines) - 1)
-    start = center_index
-    end = center_index + 1
-
-    def rendered(next_start: int, next_end: int) -> str:
-        return "".join(lines[next_start:next_end])
-
-    if context_text_token_count(rendered(start, end)) >= token_budget:
-        text = rendered(start, end)
+    start, end = _line_window_range(lines, center_index, token_budget)
+    text = "".join(lines[start:end])
+    if context_text_token_count(text) > token_budget:
         token_ends = [match.end() for match in CONTEXT_TOKEN_RE.finditer(text)]
         return text[: token_ends[token_budget - 1]] if token_ends else ""
-
-    while True:
-        changed = False
-        if start > 0:
-            candidate = rendered(start - 1, end)
-            if context_text_token_count(candidate) <= token_budget:
-                start -= 1
-                changed = True
-        if end < len(lines):
-            candidate = rendered(start, end + 1)
-            if context_text_token_count(candidate) <= token_budget:
-                end += 1
-                changed = True
-        if not changed:
-            break
-    return rendered(start, end)
+    return text
 
 
 def _focused_text(
@@ -184,6 +242,10 @@ def _focused_text(
         if fallback_relative_line is not None
         else 0
     )
+    if security_focus:
+        focused = _security_focused_text(lines, token_budget)
+        if focused is not None:
+            return focused
     scored = [
         (
             _security_focus_score(line) if security_focus else 0,

@@ -199,7 +199,7 @@ def test_focused_graph_context_prefers_security_sink_over_source_only_line():
     budget = RetrievalBudget(
         top_k=1,
         base_context_tokens=32,
-        augmentation_context_tokens=48,
+        augmentation_context_tokens=96,
         graph_hops=1,
     )
 
@@ -211,7 +211,8 @@ def test_focused_graph_context_prefers_security_sink_over_source_only_line():
     augmentation = [item for item in context if item.path == do_post.path][0]
 
     assert "ctx.search(base, filter, sc)" in augmentation.text
-    assert "request.getHeader" not in augmentation.text
+    assert "request.getHeader" in augmentation.text
+    assert 'String filter = "(&(uid=" + param + "))"' in augmentation.text
     assert context_token_count(context) <= budget.total_context_tokens
 
 
