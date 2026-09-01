@@ -34,6 +34,10 @@ JAVA_TYPED_ASSIGNMENT_RE = re.compile(
 COLLECTION_PUT_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
 )
+COLLECTION_GET_RE = re.compile(
+    r"\b(?P<name>[A-Za-z_$][\w$]*)\.get\s*\(\s*"
+    r"(?P<key>\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')\s*\)"
+)
 IF_RE = re.compile(r"^\s*if\s*\((?P<condition>.*)\)\s*(?P<trailing>.*)$")
 ELSE_RE = re.compile(r"^\s*else\b\s*(?P<trailing>.*)$")
 SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{\s*$")
@@ -196,6 +200,41 @@ def _literal_string(value: str) -> str | None:
     return result if isinstance(result, str) else None
 
 
+def _split_first_argument(arguments: str) -> tuple[str, str] | None:
+    in_quote: str | None = None
+    escaped = False
+    for index, char in enumerate(arguments):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if in_quote:
+            if char == in_quote:
+                in_quote = None
+            continue
+        if char in {"'", '"'}:
+            in_quote = char
+            continue
+        if char == ",":
+            return arguments[:index].strip(), arguments[index + 1 :].strip()
+    return None
+
+
+def _value_with_known_clean_collection_gets_removed(
+    value: str,
+    collection_values: dict[str, dict[str, bool]],
+) -> str:
+    def replace(match: re.Match[str]) -> str:
+        key = _literal_string(match.group("key"))
+        if key is not None and collection_values.get(match.group("name"), {}).get(key) is False:
+            return ""
+        return match.group(0)
+
+    return COLLECTION_GET_RE.sub(replace, value)
+
+
 def _logical_code_lines(text: str) -> list[str]:
     """Collapse continuation lines without hiding Java/Python control-flow markers."""
 
@@ -297,20 +336,34 @@ class TaintExpert:
         value: str,
         tainted: set[str],
         tainted_containers: set[str],
+        collection_values: dict[str, dict[str, bool]],
     ) -> bool:
+        for match in COLLECTION_GET_RE.finditer(value):
+            key = _literal_string(match.group("key"))
+            if key is not None and collection_values.get(match.group("name"), {}).get(key) is True:
+                return True
+        value_for_identifier_checks = _value_with_known_clean_collection_gets_removed(
+            value,
+            collection_values,
+        )
         return (
             any(pattern.search(value) for pattern in self.sources)
-            or _contains_identifier(value, tainted)
-            or _contains_identifier(value, tainted_containers)
+            or _contains_identifier(value_for_identifier_checks, tainted)
+            or _contains_identifier(value_for_identifier_checks, tainted_containers)
         )
 
     def _value_is_clean(
         self,
         value: str,
         clean: set[str],
+        collection_values: dict[str, dict[str, bool]],
     ) -> bool:
         if any(pattern.search(value) for pattern in self.sources):
             return False
+        value = _value_with_known_clean_collection_gets_removed(
+            value,
+            collection_values,
+        )
         call_arguments = re.search(r"\((?P<arguments>.*)\)", value)
         if call_arguments:
             argument_identifiers = _value_identifiers(call_arguments.group("arguments"))
@@ -348,6 +401,7 @@ class TaintExpert:
             clean: set[str] = set()
             numeric_values: dict[str, float] = {}
             tainted_containers: set[str] = set()
+            collection_values: dict[str, dict[str, bool]] = {}
             source_seen = False
             sink_seen = False
             sanitizer_seen = False
@@ -365,12 +419,30 @@ class TaintExpert:
                     sanitizer_seen = True
 
                 for put in COLLECTION_PUT_RE.finditer(line):
+                    split_arguments = _split_first_argument(put.group("arguments"))
+                    key: str | None = None
+                    value_argument = put.group("arguments")
+                    if split_arguments is not None:
+                        key = _literal_string(split_arguments[0])
+                        value_argument = split_arguments[1]
                     if self._value_is_tainted(
-                        put.group("arguments"),
+                        value_argument,
                         tainted,
                         tainted_containers,
+                        collection_values,
                     ):
-                        tainted_containers.add(put.group("name"))
+                        collection_values.setdefault(put.group("name"), {})
+                        if key is None:
+                            tainted_containers.add(put.group("name"))
+                        else:
+                            collection_values[put.group("name")][key] = True
+                            tainted_containers.add(put.group("name"))
+                    elif key is not None and self._value_is_clean(
+                        value_argument,
+                        clean,
+                        collection_values,
+                    ):
+                        collection_values.setdefault(put.group("name"), {})[key] = False
 
                 if assignment:
                     name = assignment.group("name")
@@ -413,10 +485,19 @@ class TaintExpert:
                         if allow_clean_update:
                             tainted.discard(name)
                             clean.add(name)
-                    elif self._value_is_tainted(value, tainted, tainted_containers):
+                    elif self._value_is_tainted(
+                        value,
+                        tainted,
+                        tainted_containers,
+                        collection_values,
+                    ):
                         tainted.add(name)
                         clean.discard(name)
-                    elif allow_clean_update and self._value_is_clean(value, clean):
+                    elif allow_clean_update and self._value_is_clean(
+                        value,
+                        clean,
+                        collection_values,
+                    ):
                         tainted.discard(name)
                         clean.add(name)
                     elif allow_clean_update:

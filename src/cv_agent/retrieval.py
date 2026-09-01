@@ -23,6 +23,13 @@ ASSIGNMENT_RE = re.compile(
 )
 INLINE_IF_RE = re.compile(r"^\s*if\s*\([^)]*\)\s*(?P<trailing>.+)$")
 SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{?\s*$")
+COLLECTION_GET_RE = re.compile(
+    r"\b(?P<name>[A-Za-z_$][\w$]*)\.get\s*\(\s*"
+    r"(?P<key>\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')\s*\)"
+)
+COLLECTION_PUT_RE = re.compile(
+    r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
+)
 CALL_ARGUMENT_RE = re.compile(r"\((?P<arguments>[^()]*)\)")
 MAP_GET_RE = re.compile(r"\b(?P<receiver>[A-Za-z_$][\w$]*)\.get\s*\(")
 METHOD_RECEIVER_RE = re.compile(
@@ -144,6 +151,54 @@ def _assignment_match(line: str) -> re.Match[str] | None:
     return None
 
 
+def _split_first_argument(arguments: str) -> tuple[str, str] | None:
+    in_quote: str | None = None
+    escaped = False
+    for index, char in enumerate(arguments):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if in_quote:
+            if char == in_quote:
+                in_quote = None
+            continue
+        if char in {"'", '"'}:
+            in_quote = char
+            continue
+        if char == ",":
+            return arguments[:index].strip(), arguments[index + 1 :].strip()
+    return None
+
+
+def _collection_put_dependencies(
+    lines: list[str],
+    value: str,
+    before_index: int,
+) -> tuple[list[int], set[str]]:
+    anchors: list[int] = []
+    dependencies: set[str] = set()
+    collection_gets = [
+        (match.group("name"), match.group("key"))
+        for match in COLLECTION_GET_RE.finditer(value)
+    ]
+    if not collection_gets:
+        return anchors, dependencies
+    for index in range(before_index - 1, -1, -1):
+        for put in COLLECTION_PUT_RE.finditer(lines[index]):
+            split_arguments = _split_first_argument(put.group("arguments"))
+            if split_arguments is None:
+                continue
+            key, put_value = split_arguments
+            if (put.group("name"), key) not in collection_gets:
+                continue
+            anchors.append(index)
+            dependencies.update(_assignment_value_dependencies(put_value))
+    return sorted(set(anchors)), dependencies
+
+
 def _enclosing_switch_index(lines: list[str], line_index: int) -> int | None:
     stack: list[int] = []
     for index, line in enumerate(lines[: line_index + 1]):
@@ -199,6 +254,13 @@ def _assignment_dependency_context(
                 continue
             found_names.add(name)
             discovered.update(_assignment_value_dependencies(match.group("value")))
+            put_indices, put_dependencies = _collection_put_dependencies(
+                lines,
+                match.group("value"),
+                index,
+            )
+            anchors.update(put_indices)
+            discovered.update(put_dependencies)
             switch_index = _enclosing_switch_index(lines, index)
             if switch_index is not None:
                 ranges.add(_switch_range(lines, switch_index))

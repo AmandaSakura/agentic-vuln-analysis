@@ -101,6 +101,38 @@ def test_taint_propagates_java_collection_round_trip():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_tracks_java_collection_keys_independently():
+    safe = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                "map.put(\"keyA\", \"safe\");\n"
+                'map.put("keyB", param);\n'
+                'String bar = (String) map.get("keyA");\n'
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+    vulnerable = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                "map.put(\"keyA\", \"safe\");\n"
+                'map.put("keyB", param);\n'
+                'String bar = (String) map.get("keyB");\n'
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert safe.label == "SAFE"
+    assert vulnerable.label == "VULNERABLE"
+
+
 def test_taint_tracks_java_parameter_map_source():
     vote = TaintExpert().evaluate(
         _candidate(),
