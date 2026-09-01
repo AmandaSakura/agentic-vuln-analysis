@@ -55,12 +55,14 @@ def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
     }
     assert diagnostics["v5_vs_v4_expert_calls_saved"] == 1
     assert diagnostics["expert_call_count_by_name"]["V4"] == {
-        "authz": 1,
+        "authz": 0,
+        "flow": 1,
         "scan": 1,
         "taint": 1,
     }
     assert diagnostics["expert_call_count_by_name"]["V5"] == {
         "authz": 0,
+        "flow": 0,
         "scan": 1,
         "taint": 1,
     }
@@ -178,7 +180,8 @@ def test_owasp_metrics_keep_abstention_and_separate_attribution():
     }
     result = evaluate_owasp_rag(labels, predictions)
     assert result["primary_v3_vs_v2_strict_recall_gain_percentage_points"] == 100.0
-    assert result["primary_v4_vs_v3_fpr_reduction_percent"] == 100.0
+    assert result["primary_v4_vs_v3_fpr_reduction_percent"] == 0.0
+    assert result["primary_v4_vs_v3_population_false_alert_reduction_percent"] == 100.0
     assert result["systems"]["V4"]["primary_subset"]["coverage"] == 0.5
     assert result["primary_v4_vs_v3_coverage_delta_percentage_points"] == -50.0
     assert result["primary_v4_vs_v3_transition_count"] == {

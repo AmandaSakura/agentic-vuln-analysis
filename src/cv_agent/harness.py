@@ -10,6 +10,7 @@ from .types import FrozenModel, SystemVersion
 
 
 ExpertName = Literal["scan", "taint", "authz"]
+OwaspExpertName = Literal["scan", "taint", "verify"]
 
 
 class DatasetRole(StrEnum):
@@ -53,7 +54,7 @@ class SystemHarness(FrozenModel):
     system: SystemVersion
     retrieval: RetrievalMode
     budget: RetrievalBudget
-    expert_order: tuple[ExpertName, ...]
+    expert_order: tuple[OwaspExpertName, ...]
     full_review_policy: Literal["single", "majority"]
     quorum: int = Field(default=2, ge=2, le=3)
     fast_score: float = Field(default=0.80, ge=0.0, le=1.0)
@@ -183,7 +184,7 @@ def _system(
     top_k: int,
     augmentation_tokens: int,
     graph_hops: int,
-    experts: tuple[ExpertName, ...],
+    experts: tuple[OwaspExpertName, ...],
     policy: Literal["single", "majority"],
     early_quorum_after: int | None = None,
 ) -> SystemHarness:
@@ -251,7 +252,7 @@ OWASP_HARNESS = ExperimentHarness(
             top_k=COMPARABLE_TOP_K,
             augmentation_tokens=COMPARABLE_AUGMENTATION_TOKENS,
             graph_hops=2,
-            experts=("scan", "taint", "authz"),
+            experts=("scan", "taint", "verify"),
             policy="majority",
         ),
         _system(
@@ -260,7 +261,7 @@ OWASP_HARNESS = ExperimentHarness(
             top_k=COMPARABLE_TOP_K,
             augmentation_tokens=COMPARABLE_AUGMENTATION_TOKENS,
             graph_hops=2,
-            experts=("scan", "taint", "authz"),
+            experts=("scan", "taint", "verify"),
             policy="majority",
             early_quorum_after=2,
         ),
@@ -271,6 +272,7 @@ OWASP_HARNESS = ExperimentHarness(
         "strict_recall",
         "covered_recall",
         "population_false_positive_rate",
+        "conservative_false_positive_rate",
         "covered_false_positive_rate",
         "precision",
         "recall_delta",
@@ -610,8 +612,8 @@ def validate_owasp_harness(harness: ExperimentHarness = OWASP_HARNESS) -> None:
         raise ValueError("V3, V4, and V5 must share the complete retrieval budget")
     if v4.expert_order != v5.expert_order or v4.full_review_policy != v5.full_review_policy:
         raise ValueError("V4 and V5 must use identical experts and full-review policy")
-    if v4.expert_order != ("scan", "taint", "authz"):
-        raise ValueError("the conditional workflow supports scan, taint, authz in that order")
+    if v4.expert_order != ("scan", "taint", "verify"):
+        raise ValueError("the OWASP workflow requires scan, taint, then routed verification")
     if v4.quorum != v5.quorum:
         raise ValueError("V4 and V5 must use the same majority quorum")
     if v4.early_quorum_after is not None or v5.early_quorum_after != 2:
@@ -870,6 +872,7 @@ def validate_owasp_result_payload(payload: Mapping[str, object]) -> None:
             "systems",
             "diagnostics",
             "primary_v4_vs_v3_fpr_reduction_percent",
+            "primary_v4_vs_v3_population_false_alert_reduction_percent",
             "primary_v4_vs_v3_strict_recall_delta_percentage_points",
             "primary_v4_vs_v3_coverage_delta_percentage_points",
             "v5_vs_v4_label_disagreement_count",
@@ -885,6 +888,7 @@ def validate_owasp_result_payload(payload: Mapping[str, object]) -> None:
         "strict_recall",
         "covered_recall",
         "population_false_positive_rate",
+        "conservative_false_positive_rate",
         "covered_false_positive_rate",
         "precision",
     }

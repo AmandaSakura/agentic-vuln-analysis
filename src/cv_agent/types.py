@@ -59,7 +59,7 @@ class ReasoningStep(FrozenModel):
 
 
 class ExpertVote(FrozenModel):
-    expert: Literal["scan", "taint", "authz"]
+    expert: Literal["scan", "taint", "authz", "flow"]
     label: VerdictLabel
     confidence: float = Field(ge=0.0, le=1.0)
     evidence_ids: tuple[str, ...] = ()

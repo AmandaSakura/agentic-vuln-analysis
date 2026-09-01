@@ -1,4 +1,9 @@
-from cv_agent.experts import AuthorizationExpert, ScanExpert, TaintExpert
+from cv_agent.experts import (
+    AuthorizationExpert,
+    FlowRefutationExpert,
+    ScanExpert,
+    TaintExpert,
+)
 from cv_agent.types import Candidate, Evidence
 
 
@@ -325,6 +330,67 @@ def test_taint_treats_unknown_helper_result_as_clean_only_when_arguments_are_cle
     assert vulnerable.label == "VULNERABLE"
 
 
+def test_taint_uses_retrieved_constant_return_helper_summary():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = scr.getTheValue(request.getHeader("vector"));\n'
+                'String sql = "SELECT " + param;\n'
+                "statement.execute(sql);"
+            ),
+            _evidence(
+                'String getTheValue(String key) { return "constant"; }',
+                "graph:helpers/SeparateClassRequest.java::SeparateClassRequest.getTheValue@1",
+            ),
+        ],
+    )
+
+    assert vote.label == "SAFE"
+
+
+def test_taint_rejects_ambiguous_constant_return_helper_summary():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = scr.getTheValue(request.getHeader("vector"));\n'
+                'String sql = "SELECT " + param;\n'
+                "statement.execute(sql);"
+            ),
+            _evidence(
+                'String getTheValue(String key) { return "constant"; }',
+                "graph:helpers/Safe.java::Safe.getTheValue@1",
+            ),
+            _evidence(
+                "String getTheValue(String key) { return key; }",
+                "graph:helpers/Unsafe.java::Unsafe.getTheValue@1",
+            ),
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
+def test_taint_uses_proven_clean_nonstandard_sink_argument_name():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = scr.getTheValue("vector");\n'
+                'String[] args = {"sh", "-c", "echo " + param};\n'
+                "ProcessBuilder pb = new ProcessBuilder(args);"
+            ),
+            _evidence(
+                'String getTheValue(String key) { return "constant"; }',
+                "graph:helpers/SeparateClassRequest.java::SeparateClassRequest.getTheValue@1",
+            ),
+        ],
+    )
+
+    assert vote.label == "SAFE"
+
+
 def test_taint_does_not_treat_ldap_filters_array_as_clean_filter():
     vote = TaintExpert().evaluate(
         _candidate(),
@@ -355,3 +421,54 @@ def test_authorization_guard_must_precede_operation_in_same_function():
     )
     assert guarded.label == "SAFE"
     assert unguarded.label == "VULNERABLE"
+
+
+def test_flow_refutation_proves_constant_ternary_sink_value():
+    vote = FlowRefutationExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                "int num = 106;\n"
+                'String bar = (7*18) + num > 200 ? "safe" : param;\n'
+                "String fileName = org.example.Paths.baseDir + bar;\n"
+                "new FileInputStream(fileName);"
+            )
+        ],
+    )
+
+    assert vote.label == "SAFE"
+
+
+def test_flow_refutation_uses_retrieved_constant_helper_summary():
+    vote = FlowRefutationExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = scr.getTheValue("vector");\n'
+                'String sql = "SELECT " + param;\n'
+                "statement.execute(sql);"
+            ),
+            _evidence(
+                'String getTheValue(String key) { return "constant"; }',
+                "graph:helpers/SeparateClassRequest.java::SeparateClassRequest.getTheValue@1",
+            ),
+        ],
+    )
+
+    assert vote.label == "SAFE"
+
+
+def test_flow_refutation_does_not_turn_unresolved_taint_into_vulnerability():
+    vote = FlowRefutationExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                'String sql = "SELECT " + param;\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert vote.label == "ABSTAIN"

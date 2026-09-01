@@ -136,6 +136,38 @@ def test_guarded_disagreement_abstains_instead_of_claiming_safety():
     assert ensemble.label == "ABSTAIN"
     assert ensemble.path == "slow"
     assert len(ensemble.votes) == 3
+    assert ensemble.votes[-1].expert == "authz"
+
+
+def test_injection_refutation_forms_a_real_safe_quorum():
+    document = CodeDocument(
+        repository_id="repo",
+        path="handler.java",
+        text=(
+            'String param = request.getHeader("vector");\n'
+            "int num = 106;\n"
+            'String bar = (7*18) + num > 200 ? "safe" : param;\n'
+            'String sql = "SELECT " + bar;\n'
+            "statement.execute(sql);\n"
+        ),
+        defines=("handler",),
+    )
+    candidate = Candidate(
+        candidate_id="handler",
+        case_id="handler",
+        repository_id="repo",
+        path="handler.java",
+        line=1,
+        query="handler",
+    )
+    index = RepositoryIndex([document])
+
+    single = AgentPipeline(index, PipelineConfig(system=SystemVersion.V3_GRAPH_SINGLE)).run(candidate)
+    ensemble = AgentPipeline(index, PipelineConfig(system=SystemVersion.V4_GRAPH_MULTI)).run(candidate)
+
+    assert single.label == "VULNERABLE"
+    assert ensemble.label == "SAFE"
+    assert [vote.expert for vote in ensemble.votes] == ["scan", "taint", "flow"]
 
 
 def test_slow_policy_requires_two_material_votes():

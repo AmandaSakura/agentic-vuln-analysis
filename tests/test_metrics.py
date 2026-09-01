@@ -22,4 +22,5 @@ def test_ternary_metrics_do_not_count_abstentions_as_safe():
     assert result.strict_recall == 1 / 3
     assert result.covered_recall == 1 / 2
     assert result.population_false_positive_rate == 1 / 3
+    assert result.conservative_false_positive_rate == 2 / 3
     assert result.covered_false_positive_rate == 1 / 2

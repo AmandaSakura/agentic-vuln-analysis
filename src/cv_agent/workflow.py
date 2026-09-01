@@ -40,11 +40,11 @@ class AgentPipeline:
         builder.add_node("run_scan", self._run_scan)
         builder.add_node("run_taint", self._run_taint)
         builder.add_node("try_fast", self._try_fast)
-        builder.add_node("run_authz", self._run_authz)
+        builder.add_node("run_verify", self._run_verify)
         builder.add_node("adjudicate", self._adjudicate)
-        builder.add_edge(START, "make_plan")
-        builder.add_edge("make_plan", "retrieve")
-        builder.add_edge("retrieve", "run_scan")
+        builder.add_edge(START, "retrieve")
+        builder.add_edge("retrieve", "make_plan")
+        builder.add_edge("make_plan", "run_scan")
         builder.add_conditional_edges(
             "run_scan",
             self._route_after_scan,
@@ -53,19 +53,24 @@ class AgentPipeline:
         builder.add_conditional_edges(
             "run_taint",
             self._route_after_taint,
-            {"slow": "run_authz", "fast_candidate": "try_fast"},
+            {"slow": "run_verify", "fast_candidate": "try_fast"},
         )
         builder.add_conditional_edges(
             "try_fast",
             self._route_after_fast,
-            {"done": END, "continue": "run_authz"},
+            {"done": END, "continue": "run_verify"},
         )
-        builder.add_edge("run_authz", "adjudicate")
+        builder.add_edge("run_verify", "adjudicate")
         builder.add_edge("adjudicate", END)
         return builder.compile()
 
     def _plan(self, state: WorkflowState) -> dict:
-        return {"plan": list(self.system_spec.expert_order)}
+        plan = list(self.system_spec.expert_order)
+        if "verify" in plan:
+            authz = EXPERTS["authz"]
+            verifier = "authz" if authz.applies(state["evidence"]) else "flow"
+            plan[plan.index("verify")] = verifier
+        return {"plan": plan}
 
     def _retrieve(self, state: WorkflowState) -> dict:
         candidate = state["candidate"]
@@ -90,8 +95,10 @@ class AgentPipeline:
     def _run_taint(self, state: WorkflowState) -> dict:
         return self._run_expert(state, "taint")
 
-    def _run_authz(self, state: WorkflowState) -> dict:
-        return self._run_expert(state, "authz")
+    def _run_verify(self, state: WorkflowState) -> dict:
+        if len(state["plan"]) < 3:
+            raise RuntimeError("multi-expert workflow has no planned verifier")
+        return self._run_expert(state, state["plan"][2])
 
     def _route_after_scan(self, state: WorkflowState) -> str:
         return "single" if self.system_spec.full_review_policy == "single" else "multi"

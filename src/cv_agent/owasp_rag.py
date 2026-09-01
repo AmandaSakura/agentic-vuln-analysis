@@ -84,7 +84,7 @@ def predict_owasp_rag(
     }
     expert_calls = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
     expert_calls_by_name = {
-        system.value: Counter({"scan": 0, "taint": 0, "authz": 0})
+        system.value: Counter({"scan": 0, "taint": 0, "authz": 0, "flow": 0})
         for system in EXPERIMENT_SYSTEMS
     }
     context_tokens = Counter({system.value: 0 for system in EXPERIMENT_SYSTEMS})
@@ -209,6 +209,7 @@ def _matrix_dict(matrix: TernaryEvaluation) -> dict[str, int | float | None]:
         "covered_recall": matrix.covered_recall,
         "precision": matrix.precision,
         "population_false_positive_rate": matrix.population_false_positive_rate,
+        "conservative_false_positive_rate": matrix.conservative_false_positive_rate,
         "covered_false_positive_rate": matrix.covered_false_positive_rate,
     }
 
@@ -279,11 +280,13 @@ def evaluate_owasp_rag(
     retrieval_gain = None
     if text_recall is not None and graph_recall is not None:
         retrieval_gain = 100.0 * (graph_recall - text_recall)
+    # The headline comparison maps ABSTAIN to VULNERABLE. Otherwise a system can
+    # report an arbitrary FPR reduction merely by replacing alerts with refusal.
     single_fpr = systems[SystemVersion.V3_GRAPH_SINGLE.value]["primary_subset"][
-        "population_false_positive_rate"
+        "conservative_false_positive_rate"
     ]
     multi_fpr = systems[SystemVersion.V4_GRAPH_MULTI.value]["primary_subset"][
-        "population_false_positive_rate"
+        "conservative_false_positive_rate"
     ]
     fpr_reduction = None
     fpr_reduction_points = None
@@ -291,6 +294,21 @@ def evaluate_owasp_rag(
         fpr_reduction_points = 100.0 * (single_fpr - multi_fpr)
         if single_fpr:
             fpr_reduction = 100.0 * (single_fpr - multi_fpr) / single_fpr
+    single_population_alert_rate = systems[SystemVersion.V3_GRAPH_SINGLE.value][
+        "primary_subset"
+    ]["population_false_positive_rate"]
+    multi_population_alert_rate = systems[SystemVersion.V4_GRAPH_MULTI.value][
+        "primary_subset"
+    ]["population_false_positive_rate"]
+    population_alert_reduction = None
+    if (
+        single_population_alert_rate is not None
+        and multi_population_alert_rate is not None
+        and single_population_alert_rate
+    ):
+        population_alert_reduction = 100.0 * (
+            single_population_alert_rate - multi_population_alert_rate
+        ) / single_population_alert_rate
     multi_recall = systems[SystemVersion.V4_GRAPH_MULTI.value]["primary_subset"]["strict_recall"]
     multi_recall_delta = None
     if graph_recall is not None and multi_recall is not None:
@@ -313,6 +331,9 @@ def evaluate_owasp_rag(
         "primary_v3_vs_v2_strict_recall_gain_percentage_points": retrieval_gain,
         "primary_v4_vs_v3_fpr_reduction_percent": fpr_reduction,
         "primary_v4_vs_v3_fpr_reduction_percentage_points": fpr_reduction_points,
+        "primary_v4_vs_v3_population_false_alert_reduction_percent": (
+            population_alert_reduction
+        ),
         "primary_v4_vs_v3_strict_recall_delta_percentage_points": multi_recall_delta,
         "primary_v4_vs_v3_coverage_delta_percentage_points": multi_coverage_delta,
         "primary_v4_vs_v3_transition_count": _transition_count(

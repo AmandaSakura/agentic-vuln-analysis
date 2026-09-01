@@ -38,6 +38,12 @@ COLLECTION_GET_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.get\s*\(\s*"
     r"(?P<key>\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')\s*\)"
 )
+RETURN_RE = re.compile(r"\breturn\s+(?P<value>.+?)\s*;")
+CALL_RE = re.compile(
+    r"(?:(?P<receiver>[A-Za-z_$][\w$]*)\s*\.)?"
+    r"(?P<method>[A-Za-z_$][\w$]*)\s*\((?P<arguments>.*)\)"
+)
+LEADING_CAST_RE = re.compile(r"^\s*(?:\([\w.$<>\[\],?]+\)\s*)+")
 IF_RE = re.compile(r"^\s*if\s*\((?P<condition>.*)\)\s*(?P<trailing>.*)$")
 ELSE_RE = re.compile(r"^\s*else\b\s*(?P<trailing>.*)$")
 SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{\s*$")
@@ -222,6 +228,80 @@ def _split_first_argument(arguments: str) -> tuple[str, str] | None:
     return None
 
 
+def _split_arguments(arguments: str) -> list[str]:
+    """Split Java/Python call arguments without splitting nested expressions."""
+
+    values: list[str] = []
+    start = 0
+    depth = 0
+    in_quote: str | None = None
+    escaped = False
+    for index, char in enumerate(arguments):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if in_quote:
+            if char == in_quote:
+                in_quote = None
+            continue
+        if char in {"'", '"'}:
+            in_quote = char
+            continue
+        if char in "([{":
+            depth += 1
+            continue
+        if char in ")]}" and depth:
+            depth -= 1
+            continue
+        if char == "," and depth == 0:
+            values.append(arguments[start:index].strip())
+            start = index + 1
+    tail = arguments[start:].strip()
+    if tail:
+        values.append(tail)
+    return values
+
+
+def _sink_arguments(line: str, patterns: Sequence[re.Pattern[str]]) -> list[str]:
+    """Return balanced argument expressions for security-sensitive calls."""
+
+    arguments: list[str] = []
+    for pattern in patterns:
+        for match in pattern.finditer(line):
+            open_index = line.rfind("(", match.start(), match.end())
+            if open_index < 0:
+                continue
+            depth = 0
+            in_quote: str | None = None
+            escaped = False
+            for index in range(open_index, len(line)):
+                char = line[index]
+                if escaped:
+                    escaped = False
+                    continue
+                if char == "\\":
+                    escaped = True
+                    continue
+                if in_quote:
+                    if char == in_quote:
+                        in_quote = None
+                    continue
+                if char in {"'", '"'}:
+                    in_quote = char
+                    continue
+                if char == "(":
+                    depth += 1
+                elif char == ")":
+                    depth -= 1
+                    if depth == 0:
+                        arguments.append(line[open_index + 1 : index].strip())
+                        break
+    return arguments
+
+
 def _value_with_known_clean_collection_gets_removed(
     value: str,
     collection_values: dict[str, dict[str, bool]],
@@ -266,6 +346,35 @@ def _logical_code_lines(text: str) -> list[str]:
     if pending:
         lines.append(" ".join(pending))
     return lines
+
+
+def _constant_return_method_names(
+    evidence: Sequence[Evidence],
+    sources: Sequence[re.Pattern[str]],
+) -> set[str]:
+    method_results: dict[str, list[bool]] = {}
+    for item in evidence:
+        if "::" not in item.path:
+            continue
+        symbol = item.path.split("::", 1)[1].rsplit("@", 1)[0]
+        name = symbol.rsplit(".", 1)[-1]
+        returns = [match.group("value") for match in RETURN_RE.finditer(item.text)]
+        if returns:
+            method_results.setdefault(name, []).append(
+                all(
+                    not any(pattern.search(value) for pattern in sources)
+                    and (
+                        _literal_string(value) is not None
+                        or not _value_identifiers(value)
+                    )
+                    for value in returns
+                )
+            )
+    return {
+        name
+        for name, results in method_results.items()
+        if results and all(results)
+    }
 
 
 class ScanExpert:
@@ -338,7 +447,12 @@ class TaintExpert:
         tainted: set[str],
         tainted_containers: set[str],
         collection_values: dict[str, dict[str, bool]],
+        constant_methods: set[str],
     ) -> bool:
+        call_value = re.sub(r"^new\s+", "", LEADING_CAST_RE.sub("", value.strip()))
+        call = CALL_RE.fullmatch(call_value.rstrip(";"))
+        if call and call.group("method") in constant_methods:
+            return False
         for match in COLLECTION_GET_RE.finditer(value):
             key = _literal_string(match.group("key"))
             if key is not None and collection_values.get(match.group("name"), {}).get(key) is True:
@@ -358,7 +472,12 @@ class TaintExpert:
         value: str,
         clean: set[str],
         collection_values: dict[str, dict[str, bool]],
+        constant_methods: set[str],
     ) -> bool:
+        call_value = re.sub(r"^new\s+", "", LEADING_CAST_RE.sub("", value.strip()))
+        call = CALL_RE.fullmatch(call_value.rstrip(";"))
+        if call and call.group("method") in constant_methods:
+            return True
         if any(pattern.search(value) for pattern in self.sources):
             return False
         value = _value_with_known_clean_collection_gets_removed(
@@ -392,7 +511,27 @@ class TaintExpert:
             return True
         return False
 
+    def _sink_arguments_are_clean(self, line: str, clean: set[str]) -> bool:
+        for arguments in _sink_arguments(line, self.sinks):
+            identifiers = _value_identifiers(arguments)
+            focused = {
+                name
+                for name in identifiers
+                if name.casefold() in (SINK_VALUE_NAMES | {"expression"})
+            }
+            required = focused or identifiers
+            if required and required.issubset(clean):
+                return True
+            if (
+                not required
+                and arguments.strip()
+                and not any(pattern.search(arguments) for pattern in self.sources)
+            ):
+                return True
+        return False
+
     def evaluate(self, candidate: Candidate, evidence: Sequence[Evidence]) -> ExpertVote:
+        constant_methods = _constant_return_method_names(evidence, self.sources)
         vulnerable_ids: list[str] = []
         safe_ids: list[str] = []
         fallback_vulnerable_ids: list[str] = []
@@ -431,6 +570,7 @@ class TaintExpert:
                         tainted,
                         tainted_containers,
                         collection_values,
+                        constant_methods,
                     ):
                         collection_values.setdefault(put.group("name"), {})
                         if key is None:
@@ -442,6 +582,7 @@ class TaintExpert:
                         value_argument,
                         clean,
                         collection_values,
+                        constant_methods,
                     ):
                         collection_values.setdefault(put.group("name"), {})[key] = False
 
@@ -491,6 +632,7 @@ class TaintExpert:
                         tainted,
                         tainted_containers,
                         collection_values,
+                        constant_methods,
                     ):
                         tainted.add(name)
                         clean.discard(name)
@@ -498,6 +640,7 @@ class TaintExpert:
                         value,
                         clean,
                         collection_values,
+                        constant_methods,
                     ):
                         tainted.discard(name)
                         clean.add(name)
@@ -510,7 +653,10 @@ class TaintExpert:
                     or _contains_identifier(line, tainted)
                     or _contains_identifier(line, tainted_containers)
                 )
-                line_has_clean_value = _contains_clean_sink_value(line, clean)
+                line_has_clean_value = (
+                    _contains_clean_sink_value(line, clean)
+                    or self._sink_arguments_are_clean(line, clean)
+                )
                 if any(pattern.search(line) for pattern in self.sinks):
                     sink_seen = True
                     if line_is_tainted and not sanitizer_hits:
@@ -667,6 +813,313 @@ class TaintExpert:
         )
 
 
+class FlowRefutationExpert:
+    """Independently prove that retrieved sink inputs are non-source values.
+
+    This expert deliberately emits SAFE or ABSTAIN only. A failed refutation is
+    not positive vulnerability evidence, while a SAFE vote requires a complete
+    backward proof for every modelled sink value in the retrieved item.
+    """
+
+    name = "flow"
+    sinks = ScanExpert.sinks
+    sources = TaintExpert.sources
+    sanitizers = TaintExpert.sanitizers
+    value_transforms = frozenset(
+        {
+            "append",
+            "charAt",
+            "decode",
+            "decodeBuffer",
+            "encode",
+            "encodeBuffer",
+            "getBytes",
+            "replace",
+            "split",
+            "substring",
+            "toLowerCase",
+            "toString",
+            "toUpperCase",
+            "trim",
+        }
+    )
+    static_clean_calls = frozenset({"getProperty"})
+    package_roots = frozenset({"com", "java", "javax", "org", "sun"})
+    sink_value_names = SINK_VALUE_NAMES | {"expression"}
+
+    @staticmethod
+    def _method_name(item: Evidence) -> str | None:
+        if "::" not in item.path:
+            return None
+        symbol = item.path.split("::", 1)[1].rsplit("@", 1)[0]
+        return symbol.rsplit(".", 1)[-1]
+
+    def _constant_return_methods(self, evidence: Sequence[Evidence]) -> set[str]:
+        return _constant_return_method_names(evidence, self.sources)
+
+    @staticmethod
+    def _numeric_values(lines: list[str], before_index: int) -> dict[str, float]:
+        values: dict[str, float] = {}
+        for line in lines[:before_index]:
+            assignment = ASSIGNMENT_RE.match(line)
+            if not assignment:
+                continue
+            value = _safe_eval_numeric(assignment.group("value"), values)
+            if value is None:
+                values.pop(assignment.group("name"), None)
+            else:
+                values[assignment.group("name")] = value
+        return values
+
+    def _fallback_identifiers(self, value: str) -> set[str]:
+        without_literals = STRING_LITERAL_RE.sub("", value)
+        identifiers: set[str] = set()
+        for match in IDENTIFIER_RE.finditer(without_literals):
+            name = match.group(0)
+            if (
+                name in NON_VALUE_IDENTIFIERS
+                or name in self.package_roots
+                or name[:1].isupper()
+            ):
+                continue
+            previous = without_literals[match.start() - 1 : match.start()]
+            following = without_literals[match.end() :].lstrip()
+            if previous == "." or following.startswith("("):
+                continue
+            identifiers.add(name)
+        return identifiers
+
+    def _collection_get_is_clean(
+        self,
+        match: re.Match[str],
+        lines: list[str],
+        before_index: int,
+        constant_methods: set[str],
+        seen: set[tuple[str, int]],
+    ) -> bool:
+        collection = match.group("name")
+        key = match.group("key")
+        for index in range(before_index - 1, -1, -1):
+            for put in COLLECTION_PUT_RE.finditer(lines[index]):
+                if put.group("name") != collection:
+                    continue
+                split = _split_first_argument(put.group("arguments"))
+                if split is None or split[0].strip() != key.strip():
+                    continue
+                return self._expression_is_clean(
+                    split[1],
+                    lines,
+                    index,
+                    constant_methods,
+                    seen,
+                )
+        return False
+
+    def _name_is_clean(
+        self,
+        name: str,
+        lines: list[str],
+        before_index: int,
+        constant_methods: set[str],
+        seen: set[tuple[str, int]],
+    ) -> bool:
+        key = (name, before_index)
+        if key in seen:
+            return False
+        definitions = [
+            (index, assignment)
+            for index, line in enumerate(lines[:before_index])
+            if (assignment := ASSIGNMENT_RE.match(line)) is not None
+            and assignment.group("name") == name
+        ]
+        if not definitions:
+            return name in self._numeric_values(lines, before_index)
+        next_seen = {*seen, key}
+        # Requiring every possible definition to be clean is conservative for
+        # unresolved branch joins and avoids choosing a convenient last branch.
+        return all(
+            self._expression_is_clean(
+                assignment.group("value"),
+                lines,
+                index,
+                constant_methods,
+                next_seen,
+            )
+            for index, assignment in definitions
+        )
+
+    def _expression_is_clean(
+        self,
+        value: str,
+        lines: list[str],
+        before_index: int,
+        constant_methods: set[str],
+        seen: set[tuple[str, int]],
+    ) -> bool:
+        value = LEADING_CAST_RE.sub("", value.strip().rstrip(";"))
+        if not value:
+            return True
+        if any(pattern.search(value) for pattern in self.sources):
+            return False
+        if any(pattern.search(value) for pattern in self.sanitizers):
+            return True
+        if _literal_string(value) is not None:
+            return True
+
+        numeric_values = self._numeric_values(lines, before_index)
+        if _safe_eval_numeric(value, numeric_values) is not None:
+            return True
+        ternary = TERNARY_RE.match(value)
+        if ternary:
+            decision = _safe_eval_condition(ternary.group("condition"), numeric_values)
+            if decision is not None:
+                selected = ternary.group("when_true" if decision else "when_false")
+                return self._expression_is_clean(
+                    selected,
+                    lines,
+                    before_index,
+                    constant_methods,
+                    seen,
+                )
+            return all(
+                self._expression_is_clean(
+                    branch,
+                    lines,
+                    before_index,
+                    constant_methods,
+                    seen,
+                )
+                for branch in (ternary.group("when_true"), ternary.group("when_false"))
+            )
+
+        collection_gets = list(COLLECTION_GET_RE.finditer(value))
+        if collection_gets:
+            if not all(
+                self._collection_get_is_clean(
+                    match,
+                    lines,
+                    before_index,
+                    constant_methods,
+                    seen,
+                )
+                for match in collection_gets
+            ):
+                return False
+            value = COLLECTION_GET_RE.sub("", value)
+
+        call_value = re.sub(r"^new\s+", "", value).strip()
+        call = CALL_RE.fullmatch(call_value)
+        if call:
+            method = call.group("method")
+            arguments = _split_arguments(call.group("arguments"))
+            if method in constant_methods or method in self.static_clean_calls:
+                return True
+            arguments_clean = all(
+                self._expression_is_clean(
+                    argument,
+                    lines,
+                    before_index,
+                    constant_methods,
+                    seen,
+                )
+                for argument in arguments
+            )
+            if method in self.value_transforms:
+                receiver = call.group("receiver")
+                return arguments_clean and (
+                    receiver is None
+                    or self._name_is_clean(
+                        receiver,
+                        lines,
+                        before_index,
+                        constant_methods,
+                        seen,
+                    )
+                )
+            # Unknown helpers may read ambient input, so clean arguments alone
+            # are insufficient for a refutation unless a retrieved summary exists.
+            return False
+
+        identifiers = self._fallback_identifiers(value)
+        return all(
+            self._name_is_clean(
+                name,
+                lines,
+                before_index,
+                constant_methods,
+                seen,
+            )
+            for name in identifiers
+        )
+
+    def evaluate(self, candidate: Candidate, evidence: Sequence[Evidence]) -> ExpertVote:
+        constant_methods = self._constant_return_methods(evidence)
+        safe_ids: list[str] = []
+        unresolved_ids: list[str] = []
+        for item in evidence:
+            lines = _logical_code_lines(item.text)
+            item_sinks: list[bool] = []
+            for index, line in enumerate(lines):
+                for arguments in _sink_arguments(line, self.sinks):
+                    if not arguments:
+                        continue
+                    identifiers = self._fallback_identifiers(arguments)
+                    focused = {
+                        name
+                        for name in identifiers
+                        if name.casefold() in self.sink_value_names
+                    }
+                    if focused:
+                        clean = all(
+                            self._name_is_clean(
+                                name,
+                                lines,
+                                index,
+                                constant_methods,
+                                set(),
+                            )
+                            for name in focused
+                        )
+                    else:
+                        clean = self._expression_is_clean(
+                            arguments,
+                            lines,
+                            index,
+                            constant_methods,
+                            set(),
+                        )
+                    item_sinks.append(clean)
+            if item_sinks and all(item_sinks):
+                safe_ids.append(item.evidence_id)
+            elif item_sinks:
+                unresolved_ids.append(item.evidence_id)
+
+        if safe_ids and not unresolved_ids:
+            return ExpertVote(
+                expert="flow",
+                label="SAFE",
+                confidence=0.86,
+                evidence_ids=tuple(dict.fromkeys(safe_ids)),
+                rationale=(
+                    "Backward sink slicing proved every modelled sink input in the "
+                    "retrieved path independent of request-derived values."
+                ),
+                trace=(
+                    ReasoningStep(
+                        action="prove_sink_inputs_clean",
+                        observation=f"proved {len(set(safe_ids))} sink-bearing path(s)",
+                    ),
+                ),
+            )
+        return ExpertVote(
+            expert="flow",
+            label="ABSTAIN",
+            confidence=0.35,
+            evidence_ids=tuple(dict.fromkeys(unresolved_ids)),
+            rationale="Backward slicing could not prove every retrieved sink input safe.",
+        )
+
+
 class AuthorizationExpert:
     name = "authz"
     sensitive = tuple(
@@ -687,6 +1140,9 @@ class AuthorizationExpert:
             r"has_permission\s*\(",
         )
     )
+
+    def applies(self, evidence: Sequence[Evidence]) -> bool:
+        return bool(_matching_evidence(evidence, (*self.sensitive, *self.guards)))
 
     def evaluate(self, candidate: Candidate, evidence: Sequence[Evidence]) -> ExpertVote:
         guarded_ids: list[str] = []
@@ -734,4 +1190,5 @@ EXPERTS: dict[str, Expert] = {
     "scan": ScanExpert(),
     "taint": TaintExpert(),
     "authz": AuthorizationExpert(),
+    "flow": FlowRefutationExpert(),
 }

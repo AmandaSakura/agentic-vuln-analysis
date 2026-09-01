@@ -85,8 +85,8 @@ def test_comparable_retrieval_budget_drift_is_rejected():
 def test_v4_v5_expert_or_policy_drift_is_rejected():
     v4 = OWASP_HARNESS.system_spec(SystemVersion.V4_GRAPH_MULTI)
     v5 = OWASP_HARNESS.system_spec(SystemVersion.V5_GRAPH_FAST_SLOW)
-    changed_v4 = v4.model_copy(update={"expert_order": ("scan", "authz", "taint")})
-    changed_v5 = v5.model_copy(update={"expert_order": ("scan", "authz", "taint")})
+    changed_v4 = v4.model_copy(update={"expert_order": ("scan", "verify", "taint")})
+    changed_v5 = v5.model_copy(update={"expert_order": ("scan", "verify", "taint")})
     changed_systems = tuple(
         changed_v4
         if spec.system == SystemVersion.V4_GRAPH_MULTI
@@ -96,7 +96,7 @@ def test_v4_v5_expert_or_policy_drift_is_rejected():
         for spec in OWASP_HARNESS.systems
     )
     invalid = OWASP_HARNESS.model_copy(update={"systems": changed_systems})
-    with pytest.raises(ValueError, match="supports scan, taint, authz"):
+    with pytest.raises(ValueError, match="requires scan, taint, then routed verification"):
         validate_owasp_harness(invalid)
 
 

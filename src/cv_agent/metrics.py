@@ -80,6 +80,22 @@ class TernaryEvaluation:
         return self.false_positive / denominator if denominator else None
 
     @property
+    def conservative_false_positive_rate(self) -> float | None:
+        """FPR after conservatively mapping every abstention to VULNERABLE.
+
+        Security triage cannot treat an unresolved negative as a correctly cleared
+        sample.  This metric therefore charges both false-positive and abstained
+        negatives until the system produces explicit SAFE evidence.
+        """
+
+        denominator = self.false_positive + self.true_negative + self.abstain_negative
+        return (
+            (self.false_positive + self.abstain_negative) / denominator
+            if denominator
+            else None
+        )
+
+    @property
     def covered_false_positive_rate(self) -> float | None:
         denominator = self.false_positive + self.true_negative
         return self.false_positive / denominator if denominator else None
