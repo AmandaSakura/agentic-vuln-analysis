@@ -40,12 +40,15 @@ The deterministic slice validates retrieval and adjudication mechanics. It does 
 ## Ternary evaluation
 
 - `VULNERABLE`, `SAFE`, and `ABSTAIN` remain distinct.
-- Report coverage, abstain rate, strict recall, covered recall, population FPR, covered FPR, and precision.
+- Report coverage, abstain rate, strict recall, covered recall, population alert rate, conservative FPR, covered FPR, and precision.
+- Conservative FPR maps every abstention to `VULNERABLE`; an all-abstain system therefore cannot claim an FPR reduction.
+- Covered-FPR reduction must be attributed to explicit true negatives and reported with coverage.
 - Any headline FPR change must include the associated recall and coverage changes.
 
 ## Evidence limitations
 
-- Current taint and authorization specialists use ordered same-function evidence, not full def-use/CFG proof.
+- The deterministic Java proxy combines forward taint, backward sink slicing, typed call edges, and bounded constant control-flow reasoning. It is still not a complete def-use/CFG or symbolic-execution proof.
+- Authorization evidence remains a separate specialist concern and is not validated by the injection-focused OWASP primary subset.
 - Missing configured patterns prove neither safety nor absence of a vulnerability; experts abstain in that case.
 - Heuristic confidence values are not calibrated probabilities.
 
