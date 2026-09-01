@@ -46,9 +46,21 @@ NON_VALUE_IDENTIFIERS = frozenset(
         "false",
     }
 )
-SINK_VALUE_NAME_RE = re.compile(
-    r"(?:sql|query|filter|command|cmd|path|file|name|bar|param|value)",
-    re.IGNORECASE,
+SINK_VALUE_NAMES = frozenset(
+    {
+        "bar",
+        "cmd",
+        "command",
+        "file",
+        "filename",
+        "filter",
+        "name",
+        "param",
+        "path",
+        "query",
+        "sql",
+        "value",
+    }
 )
 
 
@@ -58,7 +70,7 @@ def _contains_identifier(text: str, names: Sequence[str] | set[str]) -> bool:
 
 def _contains_clean_sink_value(text: str, clean: set[str]) -> bool:
     return any(
-        SINK_VALUE_NAME_RE.search(name)
+        name.casefold() in SINK_VALUE_NAMES
         and re.search(rf"\b{re.escape(name)}\b", text)
         for name in clean
     )

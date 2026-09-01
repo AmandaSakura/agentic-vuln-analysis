@@ -101,6 +101,22 @@ def test_taint_propagates_java_collection_round_trip():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_does_not_treat_ldap_filters_array_as_clean_filter():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeaders("vector").nextElement();\n'
+                "[... omitted non-adjacent context ...]\n"
+                'Object[] filters = new Object[]{"constant"};\n'
+                "idc.search(base, filter, filters, sc);"
+            )
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
 def test_authorization_guard_must_precede_operation_in_same_function():
     guarded = AuthorizationExpert().evaluate(
         _candidate(),
