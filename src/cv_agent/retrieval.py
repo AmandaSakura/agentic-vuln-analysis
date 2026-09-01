@@ -22,6 +22,7 @@ ASSIGNMENT_RE = re.compile(
     r"(?P<value>.+?)\s*;?\s*(?://.*)?$"
 )
 INLINE_IF_RE = re.compile(r"^\s*if\s*\([^)]*\)\s*(?P<trailing>.+)$")
+IF_CONDITION_RE = re.compile(r"^\s*if\s*\((?P<condition>.*)\)\s*$")
 SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{?\s*$")
 COLLECTION_GET_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.get\s*\(\s*"
@@ -200,6 +201,19 @@ def _collection_put_dependencies(
     return sorted(set(anchors)), dependencies
 
 
+def _nearby_if_dependencies(
+    lines: list[str],
+    line_index: int,
+    *,
+    lookback: int = 4,
+) -> tuple[list[int], set[str]]:
+    for index in range(line_index - 1, max(-1, line_index - lookback - 1), -1):
+        match = IF_CONDITION_RE.match(lines[index].strip())
+        if match:
+            return [index], _value_identifiers(match.group("condition"))
+    return [], set()
+
+
 def _is_low_priority_initializer(lines: list[str], index: int, anchors: list[int]) -> bool:
     match = _assignment_match(lines[index])
     if not match:
@@ -279,6 +293,9 @@ def _assignment_dependency_context(
             )
             anchors.update(put_indices)
             discovered.update(put_dependencies)
+            if_indices, if_dependencies = _nearby_if_dependencies(lines, index)
+            anchors.update(if_indices)
+            discovered.update(if_dependencies)
             switch_index = _enclosing_switch_index(lines, index)
             if switch_index is not None:
                 ranges.add(_switch_range(lines, switch_index))
