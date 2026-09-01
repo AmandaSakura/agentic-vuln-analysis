@@ -29,10 +29,48 @@ ASSIGNMENT_RE = re.compile(
 COLLECTION_PUT_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
 )
+STRING_LITERAL_RE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
+IDENTIFIER_RE = re.compile(r"\b[A-Za-z_$][\w$]*\b")
+NON_VALUE_IDENTIFIERS = frozenset(
+    {
+        "String",
+        "Object",
+        "Integer",
+        "Boolean",
+        "Long",
+        "Double",
+        "Float",
+        "new",
+        "null",
+        "true",
+        "false",
+    }
+)
+SINK_VALUE_NAME_RE = re.compile(
+    r"(?:sql|query|filter|command|cmd|path|file|name|bar|param|value)",
+    re.IGNORECASE,
+)
 
 
 def _contains_identifier(text: str, names: Sequence[str] | set[str]) -> bool:
     return any(re.search(rf"\b{re.escape(name)}\b", text) for name in names)
+
+
+def _contains_clean_sink_value(text: str, clean: set[str]) -> bool:
+    return any(
+        SINK_VALUE_NAME_RE.search(name)
+        and re.search(rf"\b{re.escape(name)}\b", text)
+        for name in clean
+    )
+
+
+def _value_identifiers(value: str) -> set[str]:
+    without_literals = STRING_LITERAL_RE.sub("", value)
+    return {
+        name
+        for name in IDENTIFIER_RE.findall(without_literals)
+        if name not in NON_VALUE_IDENTIFIERS and not name[:1].isupper()
+    }
 
 
 class ScanExpert:
@@ -109,12 +147,38 @@ class TaintExpert:
             or _contains_identifier(value, tainted_containers)
         )
 
+    def _value_is_clean(
+        self,
+        value: str,
+        clean: set[str],
+    ) -> bool:
+        if any(pattern.search(value) for pattern in self.sources):
+            return False
+        identifiers = _value_identifiers(value)
+        return not identifiers or identifiers.issubset(clean)
+
+    def _legacy_source_before_sink(self, item: Evidence) -> bool:
+        sources = _positions(item.text, self.sources)
+        sinks = _positions(item.text, self.sinks)
+        sanitizers = _positions(item.text, self.sanitizers)
+        for sink in sinks:
+            preceding_sources = [source for source in sources if source < sink]
+            if not preceding_sources:
+                continue
+            source = max(preceding_sources)
+            if any(source < sanitizer < sink for sanitizer in sanitizers):
+                continue
+            return True
+        return False
+
     def evaluate(self, candidate: Candidate, evidence: Sequence[Evidence]) -> ExpertVote:
         vulnerable_ids: list[str] = []
         safe_ids: list[str] = []
+        fallback_vulnerable_ids: list[str] = []
         partial_ids: list[str] = []
         for item in evidence:
             tainted: set[str] = set()
+            clean: set[str] = set()
             tainted_containers: set[str] = set()
             source_seen = False
             sink_seen = False
@@ -143,25 +207,34 @@ class TaintExpert:
                     value = assignment.group("value")
                     if sanitizer_hits:
                         tainted.discard(name)
+                        clean.add(name)
                     elif self._value_is_tainted(value, tainted, tainted_containers):
                         tainted.add(name)
+                        clean.discard(name)
+                    elif self._value_is_clean(value, clean):
+                        tainted.discard(name)
+                        clean.add(name)
                     else:
                         tainted.discard(name)
+                        clean.discard(name)
 
                 line_is_tainted = (
                     source_hits
                     or _contains_identifier(line, tainted)
                     or _contains_identifier(line, tainted_containers)
                 )
+                line_has_clean_value = _contains_clean_sink_value(line, clean)
                 if any(pattern.search(line) for pattern in self.sinks):
                     sink_seen = True
                     if line_is_tainted and not sanitizer_hits:
                         vulnerable_ids.append(item.evidence_id)
-                    elif source_seen or sanitizer_seen:
+                    elif sanitizer_seen or line_has_clean_value:
                         safe_ids.append(item.evidence_id)
 
             if source_seen or sink_seen or sanitizer_seen:
                 partial_ids.append(item.evidence_id)
+            if self._legacy_source_before_sink(item):
+                fallback_vulnerable_ids.append(item.evidence_id)
 
         if vulnerable_ids:
             return ExpertVote(
@@ -188,6 +261,26 @@ class TaintExpert:
                     ReasoningStep(
                         action="track_local_taint_to_sink",
                         observation="sink reached without a tracked tainted value",
+                    ),
+                ),
+            )
+        if fallback_vulnerable_ids:
+            return ExpertVote(
+                expert="taint",
+                label="VULNERABLE",
+                confidence=0.78,
+                evidence_ids=tuple(dict.fromkeys(fallback_vulnerable_ids)),
+                rationale=(
+                    "A source precedes a sink in the same function; local value tracking "
+                    "did not produce a stronger refutation."
+                ),
+                trace=(
+                    ReasoningStep(
+                        action="fallback_source_before_sink",
+                        observation=(
+                            f"{len(set(fallback_vulnerable_ids))} same-function "
+                            "source-before-sink candidate(s)"
+                        ),
                     ),
                 ),
             )
