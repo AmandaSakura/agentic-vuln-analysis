@@ -4,10 +4,11 @@ import argparse
 import json
 from pathlib import Path
 
+from .agentic_live import run_agentic_owasp_live
 from .agentic_smoke import run_agentic_smoke
 from .agentic_eval import run_agentic_scripted_eval
 from .experiment import run_synthetic_experiment
-from .harness import command_policy, describe_project_harness
+from .harness import AgentSystemVersion, command_policy, describe_project_harness
 from .java_ast import profile_owasp_java_ast
 from .owasp import run_owasp_static_baseline
 from .owasp_rag import run_owasp_rag_experiment
@@ -28,6 +29,24 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "agentic-eval",
         help="run the scripted LangGraph/ReAct quorum false-positive diagnostic",
+    )
+    agentic_live = subparsers.add_parser(
+        "agentic-live-owasp",
+        help="run bounded live-model AgenticPipeline cases from OWASP BenchmarkJava",
+    )
+    agentic_live.add_argument("--raw", type=Path, default=Path("data/raw"))
+    agentic_live.add_argument(
+        "--case-id",
+        action="append",
+        required=True,
+        help="explicit OWASP BenchmarkTest id to run; repeat for multiple cases",
+    )
+    agentic_live.add_argument(
+        "--system",
+        action="append",
+        required=True,
+        choices=[system.value for system in AgentSystemVersion],
+        help="explicit agentic system id to run; repeat for multiple systems",
     )
     profile = subparsers.add_parser("profile", help="report aggregate public-dataset metadata without row labels")
     profile.add_argument("--raw", type=Path, default=Path("data/raw"))
@@ -67,6 +86,15 @@ def main() -> int:
         return _emit(arguments.command, run_agentic_smoke())
     if arguments.command == "agentic-eval":
         return _emit(arguments.command, run_agentic_scripted_eval())
+    if arguments.command == "agentic-live-owasp":
+        return _emit(
+            arguments.command,
+            run_agentic_owasp_live(
+                arguments.raw,
+                case_ids=arguments.case_id,
+                system_ids=arguments.system,
+            ),
+        )
     if arguments.command == "profile":
         return _emit(arguments.command, profile_public_data(arguments.raw))
     if arguments.command == "owasp-baseline":
