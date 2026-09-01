@@ -119,6 +119,25 @@ def test_taint_tracks_java_parameter_map_source():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_tracks_multiline_java_string_assignment():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                "java.util.Map<String,String[]> map = request.getParameterMap();\n"
+                'String[] values = map.get("vector");\n'
+                'String param = "";\n'
+                "if (values != null) param = values[0];\n"
+                "String sql = \"SELECT * FROM users WHERE name='\"\n"
+                "    + param + \"'\";\n"
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
 def test_taint_evaluates_simple_java_ternary_constant_branch():
     vote = TaintExpert().evaluate(
         _candidate(),

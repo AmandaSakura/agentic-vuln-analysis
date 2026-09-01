@@ -27,6 +27,10 @@ ASSIGNMENT_RE = re.compile(
     r"(?P<name>[A-Za-z_$][\w$]*)\s*(?::=|=(?!=))\s*"
     r"(?P<value>.+?)\s*;?\s*(?://.*)?$"
 )
+JAVA_TYPED_ASSIGNMENT_RE = re.compile(
+    r"^\s*(?:final\s+)?(?:[\w.$<>\[\],?]+\s+)+"
+    r"(?P<name>[A-Za-z_$][\w$]*)\s*(?::=|=(?!=))\s*"
+)
 COLLECTION_PUT_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
 )
@@ -173,6 +177,39 @@ def _safe_eval_condition(value: str, numeric_values: dict[str, float]) -> bool |
     except Exception:
         return None
     return bool(result) if isinstance(result, bool) else None
+
+
+def _logical_code_lines(text: str) -> list[str]:
+    """Collapse continuation lines without hiding Java/Python control-flow markers."""
+
+    lines: list[str] = []
+    pending: list[str] = []
+    for raw_line in text.splitlines():
+        stripped = raw_line.split("//", 1)[0].strip()
+        if not stripped:
+            continue
+        if pending:
+            pending.append(stripped)
+            if stripped.endswith(";"):
+                lines.append(" ".join(pending))
+                pending = []
+            continue
+        if (
+            stripped.startswith("@")
+            or stripped.endswith(";")
+            or stripped.endswith("{")
+            or stripped in {"}", "};"}
+            or stripped.startswith(("case ", "default:", "try", "catch", "finally"))
+        ):
+            lines.append(stripped)
+            continue
+        if JAVA_TYPED_ASSIGNMENT_RE.match(stripped):
+            pending.append(stripped)
+            continue
+        lines.append(stripped)
+    if pending:
+        lines.append(" ".join(pending))
+    return lines
 
 
 class ScanExpert:
@@ -363,11 +400,8 @@ class TaintExpert:
 
             next_branch_decision: bool | None = None
             last_if_decision: bool | None = None
-            for raw_line in item.text.splitlines():
-                code_line = raw_line.split("//", 1)[0]
-                stripped = code_line.strip()
-                if not stripped:
-                    continue
+            for stripped in _logical_code_lines(item.text):
+                code_line = stripped
                 if_match = IF_RE.match(stripped)
                 if if_match:
                     decision = _safe_eval_condition(
