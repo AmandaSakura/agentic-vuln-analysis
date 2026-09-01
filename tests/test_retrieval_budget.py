@@ -552,6 +552,70 @@ def test_focused_graph_context_keeps_same_key_collection_put_dependencies():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_focused_graph_context_prioritizes_deep_parameter_name_flow():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00594.java::BenchmarkTest00594.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00594.doGet",),
+        calls=("BenchmarkTest00594.doPost",),
+    )
+    filler = "\n".join(f"    int filler{index} = {index};" for index in range(80))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00594.java::BenchmarkTest00594.doPost@5-120",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            '    String param = "";\n'
+            "    java.util.Enumeration<String> names = request.getParameterNames();\n"
+            "    String name = (String) names.nextElement();\n"
+            "    param = name;\n"
+            f"{filler}\n"
+            '    String bar = "safe!";\n'
+            "    java.util.HashMap<String,Object> map = new java.util.HashMap<String,Object>();\n"
+            '    map.put("keyB", param);\n'
+            '    bar = (String)map.get("keyB");\n'
+            "    String sql = \"SELECT * FROM users WHERE name='\" + bar + \"'\";\n"
+            "    statement.execute(sql);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00594.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=248,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "request.getParameterNames()" in augmentation.text
+    assert "names.nextElement()" in augmentation.text
+    assert "param = name" in augmentation.text
+    assert 'map.put("keyB", param)' in augmentation.text
+    assert 'map.get("keyB")' in augmentation.text
+    assert "statement.execute(sql)" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_text_context_keeps_query_focus_without_security_sink_boost():
     entry = CodeDocument(
         repository_id="repo",

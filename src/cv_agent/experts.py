@@ -313,7 +313,8 @@ class TaintExpert:
         for pattern in (
             r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b",
             r"\brequest\.get(?:Header|Headers|Parameter|ParameterMap|"
-            r"ParameterValues|Cookies?|QueryString)\s*\(",
+            r"ParameterNames|ParameterValues|Cookies?|QueryString)\s*\(",
+            r"\btheCookie\.getValue\s*\(",
             r"\.getTheParameter\s*\(",
             r"\buser_input\b",
             r"\binput\s*\(",

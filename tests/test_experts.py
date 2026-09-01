@@ -151,6 +151,34 @@ def test_taint_tracks_java_parameter_map_source():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_tracks_cookie_value_and_parameter_name_sources():
+    cookie = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = java.net.URLDecoder.decode(theCookie.getValue(), "UTF-8");\n'
+                'String sql = "SELECT * FROM users WHERE name=\'" + param + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+    parameter_name = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                "java.util.Enumeration<String> names = request.getParameterNames();\n"
+                "String name = (String) names.nextElement();\n"
+                "String param = name;\n"
+                'String sql = "SELECT * FROM users WHERE name=\'" + param + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert cookie.label == "VULNERABLE"
+    assert parameter_name.label == "VULNERABLE"
+
+
 def test_taint_tracks_multiline_java_string_assignment():
     vote = TaintExpert().evaluate(
         _candidate(),

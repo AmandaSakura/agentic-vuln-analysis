@@ -87,9 +87,10 @@ SECURITY_SINK_FOCUS_RE = re.compile(
 )
 SECURITY_SOURCE_FOCUS_RE = re.compile(
     r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b|"
-    r"\brequest\.get(?:Header|Headers|Parameter|ParameterMap|ParameterValues|"
+    r"\brequest\.get(?:Header|Headers|Parameter|ParameterMap|ParameterNames|ParameterValues|"
     r"Cookies?|QueryString)\s*\(|"
     r"\.getTheParameter\s*\(|"
+    r"\btheCookie\.getValue\s*\(|"
     r"\b(?:input\s*\(|sys\.argv\b|os\.environ\b|process\.env\b)",
     re.IGNORECASE,
 )
@@ -199,6 +200,23 @@ def _collection_put_dependencies(
     return sorted(set(anchors)), dependencies
 
 
+def _is_low_priority_initializer(lines: list[str], index: int, anchors: list[int]) -> bool:
+    match = _assignment_match(lines[index])
+    if not match:
+        return False
+    name = match.group("name")
+    value = match.group("value").strip()
+    later_same_name = any(
+        later > index
+        and (later_match := _assignment_match(lines[later])) is not None
+        and later_match.group("name") == name
+        for later in anchors
+    )
+    if later_same_name and STRING_LITERAL_RE.fullmatch(value.rstrip(";")):
+        return True
+    return bool(re.match(r"new\s+(?:java\.util\.)?(?:HashMap|Map|ArrayList)\b", value))
+
+
 def _enclosing_switch_index(lines: list[str], line_index: int) -> int | None:
     stack: list[int] = []
     for index, line in enumerate(lines[: line_index + 1]):
@@ -228,7 +246,7 @@ def _assignment_dependency_context(
     lines: list[str],
     sink_indices: list[int],
     *,
-    max_depth: int = 4,
+    max_depth: int = 6,
 ) -> tuple[list[int], list[tuple[int, int]]]:
     if not sink_indices:
         return [], []
@@ -385,6 +403,20 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
     compact = _render_non_overlapping_ranges(lines, compact_ranges)
     if context_text_token_count(compact) <= token_budget:
         return compact
+    prioritized_anchors = [
+        anchor
+        for anchor in anchors
+        if not _is_low_priority_initializer(lines, anchor, anchors)
+    ]
+    prioritized_compact = _render_non_overlapping_ranges(
+        lines,
+        [
+            *dependency_ranges,
+            *((anchor, anchor + 1) for anchor in prioritized_anchors),
+        ],
+    )
+    if context_text_token_count(prioritized_compact) <= token_budget:
+        return prioritized_compact
     return None
 
 
