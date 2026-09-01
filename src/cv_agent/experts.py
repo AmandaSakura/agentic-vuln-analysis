@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 from collections.abc import Sequence
 from typing import Protocol
@@ -28,6 +29,11 @@ ASSIGNMENT_RE = re.compile(
 )
 COLLECTION_PUT_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
+)
+IF_RE = re.compile(r"^\s*if\s*\((?P<condition>.*)\)\s*(?P<trailing>.*)$")
+ELSE_RE = re.compile(r"^\s*else\b\s*(?P<trailing>.*)$")
+TERNARY_RE = re.compile(
+    r"^(?P<condition>.+?)\?(?P<when_true>.+):(?P<when_false>.+)$"
 )
 STRING_LITERAL_RE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
 IDENTIFIER_RE = re.compile(r"\b[A-Za-z_$][\w$]*\b")
@@ -83,6 +89,90 @@ def _value_identifiers(value: str) -> set[str]:
         for name in IDENTIFIER_RE.findall(without_literals)
         if name not in NON_VALUE_IDENTIFIERS and not name[:1].isupper()
     }
+
+
+def _numeric_expression(value: str, numeric_values: dict[str, float]) -> str | None:
+    expression = STRING_LITERAL_RE.sub("", value).strip().rstrip(";")
+    expression = expression.replace("&&", " and ").replace("||", " or ")
+    for name, number in numeric_values.items():
+        expression = re.sub(rf"\b{re.escape(name)}\b", repr(number), expression)
+    if _value_identifiers(expression):
+        return None
+    return expression
+
+
+def _safe_eval_numeric(value: str, numeric_values: dict[str, float]) -> float | None:
+    expression = _numeric_expression(value, numeric_values)
+    if not expression:
+        return None
+    try:
+        tree = ast.parse(expression, mode="eval")
+    except SyntaxError:
+        return None
+    allowed = (
+        ast.Expression,
+        ast.Constant,
+        ast.BinOp,
+        ast.UnaryOp,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.USub,
+        ast.UAdd,
+    )
+    if any(not isinstance(node, allowed) for node in ast.walk(tree)):
+        return None
+    try:
+        result = eval(compile(tree, "<numeric-expression>", "eval"), {"__builtins__": {}}, {})
+    except Exception:
+        return None
+    return float(result) if isinstance(result, int | float) else None
+
+
+def _safe_eval_condition(value: str, numeric_values: dict[str, float]) -> bool | None:
+    expression = _numeric_expression(value, numeric_values)
+    if not expression:
+        return None
+    try:
+        tree = ast.parse(expression, mode="eval")
+    except SyntaxError:
+        return None
+    allowed = (
+        ast.Expression,
+        ast.Constant,
+        ast.BinOp,
+        ast.UnaryOp,
+        ast.BoolOp,
+        ast.Compare,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.USub,
+        ast.UAdd,
+        ast.And,
+        ast.Or,
+        ast.Eq,
+        ast.NotEq,
+        ast.Lt,
+        ast.LtE,
+        ast.Gt,
+        ast.GtE,
+    )
+    if any(not isinstance(node, allowed) for node in ast.walk(tree)):
+        return None
+    try:
+        result = eval(compile(tree, "<condition-expression>", "eval"), {"__builtins__": {}}, {})
+    except Exception:
+        return None
+    return bool(result) if isinstance(result, bool) else None
 
 
 class ScanExpert:
@@ -168,6 +258,11 @@ class TaintExpert:
         if any(pattern.search(value) for pattern in self.sources):
             return False
         identifiers = _value_identifiers(value)
+        sink_value_identifiers = {
+            name for name in identifiers if name.casefold() in SINK_VALUE_NAMES
+        }
+        if sink_value_identifiers:
+            return sink_value_identifiers.issubset(clean)
         return not identifiers or identifiers.issubset(clean)
 
     def _legacy_source_before_sink(self, item: Evidence) -> bool:
@@ -192,13 +287,14 @@ class TaintExpert:
         for item in evidence:
             tainted: set[str] = set()
             clean: set[str] = set()
+            numeric_values: dict[str, float] = {}
             tainted_containers: set[str] = set()
             source_seen = False
             sink_seen = False
             sanitizer_seen = False
 
-            for raw_line in item.text.splitlines():
-                line = raw_line.split("//", 1)[0]
+            def process_line(line: str) -> None:
+                nonlocal source_seen, sink_seen, sanitizer_seen
                 source_hits = any(pattern.search(line) for pattern in self.sources)
                 sanitizer_hits = any(pattern.search(line) for pattern in self.sanitizers)
                 assignment = ASSIGNMENT_RE.match(line)
@@ -218,6 +314,21 @@ class TaintExpert:
                 if assignment:
                     name = assignment.group("name")
                     value = assignment.group("value")
+                    ternary = TERNARY_RE.match(value)
+                    if ternary:
+                        decision = _safe_eval_condition(
+                            ternary.group("condition"),
+                            numeric_values,
+                        )
+                        if decision is not None:
+                            value = ternary.group(
+                                "when_true" if decision else "when_false"
+                            )
+                    numeric_value = _safe_eval_numeric(value, numeric_values)
+                    if numeric_value is None:
+                        numeric_values.pop(name, None)
+                    else:
+                        numeric_values[name] = numeric_value
                     if sanitizer_hits:
                         tainted.discard(name)
                         clean.add(name)
@@ -243,6 +354,49 @@ class TaintExpert:
                         vulnerable_ids.append(item.evidence_id)
                     elif sanitizer_seen or line_has_clean_value:
                         safe_ids.append(item.evidence_id)
+
+            next_branch_decision: bool | None = None
+            last_if_decision: bool | None = None
+            for raw_line in item.text.splitlines():
+                code_line = raw_line.split("//", 1)[0]
+                stripped = code_line.strip()
+                if not stripped:
+                    continue
+                if_match = IF_RE.match(stripped)
+                if if_match:
+                    decision = _safe_eval_condition(
+                        if_match.group("condition"),
+                        numeric_values,
+                    )
+                    trailing = if_match.group("trailing").strip()
+                    last_if_decision = decision
+                    if trailing and trailing != "{":
+                        if decision is True:
+                            process_line(trailing)
+                        elif decision is None:
+                            process_line(code_line)
+                    else:
+                        next_branch_decision = decision
+                    continue
+                else_match = ELSE_RE.match(stripped)
+                if else_match:
+                    trailing = else_match.group("trailing").strip()
+                    decision = None if last_if_decision is None else not last_if_decision
+                    last_if_decision = None
+                    if trailing and trailing != "{":
+                        if decision is True:
+                            process_line(trailing)
+                        elif decision is None:
+                            process_line(code_line)
+                    else:
+                        next_branch_decision = decision
+                    continue
+                if next_branch_decision is False:
+                    next_branch_decision = None
+                    continue
+                if next_branch_decision is True:
+                    next_branch_decision = None
+                process_line(code_line)
 
             if source_seen or sink_seen or sanitizer_seen:
                 partial_ids.append(item.evidence_id)

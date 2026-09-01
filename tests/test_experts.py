@@ -118,6 +118,42 @@ def test_taint_tracks_java_parameter_map_source():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_evaluates_simple_java_ternary_constant_branch():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                "int num = 106;\n"
+                'String bar = (7*18) + num > 200 ? "safe" : param;\n'
+                "String fileName = baseDir + bar;\n"
+                "new FileInputStream(fileName);"
+            )
+        ],
+    )
+
+    assert vote.label == "SAFE"
+
+
+def test_taint_evaluates_simple_java_if_tainted_branch():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                "int num = 196;\n"
+                "if ( (500/42) + num > 200 )\n"
+                "   bar = param;\n"
+                'else bar = "safe";\n'
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
 def test_taint_does_not_treat_ldap_filters_array_as_clean_filter():
     vote = TaintExpert().evaluate(
         _candidate(),
