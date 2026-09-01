@@ -552,6 +552,68 @@ def test_focused_graph_context_keeps_same_key_collection_put_dependencies():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_focused_graph_context_prefers_later_sink_when_setup_sink_appears_first():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00116.java::BenchmarkTest00116.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00116.doGet",),
+        calls=("BenchmarkTest00116.doPost",),
+    )
+    filler = "\n".join(f"    int filler{index} = {index};" for index in range(80))
+    setup_filler = "\n".join(f"    int setupFiller{index} = {index};" for index in range(60))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00116.java::BenchmarkTest00116.doPost@5-120",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            '    String param = request.getHeader("vector");\n'
+            '    map.put("keyA", "safe");\n'
+            '    map.put("keyB", param);\n'
+            '    bar = (String)map.get("keyB");\n'
+            '    bar = (String)map.get("keyA");\n'
+            f"{filler}\n"
+            '    java.io.FileInputStream file = new java.io.FileInputStream("employees.xml");\n'
+            f"{setup_filler}\n"
+            '    String expression = "/Employees/Employee[@emplid=\'" + bar + "\']";\n'
+            "    xp.compile(expression).evaluate(xmlDocument, javax.xml.xpath.XPathConstants.NODESET);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00116.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=192,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "xp.compile(expression)" in augmentation.text
+    assert "String expression =" in augmentation.text
+    assert 'map.put("keyA", "safe")' in augmentation.text
+    assert 'map.get("keyA")' in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_focused_graph_context_prioritizes_deep_parameter_name_flow():
     entry = CodeDocument(
         repository_id="repo",

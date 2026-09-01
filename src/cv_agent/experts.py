@@ -71,6 +71,7 @@ SINK_VALUE_NAMES = frozenset(
         "bar",
         "cmd",
         "command",
+        "expression",
         "file",
         "filename",
         "filter",

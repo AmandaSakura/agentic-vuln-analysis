@@ -62,6 +62,7 @@ SINK_VALUE_NAMES = frozenset(
         "bar",
         "cmd",
         "command",
+        "expression",
         "file",
         "filename",
         "filter",
@@ -79,7 +80,7 @@ SECURITY_SINK_FOCUS_RE = re.compile(
     r"\bProcessBuilder\s*\(|"
     r"\bsubprocess\.(?:run|popen|call)|"
     r"\.(?:execute|executeQuery|executeUpdate|prepareStatement|prepareCall)\s*\(|"
-    r"\.search\s*\(|"
+    r"\.(?:search|compile|evaluate)\s*\(|"
     r"\b(?:FileInputStream|FileOutputStream|FileReader|FileWriter)\s*\(|"
     r"\.delete\s*\(|"
     r"shell\s*=\s*True",
@@ -373,12 +374,12 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
     if not source_indices and not sink_indices:
         return None
     if source_indices and sink_indices:
-        sink_index = sink_indices[0]
+        sink_index = sink_indices[-1]
         preceding_sources = [index for index in source_indices if index <= sink_index]
         source_index = preceding_sources[-1] if preceding_sources else source_indices[0]
         dependency_indices, dependency_ranges = _assignment_dependency_context(
             lines,
-            sink_indices,
+            [sink_index],
         )
         anchors = sorted({source_index, *dependency_indices, sink_index})
     else:
