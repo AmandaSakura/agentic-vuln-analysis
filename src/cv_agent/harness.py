@@ -527,6 +527,12 @@ COMMAND_POLICIES = (
         claim_eligible=False,
         harness_id=FULL_SYSTEM_HARNESS.harness_id,
     ),
+    CommandPolicy(
+        command="agentic-eval",
+        kind="diagnostic",
+        claim_eligible=False,
+        harness_id=FULL_SYSTEM_HARNESS.harness_id,
+    ),
     CommandPolicy(command="profile", kind="data-preparation", claim_eligible=False),
     CommandPolicy(
         command="owasp-baseline",

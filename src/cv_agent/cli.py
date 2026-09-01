@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .agentic_smoke import run_agentic_smoke
+from .agentic_eval import run_agentic_scripted_eval
 from .experiment import run_synthetic_experiment
 from .harness import command_policy, describe_project_harness
 from .java_ast import profile_owasp_java_ast
@@ -23,6 +24,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "agentic-smoke",
         help="run the scripted model/tool/observation LangGraph wiring diagnostic",
+    )
+    subparsers.add_parser(
+        "agentic-eval",
+        help="run the scripted LangGraph/ReAct quorum false-positive diagnostic",
     )
     profile = subparsers.add_parser("profile", help="report aggregate public-dataset metadata without row labels")
     profile.add_argument("--raw", type=Path, default=Path("data/raw"))
@@ -60,6 +65,8 @@ def main() -> int:
         return _emit(arguments.command, run_synthetic_experiment())
     if arguments.command == "agentic-smoke":
         return _emit(arguments.command, run_agentic_smoke())
+    if arguments.command == "agentic-eval":
+        return _emit(arguments.command, run_agentic_scripted_eval())
     if arguments.command == "profile":
         return _emit(arguments.command, profile_public_data(arguments.raw))
     if arguments.command == "owasp-baseline":
