@@ -294,6 +294,22 @@ def evaluate_owasp_rag(
         fpr_reduction_points = 100.0 * (single_fpr - multi_fpr)
         if single_fpr:
             fpr_reduction = 100.0 * (single_fpr - multi_fpr) / single_fpr
+    single_covered_fpr = systems[SystemVersion.V3_GRAPH_SINGLE.value][
+        "primary_subset"
+    ]["covered_false_positive_rate"]
+    multi_covered_fpr = systems[SystemVersion.V4_GRAPH_MULTI.value][
+        "primary_subset"
+    ]["covered_false_positive_rate"]
+    covered_fpr_reduction = None
+    covered_fpr_reduction_points = None
+    if single_covered_fpr is not None and multi_covered_fpr is not None:
+        covered_fpr_reduction_points = 100.0 * (
+            single_covered_fpr - multi_covered_fpr
+        )
+        if single_covered_fpr:
+            covered_fpr_reduction = 100.0 * (
+                single_covered_fpr - multi_covered_fpr
+            ) / single_covered_fpr
     single_population_alert_rate = systems[SystemVersion.V3_GRAPH_SINGLE.value][
         "primary_subset"
     ]["population_false_positive_rate"]
@@ -331,6 +347,10 @@ def evaluate_owasp_rag(
         "primary_v3_vs_v2_strict_recall_gain_percentage_points": retrieval_gain,
         "primary_v4_vs_v3_fpr_reduction_percent": fpr_reduction,
         "primary_v4_vs_v3_fpr_reduction_percentage_points": fpr_reduction_points,
+        "primary_v4_vs_v3_covered_fpr_reduction_percent": covered_fpr_reduction,
+        "primary_v4_vs_v3_covered_fpr_reduction_percentage_points": (
+            covered_fpr_reduction_points
+        ),
         "primary_v4_vs_v3_population_false_alert_reduction_percent": (
             population_alert_reduction
         ),

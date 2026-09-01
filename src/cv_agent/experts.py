@@ -34,15 +34,14 @@ JAVA_TYPED_ASSIGNMENT_RE = re.compile(
 COLLECTION_PUT_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.put\s*\((?P<arguments>[^;]*)\)"
 )
+COLLECTION_ADD_RE = re.compile(
+    r"\b(?P<name>[A-Za-z_$][\w$]*)\.add\s*\((?P<value>[^;]*)\)"
+)
 COLLECTION_GET_RE = re.compile(
     r"\b(?P<name>[A-Za-z_$][\w$]*)\.get\s*\(\s*"
     r"(?P<key>\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')\s*\)"
 )
 RETURN_RE = re.compile(r"\breturn\s+(?P<value>.+?)\s*;")
-CALL_RE = re.compile(
-    r"(?:(?P<receiver>[A-Za-z_$][\w$]*)\s*\.)?"
-    r"(?P<method>[A-Za-z_$][\w$]*)\s*\((?P<arguments>.*)\)"
-)
 LEADING_CAST_RE = re.compile(r"^\s*(?:\([\w.$<>\[\],?]+\)\s*)+")
 IF_RE = re.compile(r"^\s*if\s*\((?P<condition>.*)\)\s*(?P<trailing>.*)$")
 ELSE_RE = re.compile(r"^\s*else\b\s*(?P<trailing>.*)$")
@@ -265,33 +264,64 @@ def _split_arguments(arguments: str) -> list[str]:
     return values
 
 
+def _outer_call_parts(value: str) -> tuple[str, str, str | None] | None:
+    """Parse the final call in an expression using balanced parentheses."""
+
+    expression = value.strip().rstrip(";")
+    if not expression.endswith(")"):
+        return None
+    depth = 0
+    in_quote: str | None = None
+    escaped = False
+    for index in range(len(expression) - 1, -1, -1):
+        char = expression[index]
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if in_quote:
+            if char == in_quote:
+                in_quote = None
+            continue
+        if char in {"'", '"'}:
+            in_quote = char
+            continue
+        if char == ")":
+            depth += 1
+        elif char == "(":
+            depth -= 1
+            if depth != 0:
+                continue
+            prefix = expression[:index].rstrip()
+            method_match = re.search(r"(?P<method>[A-Za-z_$][\w$]*)$", prefix)
+            if not method_match:
+                return None
+            receiver = prefix[: method_match.start()].rstrip()
+            if receiver.endswith("."):
+                receiver = receiver[:-1].rstrip()
+            return (
+                method_match.group("method"),
+                expression[index + 1 : -1],
+                receiver or None,
+            )
+    return None
+
+
 def _sink_arguments(line: str, patterns: Sequence[re.Pattern[str]]) -> list[str]:
     """Return balanced argument expressions for security-sensitive calls."""
 
     arguments: list[str] = []
+    masked = STRING_LITERAL_RE.sub(lambda match: " " * len(match.group(0)), line)
     for pattern in patterns:
-        for match in pattern.finditer(line):
-            open_index = line.rfind("(", match.start(), match.end())
+        for match in pattern.finditer(masked):
+            open_index = masked.rfind("(", match.start(), match.end())
             if open_index < 0:
                 continue
             depth = 0
-            in_quote: str | None = None
-            escaped = False
-            for index in range(open_index, len(line)):
-                char = line[index]
-                if escaped:
-                    escaped = False
-                    continue
-                if char == "\\":
-                    escaped = True
-                    continue
-                if in_quote:
-                    if char == in_quote:
-                        in_quote = None
-                    continue
-                if char in {"'", '"'}:
-                    in_quote = char
-                    continue
+            for index in range(open_index, len(masked)):
+                char = masked[index]
                 if char == "(":
                     depth += 1
                 elif char == ")":
@@ -386,6 +416,7 @@ class ScanExpert:
             r"subprocess\.(?:run|popen|call)",
             r"Runtime\.getRuntime\(\)\.exec",
             r"\bProcessBuilder\s*\(",
+            r"\.command\s*\(",
             r"\.(?:execute|executeQuery|executeUpdate|prepareStatement|prepareCall)\s*\(",
             r"\.(?:search|compile|evaluate)\s*\(",
             r"\b(?:FileInputStream|FileOutputStream|FileReader|FileWriter)\s*\(",
@@ -449,9 +480,8 @@ class TaintExpert:
         collection_values: dict[str, dict[str, bool]],
         constant_methods: set[str],
     ) -> bool:
-        call_value = re.sub(r"^new\s+", "", LEADING_CAST_RE.sub("", value.strip()))
-        call = CALL_RE.fullmatch(call_value.rstrip(";"))
-        if call and call.group("method") in constant_methods:
+        call = _outer_call_parts(LEADING_CAST_RE.sub("", value.strip()))
+        if call and call[0] in constant_methods:
             return False
         for match in COLLECTION_GET_RE.finditer(value):
             key = _literal_string(match.group("key"))
@@ -474,9 +504,8 @@ class TaintExpert:
         collection_values: dict[str, dict[str, bool]],
         constant_methods: set[str],
     ) -> bool:
-        call_value = re.sub(r"^new\s+", "", LEADING_CAST_RE.sub("", value.strip()))
-        call = CALL_RE.fullmatch(call_value.rstrip(";"))
-        if call and call.group("method") in constant_methods:
+        call = _outer_call_parts(LEADING_CAST_RE.sub("", value.strip()))
+        if call and call[0] in constant_methods:
             return True
         if any(pattern.search(value) for pattern in self.sources):
             return False
@@ -557,6 +586,29 @@ class TaintExpert:
                     source_seen = True
                 if sanitizer_hits:
                     sanitizer_seen = True
+
+                for add in COLLECTION_ADD_RE.finditer(line):
+                    container = add.group("name")
+                    value_argument = add.group("value")
+                    if self._value_is_tainted(
+                        value_argument,
+                        tainted,
+                        tainted_containers,
+                        collection_values,
+                        constant_methods,
+                    ):
+                        tainted_containers.add(container)
+                        clean.discard(container)
+                    elif self._value_is_clean(
+                        value_argument,
+                        clean,
+                        collection_values,
+                        constant_methods,
+                    ):
+                        if container not in tainted_containers:
+                            clean.add(container)
+                    else:
+                        clean.discard(container)
 
                 for put in COLLECTION_PUT_RE.finditer(line):
                     split_arguments = _split_first_argument(put.group("arguments"))
@@ -843,19 +895,205 @@ class FlowRefutationExpert:
             "trim",
         }
     )
-    static_clean_calls = frozenset({"getProperty"})
+    static_clean_calls = frozenset({"getClass", "getClassLoader", "getProperty"})
     package_roots = frozenset({"com", "java", "javax", "org", "sun"})
     sink_value_names = SINK_VALUE_NAMES | {"expression"}
 
-    @staticmethod
-    def _method_name(item: Evidence) -> str | None:
-        if "::" not in item.path:
-            return None
-        symbol = item.path.split("::", 1)[1].rsplit("@", 1)[0]
-        return symbol.rsplit(".", 1)[-1]
-
     def _constant_return_methods(self, evidence: Sequence[Evidence]) -> set[str]:
         return _constant_return_method_names(evidence, self.sources)
+
+    def _argument_preserving_methods(self, evidence: Sequence[Evidence]) -> set[str]:
+        method_results: dict[str, list[bool]] = {}
+        for item in evidence:
+            if "::" not in item.path:
+                continue
+            returns = [match.group("value") for match in RETURN_RE.finditer(item.text)]
+            if not returns:
+                continue
+            symbol = item.path.split("::", 1)[1].rsplit("@", 1)[0]
+            method_name = symbol.rsplit(".", 1)[-1]
+            signature = item.text.split("{", 1)[0]
+            parameter_match = re.search(r"\((?P<parameters>.*)\)", signature, re.DOTALL)
+            parameters: set[str] = set()
+            if parameter_match:
+                for parameter in _split_arguments(parameter_match.group("parameters")):
+                    names = IDENTIFIER_RE.findall(parameter)
+                    if names:
+                        parameters.add(names[-1])
+
+            clean = set(parameters)
+            has_ambient_source = any(
+                pattern.search(item.text) for pattern in self.sources
+            )
+            for line in _logical_code_lines(item.text):
+                assignment = ASSIGNMENT_RE.match(line)
+                if not assignment:
+                    continue
+                value = assignment.group("value")
+                identifiers = self._fallback_identifiers(value)
+                if (
+                    not any(pattern.search(value) for pattern in self.sources)
+                    and identifiers.issubset(clean)
+                ):
+                    clean.add(assignment.group("name"))
+                else:
+                    clean.discard(assignment.group("name"))
+
+            preserves_arguments = not has_ambient_source and all(
+                _literal_string(value) is not None
+                or self._fallback_identifiers(value).issubset(clean)
+                for value in returns
+            )
+            method_results.setdefault(method_name, []).append(preserves_arguments)
+        return {
+            name
+            for name, results in method_results.items()
+            if results and all(results)
+        }
+
+    @staticmethod
+    def _record_literal_state(
+        line: str,
+        numeric_values: dict[str, float],
+        string_values: dict[str, str],
+        char_values: dict[str, str],
+    ) -> None:
+        assignment = ASSIGNMENT_RE.match(line)
+        if not assignment:
+            return
+        name = assignment.group("name")
+        value = assignment.group("value")
+        numeric = _safe_eval_numeric(value, numeric_values)
+        if numeric is None:
+            numeric_values.pop(name, None)
+        else:
+            numeric_values[name] = numeric
+        literal = _literal_string(value)
+        char_at = CHAR_AT_RE.match(value.strip().rstrip(";"))
+        if literal is not None:
+            string_values[name] = literal
+            if len(literal) == 1:
+                char_values[name] = literal
+            else:
+                char_values.pop(name, None)
+        elif char_at and char_at.group("name") in string_values:
+            source = string_values[char_at.group("name")]
+            index = int(char_at.group("index"))
+            string_values.pop(name, None)
+            if 0 <= index < len(source):
+                char_values[name] = source[index]
+            else:
+                char_values.pop(name, None)
+        else:
+            string_values.pop(name, None)
+            char_values.pop(name, None)
+
+    def _active_lines(
+        self,
+        lines: list[str],
+        before_index: int,
+    ) -> list[tuple[int, str]]:
+        """Select lines from provably reachable simple Java branches."""
+
+        active: list[tuple[int, str]] = []
+        numeric_values: dict[str, float] = {}
+        string_values: dict[str, str] = {}
+        char_values: dict[str, str] = {}
+        next_branch_decision: bool | None = None
+        last_if_decision: bool | None = None
+        switch_target: str | None = None
+        switch_active = False
+        switch_matched = False
+        switch_done = False
+
+        def include(index: int, line: str) -> None:
+            active.append((index, line))
+            self._record_literal_state(
+                line,
+                numeric_values,
+                string_values,
+                char_values,
+            )
+
+        for index, stripped in enumerate(lines[:before_index]):
+            if switch_target is not None:
+                if stripped == "}":
+                    switch_target = None
+                    switch_active = False
+                    switch_matched = False
+                    switch_done = False
+                    continue
+                case_match = CASE_RE.match(stripped)
+                if case_match:
+                    if switch_done:
+                        switch_active = False
+                    elif switch_active:
+                        switch_matched = True
+                    else:
+                        case_value = _literal_string(case_match.group("value"))
+                        switch_active = case_value == switch_target
+                        switch_matched = switch_matched or switch_active
+                    continue
+                if DEFAULT_RE.match(stripped):
+                    switch_active = not switch_done and (
+                        switch_active or not switch_matched
+                    )
+                    switch_matched = True
+                    continue
+                if stripped == "break;":
+                    if switch_active:
+                        switch_done = True
+                        switch_active = False
+                    continue
+                if switch_done:
+                    continue
+                if switch_active:
+                    include(index, stripped)
+                continue
+
+            switch_match = SWITCH_RE.match(stripped)
+            if switch_match:
+                value = switch_match.group("value").strip()
+                switch_target = char_values.get(value) or _literal_string(value)
+                if switch_target is not None:
+                    switch_active = False
+                    switch_matched = False
+                    switch_done = False
+                    continue
+
+            if_match = IF_RE.match(stripped)
+            if if_match:
+                decision = _safe_eval_condition(
+                    if_match.group("condition"),
+                    numeric_values,
+                )
+                trailing = if_match.group("trailing").strip()
+                last_if_decision = decision
+                if trailing and trailing != "{":
+                    if decision is not False:
+                        include(index, trailing)
+                else:
+                    next_branch_decision = decision
+                continue
+
+            else_match = ELSE_RE.match(stripped)
+            if else_match:
+                trailing = else_match.group("trailing").strip()
+                decision = None if last_if_decision is None else not last_if_decision
+                last_if_decision = None
+                if trailing and trailing != "{":
+                    if decision is not False:
+                        include(index, trailing)
+                else:
+                    next_branch_decision = decision
+                continue
+
+            if next_branch_decision is False:
+                next_branch_decision = None
+                continue
+            next_branch_decision = None
+            include(index, stripped)
+        return active
 
     @staticmethod
     def _numeric_values(lines: list[str], before_index: int) -> dict[str, float]:
@@ -895,6 +1133,7 @@ class FlowRefutationExpert:
         lines: list[str],
         before_index: int,
         constant_methods: set[str],
+        argument_methods: set[str],
         seen: set[tuple[str, int]],
     ) -> bool:
         collection = match.group("name")
@@ -911,6 +1150,7 @@ class FlowRefutationExpert:
                     lines,
                     index,
                     constant_methods,
+                    argument_methods,
                     seen,
                 )
         return False
@@ -921,32 +1161,65 @@ class FlowRefutationExpert:
         lines: list[str],
         before_index: int,
         constant_methods: set[str],
+        argument_methods: set[str],
         seen: set[tuple[str, int]],
     ) -> bool:
         key = (name, before_index)
         if key in seen:
             return False
+        active_lines = self._active_lines(lines, before_index)
         definitions = [
             (index, assignment)
-            for index, line in enumerate(lines[:before_index])
+            for index, line in active_lines
             if (assignment := ASSIGNMENT_RE.match(line)) is not None
             and assignment.group("name") == name
         ]
         if not definitions:
             return name in self._numeric_values(lines, before_index)
+        if len(definitions) > 1:
+            first_index = definitions[0][0]
+            last_index = definitions[-1][0]
+            has_control_join = any(
+                IF_RE.match(lines[index])
+                or ELSE_RE.match(lines[index])
+                or SWITCH_RE.match(lines[index])
+                or CASE_RE.match(lines[index])
+                or DEFAULT_RE.match(lines[index])
+                for index in range(first_index, last_index + 1)
+            )
+            if not has_control_join:
+                definitions = [definitions[-1]]
         next_seen = {*seen, key}
-        # Requiring every possible definition to be clean is conservative for
-        # unresolved branch joins and avoids choosing a convenient last branch.
-        return all(
+        # Requiring every remaining feasible definition to be clean is
+        # conservative for unresolved branch joins.
+        definitions_clean = all(
             self._expression_is_clean(
                 assignment.group("value"),
                 lines,
                 index,
                 constant_methods,
+                argument_methods,
                 next_seen,
             )
             for index, assignment in definitions
         )
+        if not definitions_clean:
+            return False
+        first_definition = min(index for index, _ in definitions)
+        for index, line in active_lines:
+            if index <= first_definition:
+                continue
+            for add in COLLECTION_ADD_RE.finditer(line):
+                if add.group("name") == name and not self._expression_is_clean(
+                    add.group("value"),
+                    lines,
+                    index,
+                    constant_methods,
+                    argument_methods,
+                    next_seen,
+                ):
+                    return False
+        return True
 
     def _expression_is_clean(
         self,
@@ -954,6 +1227,7 @@ class FlowRefutationExpert:
         lines: list[str],
         before_index: int,
         constant_methods: set[str],
+        argument_methods: set[str],
         seen: set[tuple[str, int]],
     ) -> bool:
         value = LEADING_CAST_RE.sub("", value.strip().rstrip(";"))
@@ -979,6 +1253,7 @@ class FlowRefutationExpert:
                     lines,
                     before_index,
                     constant_methods,
+                    argument_methods,
                     seen,
                 )
             return all(
@@ -987,6 +1262,7 @@ class FlowRefutationExpert:
                     lines,
                     before_index,
                     constant_methods,
+                    argument_methods,
                     seen,
                 )
                 for branch in (ternary.group("when_true"), ternary.group("when_false"))
@@ -1000,6 +1276,7 @@ class FlowRefutationExpert:
                     lines,
                     before_index,
                     constant_methods,
+                    argument_methods,
                     seen,
                 )
                 for match in collection_gets
@@ -1007,11 +1284,10 @@ class FlowRefutationExpert:
                 return False
             value = COLLECTION_GET_RE.sub("", value)
 
-        call_value = re.sub(r"^new\s+", "", value).strip()
-        call = CALL_RE.fullmatch(call_value)
+        call = _outer_call_parts(value)
         if call:
-            method = call.group("method")
-            arguments = _split_arguments(call.group("arguments"))
+            method, raw_arguments, receiver = call
+            arguments = _split_arguments(raw_arguments)
             if method in constant_methods or method in self.static_clean_calls:
                 return True
             arguments_clean = all(
@@ -1020,22 +1296,38 @@ class FlowRefutationExpert:
                     lines,
                     before_index,
                     constant_methods,
+                    argument_methods,
                     seen,
                 )
                 for argument in arguments
             )
             if method in self.value_transforms:
-                receiver = call.group("receiver")
                 return arguments_clean and (
                     receiver is None
-                    or self._name_is_clean(
-                        receiver,
-                        lines,
-                        before_index,
-                        constant_methods,
-                        seen,
+                    or (
+                        self._name_is_clean(
+                            receiver,
+                            lines,
+                            before_index,
+                            constant_methods,
+                            argument_methods,
+                            seen,
+                        )
+                        if IDENTIFIER_RE.fullmatch(receiver)
+                        else self._expression_is_clean(
+                            receiver,
+                            lines,
+                            before_index,
+                            constant_methods,
+                            argument_methods,
+                            seen,
+                        )
                     )
                 )
+            if method in argument_methods:
+                return arguments_clean
+            if value.lstrip().startswith("new ") and method[:1].isupper():
+                return arguments_clean
             # Unknown helpers may read ambient input, so clean arguments alone
             # are insufficient for a refutation unless a retrieved summary exists.
             return False
@@ -1047,6 +1339,7 @@ class FlowRefutationExpert:
                 lines,
                 before_index,
                 constant_methods,
+                argument_methods,
                 seen,
             )
             for name in identifiers
@@ -1054,14 +1347,22 @@ class FlowRefutationExpert:
 
     def evaluate(self, candidate: Candidate, evidence: Sequence[Evidence]) -> ExpertVote:
         constant_methods = self._constant_return_methods(evidence)
+        argument_methods = self._argument_preserving_methods(evidence)
         safe_ids: list[str] = []
         unresolved_ids: list[str] = []
         for item in evidence:
             lines = _logical_code_lines(item.text)
             item_sinks: list[bool] = []
             for index, line in enumerate(lines):
-                for arguments in _sink_arguments(line, self.sinks):
+                sink_arguments = _sink_arguments(line, self.sinks)
+                for sink_index, arguments in enumerate(sink_arguments):
                     if not arguments:
+                        continue
+                    if (
+                        sink_index > 0
+                        and ".compile(" in line
+                        and ".evaluate(" in line
+                    ):
                         continue
                     identifiers = self._fallback_identifiers(arguments)
                     focused = {
@@ -1076,6 +1377,7 @@ class FlowRefutationExpert:
                                 lines,
                                 index,
                                 constant_methods,
+                                argument_methods,
                                 set(),
                             )
                             for name in focused
@@ -1086,6 +1388,7 @@ class FlowRefutationExpert:
                             lines,
                             index,
                             constant_methods,
+                            argument_methods,
                             set(),
                         )
                     item_sinks.append(clean)

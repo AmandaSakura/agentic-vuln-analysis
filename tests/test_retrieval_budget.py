@@ -727,6 +727,129 @@ def test_text_context_keeps_query_focus_without_security_sink_boost():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_graph_context_keeps_complete_multiline_security_sink_statement():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="entry.java::Entry.doGet@1-3",
+        text="void doGet() { doPost(); }",
+        defines=("Entry.doGet",),
+        calls=("Entry.doPost",),
+    )
+    filler = "\n".join(f"int filler{index} = {index};" for index in range(40))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="entry.java::Entry.doPost@5-60",
+        text=(
+            "void doPost() {\n"
+            'String param = request.getHeader("vector");\n'
+            f"{filler}\n"
+            'String sql = "SELECT " + param;\n'
+            "CallableStatement statement = connection.prepareCall( sql,\n"
+            "    ResultSet.TYPE_FORWARD_ONLY,\n"
+            "    ResultSet.CONCUR_READ_ONLY );\n"
+            "}\n"
+        ),
+        defines=("Entry.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=128,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "connection.prepareCall( sql," in augmentation.text
+    assert "ResultSet.CONCUR_READ_ONLY );" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
+def test_graph_context_prioritizes_entry_callee_under_shared_budget():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="entry.java::Entry.doGet@1-3",
+        text="void doGet() { doPost(); }",
+        defines=("Entry.doGet",),
+        calls=("Entry.doPost",),
+    )
+    filler = "\n".join(f"int filler{index} = {index};" for index in range(90))
+    helper_calls = tuple(f"Helper{index}.run" for index in range(5))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="entry.java::Entry.doPost@5-150",
+        text=(
+            "void doPost() {\n"
+            'String param = request.getParameterNames().nextElement();\n'
+            f"{filler}\n"
+            'String guess = "ABC";\n'
+            "char switchTarget = guess.charAt(2);\n"
+            "switch (switchTarget) {\n"
+            "case 'A': bar = param; break;\n"
+            'case \'B\': bar = "safe"; break;\n'
+            "case 'C': bar = param; break;\n"
+            "default: bar = \"safe\"; break;\n"
+            "}\n"
+            'String sql = "SELECT " + bar;\n'
+            "CallableStatement statement = connection.prepareCall( sql,\n"
+            "    ResultSet.TYPE_FORWARD_ONLY,\n"
+            "    ResultSet.CONCUR_READ_ONLY );\n"
+            "}\n"
+        ),
+        defines=("Entry.doPost",),
+        calls=helper_calls,
+    )
+    helpers = [
+        CodeDocument(
+            repository_id="repo",
+            path=f"Helper{index}.java::Helper{index}.run@1-20",
+            text=("void run() {\n" + "int value = 1;\n" * 30 + "}\n"),
+            defines=(f"Helper{index}.run",),
+        )
+        for index in range(5)
+    ]
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=6,
+        base_context_tokens=32,
+        augmentation_context_tokens=1488,
+        graph_hops=2,
+    )
+
+    context = RepositoryIndex([entry, do_post, *helpers]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "request.getParameterNames()" in augmentation.text
+    assert "switchTarget = guess.charAt(2)" in augmentation.text
+    assert "connection.prepareCall( sql," in augmentation.text
+    assert "ResultSet.CONCUR_READ_ONLY );" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_hybrid_context_budget_does_not_starve_graph_neighbor_after_long_seed():
     entry = CodeDocument(
         repository_id="repo",

@@ -76,7 +76,7 @@ def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
     }
     assert diagnostics["retrieval_contract"]["V2"] == {
         "mode": "text",
-        "top_k": 6,
+        "top_k": 10,
         "base_context_tokens": 512,
         "augmentation_context_tokens": 1488,
         "graph_hops": 0,
@@ -181,6 +181,7 @@ def test_owasp_metrics_keep_abstention_and_separate_attribution():
     result = evaluate_owasp_rag(labels, predictions)
     assert result["primary_v3_vs_v2_strict_recall_gain_percentage_points"] == 100.0
     assert result["primary_v4_vs_v3_fpr_reduction_percent"] == 0.0
+    assert result["primary_v4_vs_v3_covered_fpr_reduction_percent"] is None
     assert result["primary_v4_vs_v3_population_false_alert_reduction_percent"] == 100.0
     assert result["systems"]["V4"]["primary_subset"]["coverage"] == 0.5
     assert result["primary_v4_vs_v3_coverage_delta_percentage_points"] == -50.0
@@ -189,3 +190,29 @@ def test_owasp_metrics_keep_abstention_and_separate_attribution():
         "positive": {"VULNERABLE->VULNERABLE": 1},
     }
     assert result["v5_vs_v4_label_disagreement_count"] == 0
+
+
+def test_owasp_covered_fpr_reduction_requires_explicit_safe_resolution():
+    labels = {
+        "vulnerable": OwaspLabel(
+            case_id="vulnerable", category="cmdi", vulnerable=True, cwe=78
+        ),
+        "benign": OwaspLabel(
+            case_id="benign", category="cmdi", vulnerable=False, cwe=78
+        ),
+    }
+    predictions = {
+        "V1": {"vulnerable": "ABSTAIN", "benign": "ABSTAIN"},
+        "V2": {"vulnerable": "ABSTAIN", "benign": "ABSTAIN"},
+        "V3": {"vulnerable": "VULNERABLE", "benign": "VULNERABLE"},
+        "V4": {"vulnerable": "VULNERABLE", "benign": "SAFE"},
+        "V5": {"vulnerable": "VULNERABLE", "benign": "SAFE"},
+    }
+
+    result = evaluate_owasp_rag(labels, predictions)
+
+    assert result["primary_v4_vs_v3_fpr_reduction_percent"] == 100.0
+    assert result["primary_v4_vs_v3_covered_fpr_reduction_percent"] == 100.0
+    assert result["primary_v4_vs_v3_transition_count"]["negative"] == {
+        "VULNERABLE->SAFE": 1
+    }

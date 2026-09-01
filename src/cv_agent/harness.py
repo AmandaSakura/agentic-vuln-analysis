@@ -174,7 +174,7 @@ class EndToEndHarness(FrozenModel):
 
 COMPARABLE_BASE_TOKENS = 512
 COMPARABLE_AUGMENTATION_TOKENS = 1488
-COMPARABLE_TOP_K = 6
+COMPARABLE_TOP_K = 10
 
 
 def _system(
@@ -204,7 +204,7 @@ def _system(
 
 
 OWASP_HARNESS = ExperimentHarness(
-    harness_id="owasp-development-v2",
+    harness_id="owasp-development-v3",
     dataset_name="OWASP BenchmarkJava 1.2beta",
     dataset_role=DatasetRole.DEVELOPMENT,
     claim_eligible=False,
@@ -242,7 +242,7 @@ OWASP_HARNESS = ExperimentHarness(
             RetrievalMode.GRAPH,
             top_k=COMPARABLE_TOP_K,
             augmentation_tokens=COMPARABLE_AUGMENTATION_TOKENS,
-            graph_hops=2,
+            graph_hops=4,
             experts=("scan",),
             policy="single",
         ),
@@ -251,7 +251,7 @@ OWASP_HARNESS = ExperimentHarness(
             RetrievalMode.GRAPH,
             top_k=COMPARABLE_TOP_K,
             augmentation_tokens=COMPARABLE_AUGMENTATION_TOKENS,
-            graph_hops=2,
+            graph_hops=4,
             experts=("scan", "taint", "verify"),
             policy="majority",
         ),
@@ -260,7 +260,7 @@ OWASP_HARNESS = ExperimentHarness(
             RetrievalMode.GRAPH,
             top_k=COMPARABLE_TOP_K,
             augmentation_tokens=COMPARABLE_AUGMENTATION_TOKENS,
-            graph_hops=2,
+            graph_hops=4,
             experts=("scan", "taint", "verify"),
             policy="majority",
             early_quorum_after=2,
@@ -274,6 +274,7 @@ OWASP_HARNESS = ExperimentHarness(
         "population_false_positive_rate",
         "conservative_false_positive_rate",
         "covered_false_positive_rate",
+        "covered_fpr_reduction",
         "precision",
         "recall_delta",
         "coverage_delta",
@@ -872,6 +873,7 @@ def validate_owasp_result_payload(payload: Mapping[str, object]) -> None:
             "systems",
             "diagnostics",
             "primary_v4_vs_v3_fpr_reduction_percent",
+            "primary_v4_vs_v3_covered_fpr_reduction_percent",
             "primary_v4_vs_v3_population_false_alert_reduction_percent",
             "primary_v4_vs_v3_strict_recall_delta_percentage_points",
             "primary_v4_vs_v3_coverage_delta_percentage_points",

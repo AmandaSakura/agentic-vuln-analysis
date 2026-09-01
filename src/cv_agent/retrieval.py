@@ -380,6 +380,24 @@ def _line_window_range(
     return start, end
 
 
+def _logical_statement_range(lines: list[str], start: int) -> tuple[int, int]:
+    """Expand a Java call anchor through its balanced multiline statement."""
+
+    depth = 0
+    saw_parenthesis = False
+    for index in range(start, len(lines)):
+        masked = STRING_LITERAL_RE.sub("", lines[index])
+        for char in masked:
+            if char == "(":
+                depth += 1
+                saw_parenthesis = True
+            elif char == ")" and depth:
+                depth -= 1
+        if saw_parenthesis and depth == 0 and ";" in masked:
+            return start, index + 1
+    return start, min(len(lines), start + 1)
+
+
 def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
     source_indices = [
         index for index, line in enumerate(lines) if SECURITY_SOURCE_FOCUS_RE.search(line)
@@ -402,12 +420,17 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
         dependency_ranges = []
         anchors = [source_indices[0] if source_indices else sink_indices[0]]
 
+    sink_statement_ranges = [
+        _logical_statement_range(lines, index) for index in sink_indices
+    ]
+
     marker_budget = (
         context_text_token_count(NON_ADJACENT_CONTEXT_MARKER) * (len(anchors) - 1)
     )
     chunk_budget = max(1, (token_budget - marker_budget) // len(anchors))
     ranges = [
         *dependency_ranges,
+        *sink_statement_ranges,
         *(_line_window_range(lines, anchor, chunk_budget) for anchor in anchors),
     ]
     focused = _render_non_overlapping_ranges(lines, ranges)
@@ -415,6 +438,7 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
         return focused
     compact_ranges = [
         *dependency_ranges,
+        *sink_statement_ranges,
         *((anchor, anchor + 1) for anchor in anchors),
     ]
     compact = _render_non_overlapping_ranges(lines, compact_ranges)
@@ -429,6 +453,7 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
         lines,
         [
             *dependency_ranges,
+            *sink_statement_ranges,
             *((anchor, anchor + 1) for anchor in prioritized_anchors),
         ],
     )
@@ -584,7 +609,14 @@ class RepositoryIndex:
         forward: dict[str, set[str]] = {doc.path: set() for doc in documents}
         reverse: dict[str, set[str]] = {doc.path: set() for doc in documents}
         for caller in documents:
+            precise_bases = {
+                symbol.split("(", 1)[0].split("#", 1)[0]
+                for symbol in caller.calls
+                if "(" in symbol or "#" in symbol
+            }
             for symbol in caller.calls:
+                if symbol in precise_bases:
+                    continue
                 targets = definitions.get(symbol, set())
                 # Bare symbols are useful only when they resolve uniquely. Linking every
                 # same-named method creates artificial repository-wide shortcuts.
@@ -656,14 +688,27 @@ class RepositoryIndex:
     ) -> list[Evidence]:
         if not evidence:
             return []
-        per_item_budget = max(1, token_budget // len(evidence))
+        if len(evidence) == 1 or token_budget < len(evidence):
+            item_budgets = [max(1, token_budget // len(evidence))] * len(evidence)
+        else:
+            equal_share = token_budget // len(evidence)
+            priority_budget = min(
+                token_budget - (len(evidence) - 1),
+                max(equal_share, min(512, token_budget // 2)),
+            )
+            remaining = token_budget - priority_budget
+            share, extra = divmod(remaining, len(evidence) - 1)
+            item_budgets = [priority_budget] + [
+                share + (1 if index < extra else 0)
+                for index in range(len(evidence) - 1)
+            ]
         return [
             item.model_copy(
                 update={
                     "text": _focused_text(
                         item.text,
                         query=candidate.query,
-                        token_budget=per_item_budget,
+                        token_budget=item_budget,
                         security_focus=(
                             item.retrieval in {"graph", "hybrid"}
                             and item.graph_distance is not None
@@ -671,7 +716,7 @@ class RepositoryIndex:
                     )
                 }
             )
-            for item in evidence
+            for item, item_budget in zip(evidence, item_budgets, strict=True)
         ]
 
     def document(self, path: str) -> CodeDocument | None:
