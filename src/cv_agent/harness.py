@@ -25,6 +25,19 @@ class RetrievalMode(StrEnum):
     HYBRID = "hybrid"
 
 
+class AgentRuntimeMode(StrEnum):
+    SCRIPTED = "scripted"
+    LIVE = "live"
+
+
+class AgentSystemVersion(StrEnum):
+    E1_LOCAL_SINGLE = "E1"
+    E2_TEXT_SINGLE = "E2"
+    E3_GRAPH_SINGLE = "E3"
+    E4_GRAPH_MULTI = "E4"
+    E5_GRAPH_FAST = "E5"
+
+
 class RetrievalBudget(FrozenModel):
     top_k: int = Field(ge=0, le=50)
     base_context_tokens: int = Field(ge=32, le=100_000)
@@ -83,6 +96,78 @@ class CommandPolicy(FrozenModel):
     kind: Literal["experiment", "diagnostic", "data-preparation", "harness"]
     claim_eligible: bool
     harness_id: str | None = None
+
+
+class ModelRuntimeHarness(FrozenModel):
+    protocol: Literal["openai-compatible-chat"]
+    base_url_env: str
+    model_env: str
+    api_key_env: str
+    temperature: float = Field(ge=0.0, le=2.0)
+    request_timeout_seconds: int = Field(ge=1, le=600)
+
+
+class ReActLoopHarness(FrozenModel):
+    max_steps: int = Field(ge=1, le=32)
+    max_tool_observation_tokens: int = Field(ge=128, le=100_000)
+    require_model_action: bool
+    require_tool_observation: bool
+    final_schema: str
+
+
+class ExpertAgentHarness(FrozenModel):
+    expert: ExpertName
+    mandate: str
+    tools: tuple[str, ...]
+    require_react_trace: bool
+
+
+class ValidationRuntimeHarness(FrozenModel):
+    validators: tuple[str, ...]
+    command_policy: Literal["typed-allowlist"]
+    network_policy: Literal["disabled-or-loopback"]
+    subject_mode: Literal["read-only"]
+    timeout_seconds: int = Field(ge=1, le=600)
+    max_output_bytes: int = Field(ge=1_024, le=10_000_000)
+
+
+class AgentSystemHarness(FrozenModel):
+    system: AgentSystemVersion
+    retrieval: RetrievalMode
+    budget: RetrievalBudget
+    planner_enabled: bool
+    expert_order: tuple[ExpertName, ...]
+    full_review_policy: Literal["single", "majority"]
+    quorum: int = Field(default=2, ge=2, le=3)
+    fast_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
+    early_quorum_after: int | None = Field(default=None, ge=2, le=3)
+
+
+class EndToEndHarness(FrozenModel):
+    harness_id: str
+    runtime_modes: tuple[AgentRuntimeMode, ...]
+    claim_runtime_mode: AgentRuntimeMode
+    model: ModelRuntimeHarness
+    react_loop: ReActLoopHarness
+    planner_max_subtasks: int = Field(ge=1, le=32)
+    experts: tuple[ExpertAgentHarness, ...]
+    validation: ValidationRuntimeHarness
+    tier1_languages: tuple[str, ...]
+    fallback_suffixes: tuple[str, ...]
+    development_repositories: tuple[str, ...]
+    held_out_positive_dataset: str
+    paired_negative_sources: tuple[str, ...]
+    systems: tuple[AgentSystemHarness, ...]
+    required_metrics: tuple[str, ...]
+
+    def system_spec(self, system: AgentSystemVersion) -> AgentSystemHarness:
+        matches = [spec for spec in self.systems if spec.system == system]
+        if len(matches) != 1:
+            raise ValueError(
+                f"{self.harness_id}: expected one agent-system spec for {system}, "
+                f"found {len(matches)}"
+            )
+        return matches[0]
 
 
 COMPARABLE_BASE_TOKENS = 512
@@ -225,9 +310,219 @@ VULNGYM_RETRIEVAL_HARNESS = RetrievalEvaluationHarness(
 )
 
 
+AGENT_BASE_TOKENS = 4_096
+AGENT_AUGMENTATION_TOKENS = 12_288
+AGENT_TOP_K = 12
+AGENT_GRAPH_HOPS = 4
+
+
+def _agent_system(
+    system: AgentSystemVersion,
+    retrieval: RetrievalMode,
+    *,
+    planner_enabled: bool,
+    experts: tuple[ExpertName, ...],
+    policy: Literal["single", "majority"],
+    early_quorum_after: int | None = None,
+) -> AgentSystemHarness:
+    augmented = retrieval != RetrievalMode.LOCAL
+    return AgentSystemHarness(
+        system=system,
+        retrieval=retrieval,
+        budget=RetrievalBudget(
+            top_k=AGENT_TOP_K if augmented else 0,
+            base_context_tokens=AGENT_BASE_TOKENS,
+            augmentation_context_tokens=(
+                AGENT_AUGMENTATION_TOKENS if augmented else 0
+            ),
+            graph_hops=(
+                AGENT_GRAPH_HOPS
+                if retrieval in {RetrievalMode.GRAPH, RetrievalMode.HYBRID}
+                else 0
+            ),
+        ),
+        planner_enabled=planner_enabled,
+        expert_order=experts,
+        full_review_policy=policy,
+        early_quorum_after=early_quorum_after,
+    )
+
+
+FULL_SYSTEM_HARNESS = EndToEndHarness(
+    harness_id="agentic-vulnerability-system-v1",
+    runtime_modes=(AgentRuntimeMode.SCRIPTED, AgentRuntimeMode.LIVE),
+    claim_runtime_mode=AgentRuntimeMode.LIVE,
+    model=ModelRuntimeHarness(
+        protocol="openai-compatible-chat",
+        base_url_env="CV_AGENT_MODEL_BASE_URL",
+        model_env="CV_AGENT_MODEL_NAME",
+        api_key_env="CV_AGENT_MODEL_API_KEY",
+        temperature=0.0,
+        request_timeout_seconds=180,
+    ),
+    react_loop=ReActLoopHarness(
+        max_steps=8,
+        max_tool_observation_tokens=8_192,
+        require_model_action=True,
+        require_tool_observation=True,
+        final_schema="AgentExpertVote",
+    ),
+    planner_max_subtasks=8,
+    experts=(
+        ExpertAgentHarness(
+            expert="scan",
+            mandate=(
+                "Locate externally reachable security-sensitive operations and produce "
+                "candidate vulnerability categories without deciding safety from absence."
+            ),
+            tools=(
+                "search_symbols",
+                "read_span",
+                "find_references",
+                "get_callers",
+                "get_callees",
+                "run_static_check",
+                "run_fixture_test",
+            ),
+            require_react_trace=True,
+        ),
+        ExpertAgentHarness(
+            expert="taint",
+            mandate=(
+                "Establish or refute a source-to-sink path with transformations, "
+                "sanitizers, and missing graph edges stated explicitly."
+            ),
+            tools=(
+                "read_span",
+                "get_callers",
+                "get_callees",
+                "find_sources",
+                "find_sinks",
+                "trace_dataflow",
+                "find_sanitizers",
+                "compare_vulnerable_and_fixed",
+            ),
+            require_react_trace=True,
+        ),
+        ExpertAgentHarness(
+            expert="authz",
+            mandate=(
+                "Model principal, action, resource or tenant scope, and enforcement "
+                "guards; abstain when the candidate is outside authorization semantics."
+            ),
+            tools=(
+                "read_span",
+                "get_routes",
+                "get_callers",
+                "get_callees",
+                "get_guards",
+                "inspect_principal",
+                "inspect_resource_scope",
+                "compare_route_and_service_guard",
+                "run_loopback_http_case",
+            ),
+            require_react_trace=True,
+        ),
+    ),
+    validation=ValidationRuntimeHarness(
+        validators=(
+            "run_static_check",
+            "run_fixture_test",
+            "run_loopback_http_case",
+            "compare_vulnerable_and_fixed",
+        ),
+        command_policy="typed-allowlist",
+        network_policy="disabled-or-loopback",
+        subject_mode="read-only",
+        timeout_seconds=120,
+        max_output_bytes=1_000_000,
+    ),
+    tier1_languages=("python", "typescript", "javascript", "go"),
+    fallback_suffixes=(
+        ".swift",
+        ".vue",
+        ".yaml",
+        ".yml",
+        ".ini",
+        ".jsx",
+        ".sh",
+        ".svelte",
+    ),
+    development_repositories=(
+        "https://github.com/google/adk-python",
+        "https://github.com/PrefectHQ/fastmcp",
+        "https://github.com/jlowin/fastmcp",
+    ),
+    held_out_positive_dataset="VulnGym v0.1.4 verified entries excluding development repositories",
+    paired_negative_sources=(
+        "OSV same-repository verified fixed Git descendants",
+        "OWASP Benchmark positive/negative executable cases",
+        "PrimeVul paired C/C++ optional external discrimination set",
+    ),
+    systems=(
+        _agent_system(
+            AgentSystemVersion.E1_LOCAL_SINGLE,
+            RetrievalMode.LOCAL,
+            planner_enabled=False,
+            experts=("scan",),
+            policy="single",
+        ),
+        _agent_system(
+            AgentSystemVersion.E2_TEXT_SINGLE,
+            RetrievalMode.TEXT,
+            planner_enabled=False,
+            experts=("scan",),
+            policy="single",
+        ),
+        _agent_system(
+            AgentSystemVersion.E3_GRAPH_SINGLE,
+            RetrievalMode.GRAPH,
+            planner_enabled=False,
+            experts=("scan",),
+            policy="single",
+        ),
+        _agent_system(
+            AgentSystemVersion.E4_GRAPH_MULTI,
+            RetrievalMode.GRAPH,
+            planner_enabled=True,
+            experts=("scan", "taint", "authz"),
+            policy="majority",
+        ),
+        _agent_system(
+            AgentSystemVersion.E5_GRAPH_FAST,
+            RetrievalMode.GRAPH,
+            planner_enabled=True,
+            experts=("scan", "taint", "authz"),
+            policy="majority",
+            early_quorum_after=2,
+        ),
+    ),
+    required_metrics=(
+        "advisory_recall",
+        "entry_recall",
+        "precision",
+        "population_false_positive_rate",
+        "covered_false_positive_rate",
+        "coverage",
+        "abstain_rate",
+        "paired_graph_text_outcomes",
+        "validation_status_counts",
+        "expert_model_tool_calls",
+        "fast_slow_path_counts",
+        "clustered_uncertainty",
+    ),
+)
+
+
 COMMAND_POLICIES = (
     CommandPolicy(command="harness-check", kind="harness", claim_eligible=False),
     CommandPolicy(command="synthetic", kind="diagnostic", claim_eligible=False),
+    CommandPolicy(
+        command="agentic-smoke",
+        kind="diagnostic",
+        claim_eligible=False,
+        harness_id=FULL_SYSTEM_HARNESS.harness_id,
+    ),
     CommandPolicy(command="profile", kind="data-preparation", claim_eligible=False),
     CommandPolicy(
         command="owasp-baseline",
@@ -345,15 +640,144 @@ def validate_vulngym_harness(
         raise ValueError("VulnGym hits must retain the complete critical line")
 
 
+def validate_full_system_harness(
+    harness: EndToEndHarness = FULL_SYSTEM_HARNESS,
+) -> None:
+    if set(harness.runtime_modes) != set(AgentRuntimeMode):
+        raise ValueError("full system must declare scripted and live runtime modes")
+    if harness.claim_runtime_mode != AgentRuntimeMode.LIVE:
+        raise ValueError("only live model runs may become claim eligible")
+    if (
+        harness.model.temperature != 0.0
+        or not harness.model.base_url_env.strip()
+        or not harness.model.model_env.strip()
+        or not harness.model.api_key_env.strip()
+    ):
+        raise ValueError("live model configuration must be deterministic and environment-backed")
+    if not (
+        harness.react_loop.require_model_action
+        and harness.react_loop.require_tool_observation
+        and harness.react_loop.final_schema == "AgentExpertVote"
+    ):
+        raise ValueError("material expert results must contain a genuine ReAct trace")
+
+    experts = {expert.expert: expert for expert in harness.experts}
+    if set(experts) != {"scan", "taint", "authz"} or len(harness.experts) != 3:
+        raise ValueError("full system must define scan, taint, and authz experts exactly once")
+    for name, expert in experts.items():
+        if not expert.mandate.strip() or not expert.tools or not expert.require_react_trace:
+            raise ValueError(f"expert {name} lacks a mandate, tools, or ReAct requirement")
+        if len(expert.tools) != len(set(expert.tools)):
+            raise ValueError(f"expert {name} contains duplicate tools")
+
+    if not harness.development_repositories or len(
+        harness.development_repositories
+    ) != len(set(harness.development_repositories)):
+        raise ValueError("development repositories must be explicit and unique")
+    if not harness.held_out_positive_dataset.strip() or not harness.paired_negative_sources:
+        raise ValueError("full system requires held-out positive and paired negative data")
+
+    systems = {spec.system: spec for spec in harness.systems}
+    if set(systems) != set(AgentSystemVersion) or len(harness.systems) != len(
+        AgentSystemVersion
+    ):
+        raise ValueError("full system must define E1 through E5 exactly once")
+    e1 = harness.system_spec(AgentSystemVersion.E1_LOCAL_SINGLE)
+    e2 = harness.system_spec(AgentSystemVersion.E2_TEXT_SINGLE)
+    e3 = harness.system_spec(AgentSystemVersion.E3_GRAPH_SINGLE)
+    e4 = harness.system_spec(AgentSystemVersion.E4_GRAPH_MULTI)
+    e5 = harness.system_spec(AgentSystemVersion.E5_GRAPH_FAST)
+    if len({spec.budget.base_context_tokens for spec in harness.systems}) != 1:
+        raise ValueError("E1-E5 must share an identical candidate-local base budget")
+    if (
+        e1.retrieval != RetrievalMode.LOCAL
+        or e1.budget.augmentation_context_tokens != 0
+        or e1.budget.top_k != 0
+    ):
+        raise ValueError("E1 must use candidate-local context only")
+    if e2.retrieval != RetrievalMode.TEXT or e3.retrieval != RetrievalMode.GRAPH:
+        raise ValueError("E2 and E3 must isolate text versus graph Code-RAG")
+    if not (
+        e2.budget.top_k == e3.budget.top_k
+        and e2.budget.base_context_tokens == e3.budget.base_context_tokens
+        and e2.budget.augmentation_context_tokens
+        == e3.budget.augmentation_context_tokens
+    ):
+        raise ValueError("E2 and E3 must share top_k, base, and augmentation budgets")
+    if any(spec.retrieval != RetrievalMode.GRAPH for spec in (e3, e4, e5)):
+        raise ValueError("E3-E5 must share graph retrieval")
+    if not (e3.budget == e4.budget == e5.budget):
+        raise ValueError("E3-E5 must share the complete graph retrieval budget")
+    if any(
+        spec.planner_enabled
+        or spec.expert_order != ("scan",)
+        or spec.full_review_policy != "single"
+        or spec.early_quorum_after is not None
+        for spec in (e1, e2, e3)
+    ):
+        raise ValueError("E1-E3 must isolate one scan ReAct expert without a planner")
+    if any(
+        not spec.planner_enabled
+        or spec.expert_order != ("scan", "taint", "authz")
+        or spec.full_review_policy != "majority"
+        for spec in (e4, e5)
+    ):
+        raise ValueError("E4 and E5 must share planner, experts, and full-review policy")
+    if e4.early_quorum_after is not None or e5.early_quorum_after != 2:
+        raise ValueError("only E5 may exit after two expert votes")
+    if (
+        e4.quorum != e5.quorum
+        or e4.fast_confidence != e5.fast_confidence
+        or e5.early_quorum_after < e5.quorum
+    ):
+        raise ValueError("E4/E5 quorum definitions are inconsistent")
+
+    if (
+        harness.validation.command_policy != "typed-allowlist"
+        or harness.validation.network_policy != "disabled-or-loopback"
+        or harness.validation.subject_mode != "read-only"
+        or not harness.validation.validators
+    ):
+        raise ValueError("validation tools must retain the declared safety boundary")
+    executable_tools = {
+        tool for expert in harness.experts for tool in expert.tools
+    }
+    orphaned_validators = sorted(
+        set(harness.validation.validators) - executable_tools
+    )
+    if orphaned_validators:
+        raise ValueError(
+            "validation tools must be owned by an executable expert: "
+            f"{orphaned_validators}"
+        )
+    required_metrics = {
+        "advisory_recall",
+        "entry_recall",
+        "precision",
+        "population_false_positive_rate",
+        "coverage",
+        "abstain_rate",
+        "paired_graph_text_outcomes",
+        "validation_status_counts",
+        "expert_model_tool_calls",
+        "fast_slow_path_counts",
+        "clustered_uncertainty",
+    }
+    if not required_metrics.issubset(harness.required_metrics):
+        raise ValueError("full-system Harness omits required attribution metrics")
+
+
 def validate_project_harness() -> None:
     validate_owasp_harness()
     validate_vulngym_harness()
+    validate_full_system_harness()
     commands = [policy.command for policy in COMMAND_POLICIES]
     if len(commands) != len(set(commands)):
         raise ValueError("project harness contains duplicate command policies")
     valid_harness_ids = {
         OWASP_HARNESS.harness_id,
         VULNGYM_RETRIEVAL_HARNESS.harness_id,
+        FULL_SYSTEM_HARNESS.harness_id,
     }
     for policy in COMMAND_POLICIES:
         if policy.harness_id is not None and policy.harness_id not in valid_harness_ids:
@@ -859,6 +1283,7 @@ def describe_project_harness() -> dict[str, object]:
         "status": "PASS",
         "owasp": OWASP_HARNESS.model_dump(mode="json"),
         "vulngym_retrieval": VULNGYM_RETRIEVAL_HARNESS.model_dump(mode="json"),
+        "full_system": FULL_SYSTEM_HARNESS.model_dump(mode="json"),
         "commands": [policy.model_dump(mode="json") for policy in COMMAND_POLICIES],
     }
 

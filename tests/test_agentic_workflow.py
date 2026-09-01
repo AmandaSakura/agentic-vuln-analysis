@@ -1,0 +1,423 @@
+import json
+
+import pytest
+
+from cv_agent.agent_tools import (
+    AgentTool,
+    ReadSpanInput,
+    ToolExecutionScope,
+    ToolRegistry,
+    repository_tools,
+)
+from cv_agent.agent_types import (
+    ModelReply,
+    ModelToolCall,
+    ModelUsage,
+    ToolObservation,
+)
+from cv_agent.agentic_workflow import AgenticPipeline
+from cv_agent.harness import (
+    FULL_SYSTEM_HARNESS,
+    AgentRuntimeMode,
+    AgentSystemVersion,
+)
+from cv_agent.model_runtime import OpenAICompatibleChatModel, ScriptedChatModel
+from cv_agent.retrieval import RepositoryIndex, context_text_token_count
+from cv_agent.types import Candidate, CodeDocument, FrozenModel
+
+
+ENTRY_PATH = "handler.py::handle@1-3"
+
+
+class LiveStubModel(ScriptedChatModel):
+    runtime_mode = AgentRuntimeMode.LIVE
+
+
+def _index_and_candidate(
+    *,
+    query: str | None = None,
+    metadata: dict[str, object] | None = None,
+) -> tuple[RepositoryIndex, Candidate]:
+    document = CodeDocument(
+        repository_id="repo",
+        path=ENTRY_PATH,
+        text=(
+            "def handle(request):\n"
+            "    command = request.args['command']\n"
+            "    return eval(command)\n"
+        ),
+        defines=("handle",),
+    )
+    index = RepositoryIndex([document])
+    candidate = Candidate(
+        candidate_id="candidate-1",
+        case_id="case-1",
+        repository_id="repo",
+        path=ENTRY_PATH,
+        line=1,
+        query=document.text if query is None else query,
+        metadata={} if metadata is None else metadata,
+    )
+    return index, candidate
+
+
+def _tool_reply(role: str) -> ModelReply:
+    return ModelReply(
+        model_id=f"scripted-{role}",
+        tool_calls=(
+            ModelToolCall(
+                call_id=f"{role}-read",
+                name="read_span",
+                arguments={"path": ENTRY_PATH},
+            ),
+        ),
+    )
+
+
+def _planner_model(
+    *,
+    scan_validator: str = "run_static_check",
+) -> ScriptedChatModel:
+    plan = {
+        "candidate_id": "candidate-1",
+        "vulnerability_hypotheses": ["code injection"],
+        "subtasks": [
+            {
+                "task_id": "locate-sink",
+                "objective": "Confirm the eval operation.",
+                "expert": "scan",
+                "allowed_validator": scan_validator,
+                "dependencies": [],
+                "success_condition": "The sink is externally reachable.",
+            },
+            {
+                "task_id": "trace-command",
+                "objective": "Trace request input to eval.",
+                "expert": "taint",
+                "allowed_validator": "compare_vulnerable_and_fixed",
+                "dependencies": ["locate-sink"],
+                "success_condition": "An unsanitized path reaches eval.",
+            },
+            {
+                "task_id": "check-guard",
+                "objective": "Determine whether authorization is relevant.",
+                "expert": "authz",
+                "allowed_validator": "run_loopback_http_case",
+                "dependencies": ["locate-sink"],
+                "success_condition": "Authorization relevance is resolved.",
+            },
+        ],
+        "rationale": "The route passes request data to dynamic evaluation.",
+    }
+    return ScriptedChatModel(
+        [
+            _tool_reply("planner"),
+            ModelReply(model_id="scripted-planner", content=json.dumps(plan)),
+        ]
+    )
+
+
+def _expert_model(
+    expert: str,
+    *,
+    label: str,
+    confidence: float,
+    validation_status: str,
+    report_usage: bool = False,
+) -> ScriptedChatModel:
+    conclusion = {
+        "expert": expert,
+        "label": label,
+        "confidence": confidence,
+        "validation_status": validation_status,
+        "evidence_ids": [f"span:{ENTRY_PATH}"],
+        "rationale": f"{expert} completed its assigned validation task.",
+    }
+    tool_reply = _tool_reply(expert)
+    conclusion_reply = ModelReply(
+        model_id=f"scripted-{expert}",
+        content=json.dumps(conclusion),
+    )
+    if report_usage:
+        tool_reply = tool_reply.model_copy(
+            update={
+                "usage": ModelUsage(
+                    input_tokens=10,
+                    output_tokens=4,
+                    total_tokens=14,
+                )
+            }
+        )
+        conclusion_reply = conclusion_reply.model_copy(
+            update={
+                "usage": ModelUsage(
+                    input_tokens=20,
+                    output_tokens=12,
+                    total_tokens=32,
+                )
+            }
+        )
+    return ScriptedChatModel([tool_reply, conclusion_reply])
+
+
+def _models() -> dict[str, ScriptedChatModel]:
+    return {
+        "planner": _planner_model(),
+        "scan": _expert_model(
+            "scan",
+            label="VULNERABLE",
+            confidence=0.9,
+            validation_status="CONFIRMED",
+        ),
+        "taint": _expert_model(
+            "taint",
+            label="VULNERABLE",
+            confidence=0.9,
+            validation_status="CONFIRMED",
+        ),
+        "authz": _expert_model(
+            "authz",
+            label="SAFE",
+            confidence=0.9,
+            validation_status="REFUTED",
+        ),
+    }
+
+
+def _pipeline(
+    system: AgentSystemVersion,
+    models: dict[str, ScriptedChatModel],
+) -> tuple[AgenticPipeline, Candidate]:
+    index, candidate = _index_and_candidate()
+    tools = ToolRegistry(
+        repository_tools(index),
+        max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
+    )
+    return (
+        AgenticPipeline(
+            index=index,
+            system=system,
+            models=models,
+            tools=tools,
+        ),
+        candidate,
+    )
+
+
+def _complete_tool_registry(index: RepositoryIndex) -> ToolRegistry:
+    tools = list(repository_tools(index))
+    names = {tool.name for tool in tools}
+    required = set(FULL_SYSTEM_HARNESS.validation.validators)
+    for expert in FULL_SYSTEM_HARNESS.experts:
+        required.update(expert.tools)
+
+    def placeholder(name: str):
+        def handle(
+            arguments: FrozenModel,
+            scope: ToolExecutionScope,
+        ) -> ToolObservation:
+            del arguments, scope
+            return ToolObservation(tool=name, status="ok", content="placeholder")
+
+        return handle
+
+    for name in sorted(required - names):
+        tools.append(
+            AgentTool(
+                name=name,
+                description="Typed test placeholder.",
+                input_model=ReadSpanInput,
+                handler=placeholder(name),
+            )
+        )
+    return ToolRegistry(
+        tools,
+        max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
+    )
+
+
+def test_agentic_fast_quorum_skips_authz_and_matches_full_review():
+    full_models = _models()
+    fast_models = _models()
+    full_pipeline, candidate = _pipeline(
+        AgentSystemVersion.E4_GRAPH_MULTI,
+        full_models,
+    )
+    fast_pipeline, _ = _pipeline(
+        AgentSystemVersion.E5_GRAPH_FAST,
+        fast_models,
+    )
+
+    full = full_pipeline.run(candidate)
+    fast = fast_pipeline.run(candidate)
+
+    assert full.label == fast.label == "VULNERABLE"
+    assert full.path == "slow"
+    assert fast.path == "fast"
+    assert len(full.votes) == 3
+    assert len(fast.votes) == 2
+    assert len(full_models["authz"].requests) == 2
+    assert len(fast_models["authz"].requests) == 0
+    assert fast.planner is not None
+    assert [task.expert for task in fast.planner.plan.subtasks] == [
+        "scan",
+        "taint",
+        "authz",
+    ]
+    assert fast.model_calls == 6
+    assert fast.tool_calls == 3
+    assert fast.runtime_mode == AgentRuntimeMode.SCRIPTED
+    assert fast.context_token_count == (
+        fast.retrieval_context_token_count + fast.tool_observation_token_count
+    )
+    assert fast.tool_observation_token_count > 0
+    assert fast.usage.total_tokens is None
+
+
+def test_agentic_fast_system_falls_back_on_conflict_and_matches_full_review():
+    full_models = _models()
+    fast_models = _models()
+    for models in (full_models, fast_models):
+        models["taint"] = _expert_model(
+            "taint",
+            label="SAFE",
+            confidence=0.9,
+            validation_status="REFUTED",
+        )
+
+    full_pipeline, candidate = _pipeline(
+        AgentSystemVersion.E4_GRAPH_MULTI,
+        full_models,
+    )
+    fast_pipeline, _ = _pipeline(
+        AgentSystemVersion.E5_GRAPH_FAST,
+        fast_models,
+    )
+
+    full = full_pipeline.run(candidate)
+    fast = fast_pipeline.run(candidate)
+
+    assert full.label == fast.label == "SAFE"
+    assert full.path == fast.path == "slow"
+    assert len(full.votes) == len(fast.votes) == 3
+    assert len(fast_models["authz"].requests) == 2
+    assert fast.model_calls == full.model_calls
+    assert fast.tool_calls == full.tool_calls
+
+
+def test_candidate_query_and_metadata_are_not_model_visible_or_unaccounted():
+    secret = "ORACLE_GROUND_TRUTH_" * 2_000
+    index, candidate = _index_and_candidate(
+        query=secret,
+        metadata={"ground_truth": secret},
+    )
+    scan = _expert_model(
+        "scan",
+        label="VULNERABLE",
+        confidence=0.9,
+        validation_status="CONFIRMED",
+    )
+    tools = ToolRegistry(
+        repository_tools(index),
+        max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
+    )
+    verdict = AgenticPipeline(
+        index=index,
+        system=AgentSystemVersion.E1_LOCAL_SINGLE,
+        models={"scan": scan},
+        tools=tools,
+    ).run(candidate)
+    user_prompt = scan.requests[0][0][1].content or ""
+    task_prompt = user_prompt.split("\n\nUse the registered tools", maxsplit=1)[0]
+    context_prompt = task_prompt.split(
+        "\nAssigned validation subtasks:",
+        maxsplit=1,
+    )[0]
+
+    assert secret not in user_prompt
+    assert "ground_truth" not in user_prompt
+    assert verdict.retrieval_context_token_count == context_text_token_count(
+        context_prompt
+    )
+    assert verdict.retrieval_context_token_count <= (
+        FULL_SYSTEM_HARNESS.system_spec(
+            AgentSystemVersion.E1_LOCAL_SINGLE
+        ).budget.total_context_tokens
+    )
+
+
+def test_cross_role_partial_usage_remains_unknown_in_verdict_aggregate():
+    models = _models()
+    models["scan"] = _expert_model(
+        "scan",
+        label="VULNERABLE",
+        confidence=0.9,
+        validation_status="CONFIRMED",
+        report_usage=True,
+    )
+    pipeline, candidate = _pipeline(
+        AgentSystemVersion.E5_GRAPH_FAST,
+        models,
+    )
+
+    verdict = pipeline.run(candidate)
+
+    assert verdict.votes[0].usage.total_tokens == 46
+    assert verdict.votes[1].usage.total_tokens is None
+    assert verdict.usage.input_tokens is None
+    assert verdict.usage.output_tokens is None
+    assert verdict.usage.total_tokens is None
+
+
+def test_live_pipeline_rejects_partial_smoke_tool_registry():
+    index, _ = _index_and_candidate()
+    tools = ToolRegistry(
+        repository_tools(index),
+        max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
+    )
+    live = OpenAICompatibleChatModel(
+        base_url="http://127.0.0.1:1/v1",
+        model="unused-test-model",
+        api_key=None,
+        temperature=0.0,
+        timeout_seconds=1,
+    )
+    models = {role: live for role in ("planner", "scan", "taint", "authz")}
+
+    with pytest.raises(ValueError, match="lacks required Harness tools"):
+        AgenticPipeline(
+            index=index,
+            system=AgentSystemVersion.E5_GRAPH_FAST,
+            models=models,
+            tools=tools,
+        )
+
+
+def test_runtime_mode_cannot_be_spoofed_by_a_scripted_subclass():
+    index, _ = _index_and_candidate()
+    models = {
+        role: LiveStubModel([])
+        for role in ("planner", "scan", "taint", "authz")
+    }
+
+    with pytest.raises(ValueError, match="untrusted chat-model runtime"):
+        AgenticPipeline(
+            index=index,
+            system=AgentSystemVersion.E5_GRAPH_FAST,
+            models=models,
+            tools=_complete_tool_registry(index),
+        )
+
+
+def test_planner_cannot_assign_validator_to_wrong_expert():
+    models = _models()
+    models["planner"] = _planner_model(
+        scan_validator="run_loopback_http_case"
+    )
+    pipeline, candidate = _pipeline(
+        AgentSystemVersion.E4_GRAPH_MULTI,
+        models,
+    )
+
+    with pytest.raises(ValueError, match="which cannot execute it"):
+        pipeline.run(candidate)

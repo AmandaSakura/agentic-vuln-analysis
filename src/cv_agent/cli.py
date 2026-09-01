@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .agentic_smoke import run_agentic_smoke
 from .experiment import run_synthetic_experiment
 from .harness import command_policy, describe_project_harness
 from .java_ast import profile_owasp_java_ast
@@ -19,6 +20,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("harness-check", help="validate and print the project experiment contract")
     subparsers.add_parser("synthetic", help="run the deterministic two-case wiring experiment")
+    subparsers.add_parser(
+        "agentic-smoke",
+        help="run the scripted model/tool/observation LangGraph wiring diagnostic",
+    )
     profile = subparsers.add_parser("profile", help="report aggregate public-dataset metadata without row labels")
     profile.add_argument("--raw", type=Path, default=Path("data/raw"))
     baseline = subparsers.add_parser("owasp-baseline", help="run the source-only OWASP static sink baseline")
@@ -53,6 +58,8 @@ def main() -> int:
         return _emit(arguments.command, describe_project_harness())
     if arguments.command == "synthetic":
         return _emit(arguments.command, run_synthetic_experiment())
+    if arguments.command == "agentic-smoke":
+        return _emit(arguments.command, run_agentic_smoke())
     if arguments.command == "profile":
         return _emit(arguments.command, profile_public_data(arguments.raw))
     if arguments.command == "owasp-baseline":

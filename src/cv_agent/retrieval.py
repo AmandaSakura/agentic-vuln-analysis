@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter, defaultdict, deque
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import lru_cache
 from typing import Literal
 
@@ -20,7 +20,47 @@ def tokenize(text: str) -> list[str]:
 
 
 def context_token_count(evidence: Iterable[Evidence]) -> int:
-    return sum(len(CONTEXT_TOKEN_RE.findall(item.text)) for item in evidence)
+    return sum(context_text_token_count(item.text) for item in evidence)
+
+
+def context_text_token_count(text: str) -> int:
+    return len(CONTEXT_TOKEN_RE.findall(text))
+
+
+def fit_text_to_serialized_context(
+    text: str,
+    *,
+    token_budget: int,
+    render: Callable[[str], str],
+) -> tuple[str, str, int] | None:
+    """Fit a text field while charging the exact serialized model-visible payload."""
+
+    if token_budget < 0:
+        raise ValueError("serialized context token budget cannot be negative")
+    empty_payload = render("")
+    empty_tokens = context_text_token_count(empty_payload)
+    if empty_tokens > token_budget:
+        return None
+    full_payload = render(text)
+    full_tokens = context_text_token_count(full_payload)
+    if full_tokens <= token_budget:
+        return text, full_payload, full_tokens
+
+    token_ends = [match.end() for match in CONTEXT_TOKEN_RE.finditer(text)]
+    low = 0
+    high = len(token_ends)
+    best = ("", empty_payload, empty_tokens)
+    while low <= high:
+        middle = (low + high) // 2
+        prefix = text[: token_ends[middle - 1]] if middle else ""
+        payload = render(prefix)
+        count = context_text_token_count(payload)
+        if count <= token_budget:
+            best = (prefix, payload, count)
+            low = middle + 1
+        else:
+            high = middle - 1
+    return best
 
 
 def limit_evidence_context(
@@ -110,9 +150,30 @@ class RepositoryIndex:
             return []
         return [Evidence(evidence_id=f"local:{document.path}", path=document.path, text=document.text, retrieval="local", score=1.0)]
 
-    def text_search(self, query: str, *, top_k: int = 5) -> list[Evidence]:
+    def document(self, path: str) -> CodeDocument | None:
+        return self.documents.get(path)
+
+    def graph_neighbors(
+        self,
+        path: str,
+        *,
+        direction: Literal["forward", "reverse"],
+    ) -> tuple[str, ...]:
+        graph = self._forward_graph if direction == "forward" else self._reverse_graph
+        return tuple(sorted(graph.get(path, ())))
+
+    def text_search(
+        self,
+        query: str,
+        *,
+        top_k: int = 5,
+        allowed_paths: Iterable[str] | None = None,
+    ) -> list[Evidence]:
         scores = self._lexical_scores(query)
-        ranked = sorted(scores, key=lambda path: (-scores[path], path))[:top_k]
+        candidates = set(scores)
+        if allowed_paths is not None:
+            candidates &= set(allowed_paths)
+        ranked = sorted(candidates, key=lambda path: (-scores[path], path))[:top_k]
         return [
             Evidence(
                 evidence_id=f"text:{path}",

@@ -5,7 +5,7 @@ Deterministic research harness for two directional questions:
 1. does forward AST/call-graph retrieval recover security context that a lexical retriever misses under the same retrieval budget?
 2. can specialist evidence reduce false alerts, and can an early quorum preserve the full-review label while skipping an expert call?
 
-This repository is not yet an LLM ReAct system or an exploit validator. The current experts are deterministic heuristics used to isolate retrieval, abstention, and adjudication behavior before an LLM/tool loop is introduced.
+The repository contains the original deterministic retrieval/adjudication slice plus the first scripted foundation of the full agentic system: a provider-neutral model protocol, typed model/tool/observation ReAct loops, a dynamic planner, and a LangGraph full/fast workflow. `agentic-smoke` is wiring-only and cannot produce research claims. No live model or real-project exploit validator has run yet, so the end-to-end reproduction remains in progress.
 
 System variants:
 
@@ -30,3 +30,5 @@ The graph implementation keeps forward and reverse edges separate. Pure graph re
 Budgets, dataset roles, candidate protocols, expert order, adjudication policy, early-exit position, and required metrics live only in the typed project contract at `src/cv_agent/harness.py`. Run `cv-agent harness-check` to inspect it. Experiment results include code and dataset Git identities without introducing separate lock hashes.
 
 See `docs/HARNESS.md` for experiment constraints and metric attribution. The audited development-only OWASP outcome and its rejected retrieval interpretation are recorded in `docs/OWASP_DEVELOPMENT_RESULT.md`. The accepted oracle-only cross-file retrieval result is recorded in `docs/VULNGYM_RETRIEVAL_RESULT.md`.
+
+The deterministic slice is now the development precursor to the complete agentic implementation specified in `docs/FULL_SYSTEM_SPEC.md`. That specification defines genuine ReAct traces, dynamic planning, multi-language Code-RAG, typed validation tools, held-out data, paired negatives, and full/fast attribution.
