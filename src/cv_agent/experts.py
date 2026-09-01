@@ -36,6 +36,12 @@ COLLECTION_PUT_RE = re.compile(
 )
 IF_RE = re.compile(r"^\s*if\s*\((?P<condition>.*)\)\s*(?P<trailing>.*)$")
 ELSE_RE = re.compile(r"^\s*else\b\s*(?P<trailing>.*)$")
+SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{\s*$")
+CASE_RE = re.compile(r"^\s*case\s+(?P<value>'(?:\\.|[^'\\])'|\"(?:\\.|[^\"\\])*\")\s*:\s*$")
+DEFAULT_RE = re.compile(r"^\s*default\s*:\s*$")
+CHAR_AT_RE = re.compile(
+    r"^(?P<name>[A-Za-z_$][\w$]*)\.charAt\((?P<index>\d+)\)$"
+)
 TERNARY_RE = re.compile(
     r"^(?P<condition>.+?)\?(?P<when_true>.+):(?P<when_false>.+)$"
 )
@@ -177,6 +183,17 @@ def _safe_eval_condition(value: str, numeric_values: dict[str, float]) -> bool |
     except Exception:
         return None
     return bool(result) if isinstance(result, bool) else None
+
+
+def _literal_string(value: str) -> str | None:
+    expression = value.strip().rstrip(";")
+    if not STRING_LITERAL_RE.fullmatch(expression):
+        return None
+    try:
+        result = ast.literal_eval(expression)
+    except (SyntaxError, ValueError):
+        return None
+    return result if isinstance(result, str) else None
 
 
 def _logical_code_lines(text: str) -> list[str]:
@@ -334,6 +351,8 @@ class TaintExpert:
             source_seen = False
             sink_seen = False
             sanitizer_seen = False
+            string_values: dict[str, str] = {}
+            char_values: dict[str, str] = {}
 
             def process_line(line: str, *, allow_clean_update: bool = True) -> None:
                 nonlocal source_seen, sink_seen, sanitizer_seen
@@ -356,6 +375,25 @@ class TaintExpert:
                 if assignment:
                     name = assignment.group("name")
                     value = assignment.group("value")
+                    literal = _literal_string(value)
+                    char_at = CHAR_AT_RE.match(value.strip().rstrip(";"))
+                    if literal is not None:
+                        string_values[name] = literal
+                        if len(literal) == 1:
+                            char_values[name] = literal
+                        else:
+                            char_values.pop(name, None)
+                    elif char_at and char_at.group("name") in string_values:
+                        source = string_values[char_at.group("name")]
+                        index = int(char_at.group("index"))
+                        string_values.pop(name, None)
+                        if 0 <= index < len(source):
+                            char_values[name] = source[index]
+                        else:
+                            char_values.pop(name, None)
+                    else:
+                        string_values.pop(name, None)
+                        char_values.pop(name, None)
                     ternary = TERNARY_RE.match(value)
                     if ternary:
                         decision = _safe_eval_condition(
@@ -400,8 +438,55 @@ class TaintExpert:
 
             next_branch_decision: bool | None = None
             last_if_decision: bool | None = None
+            switch_target: str | None = None
+            switch_active = False
+            switch_matched = False
+            switch_done = False
             for stripped in _logical_code_lines(item.text):
                 code_line = stripped
+                if switch_target is not None:
+                    if stripped == "}":
+                        switch_target = None
+                        switch_active = False
+                        switch_matched = False
+                        switch_done = False
+                        continue
+                    case_match = CASE_RE.match(stripped)
+                    if case_match:
+                        if switch_done:
+                            switch_active = False
+                        elif switch_active:
+                            switch_matched = True
+                        else:
+                            case_value = _literal_string(case_match.group("value"))
+                            switch_active = case_value == switch_target
+                            switch_matched = switch_matched or switch_active
+                        continue
+                    if DEFAULT_RE.match(stripped):
+                        switch_active = not switch_done and (
+                            switch_active or not switch_matched
+                        )
+                        switch_matched = True
+                        continue
+                    if stripped == "break;":
+                        if switch_active:
+                            switch_done = True
+                            switch_active = False
+                        continue
+                    if switch_done:
+                        continue
+                    if switch_active:
+                        process_line(code_line)
+                    continue
+                switch_match = SWITCH_RE.match(stripped)
+                if switch_match:
+                    value = switch_match.group("value").strip()
+                    switch_target = char_values.get(value) or _literal_string(value)
+                    if switch_target is not None:
+                        switch_active = False
+                        switch_matched = False
+                        switch_done = False
+                        continue
                 if_match = IF_RE.match(stripped)
                 if if_match:
                     decision = _safe_eval_condition(

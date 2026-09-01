@@ -276,6 +276,154 @@ def test_focused_graph_context_keeps_sink_assignment_dependencies():
     assert context_token_count(context) <= budget.total_context_tokens
 
 
+def test_focused_graph_context_keeps_switch_selector_dependencies():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00192.java::BenchmarkTest00192.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00192.doGet",),
+        calls=("BenchmarkTest00192.doPost",),
+    )
+    first_filler = "\n".join(f"    int firstFiller{index} = {index};" for index in range(40))
+    second_filler = "\n".join(f"    int secondFiller{index} = {index};" for index in range(40))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00192.java::BenchmarkTest00192.doPost@5-120",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            '    String param = request.getHeader("vector");\n'
+            f"{first_filler}\n"
+            '    String guess = "ABC";\n'
+            "    char switchTarget = guess.charAt(2);\n"
+            "    switch (switchTarget) {\n"
+            "    case 'A':\n"
+            "        bar = param;\n"
+            "        break;\n"
+            "    case 'B':\n"
+            '        bar = "safe";\n'
+            "        break;\n"
+            "    case 'C':\n"
+            "    case 'D':\n"
+            "        bar = param;\n"
+            "        break;\n"
+            "    default:\n"
+            '        bar = "safe";\n'
+            "        break;\n"
+            "    }\n"
+            f"{second_filler}\n"
+            "    String sql = \"SELECT * FROM users WHERE name='\" + bar + \"'\";\n"
+            "    statement.execute(sql);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00192.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=256,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert 'String guess = "ABC"' in augmentation.text
+    assert "char switchTarget = guess.charAt(2)" in augmentation.text
+    assert "switch (switchTarget)" in augmentation.text
+    assert "case 'C':" in augmentation.text
+    assert "bar = param" in augmentation.text
+    assert "statement.execute(sql)" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
+def test_focused_graph_context_keeps_parameter_map_dependencies_into_switch():
+    entry = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00516.java::BenchmarkTest00516.doGet@1-3",
+        text=(
+            "public void doGet(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    doPost(request, response);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00516.doGet",),
+        calls=("BenchmarkTest00516.doPost",),
+    )
+    first_filler = "\n".join(f"    int firstFiller{index} = {index};" for index in range(35))
+    second_filler = "\n".join(f"    int secondFiller{index} = {index};" for index in range(35))
+    do_post = CodeDocument(
+        repository_id="repo",
+        path="BenchmarkTest00516.java::BenchmarkTest00516.doPost@5-120",
+        text=(
+            "public void doPost(HttpServletRequest request, HttpServletResponse response) {\n"
+            "    java.util.Map<String,String[]> map = request.getParameterMap();\n"
+            '    String[] values = map.get("vector");\n'
+            '    String param = "";\n'
+            "    if (values != null) param = values[0];\n"
+            f"{first_filler}\n"
+            '    String guess = "ABC";\n'
+            "    char switchTarget = guess.charAt(2);\n"
+            "    switch (switchTarget) {\n"
+            "    case 'C':\n"
+            "        bar = param;\n"
+            "        break;\n"
+            "    default:\n"
+            '        bar = "safe";\n'
+            "        break;\n"
+            "    }\n"
+            f"{second_filler}\n"
+            "    String sql = \"SELECT * FROM users WHERE name='\" + bar + \"'\";\n"
+            "    statement.execute(sql);\n"
+            "}\n"
+        ),
+        defines=("BenchmarkTest00516.doPost",),
+    )
+    candidate = Candidate(
+        candidate_id="case",
+        case_id="case",
+        repository_id="repo",
+        path=entry.path,
+        line=1,
+        query=entry.text,
+    )
+    budget = RetrievalBudget(
+        top_k=1,
+        base_context_tokens=32,
+        augmentation_context_tokens=256,
+        graph_hops=1,
+    )
+
+    context = RepositoryIndex([entry, do_post]).retrieve_context(
+        candidate,
+        mode=RetrievalMode.GRAPH,
+        budget=budget,
+    )
+    augmentation = [item for item in context if item.path == do_post.path][0]
+
+    assert "request.getParameterMap()" in augmentation.text
+    assert 'String[] values = map.get("vector")' in augmentation.text
+    assert "param = values[0]" in augmentation.text
+    assert "switch (switchTarget)" in augmentation.text
+    assert "bar = param" in augmentation.text
+    assert "statement.execute(sql)" in augmentation.text
+    assert context_token_count(context) <= budget.total_context_tokens
+
+
 def test_text_context_keeps_query_focus_without_security_sink_boost():
     entry = CodeDocument(
         repository_id="repo",

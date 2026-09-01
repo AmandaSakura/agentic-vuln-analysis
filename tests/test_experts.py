@@ -174,6 +174,68 @@ def test_taint_evaluates_simple_java_if_tainted_branch():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_evaluates_constant_java_switch_branch():
+    vulnerable = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                'String bar;\n'
+                'String guess = "ABC";\n'
+                "char switchTarget = guess.charAt(2);\n"
+                "switch (switchTarget) {\n"
+                "case 'A':\n"
+                "    bar = param;\n"
+                "    break;\n"
+                "case 'B':\n"
+                '    bar = "safe";\n'
+                "    break;\n"
+                "case 'C':\n"
+                "case 'D':\n"
+                "    bar = param;\n"
+                "    break;\n"
+                "default:\n"
+                '    bar = "safe";\n'
+                "    break;\n"
+                "}\n"
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+    safe = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                'String param = request.getHeader("vector");\n'
+                'String bar;\n'
+                'String guess = "ABC";\n'
+                "char switchTarget = guess.charAt(1);\n"
+                "switch (switchTarget) {\n"
+                "case 'A':\n"
+                "    bar = param;\n"
+                "    break;\n"
+                "case 'B':\n"
+                '    bar = "safe";\n'
+                "    break;\n"
+                "case 'C':\n"
+                "case 'D':\n"
+                "    bar = param;\n"
+                "    break;\n"
+                "default:\n"
+                '    bar = "safe";\n'
+                "    break;\n"
+                "}\n"
+                'String sql = "SELECT * FROM users WHERE name=\'" + bar + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert vulnerable.label == "VULNERABLE"
+    assert safe.label == "SAFE"
+
+
 def test_taint_treats_unknown_helper_result_as_clean_only_when_arguments_are_clean():
     safe = TaintExpert().evaluate(
         _candidate(),

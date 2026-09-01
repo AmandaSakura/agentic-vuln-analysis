@@ -21,7 +21,10 @@ ASSIGNMENT_RE = re.compile(
     r"(?P<name>[A-Za-z_$][\w$]*)\s*(?::=|=(?!=))\s*"
     r"(?P<value>.+?)\s*;?\s*(?://.*)?$"
 )
+INLINE_IF_RE = re.compile(r"^\s*if\s*\([^)]*\)\s*(?P<trailing>.+)$")
+SWITCH_RE = re.compile(r"^\s*switch\s*\((?P<value>.*)\)\s*\{?\s*$")
 CALL_ARGUMENT_RE = re.compile(r"\((?P<arguments>[^()]*)\)")
+MAP_GET_RE = re.compile(r"\b(?P<receiver>[A-Za-z_$][\w$]*)\.get\s*\(")
 STRING_LITERAL_RE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
 IDENTIFIER_RE = re.compile(r"\b[A-Za-z_$][\w$]*\b")
 NON_VALUE_IDENTIFIERS = frozenset(
@@ -99,27 +102,69 @@ def _sink_value_identifiers(line: str) -> set[str]:
 
 
 def _assignment_value_dependencies(value: str) -> set[str]:
+    dependencies: set[str] = set()
+    if map_get := MAP_GET_RE.search(value):
+        dependencies.add(map_get.group("receiver"))
     call_arguments = CALL_ARGUMENT_RE.findall(value)
     if call_arguments:
         argument_identifiers = _value_identifiers(" ".join(call_arguments))
         if argument_identifiers:
-            return argument_identifiers
-    return _value_identifiers(value)
+            dependencies.update(argument_identifiers)
+            return dependencies
+    dependencies.update(_value_identifiers(value))
+    return dependencies
 
 
-def _assignment_dependency_indices(
+def _assignment_match(line: str) -> re.Match[str] | None:
+    stripped = line.strip()
+    match = ASSIGNMENT_RE.match(stripped)
+    if match:
+        return match
+    inline_if = INLINE_IF_RE.match(stripped)
+    if inline_if:
+        return ASSIGNMENT_RE.match(inline_if.group("trailing"))
+    return None
+
+
+def _enclosing_switch_index(lines: list[str], line_index: int) -> int | None:
+    stack: list[int] = []
+    for index, line in enumerate(lines[: line_index + 1]):
+        stripped = line.strip()
+        if SWITCH_RE.match(stripped):
+            stack.append(index)
+        elif stripped == "}" and stack:
+            stack.pop()
+    return stack[-1] if stack else None
+
+
+def _switch_range(lines: list[str], switch_index: int) -> tuple[int, int]:
+    depth = 0
+    for index in range(switch_index, len(lines)):
+        stripped = lines[index].strip()
+        if SWITCH_RE.match(stripped):
+            depth += 1
+            continue
+        if stripped == "}" and depth:
+            depth -= 1
+            if depth == 0:
+                return switch_index, index + 1
+    return switch_index, min(len(lines), switch_index + 1)
+
+
+def _assignment_dependency_context(
     lines: list[str],
     sink_indices: list[int],
     *,
     max_depth: int = 4,
-) -> list[int]:
+) -> tuple[list[int], list[tuple[int, int]]]:
     if not sink_indices:
-        return []
+        return [], []
     first_sink = min(sink_indices)
     needed: set[str] = set()
     for sink_index in sink_indices:
         needed.update(_sink_value_identifiers(lines[sink_index]))
     anchors: set[int] = set()
+    ranges: set[tuple[int, int]] = set()
     resolved: set[str] = set()
     for _ in range(max_depth):
         unresolved = needed - resolved
@@ -128,20 +173,27 @@ def _assignment_dependency_indices(
         found_names: set[str] = set()
         discovered: set[str] = set()
         for index in range(first_sink - 1, -1, -1):
-            match = ASSIGNMENT_RE.match(lines[index].strip())
+            match = _assignment_match(lines[index])
             if not match:
                 continue
             name = match.group("name")
             if name not in unresolved:
                 continue
-            anchors.add(index)
             found_names.add(name)
             discovered.update(_assignment_value_dependencies(match.group("value")))
+            switch_index = _enclosing_switch_index(lines, index)
+            if switch_index is not None:
+                ranges.add(_switch_range(lines, switch_index))
+                switch_match = SWITCH_RE.match(lines[switch_index].strip())
+                if switch_match:
+                    discovered.update(_value_identifiers(switch_match.group("value")))
+            else:
+                anchors.add(index)
         if not found_names:
             break
         resolved.update(found_names)
         needed.update(discovered)
-    return sorted(anchors)
+    return sorted(anchors), sorted(ranges)
 
 
 def context_token_count(evidence: Iterable[Evidence]) -> int:
@@ -226,16 +278,23 @@ def _security_focused_text(lines: list[str], token_budget: int) -> str | None:
         sink_index = sink_indices[0]
         preceding_sources = [index for index in source_indices if index <= sink_index]
         source_index = preceding_sources[-1] if preceding_sources else source_indices[0]
-        dependency_indices = _assignment_dependency_indices(lines, sink_indices)
+        dependency_indices, dependency_ranges = _assignment_dependency_context(
+            lines,
+            sink_indices,
+        )
         anchors = sorted({source_index, *dependency_indices, sink_index})
     else:
+        dependency_ranges = []
         anchors = [source_indices[0] if source_indices else sink_indices[0]]
 
     marker_budget = (
         context_text_token_count(NON_ADJACENT_CONTEXT_MARKER) * (len(anchors) - 1)
     )
     chunk_budget = max(1, (token_budget - marker_budget) // len(anchors))
-    ranges = [_line_window_range(lines, anchor, chunk_budget) for anchor in anchors]
+    ranges = [
+        *dependency_ranges,
+        *(_line_window_range(lines, anchor, chunk_budget) for anchor in anchors),
+    ]
     focused = _render_non_overlapping_ranges(lines, ranges)
     if context_text_token_count(focused) <= token_budget:
         return focused
