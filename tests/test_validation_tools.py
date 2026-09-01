@@ -224,6 +224,7 @@ def test_java_servlet_sources_and_sinks_are_detected():
         path="BenchmarkTest00043.java::BenchmarkTest00043.doPost@1",
         text=(
             "public void doPost(HttpServletRequest request) throws Exception {\n"
+            "    java.util.Map<String,String[]> map = request.getParameterMap();\n"
             '    String param = scr.getTheParameter("vector");\n'
             "    String sql = \"SELECT * FROM users WHERE name='\" + param + \"'\";\n"
             "    statement.executeUpdate(sql);\n"
@@ -244,7 +245,7 @@ def test_java_servlet_sources_and_sinks_are_detected():
         scope,
     )
 
-    assert json.loads(sources.content)["finding_count"] == 1
+    assert json.loads(sources.content)["finding_count"] == 2
     assert json.loads(sinks.content)["findings"][0]["category"] == "sql"
     assert json.loads(trace.content)["status"] == "CONFIRMED"
 

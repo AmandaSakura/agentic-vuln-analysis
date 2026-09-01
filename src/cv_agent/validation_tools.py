@@ -40,7 +40,7 @@ SOURCE_RULES = (
         "http-input",
         re.compile(
             r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b|"
-            r"\brequest\.get(?:Header|Headers|Parameter|ParameterValues|"
+            r"\brequest\.get(?:Header|Headers|Parameter|ParameterMap|ParameterValues|"
             r"Cookies?|QueryString)\s*\(|"
             r"\.getTheParameter\s*\(|"
             r"\br\.URL\.Query\s*\(|\bmux\.Vars\s*\(|\bctx\.Param\s*\(",

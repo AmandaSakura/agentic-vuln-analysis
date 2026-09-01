@@ -30,7 +30,7 @@ SECURITY_SINK_FOCUS_RE = re.compile(
 )
 SECURITY_SOURCE_FOCUS_RE = re.compile(
     r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b|"
-    r"\brequest\.get(?:Header|Headers|Parameter|ParameterValues|"
+    r"\brequest\.get(?:Header|Headers|Parameter|ParameterMap|ParameterValues|"
     r"Cookies?|QueryString)\s*\(|"
     r"\.getTheParameter\s*\(|"
     r"\b(?:input\s*\(|sys\.argv\b|os\.environ\b|process\.env\b)",

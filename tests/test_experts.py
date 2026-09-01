@@ -101,6 +101,23 @@ def test_taint_propagates_java_collection_round_trip():
     assert vote.label == "VULNERABLE"
 
 
+def test_taint_tracks_java_parameter_map_source():
+    vote = TaintExpert().evaluate(
+        _candidate(),
+        [
+            _evidence(
+                "java.util.Map<String,String[]> map = request.getParameterMap();\n"
+                'String[] values = map.get("vector");\n'
+                "String param = values[0];\n"
+                'String sql = "SELECT * FROM users WHERE name=\'" + param + "\'";\n'
+                "statement.execute(sql);"
+            )
+        ],
+    )
+
+    assert vote.label == "VULNERABLE"
+
+
 def test_taint_does_not_treat_ldap_filters_array_as_clean_filter():
     vote = TaintExpert().evaluate(
         _candidate(),

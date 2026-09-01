@@ -129,7 +129,8 @@ class TaintExpert:
         re.compile(pattern, re.IGNORECASE)
         for pattern in (
             r"\b(?:request|req)\.(?:args|query|body|params|headers|cookies)\b",
-            r"\brequest\.get(?:Header|Headers|Parameter|ParameterValues|Cookies?|QueryString)\s*\(",
+            r"\brequest\.get(?:Header|Headers|Parameter|ParameterMap|"
+            r"ParameterValues|Cookies?|QueryString)\s*\(",
             r"\.getTheParameter\s*\(",
             r"\buser_input\b",
             r"\binput\s*\(",
