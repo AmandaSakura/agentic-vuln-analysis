@@ -108,7 +108,8 @@ def test_taint_tracks_java_parameter_map_source():
             _evidence(
                 "java.util.Map<String,String[]> map = request.getParameterMap();\n"
                 'String[] values = map.get("vector");\n'
-                "String param = values[0];\n"
+                'String param = "";\n'
+                "if (values != null) param = values[0];\n"
                 'String sql = "SELECT * FROM users WHERE name=\'" + param + "\'";\n'
                 "statement.execute(sql);"
             )

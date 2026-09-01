@@ -293,7 +293,7 @@ class TaintExpert:
             sink_seen = False
             sanitizer_seen = False
 
-            def process_line(line: str) -> None:
+            def process_line(line: str, *, allow_clean_update: bool = True) -> None:
                 nonlocal source_seen, sink_seen, sanitizer_seen
                 source_hits = any(pattern.search(line) for pattern in self.sources)
                 sanitizer_hits = any(pattern.search(line) for pattern in self.sanitizers)
@@ -330,15 +330,16 @@ class TaintExpert:
                     else:
                         numeric_values[name] = numeric_value
                     if sanitizer_hits:
-                        tainted.discard(name)
-                        clean.add(name)
+                        if allow_clean_update:
+                            tainted.discard(name)
+                            clean.add(name)
                     elif self._value_is_tainted(value, tainted, tainted_containers):
                         tainted.add(name)
                         clean.discard(name)
-                    elif self._value_is_clean(value, clean):
+                    elif allow_clean_update and self._value_is_clean(value, clean):
                         tainted.discard(name)
                         clean.add(name)
-                    else:
+                    elif allow_clean_update:
                         tainted.discard(name)
                         clean.discard(name)
 
@@ -374,7 +375,7 @@ class TaintExpert:
                         if decision is True:
                             process_line(trailing)
                         elif decision is None:
-                            process_line(code_line)
+                            process_line(trailing, allow_clean_update=False)
                     else:
                         next_branch_decision = decision
                     continue
@@ -387,7 +388,7 @@ class TaintExpert:
                         if decision is True:
                             process_line(trailing)
                         elif decision is None:
-                            process_line(code_line)
+                            process_line(trailing, allow_clean_update=False)
                     else:
                         next_branch_decision = decision
                     continue
