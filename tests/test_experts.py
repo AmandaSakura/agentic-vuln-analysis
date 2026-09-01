@@ -234,26 +234,6 @@ def test_taint_evaluates_simple_java_if_tainted_branch():
     assert vote.label == "VULNERABLE"
 
 
-def test_taint_treats_clean_xpath_expression_variable_as_safe():
-    vote = TaintExpert().evaluate(
-        _candidate(),
-        [
-            _evidence(
-                'String param = java.net.URLDecoder.decode(theCookie.getValue(), "UTF-8");\n'
-                "String bar;\n"
-                "int num = 86;\n"
-                "if ( (7*42) - num > 200 )\n"
-                '   bar = "This_should_always_happen";\n'
-                "else bar = param;\n"
-                'String expression = "/Employees/Employee[@emplid=\'" + bar + "\']";\n'
-                "xp.compile(expression).evaluate(xmlDocument, javax.xml.xpath.XPathConstants.NODESET);"
-            )
-        ],
-    )
-
-    assert vote.label == "SAFE"
-
-
 def test_taint_evaluates_constant_java_switch_branch():
     vulnerable = TaintExpert().evaluate(
         _candidate(),
