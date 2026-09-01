@@ -86,7 +86,9 @@ def test_retrieval_hit_requires_critical_line_inside_retained_context():
     partial_critical_line = truncated.model_copy(
         update={"text": "def run():\n    first()\n    crit"}
     )
+    centered_critical_line = truncated.model_copy(update={"text": "    critical()\n"})
     full = truncated.model_copy(update={"text": document.text})
     assert _hit([truncated], span, 12) is False
     assert _hit([partial_critical_line], span, 12) is False
+    assert _hit([centered_critical_line], span, 12) is True
     assert _hit([full], span, 12) is True

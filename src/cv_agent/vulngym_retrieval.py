@@ -47,11 +47,13 @@ def _hit(
     lines = target.document.text.splitlines(keepends=True)
     if relative_end < 0 or relative_end >= len(lines):
         return False
-    required_characters = sum(len(line) for line in lines[: relative_end + 1])
+    critical_line = lines[relative_end].rstrip("\r\n")
+    if not critical_line:
+        return False
     for item in evidence:
         if item.path != target.document.path:
             continue
-        if len(item.text) >= required_characters:
+        if critical_line in item.text:
             return True
     return False
 

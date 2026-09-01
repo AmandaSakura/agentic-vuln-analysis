@@ -13,6 +13,9 @@ from .types import Candidate, CodeDocument, Evidence
 
 TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{1,}")
 CONTEXT_TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
+DOCUMENT_SPAN_RE = re.compile(
+    r"^(?P<file>.+)::(?P<symbol>.+)@(?P<start>\d+)-(?P<end>\d+)$"
+)
 
 
 def tokenize(text: str) -> list[str]:
@@ -90,6 +93,80 @@ def limit_evidence_context(
     return limited
 
 
+def _line_bounds_from_path(path: str) -> tuple[int, int] | None:
+    match = DOCUMENT_SPAN_RE.match(path)
+    if not match:
+        return None
+    return int(match.group("start")), int(match.group("end"))
+
+
+def _line_window_around(
+    lines: list[str],
+    center_index: int,
+    token_budget: int,
+) -> str:
+    if not lines:
+        return ""
+    center_index = min(max(center_index, 0), len(lines) - 1)
+    start = center_index
+    end = center_index + 1
+
+    def rendered(next_start: int, next_end: int) -> str:
+        return "".join(lines[next_start:next_end])
+
+    if context_text_token_count(rendered(start, end)) >= token_budget:
+        text = rendered(start, end)
+        token_ends = [match.end() for match in CONTEXT_TOKEN_RE.finditer(text)]
+        return text[: token_ends[token_budget - 1]] if token_ends else ""
+
+    while True:
+        changed = False
+        if start > 0:
+            candidate = rendered(start - 1, end)
+            if context_text_token_count(candidate) <= token_budget:
+                start -= 1
+                changed = True
+        if end < len(lines):
+            candidate = rendered(start, end + 1)
+            if context_text_token_count(candidate) <= token_budget:
+                end += 1
+                changed = True
+        if not changed:
+            break
+    return rendered(start, end)
+
+
+def _focused_text(
+    text: str,
+    *,
+    query: str,
+    token_budget: int,
+    fallback_relative_line: int | None = None,
+) -> str:
+    if context_text_token_count(text) <= token_budget:
+        return text
+    lines = text.splitlines(keepends=True)
+    if not lines:
+        return text
+    query_terms = set(tokenize(query))
+    fallback_index = (
+        min(max(fallback_relative_line - 1, 0), len(lines) - 1)
+        if fallback_relative_line is not None
+        else 0
+    )
+    scored = [
+        (
+            sum(1 for term in tokenize(line) if term in query_terms),
+            -abs(index - fallback_index),
+            index,
+        )
+        for index, line in enumerate(lines)
+    ]
+    best_score, _, best_index = max(scored)
+    center = best_index if best_score > 0 else fallback_index
+    return _line_window_around(lines, center, token_budget)
+
+
 class RepositoryIndex:
     def __init__(self, documents: Iterable[CodeDocument]) -> None:
         docs = list(documents)
@@ -149,6 +226,59 @@ class RepositoryIndex:
         if document is None:
             return []
         return [Evidence(evidence_id=f"local:{document.path}", path=document.path, text=document.text, retrieval="local", score=1.0)]
+
+    def _focused_local(
+        self,
+        candidate: Candidate,
+        *,
+        token_budget: int,
+    ) -> list[Evidence]:
+        document = self.documents.get(candidate.path)
+        if document is None:
+            return []
+        bounds = _line_bounds_from_path(candidate.path)
+        fallback_relative_line = (
+            candidate.line - bounds[0] + 1
+            if bounds is not None and bounds[0] <= candidate.line <= bounds[1]
+            else None
+        )
+        return [
+            Evidence(
+                evidence_id=f"local:{document.path}",
+                path=document.path,
+                text=_focused_text(
+                    document.text,
+                    query=candidate.query,
+                    token_budget=token_budget,
+                    fallback_relative_line=fallback_relative_line,
+                ),
+                retrieval="local",
+                score=1.0,
+            )
+        ]
+
+    def _focused_augmentation(
+        self,
+        evidence: list[Evidence],
+        candidate: Candidate,
+        *,
+        token_budget: int,
+    ) -> list[Evidence]:
+        if not evidence:
+            return []
+        per_item_budget = max(1, token_budget // len(evidence))
+        return [
+            item.model_copy(
+                update={
+                    "text": _focused_text(
+                        item.text,
+                        query=candidate.query,
+                        token_budget=per_item_budget,
+                    )
+                }
+            )
+            for item in evidence
+        ]
 
     def document(self, path: str) -> CodeDocument | None:
         return self.documents.get(path)
@@ -301,7 +431,10 @@ class RepositoryIndex:
         """Assemble a fixed local base plus a separately budgeted augmentation."""
 
         base = limit_evidence_context(
-            self.local(candidate),
+            self._focused_local(
+                candidate,
+                token_budget=budget.base_context_tokens,
+            ),
             token_budget=budget.base_context_tokens,
         )
         if mode == RetrievalMode.LOCAL:
@@ -331,7 +464,11 @@ class RepositoryIndex:
         if not augmentation or budget.augmentation_context_tokens == 0:
             return base
         limited_augmentation = limit_evidence_context(
-            augmentation,
+            self._focused_augmentation(
+                augmentation,
+                candidate,
+                token_budget=budget.augmentation_context_tokens,
+            ),
             token_budget=budget.augmentation_context_tokens,
         )
         return [*base, *limited_augmentation]
