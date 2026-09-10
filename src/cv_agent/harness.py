@@ -105,6 +105,8 @@ class ModelRuntimeHarness(FrozenModel):
     base_url_env: str
     model_env: str
     api_key_env: str
+    max_tokens_env: str | None = None
+    thinking_mode_env: str | None = None
     temperature: float = Field(ge=0.0, le=2.0)
     request_timeout_seconds: int = Field(ge=1, le=600)
 
@@ -364,6 +366,8 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
         base_url_env="CV_AGENT_MODEL_BASE_URL",
         model_env="CV_AGENT_MODEL_NAME",
         api_key_env="CV_AGENT_MODEL_API_KEY",
+        max_tokens_env="CV_AGENT_MODEL_MAX_TOKENS",
+        thinking_mode_env="CV_AGENT_MODEL_THINKING",
         temperature=0.0,
         request_timeout_seconds=180,
     ),
@@ -380,7 +384,11 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
             expert="scan",
             mandate=(
                 "Locate externally reachable security-sensitive operations and produce "
-                "candidate vulnerability categories without deciding safety from absence."
+                "candidate vulnerability categories without deciding safety from absence. "
+                "Validate candidates with a concrete Python eval probe or a registered fixture "
+                "when applicable; sink presence alone is not confirmation. Distinguish an "
+                "evidence-backed prediction (UNRESOLVED validation status) from successful "
+                "typed validation. Inspect your own evidence rather than adopting another vote."
             ),
             tools=(
                 "search_symbols",
@@ -389,6 +397,7 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "get_callers",
                 "get_callees",
                 "run_static_check",
+                "probe_python_eval",
                 "run_fixture_test",
             ),
             require_react_trace=True,
@@ -434,9 +443,12 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
     validation=ValidationRuntimeHarness(
         validators=(
             "run_static_check",
+            "probe_python_eval",
             "run_fixture_test",
             "run_loopback_http_case",
             "compare_vulnerable_and_fixed",
+            "trace_dataflow",
+            "compare_route_and_service_guard",
         ),
         command_policy="typed-allowlist",
         network_policy="disabled-or-loopback",

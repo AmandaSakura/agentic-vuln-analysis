@@ -54,12 +54,14 @@ class QuorumPolicy:
 
         material = [vote for vote in votes if vote.label != "ABSTAIN"]
         if len(material) < self.quorum:
+            # Validator status describes evidence; it does not grant extra votes
+            # or exempt a specialist from the declared quorum policy.
             return Verdict(
                 label="ABSTAIN",
                 confidence=max((vote.confidence for vote in material), default=0.0),
                 path="slow",
                 votes=tuple(votes),
-                rationale="Fewer than two material expert votes were available.",
+                rationale=f"Fewer than {self.quorum} material expert votes were available.",
             )
         labels = Counter(vote.label for vote in material)
         ranked = labels.most_common()

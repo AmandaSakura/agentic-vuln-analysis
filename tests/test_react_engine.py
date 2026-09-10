@@ -57,7 +57,7 @@ def test_react_expert_requires_tool_observation_and_attaches_trace():
         "expert": "scan",
         "label": "VULNERABLE",
         "confidence": 0.9,
-        "validation_status": "CONFIRMED",
+        "validation_status": "UNRESOLVED",
         "evidence_ids": [f"span:{ENTRY_PATH}"],
         "rationale": "The externally supplied value reaches eval.",
     }
@@ -139,7 +139,7 @@ def test_react_partial_usage_fields_remain_unknown_instead_of_zero():
         "expert": "scan",
         "label": "VULNERABLE",
         "confidence": 0.8,
-        "validation_status": "CONFIRMED",
+        "validation_status": "UNRESOLVED",
         "evidence_ids": [f"span:{ENTRY_PATH}"],
         "rationale": "The source reaches eval.",
     }

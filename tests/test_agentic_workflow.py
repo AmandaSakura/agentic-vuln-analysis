@@ -22,8 +22,9 @@ from cv_agent.harness import (
     AgentSystemVersion,
 )
 from cv_agent.model_runtime import OpenAICompatibleChatModel, ScriptedChatModel
-from cv_agent.retrieval import RepositoryIndex, context_text_token_count
+from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count
 from cv_agent.types import Candidate, CodeDocument, FrozenModel
+from cv_agent.validation_tools import full_agent_tools
 
 
 ENTRY_PATH = "handler.py::handle@1-3"
@@ -62,13 +63,18 @@ def _index_and_candidate(
 
 
 def _tool_reply(role: str) -> ModelReply:
+    name, key = {
+        "scan": ("run_static_check", "path"),
+        "taint": ("trace_dataflow", "source_path"),
+        "authz": ("compare_route_and_service_guard", "route_path"),
+    }.get(role, ("read_span", "path"))
     return ModelReply(
         model_id=f"scripted-{role}",
         tool_calls=(
             ModelToolCall(
                 call_id=f"{role}-read",
-                name="read_span",
-                arguments={"path": ENTRY_PATH},
+                name=name,
+                arguments={key: ENTRY_PATH},
             ),
         ),
     )
@@ -94,7 +100,7 @@ def _planner_model(
                 "task_id": "trace-command",
                 "objective": "Trace request input to eval.",
                 "expert": "taint",
-                "allowed_validator": "compare_vulnerable_and_fixed",
+                "allowed_validator": "trace_dataflow",
                 "dependencies": ["locate-sink"],
                 "success_condition": "An unsanitized path reaches eval.",
             },
@@ -102,7 +108,7 @@ def _planner_model(
                 "task_id": "check-guard",
                 "objective": "Determine whether authorization is relevant.",
                 "expert": "authz",
-                "allowed_validator": "run_loopback_http_case",
+                "allowed_validator": "compare_route_and_service_guard",
                 "dependencies": ["locate-sink"],
                 "success_condition": "Authorization relevance is resolved.",
             },
@@ -130,7 +136,7 @@ def _expert_model(
         "label": label,
         "confidence": confidence,
         "validation_status": validation_status,
-        "evidence_ids": [f"span:{ENTRY_PATH}"],
+        "evidence_ids": [f"{expert}/tool:1"],
         "rationale": f"{expert} completed its assigned validation task.",
     }
     tool_reply = _tool_reply(expert)
@@ -167,19 +173,19 @@ def _models() -> dict[str, ScriptedChatModel]:
             "scan",
             label="VULNERABLE",
             confidence=0.9,
-            validation_status="CONFIRMED",
+            validation_status="UNRESOLVED",
         ),
         "taint": _expert_model(
             "taint",
             label="VULNERABLE",
             confidence=0.9,
-            validation_status="CONFIRMED",
+            validation_status="UNRESOLVED",
         ),
         "authz": _expert_model(
             "authz",
             label="SAFE",
             confidence=0.9,
-            validation_status="REFUTED",
+            validation_status="UNRESOLVED",
         ),
     }
 
@@ -190,7 +196,7 @@ def _pipeline(
 ) -> tuple[AgenticPipeline, Candidate]:
     index, candidate = _index_and_candidate()
     tools = ToolRegistry(
-        repository_tools(index),
+        full_agent_tools(index),
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
     )
     return (
@@ -282,7 +288,7 @@ def test_agentic_fast_system_falls_back_on_conflict_and_matches_full_review():
             "taint",
             label="SAFE",
             confidence=0.9,
-            validation_status="REFUTED",
+            validation_status="UNRESOLVED",
         )
 
     full_pipeline, candidate = _pipeline(
@@ -315,10 +321,10 @@ def test_candidate_query_and_metadata_are_not_model_visible_or_unaccounted():
         "scan",
         label="VULNERABLE",
         confidence=0.9,
-        validation_status="CONFIRMED",
+        validation_status="UNRESOLVED",
     )
     tools = ToolRegistry(
-        repository_tools(index),
+        full_agent_tools(index),
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
     )
     verdict = AgenticPipeline(
@@ -352,7 +358,7 @@ def test_cross_role_partial_usage_remains_unknown_in_verdict_aggregate():
         "scan",
         label="VULNERABLE",
         confidence=0.9,
-        validation_status="CONFIRMED",
+        validation_status="UNRESOLVED",
         report_usage=True,
     )
     pipeline, candidate = _pipeline(
@@ -409,15 +415,59 @@ def test_runtime_mode_cannot_be_spoofed_by_a_scripted_subclass():
         )
 
 
-def test_planner_cannot_assign_validator_to_wrong_expert():
+@pytest.mark.parametrize("validator,error_fragment", [
+    ("run_loopback_http_case", "which cannot execute it"),
+    ("scan", "unregistered validator"),
+    ("read_span", "unregistered validator"),
+    ("run_fixture_test", "unavailable for this run"),
+])
+def test_planner_invalid_validator_is_rejected_and_can_be_corrected(validator, error_fragment):
     models = _models()
-    models["planner"] = _planner_model(
-        scan_validator="run_loopback_http_case"
-    )
+    models["planner"] = _planner_model(scan_validator=validator)
+    models["planner"]._replies.append(_planner_model()._replies[-1])
     pipeline, candidate = _pipeline(
         AgentSystemVersion.E4_GRAPH_MULTI,
         models,
     )
 
-    with pytest.raises(ValueError, match="which cannot execute it"):
-        pipeline.run(candidate)
+    verdict = pipeline.run(candidate)
+    assert verdict.planner.model_calls == 3
+    assert error_fragment in models["planner"].requests[2][0][-1].content
+    assert verdict.planner.plan.subtasks[0].allowed_validator == "run_static_check"
+
+
+@pytest.mark.parametrize("system", [AgentSystemVersion.E4_GRAPH_MULTI, AgentSystemVersion.E5_GRAPH_FAST])
+def test_validator_status_survives_workflow_without_overriding_quorum(system):
+    models = _models()
+    for role in ("scan", "authz"):
+        models[role] = _expert_model(
+            role, label="ABSTAIN", confidence=0.9, validation_status="UNRESOLVED",
+        )
+    models["taint"] = _expert_model(
+        "taint", label="VULNERABLE", confidence=1.0, validation_status="CONFIRMED",
+    )
+    pipeline, candidate = _pipeline(system, models)
+    verdict = pipeline.run(candidate)
+    taint = next(vote for vote in verdict.votes if vote.expert == "taint")
+    ballot = next(vote for vote in pipeline._consensus_votes(list(verdict.votes)) if vote.expert == "taint")
+    assert taint.validation_status.value == ballot.validation_status == "CONFIRMED"
+    assert ballot.evidence_ids == ("taint/tool:1",)
+    assert verdict.label == "ABSTAIN"
+    assert verdict.path == "slow"
+    assert len(verdict.votes) == 3
+
+
+def test_planner_receives_registered_validator_names_for_each_expert():
+    models = _models()
+    pipeline, candidate = _pipeline(AgentSystemVersion.E4_GRAPH_MULTI, models)
+    pipeline.run(candidate)
+    prompt = models["planner"].requests[0][0][1].content
+    capabilities = json.loads(
+        prompt.split("Planning capabilities: ", 1)[1].split("\n\nUse the registered tools", 1)[0]
+    )
+    assert capabilities["maximum_subtasks"] == FULL_SYSTEM_HARNESS.planner_max_subtasks
+    assert capabilities["allowed_validators_by_expert"] == {
+        "scan": ["run_static_check"],
+        "taint": ["trace_dataflow"],
+        "authz": ["compare_route_and_service_guard"],
+    }

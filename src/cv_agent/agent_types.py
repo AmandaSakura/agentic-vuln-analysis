@@ -54,6 +54,8 @@ class ToolObservation(FrozenModel):
     content: str
     evidence_ids: tuple[str, ...] = ()
     metadata: dict[str, Any] = Field(default_factory=dict)
+    citation_id: str | None = None
+    validation_status: ValidationStatus | None = None
 
 
 class ReActStep(FrozenModel):
@@ -137,6 +139,11 @@ class PlannerResult(FrozenModel):
     usage: ModelUsage
 
 
+class ValidationTaskExecution(FrozenModel):
+    task_id: str | None
+    vote: AgentExpertVote
+
+
 class AgenticVerdict(FrozenModel):
     runtime_mode: AgentRuntimeMode
     label: VerdictLabel
@@ -145,12 +152,14 @@ class AgenticVerdict(FrozenModel):
     rationale: str
     planner: PlannerResult | None = None
     votes: tuple[AgentExpertVote, ...]
+    task_executions: tuple[ValidationTaskExecution, ...] = ()
     model_calls: int = Field(ge=1)
     tool_calls: int = Field(ge=1)
     usage: ModelUsage
     retrieval_context_token_count: int = Field(ge=0)
     tool_observation_token_count: int = Field(ge=0)
     context_token_count: int = Field(ge=0)
+    context_accounting: Literal["utf8-byte-upper-bound"] = "utf8-byte-upper-bound"
 
     @model_validator(mode="after")
     def context_components_match_total(self) -> AgenticVerdict:

@@ -8,7 +8,7 @@ Reproduce the architecture described in the resume as an executable vulnerabilit
 2. scanning, taint, and authorization specialists each run a genuine model/tool/observation ReAct loop;
 3. Code-RAG supplies AST, symbol, forward/reverse call, import, data-flow, route, and guard context across files;
 4. typed validation tools attempt static proofs, bounded tests, or loopback HTTP checks without executing arbitrary model-generated shell commands;
-5. a quorum-inspired full/fast adjudicator combines independent specialist evidence and skips the third specialist only when the first two form an irreversible high-confidence quorum;
+5. a quorum-inspired full/fast adjudicator combines independent specialist evidence, preserves typed validator status, and skips the third specialist only when the first two form an irreversible high-confidence quorum;
 6. project-level evaluation separates development, held-out positive, paired negative, and oracle-diagnostic data.
 
 The target is architectural and methodological reproduction. The original prompts, model, repositories, thresholds, and raw predictions are unavailable, so the original 28% and 37% numbers cannot be reproduced exactly. This project reports the numbers produced by its own declared data and model configuration.
@@ -47,6 +47,17 @@ repository -> index -> candidate scan -> planner
 
 The planner may omit an irrelevant specialist, but every experimental system variant has a declared scheduling policy. The full three-expert ablation always runs all three specialists. The fast variant considers an early exit only after the first two declared specialists have completed.
 
+The runtime dispatches ready subtasks from the planner's dependency graph. The declared
+expert order is a tie-breaker among ready tasks, not an override of dependencies. Each
+subtask runs a ReAct loop and must complete its assigned typed validator; its result
+and bounded observations are passed to dependent tasks. A task can complete with an
+`UNRESOLVED` validation result, which is not interpreted as satisfying its success condition.
+An expert can resume after another expert. Its last cumulative judgment becomes its
+single ballot only after all its assigned tasks complete; earlier judgments remain
+in `task_executions`. Observation budgets persist across that expert's subtasks.
+Fast exit requires the first two declared experts' final ballots, and cost accounting
+includes every executed task, including a partially completed third expert.
+
 ## Model contract
 
 The runtime uses a provider-neutral chat-model protocol. A live model is configured at runtime with environment variables for endpoint, model name, and optional credential; secrets are never stored in Git or result files. Temperature is zero where supported. Every result records the provider protocol, model identifier returned by the endpoint, sampling parameters, and usage reported by the endpoint.
@@ -65,9 +76,43 @@ The model never emits an unrestricted shell command. It chooses from typed tools
 - repository: `search_symbols`, `read_span`, `find_references`, `get_callers`, `get_callees`, `get_routes`, `get_guards`;
 - taint: `find_sources`, `find_sinks`, `trace_dataflow`, `find_sanitizers`;
 - authorization: `inspect_principal`, `inspect_resource_scope`, `inspect_guard`, `compare_route_and_service_guard`;
-- validation: `run_static_check`, `run_fixture_test`, `run_loopback_http_case`, `compare_vulnerable_and_fixed`.
+- validation: `run_static_check`, `probe_python_eval`, `run_fixture_test`, `run_loopback_http_case`, `compare_vulnerable_and_fixed`.
 
-Validation adapters map typed requests to project-owned commands. They enforce repository-root containment, timeouts, output limits, resource limits, loopback-only networking, and an explicit command allowlist. Public subject repositories are read-only. Destructive commands, credential access, external targets, and arbitrary package scripts are outside the tool surface.
+The scan specialist also performs applicable verification, rather than only reporting sink
+presence. For supported Python eval candidates, the planner can assign scan `probe_python_eval`
+and taint `trace_dataflow` without cross-expert dependencies. The former checks concrete input
+values in a restricted interpreter; the latter tracks abstract taint through argument bindings.
+Authz retains its permission-specific mandate and may abstain. Registered execution fixtures
+remain an option for other supported cases. A lack of two applicable checks remains unresolved;
+it does not lower quorum or turn an irrelevant expert into a supporting vote.
+
+`probe_python_eval` operates only on admitted Python AST function slices. It supports plain
+functions, positional/keyword argument binding, literal defaults, local assignments, returns,
+simple branches and limited expressions. It looks for two distinct injected expressions reaching
+the same eval argument, with a maximum of 256 interpreter steps and the declared call-hop limit.
+It never executes repository code, imports modules, opens files, or invokes host callables.
+Unsupported constructs, unresolved calls, decorators, argument expansion and unsuccessful probes
+return `UNRESOLVED`, never `REFUTED`. Its `CONFIRMED` is a function-slice input-control witness
+under a modeled request and builtin eval, not a full application exploit. Both validators share
+the repository index, so distinct checks must not be described as statistically independent.
+
+Validation adapters invoke registered, project-owned callbacks. Source indexing opens
+repository files relative to directory descriptors and refuses symlinks, including
+symlinked parent directories. Fixture and HTTP application callbacks run in disposable
+Linux children with resource limits, a deadline, closed inherited descriptors, seccomp,
+and Landlock ABI 3 or newer. Registered `read_roots` permit file reads; filesystem writes
+are denied. With no read roots, callbacks have no ambient file-read access.
+Unavailable isolation prevents callback execution. HTTP validation retains only the
+pre-bound loopback listener in the child, and the parent driver disables proxies and
+redirect following. Arbitrary package scripts and model-generated shell commands
+are outside this callback interface. These are trusted fixture callbacks, not a sandbox
+for executing arbitrary hostile Python inside the agent's process memory.
+
+Material model predictions must cite retrieved evidence or runtime-generated tool
+citation IDs. `CONFIRMED` and `REFUTED` additionally require a matching cited typed
+validator observation; tool errors and truncated observations cannot establish those
+states. Reading code can support a prediction with `validation_status=UNRESOLVED`,
+but cannot manufacture a successful validation result.
 
 ## Code-RAG tiers
 
@@ -79,11 +124,25 @@ The verified VulnGym entries are dominated by TypeScript, Python, and Go:
 
 Tier 1 therefore provides AST and semantic graph adapters for Python, TypeScript/JavaScript, and Go, covering 380 of 393 verified entries. Tier 2 processes Swift, Vue, YAML, JSX, shell, Svelte, and cross-format cases with file, import, configuration, and trace-aware fallback documents. Metrics are always stratified by adapter tier; fallback results are not described as AST call-graph results.
 
-Every retrieval system receives the same candidate-local base. Text, graph, and hybrid systems receive equal maximum augmentation `top_k` and token budgets. Actual tokens, target rank, graph distance, selected evidence paths, and truncation status are recorded per entry.
+Every retrieval system receives the same candidate-local base. Text, graph, and hybrid systems receive equal maximum augmentation `top_k` and context budgets. Context units, target rank, graph distance, selected evidence paths, and truncation status are recorded per entry.
 
 Repository tools execute inside a per-ReAct scope derived only from those selected evidence paths. A tool may re-read, search, or traverse within that admitted set, but it cannot turn an E1 local run into repository-wide retrieval or expand an E2/E3 result beyond its selected context. Tool observations share a bounded token budget and are measured separately from the initially retrieved context.
 
-Only an explicit candidate projection (`candidate_id`, repository, path, and line) is model-visible; caller metadata and the retrieval query are not copied into prompts. Initial context accounting measures the complete serialized projection, not just source text. Tool prompts contain only tool name, status, and bounded content; audit metadata and evidence identifiers stay in the trace, and the complete serialized tool prompt is charged to the observation budget.
+Only an explicit candidate projection (`candidate_id`, repository, path, and line) is model-visible; caller metadata and the retrieval query are not copied into prompts. Initial context accounting measures the complete serialized projection, not just source text. Tool prompts contain the tool name, status, bounded content, a runtime-generated citation ID, and an optional typed validation status. Raw audit metadata and backend evidence identifiers stay in the trace. The complete serialized tool prompt is charged to the observation budget.
+
+The Agent runtime uses UTF-8 byte upper bounds for those serialized text payloads,
+reported as `context_accounting=utf8-byte-upper-bound`. Long unbroken identifiers
+therefore cannot count as a single budget unit. Historical deterministic OWASP/VulnGym
+proxy functions retain their lexical accounting; their existing artifacts are not
+reinterpreted or recomputed. These text budgets do not measure total API billing:
+system instructions, schemas, planning/dependency prompts, repeated messages and output
+tokens are reflected in provider `usage` when a live model reports it.
+
+Python taint transfer uses AST expressions, positional/keyword argument bindings and
+branch joins. Formal parameter extraction also uses Tree-sitter for Java, JS/TS and Go.
+The remaining non-Python flow rules are bounded line-based approximations. Dynamic
+dispatch, aliases, heap state, arbitrary sanitizers and exploit feasibility are not
+fully established by the static flow tool.
 
 ## Data lifecycle
 
@@ -118,6 +177,14 @@ No entry from a development repository can enter held-out results. Held-out repo
 - `E5`: the same planner, retrieval, specialists, votes, and full-review policy with an irreversible two-vote fast path.
 
 `E2 -> E3` isolates retrieval. `E3 -> E4` measures planner/specialist/validation adjudication as a bundle and must not be attributed to quorum scheduling. `E4 -> E5` measures scheduling and expert calls only; labels must match.
+
+Full review requires the declared quorum for material votes, including `CONFIRMED` votes.
+Typed validator status remains attached to each ballot for evidence inspection; it does not
+give one expert a quorum exemption. In particular, a static dataflow validator's `CONFIRMED`
+status is not a dynamic exploit reproduction. A single material vote with two abstentions
+therefore produces `ABSTAIN`, while retaining the supporting validator observation.
+
+The concrete-probe integration check is documented in `QUORUM_APPLICABLE_VERIFICATION.md`.
 
 ## Metrics
 

@@ -33,3 +33,33 @@ Budgets, dataset roles, candidate protocols, expert order, adjudication policy, 
 See `docs/HARNESS.md` for experiment constraints and metric attribution. The development-only OWASP v3 outcome, its real-safe adjudication result, and its limitations are recorded in `docs/OWASP_DEVELOPMENT_RESULT.md`. The accepted oracle-only cross-file retrieval result is recorded in `docs/VULNGYM_RETRIEVAL_RESULT.md`.
 
 The deterministic slice is now the development precursor to the complete agentic implementation specified in `docs/FULL_SYSTEM_SPEC.md`. That specification defines genuine ReAct traces, dynamic planning, multi-language Code-RAG, typed validation tools, held-out data, paired negatives, and full/fast attribution.
+
+## DeepSeek live-model configuration
+
+Local regression checks use the existing WSL/uv environment:
+
+```bash
+uv run --no-sync pytest
+uv run --no-sync cv-agent harness-check
+```
+
+Tests use scripted model replies and temporary local fixtures; no model API credential is needed.
+The bug fixes and their regression coverage are described in `docs/BUGFIX_VERIFICATION.md`.
+The clean-context Luna max workflow simulation is recorded in
+`docs/LUNA_CLEAN_CONTEXT_SIMULATION.md`.
+Agent input accounting now reports `context_accounting=utf8-byte-upper-bound` for retrieved
+text and tool observations. Historical deterministic proxy experiments retain their lexical
+counting units; provider-reported `usage` remains the source for actual model token consumption.
+
+The local `.env.deepseek` file is preconfigured for the OpenAI-compatible DeepSeek endpoint and `deepseek-v4-flash`. Fill only `CV_AGENT_MODEL_API_KEY`; the file is Git-ignored. The default live settings disable DeepSeek thinking mode and cap each completion at 1,200 tokens.
+
+Run an explicit live case through the wrapper so the local environment file is loaded:
+
+```bash
+./scripts/deepseek.sh agentic-live-owasp \
+  --raw data/raw \
+  --case-id BenchmarkTest00001 \
+  --system E1
+```
+
+Repeat `--case-id` and `--system` for additional cases and ablations. The wrapper rejects an empty key before making a request. `.env.deepseek.example` is the tracked, secret-free template.

@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import ctypes
+import ast
 import errno
 import json
 import multiprocessing
 import os
 import re
-import threading
 import time
 import urllib.error
 import urllib.request
 from collections import deque
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from typing import Any, cast
 
 from pydantic import Field
@@ -25,6 +26,10 @@ from .agent_tools import (
 )
 from .agent_types import ToolObservation, ValidationStatus
 from .harness import FULL_SYSTEM_HARNESS
+from .fixture_isolation import restrict_fixture_filesystem
+from .function_parameters import ast_parameters
+from .python_flow import CallBinding, function_node, parameter_names, python_document_flow
+from .python_probe import probe_python_eval
 from .retrieval import RepositoryIndex
 from .types import CodeDocument, FrozenModel
 
@@ -175,6 +180,7 @@ class FixtureCase:
     case_id: str
     runner: Callable[[], FixtureOutcome]
     timeout_seconds: float | None = None
+    read_roots: tuple[Path, ...] = ()
 
     def __post_init__(self) -> None:
         if self.timeout_seconds is not None and self.timeout_seconds <= 0:
@@ -207,6 +213,7 @@ class LoopbackCase:
         ("Authorization", "Bearer project-owned-test-principal"),
     )
     body: bytes = b""
+    read_roots: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -217,6 +224,7 @@ class _DocumentFlow:
     sanitizers: tuple[dict[str, Any], ...]
     tainted_variables: tuple[str, ...]
     tainted_calls: tuple[str, ...]
+    call_bindings: tuple[CallBinding, ...] = ()
 
 
 def _json_content(payload: object) -> str:
@@ -243,6 +251,12 @@ def _matching_lines(
 
 
 def _parameters(document: CodeDocument) -> tuple[str, ...]:
+    node = function_node(document)
+    if node is not None:
+        return parameter_names(node)
+    parsed_parameters = ast_parameters(document)
+    if parsed_parameters is not None:
+        return parsed_parameters
     header = document.text.split("{", 1)[0]
     match = re.search(r"\((?P<parameters>[^)]*)\)", header)
     if not match:
@@ -254,7 +268,7 @@ def _parameters(document: CodeDocument) -> tuple[str, ...]:
             continue
         name_match = re.search(
             r"([A-Za-z_$][\w$]*)\s*$",
-            raw.split("=", maxsplit=1)[0].strip(),
+            raw.split("=", maxsplit=1)[0].split(":", maxsplit=1)[0].strip(),
         )
         if name_match and name_match.group(1) not in {"self", "cls"}:
             parameters.append(name_match.group(1))
@@ -283,13 +297,21 @@ def _document_flow(
     document: CodeDocument,
     *,
     initial_tainted: Iterable[str] = (),
+    sink_category: str = "command-execution",
 ) -> _DocumentFlow:
+    parsed = python_document_flow(
+        document, initial_tainted=initial_tainted, sink_category=sink_category,
+        source_rules=SOURCE_RULES, sink_rules=SINK_RULES, sanitizer_rules=SANITIZER_RULES,
+    )
+    if parsed is not None:
+        return _DocumentFlow(**parsed)
     tainted = set(initial_tainted)
     tainted_containers: set[str] = set()
     sources: list[dict[str, Any]] = []
     sinks: list[dict[str, Any]] = []
     sanitizers: list[dict[str, Any]] = []
     tainted_calls: set[str] = set()
+    call_bindings: list[CallBinding] = []
 
     for line_number, line in enumerate(document.text.splitlines(), start=1):
         code_line = line.split("//", maxsplit=1)[0]
@@ -298,6 +320,10 @@ def _document_flow(
         ]
         sanitizer_hits = [
             rule.category for rule in SANITIZER_RULES if rule.pattern.search(code_line)
+            and (
+                (rule.category == "shell-escaping" and sink_category == "command-execution")
+                or (rule.category == "numeric-validation" and sink_category in {"command-execution", "code-execution", "sql"})
+            )
         ]
         assignment = ASSIGNMENT_RE.match(code_line)
         if source_hits:
@@ -354,6 +380,8 @@ def _document_flow(
             or _contains_identifier(code_line, tainted_containers)
         )
         for rule in SINK_RULES:
+            if rule.category != sink_category:
+                continue
             match = rule.pattern.search(code_line)
             if match:
                 sinks.append(
@@ -365,9 +393,22 @@ def _document_flow(
                         "text": line.strip(),
                     }
                 )
-        if line_is_tainted and not sanitizer_hits:
+        if not re.match(r"^\s*(?:def|func|function)\b", code_line):
             for call in CALL_RE.finditer(code_line):
+                try:
+                    expression = ast.parse("f(" + call.group("arguments") + ")", mode="eval").body
+                    arguments = tuple(
+                        any(isinstance(node, ast.Name) and node.id in tainted for node in ast.walk(arg))
+                        or any(rule.pattern.search(ast.unparse(arg)) for rule in SOURCE_RULES)
+                        for arg in expression.args
+                    )
+                except SyntaxError:
+                    # Unsupported argument syntax does not justify tainting every parameter.
+                    continue
+                if not any(arguments):
+                    continue
                 tainted_calls.add(call.group("name"))
+                call_bindings.append(CallBinding(call.group("name"), arguments))
 
     return _DocumentFlow(
         path=document.path,
@@ -376,6 +417,7 @@ def _document_flow(
         sanitizers=tuple(sanitizers),
         tainted_variables=tuple(sorted(tainted)),
         tainted_calls=tuple(sorted(tainted_calls)),
+        call_bindings=tuple(call_bindings),
     )
 
 
@@ -459,10 +501,14 @@ def _write_fixture_message(result_fd: int, message: Mapping[str, Any]) -> None:
 def _fixture_worker(
     runner: Callable[[], FixtureOutcome],
     result_fd: int,
+    read_roots: tuple[Path, ...],
+    retained_fds: tuple[int, ...],
+    accept_only: bool,
 ) -> None:
     try:
         _apply_fixture_limits()
-        _install_fixture_isolation(result_fd)
+        _install_fixture_isolation(result_fd, retained_fds=retained_fds, accept_only=accept_only)
+        restrict_fixture_filesystem(read_roots)
         outcome = runner()
         _write_fixture_message(
             result_fd,
@@ -483,7 +529,9 @@ def _fixture_worker(
             pass
 
 
-def _install_fixture_isolation(result_fd: int) -> None:
+def _install_fixture_isolation(
+    result_fd: int, *, retained_fds: tuple[int, ...] = (), accept_only: bool = False,
+) -> None:
     """Close inherited descriptors and deny socket syscalls before fixture code runs."""
 
     devnull_fd = os.open(os.devnull, os.O_RDWR)
@@ -497,7 +545,7 @@ def _install_fixture_isolation(result_fd: int) -> None:
 
     for raw_fd in os.listdir("/proc/self/fd"):
         fd = int(raw_fd)
-        if fd > 2 and fd != result_fd:
+        if fd > 2 and fd != result_fd and fd not in retained_fds:
             try:
                 os.close(fd)
             except OSError:
@@ -539,6 +587,12 @@ def _install_fixture_isolation(result_fd: int) -> None:
             b"recvfrom",
             b"recvmsg",
         ):
+            if accept_only and name in {
+                b"accept", b"accept4", b"sendto", b"sendmsg", b"recvfrom", b"recvmsg",
+            }:
+                # Only the pre-bound loopback listener and result pipe survive.
+                # New sockets and outgoing connections are still denied.
+                continue
             syscall = seccomp.seccomp_syscall_resolve_name(name)
             if syscall < 0:
                 continue
@@ -578,10 +632,18 @@ def _terminate_fixture_process(process: multiprocessing.Process) -> None:
     _wait_for_fixture_exit(process, _FIXTURE_CLEANUP_SECONDS)
 
 
-def _run_fixture_case(case: FixtureCase, timeout_seconds: float) -> FixtureOutcome:
+def _run_fixture_case(
+    case: FixtureCase, timeout_seconds: float, *,
+    retained_fds: tuple[int, ...] = (), accept_only: bool = False,
+    parent_action: Callable[[], None] | None = None,
+) -> FixtureOutcome:
+    deadline = time.monotonic() + timeout_seconds
     context = multiprocessing.get_context("fork")
     read_fd, write_fd = os.pipe()
-    process = context.Process(target=_fixture_worker, args=(case.runner, write_fd))
+    process = context.Process(
+        target=_fixture_worker,
+        args=(case.runner, write_fd, case.read_roots, retained_fds, accept_only),
+    )
     process.start()
     os.close(write_fd)
     os.set_blocking(read_fd, False)
@@ -610,9 +672,18 @@ def _run_fixture_case(case: FixtureCase, timeout_seconds: float) -> FixtureOutco
             elif read_error is None:
                 read_error = "fixture result exceeded its Harness byte limit"
 
-    deadline = time.monotonic() + timeout_seconds
     timed_out = False
     try:
+        if parent_action is not None:
+            try:
+                parent_action()
+            except Exception as error:
+                _terminate_fixture_process(process)
+                return FixtureOutcome(
+                    status=ValidationStatus.UNRESOLVED,
+                    summary="loopback request driver failed",
+                    details={"error": f"{type(error).__name__}: {error}"},
+                )
         while process.is_alive():
             drain_result()
             remaining = deadline - time.monotonic()
@@ -684,8 +755,13 @@ def _loopback_status(
         headers=dict(headers),
         method=case.method,
     )
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        with opener.open(request, timeout=timeout_seconds) as response:
             response.read(4_096)
             return response.status
     except urllib.error.HTTPError as error:
@@ -724,31 +800,37 @@ def _run_loopback_case(case: LoopbackCase, timeout_seconds: int) -> FixtureOutco
         def log_message(self, format: str, *args: object) -> None:
             del format, args
 
-    class LoopbackServer(ThreadingHTTPServer):
-        daemon_threads = True
-        block_on_close = False
-
-    server = LoopbackServer(("127.0.0.1", 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+    # Bind in trusted code before restricting the child. The child can accept
+    # these local requests but cannot create sockets or connect elsewhere.
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    server.timeout = timeout_seconds
     base_url = f"http://127.0.0.1:{server.server_port}"
+    statuses: list[int] = []
+    deadline = time.monotonic() + timeout_seconds
+
+    def serve() -> FixtureOutcome:
+        for _ in range(2):
+            server.handle_request()
+        return FixtureOutcome(status=ValidationStatus.UNRESOLVED, summary="loopback requests served")
+
+    def drive() -> None:
+        for headers in (case.unauthorized_headers, case.authorized_headers):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("loopback case exceeded its deadline")
+            statuses.append(_loopback_status(base_url, case, headers, remaining))
+
     try:
-        unauthorized = _loopback_status(
-            base_url,
-            case,
-            case.unauthorized_headers,
-            timeout_seconds,
-        )
-        authorized = _loopback_status(
-            base_url,
-            case,
-            case.authorized_headers,
-            timeout_seconds,
+        outcome = _run_fixture_case(
+            FixtureCase(case.case_id, serve, read_roots=case.read_roots),
+            timeout_seconds, retained_fds=(server.fileno(),),
+            accept_only=True, parent_action=drive,
         )
     finally:
-        server.shutdown()
         server.server_close()
-        thread.join(timeout=2)
+    if len(statuses) != 2 or outcome.summary != "loopback requests served":
+        return outcome
+    unauthorized, authorized = statuses
 
     details = {
         "authorized_status": authorized,
@@ -887,22 +969,25 @@ def validation_tools(
                 content="sink path is outside the retrieved execution scope",
             )
 
-        queue: deque[tuple[str, tuple[str, ...], tuple[dict[str, Any], ...]]] = deque(
-            [(cast(CodeDocument, source).path, (), ())]
+        queue: deque[tuple[str, tuple[str, ...], tuple[dict[str, Any], ...], str]] = deque(
+            (cast(CodeDocument, source).path, (), (), category)
+            for category in dict.fromkeys(rule.category for rule in SINK_RULES)
         )
-        visited: set[tuple[str, tuple[str, ...]]] = set()
+        visited: set[tuple[str, tuple[str, ...], str]] = set()
         unresolved_edges: list[dict[str, str]] = []
         confirmed_trace: tuple[dict[str, Any], ...] | None = None
         while queue:
-            path, initial_tainted, trace = queue.popleft()
-            state_key = (path, initial_tainted)
+            path, initial_tainted, trace, category = queue.popleft()
+            state_key = (path, initial_tainted, category)
             if state_key in visited:
                 continue
             visited.add(state_key)
             document = index.document(path)
             if document is None:
                 continue
-            flow = _document_flow(document, initial_tainted=initial_tainted)
+            flow = _document_flow(
+                document, initial_tainted=initial_tainted, sink_category=category
+            )
             step = {
                 "path": path,
                 "sanitizers": list(flow.sanitizers),
@@ -927,13 +1012,26 @@ def validation_tools(
                     continue
                 matching_calls = [
                     call
-                    for call in flow.tainted_calls
-                    if _symbol_matches_target(call, target)
+                    for call in flow.call_bindings
+                    if _symbol_matches_target(call.name, target)
                 ]
                 if not matching_calls:
                     unresolved_edges.append({"from": path, "to": neighbor})
                     continue
-                queue.append((neighbor, _parameters(target), next_trace))
+                parameters = _parameters(target)
+                for call in matching_calls:
+                    tainted_parameters = {
+                        name for name, is_tainted in zip(parameters, call.positional)
+                        if is_tainted and name
+                    }
+                    tainted_parameters.update(
+                        name for name, is_tainted in call.keywords
+                        if is_tainted and name in parameters
+                    )
+                    if tainted_parameters:
+                        queue.append((
+                            neighbor, tuple(sorted(tainted_parameters)), next_trace, category
+                        ))
 
         status = (
             ValidationStatus.CONFIRMED
@@ -943,6 +1041,7 @@ def validation_tools(
         return ToolObservation(
             tool="trace_dataflow",
             status="ok",
+            validation_status=status,
             content=_json_content(
                 {
                     "status": status,
@@ -953,6 +1052,22 @@ def validation_tools(
             evidence_ids=tuple(
                 f"taint:{step['path']}" for step in (confirmed_trace or ())
             ),
+        )
+
+    def concrete_eval_probe(arguments: FrozenModel, scope: ToolExecutionScope) -> ToolObservation:
+        value = cast(TraceDataflowInput, arguments)
+        _, error = _admitted_document(index, value.source_path, scope, "probe_python_eval")
+        if error is not None:
+            return error
+        if value.sink_path is not None and value.sink_path not in scope.admitted_paths:
+            return ToolObservation(tool="probe_python_eval", status="blocked",
+                                   content="sink path is outside the retrieved execution scope")
+        result = probe_python_eval(index, scope.admitted_paths, value.source_path,
+                                   value.sink_path, value.max_hops)
+        return ToolObservation(
+            tool="probe_python_eval", status="ok",
+            validation_status=ValidationStatus(result["status"]), content=_json_content(result),
+            evidence_ids=(f"probe:{value.source_path}",),
         )
 
     def routes(
@@ -1183,6 +1298,7 @@ def validation_tools(
         return ToolObservation(
             tool="compare_route_and_service_guard",
             status="ok",
+            validation_status=status,
             content=_json_content(
                 {
                     "interpretation": interpretation,
@@ -1254,6 +1370,7 @@ def validation_tools(
         return ToolObservation(
             tool="compare_vulnerable_and_fixed",
             status="ok",
+            validation_status=status,
             content=_json_content(
                 {
                     "fixed_guard_count": len(fixed_guards),
@@ -1294,6 +1411,7 @@ def validation_tools(
         return ToolObservation(
             tool="run_fixture_test",
             status="ok",
+            validation_status=outcome.status,
             content=_json_content(outcome.model_dump(mode="json")),
             evidence_ids=(f"fixture:{value.case_id}",),
         )
@@ -1318,6 +1436,7 @@ def validation_tools(
         return ToolObservation(
             tool="run_loopback_http_case",
             status="ok",
+            validation_status=outcome.status,
             content=_json_content(outcome.model_dump(mode="json")),
             evidence_ids=(f"loopback:{value.case_id}",),
         )
@@ -1327,6 +1446,7 @@ def validation_tools(
         description: str,
         input_model: type[FrozenModel],
         handler: Callable[[FrozenModel, ToolExecutionScope], ToolObservation],
+        *, available: bool = True,
     ) -> AgentTool:
         return AgentTool(
             name=name,
@@ -1334,23 +1454,26 @@ def validation_tools(
             input_model=input_model,
             handler=handler,
             content_type="json",
+            available=available,
         )
 
     return (
         json_tool("find_references", "Find admitted definitions and call references for one symbol.", FindReferencesInput, references),
         json_tool("run_static_check", "Run deterministic sink rules on one admitted code span.", PathInput, static_check),
-        json_tool("run_fixture_test", "Run one project-registered bounded fixture by id.", CaseInput, fixture),
+        json_tool("run_fixture_test", f"Run one project-registered bounded fixture by id. Registered case IDs: {json.dumps(sorted(fixtures))}", CaseInput, fixture, available=bool(fixtures)),
         json_tool("find_sources", "Find untrusted-input sources in one admitted code span.", PathInput, pattern_tool("find_sources", SOURCE_RULES)),
         json_tool("find_sinks", "Find security-sensitive sinks in one admitted code span.", PathInput, pattern_tool("find_sinks", SINK_RULES)),
         json_tool("trace_dataflow", "Trace tainted values through admitted call-graph paths.", TraceDataflowInput, trace_dataflow),
+        json_tool("probe_python_eval", "Independently probe request input reaching eval using two concrete inputs in a bounded Python function-slice interpreter. Use the candidate entry as source_path. Does not execute repository code or prove application exploitability. Unsupported syntax and no witness mean UNRESOLVED, not SAFE.", TraceDataflowInput, concrete_eval_probe,
+                  available=any(doc.language == "python" and doc.adapter_tier == "ast" for doc in index.documents.values())),
         json_tool("find_sanitizers", "Find sanitizer or validation operations in one admitted span.", PathInput, pattern_tool("find_sanitizers", SANITIZER_RULES)),
-        json_tool("compare_vulnerable_and_fixed", "Compare one admitted vulnerable span with its registered verified fixed pair.", PathInput, compare_versions),
+        json_tool("compare_vulnerable_and_fixed", "Compare one admitted vulnerable span with its registered verified fixed pair.", PathInput, compare_versions, available=bool(fixed_index and paired)),
         json_tool("get_routes", "Read structured and inferred route declarations for one admitted span.", PathInput, routes),
         json_tool("get_guards", "Read structured and inferred authorization guards for one admitted span.", PathInput, guards),
         json_tool("inspect_principal", "Inspect principal identity evidence in one admitted span.", PathInput, semantic_matches("inspect_principal", PRINCIPAL_PATTERN, "principals")),
         json_tool("inspect_resource_scope", "Inspect resource and tenant scope evidence in one admitted span.", PathInput, semantic_matches("inspect_resource_scope", RESOURCE_PATTERN, "resources")),
         json_tool("compare_route_and_service_guard", "Compare reachable route and service authorization enforcement.", CompareGuardInput, compare_guard),
-        json_tool("run_loopback_http_case", "Run one project-registered HTTP case on an ephemeral loopback server.", CaseInput, loopback),
+        json_tool("run_loopback_http_case", f"Run one project-registered HTTP case on an ephemeral loopback server. Registered case IDs: {json.dumps(sorted(loopbacks))}", CaseInput, loopback, available=bool(loopbacks)),
     )
 
 

@@ -6,7 +6,7 @@ from cv_agent.agent_tools import (
     repository_tools,
 )
 from cv_agent.agent_types import ModelToolCall, ToolObservation
-from cv_agent.retrieval import RepositoryIndex, context_text_token_count
+from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count
 from cv_agent.types import CodeDocument, FrozenModel
 
 
@@ -84,6 +84,26 @@ def test_tool_registry_blocks_tools_outside_expert_allowlist():
     assert observation.status == "blocked"
 
 
+def test_unavailable_tool_cannot_execute_even_in_callers_allowlist():
+    executions = []
+
+    def handle(arguments, scope):
+        executions.append(arguments.path)
+        return ToolObservation(tool="disabled", status="ok", content="executed")
+
+    registry = ToolRegistry((
+        AgentTool("disabled", "Unavailable validator", ReadSpanInput, handle, available=False),
+    ), max_output_bytes=10_000)
+    observation = registry.invoke(
+        ModelToolCall(call_id="disabled-1", name="disabled", arguments={"path": "entry.py"}),
+        allowed=("disabled",), scope=_scope("entry.py"), citation_id="tool:1",
+    )
+    assert executions == []
+    assert observation.status == "blocked"
+    assert "unavailable" in observation.content
+    assert observation.citation_id == "tool:1"
+
+
 def test_tool_registry_truncates_observations_at_harness_limit():
     registry = ToolRegistry(repository_tools(_index()), max_output_bytes=40)
     scope = _scope("entry.py::entry@1-2")
@@ -142,7 +162,7 @@ def test_repository_tools_cannot_escape_retrieved_execution_scope():
 
 def test_tool_observations_share_one_bounded_context_budget():
     registry = ToolRegistry(repository_tools(_index()), max_output_bytes=10_000)
-    scope = _scope("entry.py::entry@1-2", token_budget=32)
+    scope = _scope("entry.py::entry@1-2", token_budget=80)
     call = ModelToolCall(
         call_id="read-budgeted",
         name="read_span",
@@ -153,7 +173,7 @@ def test_tool_observations_share_one_bounded_context_budget():
     second = registry.invoke(call, allowed=("read_span",), scope=scope)
 
     assert first.status == "ok"
-    assert 0 < first.metadata["observation_token_count"] <= 32
+    assert 0 < first.metadata["observation_token_count"] <= 80
     assert first.metadata["observation_token_count"] == context_text_token_count(
         registry.prompt_payload(first)
     )

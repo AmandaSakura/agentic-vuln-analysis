@@ -4,7 +4,7 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from .agent_tools import ToolRegistry, repository_tools
+from .agent_tools import ToolRegistry
 from .agent_types import ModelReply, ModelToolCall
 from .agentic_workflow import AgenticPipeline
 from .harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
@@ -13,6 +13,7 @@ from .model_runtime import ScriptedChatModel
 from .retrieval import RepositoryIndex
 from .synthetic import cross_file_fixture, guarded_delete_fixture
 from .types import Candidate, VerdictLabel
+from .validation_tools import full_agent_tools
 
 
 @dataclass(frozen=True)
@@ -83,7 +84,7 @@ def _planner_reply(candidate: Candidate) -> ModelReply:
                 "task_id": "trace-or-refute-taint",
                 "objective": "Check whether untrusted input reaches the operation.",
                 "expert": "taint",
-                "allowed_validator": "compare_vulnerable_and_fixed",
+                "allowed_validator": "trace_dataflow",
                 "dependencies": ["scan-sensitive-operation"],
                 "success_condition": "The taint expert confirms or refutes dataflow.",
             },
@@ -91,7 +92,7 @@ def _planner_reply(candidate: Candidate) -> ModelReply:
                 "task_id": "check-authorization-guard",
                 "objective": "Check whether an authorization guard protects the operation.",
                 "expert": "authz",
-                "allowed_validator": "run_loopback_http_case",
+                "allowed_validator": "compare_route_and_service_guard",
                 "dependencies": ["trace-or-refute-taint"],
                 "success_condition": "The authz expert confirms or refutes guard coverage.",
             },
@@ -102,10 +103,7 @@ def _planner_reply(candidate: Candidate) -> ModelReply:
 
 
 def _status_for(label: VerdictLabel) -> str:
-    if label == "VULNERABLE":
-        return "CONFIRMED"
-    if label == "SAFE":
-        return "REFUTED"
+    # Scripted labels are diagnostic predictions, not validator proof.
     return "UNRESOLVED"
 
 
@@ -121,12 +119,12 @@ def _case_models(
     models = {
         "scan": ScriptedChatModel(
             [
-                _tool_reply("scan", "read_span", {"path": scan_path}),
+                _tool_reply("scan", "run_static_check", {"path": scan_path}),
                 _conclusion(
                     "scan",
                     scan_label,
                     _status_for(scan_label),
-                    [f"span:{scan_path}"],
+                    ["scan/tool:1"],
                     f"scan scripted diagnostic: {case.rationale}",
                 ),
             ]
@@ -150,24 +148,24 @@ def _case_models(
                 ),
                 "taint": ScriptedChatModel(
                     [
-                        _tool_reply("taint", "read_span", {"path": case.taint_path}),
+                        _tool_reply("taint", "trace_dataflow", {"source_path": case.taint_path}),
                         _conclusion(
                             "taint",
                             case.taint_label,
                             _status_for(case.taint_label),
-                            [f"span:{case.taint_path}"],
+                            ["taint/tool:1"],
                             f"taint scripted diagnostic: {case.rationale}",
                         ),
                     ]
                 ),
                 "authz": ScriptedChatModel(
                     [
-                        _tool_reply("authz", "read_span", {"path": case.authz_path}),
+                        _tool_reply("authz", "compare_route_and_service_guard", {"route_path": case.authz_path}),
                         _conclusion(
                             "authz",
                             case.authz_label,
                             _status_for(case.authz_label),
-                            [f"span:{case.authz_path}"],
+                            ["authz/tool:1"],
                             f"authz scripted diagnostic: {case.rationale}",
                         ),
                     ]
@@ -253,7 +251,7 @@ def run_agentic_scripted_eval() -> dict[str, object]:
         for case in cases:
             models = _case_models(case, system)
             tools = ToolRegistry(
-                repository_tools(case.index),
+                full_agent_tools(case.index),
                 max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
             )
             verdict = AgenticPipeline(

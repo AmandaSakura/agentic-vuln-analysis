@@ -12,6 +12,9 @@ from .agent_types import (
     AgenticVerdict,
     ModelUsage,
     PlannerResult,
+    ValidationPlan,
+    ValidationSubtask,
+    ValidationTaskExecution,
 )
 from .consensus import QuorumPolicy, SingleExpertPolicy
 from .harness import (
@@ -25,7 +28,7 @@ from .model_runtime import ChatModel, trusted_runtime_mode
 from .react_engine import ReActEngine, run_expert, run_planner
 from .retrieval import (
     RepositoryIndex,
-    context_text_token_count,
+    prompt_token_upper_bound as context_text_token_count,
     fit_text_to_serialized_context,
 )
 from .types import Candidate, Evidence, ExpertVote
@@ -39,6 +42,8 @@ class AgentWorkflowState(TypedDict):
     planner: PlannerResult | None
     votes: list[AgentExpertVote]
     verdict: AgenticVerdict | None
+    task_executions: list[ValidationTaskExecution]
+    fast_checked: bool
 
 
 def _sum_optional(values: list[int | None]) -> int | None:
@@ -91,6 +96,7 @@ def _bounded_context_prompt(
         fitted = fit_text_to_serialized_context(
             item.text,
             token_budget=token_budget,
+            count_tokens=context_text_token_count,
             render=lambda text, item=item: _render_context_prompt(
                 candidate,
                 [*selected, item.model_copy(update={"text": text})],
@@ -99,6 +105,8 @@ def _bounded_context_prompt(
         if fitted is None:
             continue
         text, payload, token_count = fitted
+        if not text and item.text:
+            continue
         selected.append(item.model_copy(update={"text": text}))
     return selected, payload, token_count
 
@@ -153,23 +161,10 @@ class AgenticPipeline:
         builder.add_node("adjudicate", self._adjudicate)
         builder.add_edge(START, "retrieve")
         builder.add_edge("retrieve", "plan")
-        builder.add_edge("plan", "scan")
-        builder.add_conditional_edges(
-            "scan",
-            self._route_after_scan,
-            {"single": "adjudicate", "multi": "taint"},
-        )
-        builder.add_conditional_edges(
-            "taint",
-            self._route_after_taint,
-            {"fast_candidate": "try_fast", "full": "authz"},
-        )
-        builder.add_conditional_edges(
-            "try_fast",
-            self._route_after_fast,
-            {"done": END, "continue": "authz"},
-        )
-        builder.add_edge("authz", "adjudicate")
+        routes = {name: name for name in ("scan", "taint", "authz", "try_fast", "adjudicate")}
+        routes["done"] = END
+        for node in ("plan", "scan", "taint", "authz", "try_fast"):
+            builder.add_conditional_edges(node, self._route_next, routes)
         builder.add_edge("adjudicate", END)
         return builder.compile()
 
@@ -181,7 +176,14 @@ class AgenticPipeline:
         )
         evidence, context_prompt, token_count = _bounded_context_prompt(
             state["candidate"],
-            retrieved,
+            [
+                *_bounded_context_prompt(
+                    state["candidate"],
+                    [item for item in retrieved if item.retrieval == "local"],
+                    token_budget=self.system_spec.budget.base_context_tokens,
+                )[0],
+                *[item for item in retrieved if item.retrieval != "local"],
+            ],
             token_budget=self.system_spec.budget.total_context_tokens,
         )
         return {
@@ -191,16 +193,25 @@ class AgenticPipeline:
         }
 
     def _engine(self, role: str, state: AgentWorkflowState) -> ReActEngine:
+        previous = [item.vote for item in state["task_executions"] if item.vote.expert == role]
+        selected = self._next_task(state)
+        task = selected[1] if selected is not None and role != "planner" else None
+        visible = self._visible_executions(state, role, task)
         return ReActEngine(
             model=self.models[role],
             tools=self.tools,
             scope=ToolExecutionScope(
                 admitted_paths=frozenset(item.path for item in state["evidence"]),
+                initial_evidence_ids=frozenset(item.evidence_id for item in state["evidence"]),
+                observed_tokens=sum(vote.tool_observation_token_count for vote in previous),
                 max_observation_tokens=(
                     FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens
                 ),
             ),
             harness=FULL_SYSTEM_HARNESS.react_loop,
+            prior_trace=tuple(step for item in visible for step in item.vote.trace),
+            citation_prefix=f"{role}/tool",
+            citation_offset=sum(vote.tool_calls for vote in previous),
         )
 
     def _repository_tool_names(self) -> tuple[str, ...]:
@@ -224,15 +235,53 @@ class AgenticPipeline:
                 "You are a vulnerability-validation planner. Decompose the candidate into "
                 "ordered, evidence-seeking subtasks. Use only declared experts and validators."
             ),
-            task_prompt=state["context_prompt"],
+            task_prompt=self._planner_prompt(state),
             allowed_tools=allowed_tools,
             max_subtasks=FULL_SYSTEM_HARNESS.planner_max_subtasks,
+            output_validator=lambda plan: self._validate_plan(plan, state["candidate"]),
         )
-        if result.plan.candidate_id != state["candidate"].candidate_id:
+        return {"planner": result}
+
+    def _planner_prompt(self, state: AgentWorkflowState) -> str:
+        validators = set(FULL_SYSTEM_HARNESS.validation.validators) & set(self.tools.available_names)
+        capabilities = {
+            "maximum_subtasks": FULL_SYSTEM_HARNESS.planner_max_subtasks,
+            "expert_mandates": {
+                name: self._expert_spec(name).mandate for name in self.system_spec.expert_order
+            },
+            "verification_guidance": (
+                "Arrange distinct applicable checks of the same candidate, not votes from "
+                "unrelated specialties. For supported Python eval injection, assign scan "
+                "probe_python_eval at the entry and taint trace_dataflow; these checks can "
+                "run without depending on one another's conclusions. A static sink search "
+                "only locates a candidate. Prefer registered execution fixtures when available "
+                "and relevant. Use authz for permission problems; outside scope it may abstain. "
+                "Do not request agreement, duplicate one validator result as independent "
+                "verification, or infer SAFE from an inconclusive probe. If available "
+                "capabilities cannot establish two applicable checks, retain that limitation."
+            ),
+            "allowed_validators_by_expert": {
+                name: sorted(set(self._expert_spec(name).tools) & validators)
+                for name in self.system_spec.expert_order
+            },
+            "validator_descriptions": {
+                definition["function"]["name"]: definition["function"]["description"]
+                for definition in self.tools.definitions(sorted(validators))
+            },
+        }
+        return (
+            f"{state['context_prompt']}\nPlanning capabilities: "
+            + json.dumps(capabilities, sort_keys=True, separators=(",", ":"))
+        )
+
+    def _validate_plan(self, plan: ValidationPlan, candidate: Candidate) -> None:
+        if plan.candidate_id != candidate.candidate_id:
             raise ValueError("planner output carries the wrong candidate identity")
+        if len(plan.subtasks) > FULL_SYSTEM_HARNESS.planner_max_subtasks:
+            raise ValueError("planner exceeded maximum_subtasks")
         scheduled = set(self.system_spec.expert_order)
-        validators = set(FULL_SYSTEM_HARNESS.validation.validators)
-        for task in result.plan.subtasks:
+        validators = set(FULL_SYSTEM_HARNESS.validation.validators) & set(self.tools.names)
+        for task in plan.subtasks:
             if task.expert not in scheduled:
                 raise ValueError(
                     f"planner assigned task {task.task_id} to unscheduled expert {task.expert}"
@@ -247,7 +296,11 @@ class AgenticPipeline:
                     f"planner assigned validator {task.allowed_validator} to expert "
                     f"{task.expert}, which cannot execute it"
                 )
-        return {"planner": result}
+            if task.allowed_validator not in self.tools.available_names:
+                raise ValueError(
+                    f"validator {task.allowed_validator} is unavailable for this run; "
+                    "choose from Planning capabilities"
+                )
 
     @staticmethod
     def _expert_spec(name: str) -> ExpertAgentHarness:
@@ -258,42 +311,103 @@ class AgenticPipeline:
 
     def _allowed_expert_tools(self, name: str) -> tuple[str, ...]:
         spec = self._expert_spec(name)
-        allowed = tuple(tool for tool in spec.tools if tool in self.tools.names)
+        allowed = tuple(tool for tool in spec.tools if tool in self.tools.available_names)
         if not allowed:
             raise ValueError(f"expert {name} has no registered tools")
         return allowed
 
-    def _expert_prompt(self, state: AgentWorkflowState, name: str) -> str:
+    def _visible_executions(
+        self, state: AgentWorkflowState, name: str, task: ValidationSubtask | None,
+    ) -> list[ValidationTaskExecution]:
         planner = state["planner"]
-        tasks = (
-            [
-                task.model_dump(mode="json")
-                for task in planner.plan.subtasks
-                if task.expert == name
-            ]
-            if planner is not None
-            else []
+        if planner is None:
+            return []
+        tasks = {item.task_id: item for item in planner.plan.subtasks}
+        needed = set(task.dependencies if task else ())
+        needed.update(
+            item.task_id for item in state["task_executions"]
+            if item.vote.expert == name and item.task_id is not None
         )
+        pending = list(needed)
+        while pending:
+            for dependency in tasks[pending.pop()].dependencies:
+                if dependency not in needed:
+                    needed.add(dependency)
+                    pending.append(dependency)
+        return [item for item in state["task_executions"] if item.task_id in needed]
+
+    def _expert_prompt(
+        self, state: AgentWorkflowState, name: str, task: ValidationSubtask | None,
+    ) -> str:
+        tasks = [task.model_dump(mode="json")] if task is not None else []
         task_payload = json.dumps(
             tasks,
             sort_keys=True,
             separators=(",", ":"),
         )
+        dependencies = [
+            {
+                "task_id": item.task_id,
+                "expert": item.vote.expert,
+                "label": item.vote.label,
+                "validation_status": item.vote.validation_status.value,
+                "rationale": item.vote.rationale,
+                "evidence_ids": item.vote.evidence_ids,
+                "observations": [self.tools.prompt_payload(step.observation) for step in item.vote.trace],
+            }
+            for item in self._visible_executions(state, name, task)
+        ]
         return (
             f"{state['context_prompt']}\n"
-            f"Assigned validation subtasks: {task_payload}"
+            f"Assigned validation subtasks: {task_payload}\n"
+            f"Completed dependencies and prior own tasks: {json.dumps(dependencies, separators=(',', ':'))}\n"
+            "Execute this task's validator, then give your current overall candidate judgment "
+            "for your specialty, taking the prior own task results into account. "
+            "A completed task may remain UNRESOLVED; do not treat completion as validation success."
         )
 
     def _run_named_expert(self, state: AgentWorkflowState, name: str) -> dict[str, object]:
+        selected = self._next_task(state)
+        if selected is None or selected[0] != name:
+            raise RuntimeError("expert was dispatched without a ready task")
+        task = selected[1]
         spec = self._expert_spec(name)
         vote = run_expert(
             self._engine(name, state),
             expert=spec.expert,
             system_prompt=spec.mandate,
-            task_prompt=self._expert_prompt(state, name),
+            task_prompt=self._expert_prompt(state, name, task),
             allowed_tools=self._allowed_expert_tools(name),
+            required_validators=(task.allowed_validator,) if task is not None else (),
         )
-        return {"votes": [*state["votes"], vote]}
+        executions = [*state["task_executions"], ValidationTaskExecution(
+            task_id=task.task_id if task else None, vote=vote,
+        )]
+        completed = {item.task_id for item in executions if item.task_id is not None}
+        plan = state["planner"]
+        remaining_own = [
+            item for item in plan.plan.subtasks
+            if item.expert == name and item.task_id not in completed
+        ] if plan else []
+        votes = list(state["votes"])
+        if not remaining_own:
+            own = [item.vote for item in executions if item.vote.expert == name]
+            # Only the last, cumulative judgment is a ballot. Repeated tasks do
+            # not give one specialist multiple votes in the quorum.
+            aggregate = vote.model_copy(update={
+                "trace": tuple(step for item in own for step in item.trace),
+                "model_ids": tuple(dict.fromkeys(model_id for item in own for model_id in item.model_ids)),
+                "model_calls": sum(item.model_calls for item in own),
+                "tool_calls": sum(item.tool_calls for item in own),
+                "tool_observation_token_count": sum(item.tool_observation_token_count for item in own),
+                "usage": ModelUsage(**{
+                    key: _sum_optional([getattr(item.usage, key) for item in own])
+                    for key in ("input_tokens", "output_tokens", "total_tokens")
+                }),
+            })
+            votes.append(aggregate)
+            votes.sort(key=lambda item: self.system_spec.expert_order.index(item.expert))
+        return {"votes": votes, "task_executions": executions}
 
     def _run_scan(self, state: AgentWorkflowState) -> dict[str, object]:
         return self._run_named_expert(state, "scan")
@@ -304,13 +418,38 @@ class AgenticPipeline:
     def _run_authz(self, state: AgentWorkflowState) -> dict[str, object]:
         return self._run_named_expert(state, "authz")
 
-    def _route_after_scan(self, state: AgentWorkflowState) -> str:
-        return "single" if self.system_spec.full_review_policy == "single" else "multi"
+    def _next_task(self, state: AgentWorkflowState) -> tuple[str, ValidationSubtask | None] | None:
+        plan = state["planner"]
+        tasks = plan.plan.subtasks if plan is not None else ()
+        completed = {item.task_id for item in state["task_executions"] if item.task_id is not None}
+        completed_experts = {vote.expert for vote in state["votes"]}
+        ready: list[tuple[str, ValidationSubtask | None]] = [
+            (task.expert, task) for task in tasks
+            if task.task_id not in completed and set(task.dependencies) <= completed
+        ]
+        assigned = {task.expert for task in tasks}
+        ready.extend(
+            (name, None) for name in self.system_spec.expert_order
+            if name not in assigned and name not in completed_experts
+        )
+        if ready:
+            return min(ready, key=lambda item: self.system_spec.expert_order.index(item[0]))
+        if len(completed) != len(tasks):
+            raise RuntimeError("planner dependencies have no executable task")
+        return None
 
-    def _route_after_taint(self, state: AgentWorkflowState) -> str:
-        if self.system_spec.early_quorum_after == len(state["votes"]):
-            return "fast_candidate"
-        return "full"
+    def _route_next(self, state: AgentWorkflowState) -> str:
+        if state["verdict"] is not None:
+            return "done"
+        prefix = self.system_spec.expert_order[:self.system_spec.early_quorum_after]
+        if (
+            self.system_spec.early_quorum_after is not None
+            and not state["fast_checked"]
+            and tuple(vote.expert for vote in state["votes"]) == prefix
+        ):
+            return "try_fast"
+        selected = self._next_task(state)
+        return selected[0] if selected is not None else "adjudicate"
 
     @staticmethod
     def _consensus_votes(votes: list[AgentExpertVote]) -> list[ExpertVote]:
@@ -319,6 +458,7 @@ class AgenticPipeline:
                 expert=vote.expert,
                 label=vote.label,
                 confidence=vote.confidence,
+                validation_status=vote.validation_status.value,
                 evidence_ids=vote.evidence_ids,
                 rationale=vote.rationale,
             )
@@ -335,11 +475,12 @@ class AgenticPipeline:
         rationale: str,
     ) -> AgenticVerdict:
         planner = state["planner"]
-        usage_items = [vote.usage for vote in state["votes"]]
-        model_calls = sum(vote.model_calls for vote in state["votes"])
-        tool_calls = sum(vote.tool_calls for vote in state["votes"])
+        executed_votes = [item.vote for item in state["task_executions"]]
+        usage_items = [vote.usage for vote in executed_votes]
+        model_calls = sum(vote.model_calls for vote in executed_votes)
+        tool_calls = sum(vote.tool_calls for vote in executed_votes)
         tool_observation_token_count = sum(
-            vote.tool_observation_token_count for vote in state["votes"]
+            vote.tool_observation_token_count for vote in executed_votes
         )
         if planner is not None:
             usage_items.append(planner.usage)
@@ -359,6 +500,7 @@ class AgenticPipeline:
             rationale=rationale,
             planner=planner,
             votes=tuple(state["votes"]),
+            task_executions=tuple(state["task_executions"]),
             model_calls=model_calls,
             tool_calls=tool_calls,
             usage=usage,
@@ -376,8 +518,9 @@ class AgenticPipeline:
             fast_confidence=self.system_spec.fast_confidence,
         ).try_fast(self._consensus_votes(state["votes"]))
         if verdict is None:
-            return {"verdict": None}
+            return {"verdict": None, "fast_checked": True}
         return {
+            "fast_checked": True,
             "verdict": self._result(
                 state,
                 label=verdict.label,
@@ -386,10 +529,6 @@ class AgenticPipeline:
                 rationale=verdict.rationale,
             )
         }
-
-    @staticmethod
-    def _route_after_fast(state: AgentWorkflowState) -> str:
-        return "done" if state["verdict"] is not None else "continue"
 
     def _adjudicate(self, state: AgentWorkflowState) -> dict[str, object]:
         votes = self._consensus_votes(state["votes"])
@@ -421,6 +560,8 @@ class AgenticPipeline:
                 "planner": None,
                 "votes": [],
                 "verdict": None,
+                "task_executions": [],
+                "fast_checked": False,
             }
         )
         verdict = result["verdict"]

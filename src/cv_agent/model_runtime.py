@@ -4,8 +4,8 @@ import json
 import os
 import urllib.error
 import urllib.request
-from collections.abc import Sequence
-from typing import Any, Protocol
+from collections.abc import Callable, Sequence
+from typing import Any, Literal, Protocol
 
 from .agent_types import (
     ChatMessage,
@@ -29,7 +29,9 @@ class ChatModel(Protocol):
 class ScriptedChatModel:
     runtime_mode = AgentRuntimeMode.SCRIPTED
 
-    def __init__(self, replies: Sequence[ModelReply]) -> None:
+    def __init__(self, replies: Sequence[
+        ModelReply | Callable[[Sequence[ChatMessage], Sequence[dict[str, Any]]], ModelReply]
+    ]) -> None:
         self._replies = list(replies)
         self.requests: list[tuple[tuple[ChatMessage, ...], tuple[dict[str, Any], ...]]] = []
 
@@ -41,7 +43,10 @@ class ScriptedChatModel:
         self.requests.append((tuple(messages), tuple(tools)))
         if not self._replies:
             raise RuntimeError("scripted model has no reply remaining")
-        return self._replies.pop(0)
+        reply = self._replies.pop(0)
+        # Project-owned test responders may inspect real tool observations. This
+        # transport still has scripted provenance and cannot become claim eligible.
+        return reply(messages, tools) if callable(reply) else reply
 
 
 class OpenAICompatibleChatModel:
@@ -55,14 +60,50 @@ class OpenAICompatibleChatModel:
         api_key: str | None,
         temperature: float,
         timeout_seconds: int,
+        max_tokens: int | None = None,
+        thinking_mode: Literal["enabled", "disabled"] | None = None,
     ) -> None:
         if not base_url.strip() or not model.strip():
             raise ValueError("live model base URL and model name are required")
+        if max_tokens is not None and max_tokens < 1:
+            raise ValueError("live model max_tokens must be positive")
+        if thinking_mode not in {None, "enabled", "disabled"}:
+            raise ValueError("live model thinking mode must be enabled or disabled")
         self.base_url = base_url.rstrip("/")
         self.model = model
         self._api_key = api_key
         self.temperature = temperature
         self.timeout_seconds = timeout_seconds
+        self.max_tokens = max_tokens
+        self.thinking_mode = thinking_mode
+
+    @staticmethod
+    def _optional_positive_integer_environment(name: str | None) -> int | None:
+        if name is None:
+            return None
+        raw = os.environ.get(name, "").strip()
+        if not raw:
+            return None
+        try:
+            value = int(raw)
+        except ValueError as error:
+            raise ValueError(f"{name} must be a positive integer") from error
+        if value < 1:
+            raise ValueError(f"{name} must be a positive integer")
+        return value
+
+    @staticmethod
+    def _optional_thinking_environment(
+        name: str | None,
+    ) -> Literal["enabled", "disabled"] | None:
+        if name is None:
+            return None
+        raw = os.environ.get(name, "").strip().lower()
+        if not raw:
+            return None
+        if raw not in {"enabled", "disabled"}:
+            raise ValueError(f"{name} must be enabled or disabled")
+        return raw
 
     @classmethod
     def from_harness(
@@ -90,6 +131,12 @@ class OpenAICompatibleChatModel:
             api_key=api_key,
             temperature=harness.temperature,
             timeout_seconds=harness.request_timeout_seconds,
+            max_tokens=cls._optional_positive_integer_environment(
+                harness.max_tokens_env
+            ),
+            thinking_mode=cls._optional_thinking_environment(
+                harness.thinking_mode_env
+            ),
         )
 
     def _endpoint(self) -> str:
@@ -151,19 +198,31 @@ class OpenAICompatibleChatModel:
             )
         return tuple(parsed)
 
-    def complete(
+    def _request_body(
         self,
         messages: Sequence[ChatMessage],
         tools: Sequence[dict[str, Any]],
-    ) -> ModelReply:
+    ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "model": self.model,
             "messages": [self._message_payload(message) for message in messages],
             "temperature": self.temperature,
         }
+        if self.max_tokens is not None:
+            body["max_tokens"] = self.max_tokens
+        if self.thinking_mode is not None:
+            body["thinking"] = {"type": self.thinking_mode}
         if tools:
             body["tools"] = list(tools)
             body["tool_choice"] = "auto"
+        return body
+
+    def complete(
+        self,
+        messages: Sequence[ChatMessage],
+        tools: Sequence[dict[str, Any]],
+    ) -> ModelReply:
+        body = self._request_body(messages, tools)
         request = urllib.request.Request(
             self._endpoint(),
             data=json.dumps(body).encode("utf-8"),

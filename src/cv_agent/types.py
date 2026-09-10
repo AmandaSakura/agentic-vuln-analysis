@@ -62,6 +62,7 @@ class ExpertVote(FrozenModel):
     expert: Literal["scan", "taint", "authz", "flow"]
     label: VerdictLabel
     confidence: float = Field(ge=0.0, le=1.0)
+    validation_status: Literal["CONFIRMED", "REFUTED", "UNRESOLVED"] | None = None
     evidence_ids: tuple[str, ...] = ()
     rationale: str
     trace: tuple[ReasoningStep, ...] = ()

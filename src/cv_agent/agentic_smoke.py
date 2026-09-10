@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 
-from .agent_tools import ToolRegistry, repository_tools
+from .agent_tools import ToolRegistry
 from .agent_types import ModelReply, ModelToolCall
 from .agentic_workflow import AgenticPipeline
 from .harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
 from .model_runtime import ScriptedChatModel
 from .synthetic import cross_file_fixture
+from .validation_tools import full_agent_tools
 
 
 def _tool_reply(role: str, name: str, arguments: dict[str, object]) -> ModelReply:
@@ -62,7 +63,7 @@ def run_agentic_smoke() -> dict[str, object]:
                 "task_id": "trace-request",
                 "objective": "Trace request input into the command sink.",
                 "expert": "taint",
-                "allowed_validator": "compare_vulnerable_and_fixed",
+                "allowed_validator": "trace_dataflow",
                 "dependencies": ["find-command-sink"],
                 "success_condition": "The unsanitized source-to-sink path is established.",
             },
@@ -82,23 +83,23 @@ def run_agentic_smoke() -> dict[str, object]:
         ),
         "scan": ScriptedChatModel(
             [
-                _tool_reply("scan", "read_span", {"path": "service.py"}),
+                _tool_reply("scan", "run_static_check", {"path": "service.py"}),
                 _conclusion(
                     "scan",
                     "VULNERABLE",
-                    "CONFIRMED",
-                    ["span:service.py"],
+                    "UNRESOLVED",
+                    ["scan/tool:1"],
                 ),
             ]
         ),
         "taint": ScriptedChatModel(
             [
-                _tool_reply("taint", "read_span", {"path": "controller.py"}),
+                _tool_reply("taint", "trace_dataflow", {"source_path": "controller.py"}),
                 _conclusion(
                     "taint",
                     "VULNERABLE",
                     "CONFIRMED",
-                    ["span:controller.py", "span:service.py"],
+                    ["taint/tool:1"],
                 ),
             ]
         ),
@@ -106,7 +107,7 @@ def run_agentic_smoke() -> dict[str, object]:
         "authz": ScriptedChatModel([]),
     }
     tools = ToolRegistry(
-        repository_tools(index),
+        full_agent_tools(index),
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
     )
     verdict = AgenticPipeline(
@@ -126,4 +127,3 @@ def run_agentic_smoke() -> dict[str, object]:
         "purpose": "wiring-only ReAct and LangGraph diagnostic",
         "verdict": verdict.model_dump(mode="json"),
     }
-

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import io
 import re
 import tokenize
 from collections import defaultdict
@@ -8,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from .types import CodeDocument
+from .source_files import read_source_bytes
 
 
 @dataclass(frozen=True)
@@ -191,7 +193,10 @@ def _import_aliases(tree: ast.AST, canonical_module: str) -> dict[str, str]:
     for node in getattr(tree, "body", []):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                aliases[alias.asname or alias.name.split(".", 1)[0]] = alias.name
+                # `import pkg.service` binds `pkg`, while `as service` binds
+                # the complete imported module. Do not duplicate the suffix.
+                bound = alias.asname or alias.name.split(".", 1)[0]
+                aliases[bound] = alias.name if alias.asname else bound
         elif isinstance(node, ast.ImportFrom):
             module = node.module or ""
             if node.level:
@@ -398,10 +403,11 @@ def load_python_repository(
     for source_file in source_files:
         relative_path = source_file.relative_to(source_root).as_posix()
         try:
-            with tokenize.open(source_file) as handle:
-                text = handle.read()
+            raw = read_source_bytes(source_root, relative_path)
+            encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
+            text = raw.decode(encoding)
             spans.extend(parse_python_source(repository_id, relative_path, text))
-        except (SyntaxError, UnicodeDecodeError):
+        except (SyntaxError, UnicodeDecodeError, OSError, ValueError):
             parse_errors.append(relative_path)
     return PythonRepositoryDocuments(
         documents=tuple(span.document for span in spans),

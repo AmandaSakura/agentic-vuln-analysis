@@ -14,6 +14,7 @@ from tree_sitter import Language, Node, Parser
 
 from .harness import FULL_SYSTEM_HARNESS
 from .python_ast import parse_python_source
+from .source_files import read_source_bytes
 from .types import CodeDocument
 
 
@@ -931,9 +932,9 @@ def load_code_repository(
             "fallback" if suffix in FALLBACK_SUFFIXES else "ast"
         ] += 1
         try:
-            text = source_file.read_text(encoding="utf-8")
+            text = read_source_bytes(source_root, relative_path).decode("utf-8")
             parsed = _parse_file(repository_id, relative_path, text)
-        except (SyntaxError, UnicodeDecodeError):
+        except (SyntaxError, UnicodeDecodeError, OSError, ValueError):
             parse_errors.append(relative_path)
             continue
         if parsed is None:

@@ -316,7 +316,17 @@ def context_token_count(evidence: Iterable[Evidence]) -> int:
 
 
 def context_text_token_count(text: str) -> int:
+    """Legacy lexical units for deterministic development experiments."""
     return len(CONTEXT_TOKEN_RE.findall(text))
+
+
+def prompt_token_upper_bound(text: str) -> int:
+    """UTF-8 byte bound for model-visible text, separate from provider usage.
+
+    Byte-based tokenizers cannot require more text tokens than input bytes.
+    Chat framing and tool schemas are outside this retrieved-text budget.
+    """
+    return len(text.encode("utf-8"))
 
 
 def _security_focus_score(line: str) -> int:
@@ -467,21 +477,26 @@ def fit_text_to_serialized_context(
     *,
     token_budget: int,
     render: Callable[[str], str],
+    count_tokens: Callable[[str], int] = context_text_token_count,
 ) -> tuple[str, str, int] | None:
     """Fit a text field while charging the exact serialized model-visible payload."""
 
     if token_budget < 0:
         raise ValueError("serialized context token budget cannot be negative")
     empty_payload = render("")
-    empty_tokens = context_text_token_count(empty_payload)
+    empty_tokens = count_tokens(empty_payload)
     if empty_tokens > token_budget:
         return None
     full_payload = render(text)
-    full_tokens = context_text_token_count(full_payload)
+    full_tokens = count_tokens(full_payload)
     if full_tokens <= token_budget:
         return text, full_payload, full_tokens
 
-    token_ends = [match.end() for match in CONTEXT_TOKEN_RE.finditer(text)]
+    token_ends = (
+        range(1, len(text) + 1)
+        if count_tokens is prompt_token_upper_bound
+        else [match.end() for match in CONTEXT_TOKEN_RE.finditer(text)]
+    )
     low = 0
     high = len(token_ends)
     best = ("", empty_payload, empty_tokens)
@@ -489,7 +504,7 @@ def fit_text_to_serialized_context(
         middle = (low + high) // 2
         prefix = text[: token_ends[middle - 1]] if middle else ""
         payload = render(prefix)
-        count = context_text_token_count(payload)
+        count = count_tokens(payload)
         if count <= token_budget:
             best = (prefix, payload, count)
             low = middle + 1

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
@@ -15,6 +17,7 @@ from .agent_types import (
     PlannerResult,
     ReActStep,
     ValidationPlan,
+    ValidationStatus,
 )
 from .harness import ExpertName, ReActLoopHarness
 from .model_runtime import ChatModel, trusted_runtime_mode
@@ -32,6 +35,52 @@ class ReActRun(Generic[OutputT]):
     tool_calls: int
     tool_observation_token_count: int
     usage: ModelUsage
+
+
+def validate_conclusion(
+    output: AgentExpertConclusion, trace: list[ReActStep],
+    initial_evidence_ids: frozenset[str], required_validators: tuple[str, ...] = (),
+    current_trace: list[ReActStep] | None = None,
+) -> None:
+    observations = [
+        step.observation for step in trace
+        if step.observation.status == "ok"
+        and not step.observation.metadata.get("model_payload_suppressed")
+    ]
+    known = set(initial_evidence_ids)
+    for observation in observations:
+        known.update(observation.evidence_ids)
+        if observation.citation_id:
+            known.add(observation.citation_id)
+    if set(output.evidence_ids) - known:
+        raise ValueError("Unknown evidence reference. Cite retrieved evidence or a returned tool citation_id.")
+    if output.label != "ABSTAIN" and not output.evidence_ids:
+        raise ValueError("A material prediction must cite observed evidence.")
+    executed = Counter(
+        step.observation.tool for step in (current_trace if current_trace is not None else trace)
+        if step.observation.status == "ok"
+        and not step.observation.metadata.get("observation_truncated")
+    )
+    if Counter(required_validators) - executed:
+        raise ValueError("Assigned validation tools must complete before finalizing the expert tasks.")
+    if output.validation_status == ValidationStatus.UNRESOLVED:
+        return
+    expected = {
+        ValidationStatus.CONFIRMED: "VULNERABLE", ValidationStatus.REFUTED: "SAFE",
+    }[output.validation_status]
+    if output.label != expected:
+        raise ValueError("Validation status contradicts the prediction label.")
+    referenced = [
+        item for item in observations
+        if not item.metadata.get("observation_truncated")
+        and set(output.evidence_ids) & {*item.evidence_ids, item.citation_id}
+        and item.validation_status not in {None, ValidationStatus.UNRESOLVED}
+    ]
+    if not referenced or any(item.validation_status != output.validation_status for item in referenced):
+        raise ValueError(
+            "CONFIRMED/REFUTED requires matching cited validator output; "
+            "reading code alone only supports validation_status=UNRESOLVED."
+        )
 
 
 def _sum_optional(left: int | None, right: int | None) -> int | None:
@@ -56,12 +105,18 @@ class ReActEngine:
         tools: ToolRegistry,
         scope: ToolExecutionScope,
         harness: ReActLoopHarness,
+        prior_trace: tuple[ReActStep, ...] = (),
+        citation_prefix: str = "tool",
+        citation_offset: int = 0,
     ) -> None:
         self.model = model
         self.runtime_mode = trusted_runtime_mode(model)
         self.tools = tools
         self.scope = scope
         self.harness = harness
+        self.prior_trace = prior_trace
+        self.citation_prefix = citation_prefix
+        self.citation_offset = citation_offset
 
     def run(
         self,
@@ -70,6 +125,8 @@ class ReActEngine:
         task_prompt: str,
         allowed_tools: tuple[str, ...],
         output_model: type[OutputT],
+        required_validators: tuple[str, ...] = (),
+        output_validator: Callable[[OutputT], None] | None = None,
     ) -> ReActRun[OutputT]:
         schema = json.dumps(
             output_model.model_json_schema(),
@@ -93,6 +150,7 @@ class ReActEngine:
         usage: ModelUsage | None = None
         model_calls = 0
         successful_observations = 0
+        starting_observed_tokens = self.scope.observed_tokens
 
         for _ in range(self.harness.max_steps):
             reply = self.model.complete(messages, definitions)
@@ -112,12 +170,13 @@ class ReActEngine:
                         call,
                         allowed=allowed_tools,
                         scope=self.scope,
+                        citation_id=f"{self.citation_prefix}:{self.citation_offset + len(trace) + 1}",
                     )
                     if observation.status == "ok":
                         successful_observations += 1
                     trace.append(
                         ReActStep(
-                            step=len(trace) + 1,
+                            step=self.citation_offset + len(trace) + 1,
                             model_id=reply.model_id,
                             tool_call=call,
                             observation=observation,
@@ -150,14 +209,21 @@ class ReActEngine:
             try:
                 raw_output = json.loads(reply.content or "")
                 output = output_model.model_validate(raw_output)
-            except (json.JSONDecodeError, ValidationError) as error:
+                if isinstance(output, AgentExpertConclusion):
+                    validate_conclusion(
+                        output, [*self.prior_trace, *trace], self.scope.initial_evidence_ids,
+                        required_validators, current_trace=trace,
+                    )
+                if output_validator is not None:
+                    output_validator(output)
+            except (ValueError, ValidationError) as error:
                 messages.extend(
                     (
                         ChatMessage(role="assistant", content=reply.content),
                         ChatMessage(
                             role="user",
                             content=(
-                                "The final object failed schema validation. Return corrected "
+                                "The final object failed schema or evidence validation. Return corrected "
                                 f"JSON only. Validation error: {error}"
                             ),
                         ),
@@ -170,7 +236,7 @@ class ReActEngine:
                 model_ids=tuple(dict.fromkeys(model_ids)),
                 model_calls=model_calls,
                 tool_calls=len(trace),
-                tool_observation_token_count=self.scope.observed_tokens,
+                tool_observation_token_count=self.scope.observed_tokens - starting_observed_tokens,
                 usage=usage or ModelUsage(),
             )
         raise RuntimeError(
@@ -185,12 +251,14 @@ def run_expert(
     system_prompt: str,
     task_prompt: str,
     allowed_tools: tuple[str, ...],
+    required_validators: tuple[str, ...] = (),
 ) -> AgentExpertVote:
     run = engine.run(
         system_prompt=system_prompt,
         task_prompt=task_prompt,
         allowed_tools=allowed_tools,
         output_model=AgentExpertConclusion,
+        required_validators=required_validators,
     )
     if run.output.expert != expert:
         raise ValueError(
@@ -215,12 +283,14 @@ def run_planner(
     task_prompt: str,
     allowed_tools: tuple[str, ...],
     max_subtasks: int,
+    output_validator: Callable[[ValidationPlan], None] | None = None,
 ) -> PlannerResult:
     run = engine.run(
         system_prompt=system_prompt,
         task_prompt=task_prompt,
         allowed_tools=allowed_tools,
         output_model=ValidationPlan,
+        output_validator=output_validator,
     )
     if len(run.output.subtasks) > max_subtasks:
         raise ValueError(

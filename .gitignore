@@ -7,3 +7,4 @@ data/derived/
 data/git-cache/
 data/subjects/
 artifacts/
+.env.deepseek

@@ -7,6 +7,7 @@ import tree_sitter_java
 from tree_sitter import Language, Node, Parser
 
 from .types import CodeDocument
+from .source_files import read_source_bytes
 
 
 JAVA_LANGUAGE = Language(tree_sitter_java.language())
@@ -327,7 +328,12 @@ def load_java_repository(repository_id: str, source_root: Path) -> tuple[list[Co
     parse_error_paths: list[str] = []
     for source_file in sorted(source_root.rglob("*.java")):
         relative_path = source_file.relative_to(source_root).as_posix()
-        result = parse_java_source(repository_id, relative_path, source_file.read_text(encoding="utf-8"))
+        try:
+            text = read_source_bytes(source_root, relative_path).decode("utf-8")
+        except (OSError, UnicodeDecodeError, ValueError):
+            parse_error_paths.append(relative_path)
+            continue
+        result = parse_java_source(repository_id, relative_path, text)
         documents.extend(result.documents)
         if result.has_error:
             parse_error_paths.append(relative_path)

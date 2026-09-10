@@ -182,6 +182,78 @@ def test_slow_policy_requires_two_material_votes():
     assert verdict.path == "slow"
 
 
+def test_slow_policy_requires_quorum_even_with_validator_confirmed_vote():
+    votes = [
+        ExpertVote(
+            expert="scan",
+            label="ABSTAIN",
+            confidence=0.5,
+            validation_status="UNRESOLVED",
+            rationale="sink candidate only",
+        ),
+        ExpertVote(
+            expert="taint",
+            label="VULNERABLE",
+            confidence=1.0,
+            validation_status="CONFIRMED",
+            rationale="confirmed source-to-sink trace",
+        ),
+        ExpertVote(
+            expert="authz",
+            label="ABSTAIN",
+            confidence=0.99,
+            validation_status="UNRESOLVED",
+            rationale="outside authorization semantics",
+        ),
+    ]
+    verdict = QuorumPolicy(fast_enabled=False).decide(votes)
+    assert verdict.label == "ABSTAIN"
+    assert verdict.path == "slow"
+
+
+def test_confirmed_vote_cannot_override_conflict_below_configured_quorum():
+    votes = [
+        ExpertVote(
+            expert="taint", label="VULNERABLE", confidence=1.0,
+            validation_status="CONFIRMED", rationale="static taint trace",
+        ),
+        ExpertVote(
+            expert="scan", label="SAFE", confidence=0.9,
+            validation_status="UNRESOLVED", rationale="conflicting code evidence",
+        ),
+    ]
+    verdict = QuorumPolicy(fast_enabled=False, quorum=3).decide(votes)
+    assert verdict.label == "ABSTAIN"
+
+
+def test_slow_policy_does_not_accept_unresolved_single_material_vote():
+    votes = [
+        ExpertVote(
+            expert="scan",
+            label="ABSTAIN",
+            confidence=0.5,
+            validation_status="UNRESOLVED",
+            rationale="sink candidate only",
+        ),
+        ExpertVote(
+            expert="taint",
+            label="SAFE",
+            confidence=0.98,
+            validation_status="UNRESOLVED",
+            rationale="model inferred argument mapping but validator was unresolved",
+        ),
+        ExpertVote(
+            expert="authz",
+            label="ABSTAIN",
+            confidence=0.99,
+            validation_status="UNRESOLVED",
+            rationale="outside authorization semantics",
+        ),
+    ]
+    verdict = QuorumPolicy(fast_enabled=False).decide(votes)
+    assert verdict.label == "ABSTAIN"
+
+
 def test_early_quorum_matches_full_three_vote_majority():
     votes = [
         ExpertVote(expert="scan", label="VULNERABLE", confidence=0.9, rationale="sink"),
@@ -192,3 +264,17 @@ def test_early_quorum_matches_full_three_vote_majority():
     full = QuorumPolicy(fast_enabled=False).decide(votes)
     assert early is not None
     assert early.label == full.label == "VULNERABLE"
+
+
+def test_early_exit_matches_full_review_across_labels_and_confidence_threshold():
+    from itertools import product
+
+    states = tuple(product(("VULNERABLE", "SAFE", "ABSTAIN"), (0.79, 0.80, 1.0)))
+    for combination in product(states, repeat=3):
+        votes = [
+            ExpertVote(expert=role, label=label, confidence=confidence, rationale="counterfactual")
+            for role, (label, confidence) in zip(("scan", "taint", "authz"), combination)
+        ]
+        early = QuorumPolicy().try_fast(votes[:2])
+        if early is not None:
+            assert early.label == QuorumPolicy(fast_enabled=False).decide(votes).label

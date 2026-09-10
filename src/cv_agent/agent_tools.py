@@ -10,7 +10,7 @@ from pydantic import Field, ValidationError
 from .agent_types import ModelToolCall, ToolObservation
 from .retrieval import (
     RepositoryIndex,
-    context_text_token_count,
+    prompt_token_upper_bound as context_text_token_count,
     fit_text_to_serialized_context,
 )
 from .types import FrozenModel
@@ -34,6 +34,7 @@ class ToolExecutionScope:
     admitted_paths: frozenset[str]
     max_observation_tokens: int
     observed_tokens: int = 0
+    initial_evidence_ids: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         if self.max_observation_tokens < 1:
@@ -53,6 +54,7 @@ class AgentTool:
     input_model: type[FrozenModel]
     handler: Callable[[FrozenModel, ToolExecutionScope], ToolObservation]
     content_type: Literal["text", "json"] = "text"
+    available: bool = True
 
     def definition(self) -> dict[str, Any]:
         return {
@@ -88,6 +90,10 @@ class ToolRegistry:
     @property
     def names(self) -> tuple[str, ...]:
         return tuple(sorted(self._tools))
+
+    @property
+    def available_names(self) -> tuple[str, ...]:
+        return tuple(sorted(name for name, tool in self._tools.items() if tool.available))
 
     def definitions(self, allowed: Iterable[str]) -> tuple[dict[str, Any], ...]:
         allowed_names = tuple(allowed)
@@ -167,7 +173,9 @@ class ToolRegistry:
         scope: ToolExecutionScope,
         *,
         content_type: Literal["text", "json"] = "text",
+        citation_id: str | None = None,
     ) -> ToolObservation:
+        observation = observation.model_copy(update={"citation_id": citation_id})
         effective_content_type = (
             content_type if observation.status == "ok" else "text"
         )
@@ -179,6 +187,8 @@ class ToolRegistry:
             bounded.content != observation.content
             or bounded.status != observation.status
         )
+        if structural_truncation or bounded.status != "ok":
+            bounded = bounded.model_copy(update={"validation_status": None})
         if effective_content_type == "json":
             try:
                 json.loads(bounded.content)
@@ -211,7 +221,7 @@ class ToolRegistry:
                     byte_budget=self.max_output_bytes,
                 )
                 truncated = bounded.model_copy(
-                    update={"content": marker, "status": "error"}
+                    update={"content": marker, "status": "error", "validation_status": None}
                 )
                 marker_payload = self._render_prompt_payload(
                     truncated,
@@ -233,6 +243,7 @@ class ToolRegistry:
                     bounded,
                     content=content,
                 ),
+                count_tokens=context_text_token_count,
             )
         if fitted is None:
             if effective_content_type == "json":
@@ -274,10 +285,14 @@ class ToolRegistry:
                 }
             )
         truncated = structural_truncation or content != bounded.content
+        if truncated:
+            bounded = bounded.model_copy(update={"validation_status": None})
+        token_count = context_text_token_count(self._render_prompt_payload(bounded, content=content))
         scope.observed_tokens += token_count
         return bounded.model_copy(
             update={
                 "content": content,
+                "validation_status": None if truncated else bounded.validation_status,
                 "metadata": {
                     **bounded.metadata,
                     "observation_token_count": token_count,
@@ -298,6 +313,11 @@ class ToolRegistry:
                 "content": content,
                 "status": observation.status,
                 "tool": observation.tool,
+                **({"citation_id": observation.citation_id} if observation.citation_id else {}),
+                **(
+                    {"validation_status": observation.validation_status.value}
+                    if observation.validation_status is not None else {}
+                ),
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -317,8 +337,14 @@ class ToolRegistry:
         *,
         allowed: Iterable[str],
         scope: ToolExecutionScope,
+        citation_id: str | None = None,
     ) -> ToolObservation:
         allowed_names = set(allowed)
+        if scope.remaining_tokens == 0:
+            return self._finalize(
+                ToolObservation(tool=call.name, status="blocked", content="observation budget exhausted"),
+                scope, citation_id=citation_id,
+            )
         if call.name not in allowed_names:
             return self._finalize(
                 ToolObservation(
@@ -327,6 +353,7 @@ class ToolRegistry:
                     content="tool is outside this agent's Harness allowlist",
                 ),
                 scope,
+                citation_id=citation_id,
             )
         tool = self._tools.get(call.name)
         if tool is None:
@@ -337,6 +364,17 @@ class ToolRegistry:
                     content="tool is not registered",
                 ),
                 scope,
+                citation_id=citation_id,
+            )
+        if not tool.available:
+            return self._finalize(
+                ToolObservation(
+                    tool=call.name,
+                    status="blocked",
+                    content="tool is unavailable for this run",
+                ),
+                scope,
+                citation_id=citation_id,
             )
         try:
             arguments = tool.input_model.model_validate(call.arguments)
@@ -348,6 +386,7 @@ class ToolRegistry:
                     content=f"invalid tool arguments: {error}",
                 ),
                 scope,
+                citation_id=citation_id,
             )
         try:
             observation = tool.handler(arguments, scope)
@@ -359,6 +398,7 @@ class ToolRegistry:
                     content=f"tool execution failed: {type(error).__name__}: {error}",
                 ),
                 scope,
+                citation_id=citation_id,
             )
         if observation.tool != call.name:
             raise ValueError(
@@ -368,6 +408,7 @@ class ToolRegistry:
             observation,
             scope,
             content_type=tool.content_type,
+            citation_id=citation_id,
         )
 
 

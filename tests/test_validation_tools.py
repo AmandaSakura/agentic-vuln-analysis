@@ -25,6 +25,7 @@ from cv_agent.validation_tools import (
     LoopbackRequest,
     LoopbackResponse,
     ValidationStatus,
+    _run_fixture_case,
     full_agent_tools,
 )
 
@@ -147,6 +148,17 @@ def test_full_registry_implements_every_harness_tool():
     required.update({"search_symbols", "read_span", "get_callers", "get_callees"})
 
     assert required <= set(registry.names)
+
+
+def test_unconfigured_validators_are_not_advertised_as_available():
+    index, _ = cross_file_fixture()
+    registry = _registry(index)
+    assert {"run_fixture_test", "run_loopback_http_case", "compare_vulnerable_and_fixed"} <= set(registry.names)
+    assert not {"run_fixture_test", "run_loopback_http_case", "compare_vulnerable_and_fixed"} & set(registry.available_names)
+    registered = _registry(index, fixture_cases=(FixtureCase("case-17", _confirmed_fixture),))
+    assert "run_fixture_test" in registered.available_names
+    definition = registered.definitions(("run_fixture_test",))[0]
+    assert "case-17" in definition["function"]["description"]
 
 
 def test_full_registry_satisfies_live_pipeline_construction_without_network_call():
@@ -677,7 +689,9 @@ def test_verified_fixed_pair_comparison_is_registered_not_model_selected():
         {"path": "vulnerable.py"},
         _scope("vulnerable.py"),
     )
-    assert json.loads(missing_pair.content)["status"] == "UNRESOLVED"
+    assert missing_pair.status == "blocked"
+    assert missing_pair.validation_status is None
+    assert "unavailable" in missing_pair.content
 
 
 def test_fixed_pair_pre_sink_guard_with_retained_sink_supports_fix():
@@ -804,7 +818,13 @@ def test_fixture_runner_is_registered_bounded_and_network_disabled():
     assert json.loads(network.content)["status"] == "REFUTED"
     assert json.loads(alias.content)["status"] == "REFUTED"
     assert json.loads(timeout.content)["status"] == "UNRESOLVED"
-    assert json.loads(large.content)["details"]["blob"] == "x" * 300_000
+    assert large.status == "error"
+    assert json.loads(large.content)["observation_truncated"] is True
+    assert large.validation_status is None
+    # The transport must still drain a large child result without deadlock;
+    # only the subsequent model-visible projection is limited.
+    raw_large = _run_fixture_case(FixtureCase("large-direct", _large_fixture), 2)
+    assert raw_large.details["blob"] == "x" * 300_000
 
     unknown = _invoke(
         registry,
