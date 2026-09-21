@@ -34,6 +34,9 @@ class _ObservedToolReply:
         observation = json.loads(messages[-1].content)
         status = observation.get("validation_status", "UNRESOLVED")
         label = {"CONFIRMED": "VULNERABLE", "REFUTED": "SAFE", "UNRESOLVED": "ABSTAIN"}[status]
+        if self.role == "taint" and json.loads(observation["content"]).get("flow_status") == "MAY_REACH":
+            # A prediction based on static flow remains unvalidated.
+            label = "VULNERABLE"
         return ModelReply(model_id="scripted-tool-driven", content=json.dumps({
             "expert": self.role, "label": label, "confidence": 0.9,
             "validation_status": status, "evidence_ids": [observation["citation_id"]],
@@ -71,7 +74,7 @@ def run_probe_case(case: str, system: AgentSystemVersion):
         models[role] = ScriptedChatModel([responder, responder])
     models["planner"] = ScriptedChatModel([
         ModelReply(model_id="scripted-plan", tool_calls=(
-            ModelToolCall(call_id="planner-1", name="get_callees", arguments={"path": entry.path}),
+            ModelToolCall(call_id="planner-1", name="read_span", arguments={"path": entry.path}),
         )),
         ModelReply(model_id="scripted-plan", content=json.dumps(plan)),
     ])

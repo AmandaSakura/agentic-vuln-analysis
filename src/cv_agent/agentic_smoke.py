@@ -75,7 +75,7 @@ def run_agentic_smoke() -> dict[str, object]:
             [
                 _tool_reply(
                     "planner",
-                    "get_callees",
+                    "read_span",
                     {"path": "controller.py"},
                 ),
                 ModelReply(model_id="scripted-planner", content=json.dumps(plan)),
@@ -98,7 +98,7 @@ def run_agentic_smoke() -> dict[str, object]:
                 _conclusion(
                     "taint",
                     "VULNERABLE",
-                    "CONFIRMED",
+                    "UNRESOLVED",
                     ["taint/tool:1"],
                 ),
             ]

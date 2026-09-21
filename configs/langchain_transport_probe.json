@@ -1,0 +1,7 @@
+{
+  "source": "artifacts/langchain_agent_eval/600f45a8e9b847728666fb55fc2119de/events.jsonl",
+  "model_config": "configs/micro_benchmark_gemini_native.json",
+  "cases": ["template_case_01", "template_case_01", "template_case_02"],
+  "max_requests": 3,
+  "max_seconds": 300
+}

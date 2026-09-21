@@ -6,5 +6,11 @@ data/raw/
 data/derived/
 data/git-cache/
 data/subjects/
+data/heldout-subjects/
+data/development_git_pointer_backups/
+data/diagnostics/
 artifacts/
 .env.deepseek
+.env.experiments
+data/heldout-pair-git/
+data/heldout-pair-subjects/

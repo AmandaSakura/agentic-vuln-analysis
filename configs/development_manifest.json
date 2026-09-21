@@ -1,0 +1,1093 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "selection": "SHA256 rank within category x label, seed cv-agent-development-20260919",
+  "population_count": 2740,
+  "case_ids": [
+    "BenchmarkTest00827",
+    "BenchmarkTest01779",
+    "BenchmarkTest02714",
+    "BenchmarkTest02244",
+    "BenchmarkTest01691",
+    "BenchmarkTest02411",
+    "BenchmarkTest00618",
+    "BenchmarkTest00121",
+    "BenchmarkTest00122",
+    "BenchmarkTest01016",
+    "BenchmarkTest00521",
+    "BenchmarkTest00258",
+    "BenchmarkTest01045",
+    "BenchmarkTest01652",
+    "BenchmarkTest01995",
+    "BenchmarkTest01761",
+    "BenchmarkTest00708",
+    "BenchmarkTest00875",
+    "BenchmarkTest02104",
+    "BenchmarkTest01492",
+    "BenchmarkTest00367",
+    "BenchmarkTest00694",
+    "BenchmarkTest02196",
+    "BenchmarkTest01242",
+    "BenchmarkTest02563",
+    "BenchmarkTest00954",
+    "BenchmarkTest01114",
+    "BenchmarkTest01496",
+    "BenchmarkTest00627",
+    "BenchmarkTest02567",
+    "BenchmarkTest01524",
+    "BenchmarkTest02508",
+    "BenchmarkTest01062",
+    "BenchmarkTest02142",
+    "BenchmarkTest02709",
+    "BenchmarkTest01187",
+    "BenchmarkTest01815",
+    "BenchmarkTest02368",
+    "BenchmarkTest00440",
+    "BenchmarkTest00192",
+    "BenchmarkTest01623",
+    "BenchmarkTest00850",
+    "BenchmarkTest02166",
+    "BenchmarkTest01144",
+    "BenchmarkTest00586",
+    "BenchmarkTest01206",
+    "BenchmarkTest01615",
+    "BenchmarkTest00834",
+    "BenchmarkTest00990",
+    "BenchmarkTest02013",
+    "BenchmarkTest00418",
+    "BenchmarkTest00400",
+    "BenchmarkTest00238",
+    "BenchmarkTest02503",
+    "BenchmarkTest02370",
+    "BenchmarkTest01893",
+    "BenchmarkTest01632",
+    "BenchmarkTest01223",
+    "BenchmarkTest01892",
+    "BenchmarkTest01316",
+    "BenchmarkTest01769",
+    "BenchmarkTest00282",
+    "BenchmarkTest00886",
+    "BenchmarkTest00807",
+    "BenchmarkTest01172",
+    "BenchmarkTest02227"
+  ],
+  "pilot_case_ids": [
+    "BenchmarkTest00827",
+    "BenchmarkTest02244"
+  ],
+  "systems": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+  ],
+  "parse_error_paths": [],
+  "labels": {
+    "BenchmarkTest00827": {
+      "case_id": "BenchmarkTest00827",
+      "category": "cmdi",
+      "vulnerable": false,
+      "cwe": 78
+    },
+    "BenchmarkTest01779": {
+      "case_id": "BenchmarkTest01779",
+      "category": "cmdi",
+      "vulnerable": false,
+      "cwe": 78
+    },
+    "BenchmarkTest02714": {
+      "case_id": "BenchmarkTest02714",
+      "category": "cmdi",
+      "vulnerable": false,
+      "cwe": 78
+    },
+    "BenchmarkTest02244": {
+      "case_id": "BenchmarkTest02244",
+      "category": "cmdi",
+      "vulnerable": true,
+      "cwe": 78
+    },
+    "BenchmarkTest01691": {
+      "case_id": "BenchmarkTest01691",
+      "category": "cmdi",
+      "vulnerable": true,
+      "cwe": 78
+    },
+    "BenchmarkTest02411": {
+      "case_id": "BenchmarkTest02411",
+      "category": "cmdi",
+      "vulnerable": true,
+      "cwe": 78
+    },
+    "BenchmarkTest00618": {
+      "case_id": "BenchmarkTest00618",
+      "category": "crypto",
+      "vulnerable": false,
+      "cwe": 327
+    },
+    "BenchmarkTest00121": {
+      "case_id": "BenchmarkTest00121",
+      "category": "crypto",
+      "vulnerable": false,
+      "cwe": 327
+    },
+    "BenchmarkTest00122": {
+      "case_id": "BenchmarkTest00122",
+      "category": "crypto",
+      "vulnerable": false,
+      "cwe": 327
+    },
+    "BenchmarkTest01016": {
+      "case_id": "BenchmarkTest01016",
+      "category": "crypto",
+      "vulnerable": true,
+      "cwe": 327
+    },
+    "BenchmarkTest00521": {
+      "case_id": "BenchmarkTest00521",
+      "category": "crypto",
+      "vulnerable": true,
+      "cwe": 327
+    },
+    "BenchmarkTest00258": {
+      "case_id": "BenchmarkTest00258",
+      "category": "crypto",
+      "vulnerable": true,
+      "cwe": 327
+    },
+    "BenchmarkTest01045": {
+      "case_id": "BenchmarkTest01045",
+      "category": "hash",
+      "vulnerable": false,
+      "cwe": 328
+    },
+    "BenchmarkTest01652": {
+      "case_id": "BenchmarkTest01652",
+      "category": "hash",
+      "vulnerable": false,
+      "cwe": 328
+    },
+    "BenchmarkTest01995": {
+      "case_id": "BenchmarkTest01995",
+      "category": "hash",
+      "vulnerable": false,
+      "cwe": 328
+    },
+    "BenchmarkTest01761": {
+      "case_id": "BenchmarkTest01761",
+      "category": "hash",
+      "vulnerable": true,
+      "cwe": 328
+    },
+    "BenchmarkTest00708": {
+      "case_id": "BenchmarkTest00708",
+      "category": "hash",
+      "vulnerable": true,
+      "cwe": 328
+    },
+    "BenchmarkTest00875": {
+      "case_id": "BenchmarkTest00875",
+      "category": "hash",
+      "vulnerable": true,
+      "cwe": 328
+    },
+    "BenchmarkTest02104": {
+      "case_id": "BenchmarkTest02104",
+      "category": "ldapi",
+      "vulnerable": false,
+      "cwe": 90
+    },
+    "BenchmarkTest01492": {
+      "case_id": "BenchmarkTest01492",
+      "category": "ldapi",
+      "vulnerable": false,
+      "cwe": 90
+    },
+    "BenchmarkTest00367": {
+      "case_id": "BenchmarkTest00367",
+      "category": "ldapi",
+      "vulnerable": false,
+      "cwe": 90
+    },
+    "BenchmarkTest00694": {
+      "case_id": "BenchmarkTest00694",
+      "category": "ldapi",
+      "vulnerable": true,
+      "cwe": 90
+    },
+    "BenchmarkTest02196": {
+      "case_id": "BenchmarkTest02196",
+      "category": "ldapi",
+      "vulnerable": true,
+      "cwe": 90
+    },
+    "BenchmarkTest01242": {
+      "case_id": "BenchmarkTest01242",
+      "category": "ldapi",
+      "vulnerable": true,
+      "cwe": 90
+    },
+    "BenchmarkTest02563": {
+      "case_id": "BenchmarkTest02563",
+      "category": "pathtraver",
+      "vulnerable": false,
+      "cwe": 22
+    },
+    "BenchmarkTest00954": {
+      "case_id": "BenchmarkTest00954",
+      "category": "pathtraver",
+      "vulnerable": false,
+      "cwe": 22
+    },
+    "BenchmarkTest01114": {
+      "case_id": "BenchmarkTest01114",
+      "category": "pathtraver",
+      "vulnerable": false,
+      "cwe": 22
+    },
+    "BenchmarkTest01496": {
+      "case_id": "BenchmarkTest01496",
+      "category": "pathtraver",
+      "vulnerable": true,
+      "cwe": 22
+    },
+    "BenchmarkTest00627": {
+      "case_id": "BenchmarkTest00627",
+      "category": "pathtraver",
+      "vulnerable": true,
+      "cwe": 22
+    },
+    "BenchmarkTest02567": {
+      "case_id": "BenchmarkTest02567",
+      "category": "pathtraver",
+      "vulnerable": true,
+      "cwe": 22
+    },
+    "BenchmarkTest01524": {
+      "case_id": "BenchmarkTest01524",
+      "category": "securecookie",
+      "vulnerable": false,
+      "cwe": 614
+    },
+    "BenchmarkTest02508": {
+      "case_id": "BenchmarkTest02508",
+      "category": "securecookie",
+      "vulnerable": false,
+      "cwe": 614
+    },
+    "BenchmarkTest01062": {
+      "case_id": "BenchmarkTest01062",
+      "category": "securecookie",
+      "vulnerable": false,
+      "cwe": 614
+    },
+    "BenchmarkTest02142": {
+      "case_id": "BenchmarkTest02142",
+      "category": "securecookie",
+      "vulnerable": true,
+      "cwe": 614
+    },
+    "BenchmarkTest02709": {
+      "case_id": "BenchmarkTest02709",
+      "category": "securecookie",
+      "vulnerable": true,
+      "cwe": 614
+    },
+    "BenchmarkTest01187": {
+      "case_id": "BenchmarkTest01187",
+      "category": "securecookie",
+      "vulnerable": true,
+      "cwe": 614
+    },
+    "BenchmarkTest01815": {
+      "case_id": "BenchmarkTest01815",
+      "category": "sqli",
+      "vulnerable": false,
+      "cwe": 89
+    },
+    "BenchmarkTest02368": {
+      "case_id": "BenchmarkTest02368",
+      "category": "sqli",
+      "vulnerable": false,
+      "cwe": 89
+    },
+    "BenchmarkTest00440": {
+      "case_id": "BenchmarkTest00440",
+      "category": "sqli",
+      "vulnerable": false,
+      "cwe": 89
+    },
+    "BenchmarkTest00192": {
+      "case_id": "BenchmarkTest00192",
+      "category": "sqli",
+      "vulnerable": true,
+      "cwe": 89
+    },
+    "BenchmarkTest01623": {
+      "case_id": "BenchmarkTest01623",
+      "category": "sqli",
+      "vulnerable": true,
+      "cwe": 89
+    },
+    "BenchmarkTest00850": {
+      "case_id": "BenchmarkTest00850",
+      "category": "sqli",
+      "vulnerable": true,
+      "cwe": 89
+    },
+    "BenchmarkTest02166": {
+      "case_id": "BenchmarkTest02166",
+      "category": "trustbound",
+      "vulnerable": false,
+      "cwe": 501
+    },
+    "BenchmarkTest01144": {
+      "case_id": "BenchmarkTest01144",
+      "category": "trustbound",
+      "vulnerable": false,
+      "cwe": 501
+    },
+    "BenchmarkTest00586": {
+      "case_id": "BenchmarkTest00586",
+      "category": "trustbound",
+      "vulnerable": false,
+      "cwe": 501
+    },
+    "BenchmarkTest01206": {
+      "case_id": "BenchmarkTest01206",
+      "category": "trustbound",
+      "vulnerable": true,
+      "cwe": 501
+    },
+    "BenchmarkTest01615": {
+      "case_id": "BenchmarkTest01615",
+      "category": "trustbound",
+      "vulnerable": true,
+      "cwe": 501
+    },
+    "BenchmarkTest00834": {
+      "case_id": "BenchmarkTest00834",
+      "category": "trustbound",
+      "vulnerable": true,
+      "cwe": 501
+    },
+    "BenchmarkTest00990": {
+      "case_id": "BenchmarkTest00990",
+      "category": "weakrand",
+      "vulnerable": false,
+      "cwe": 330
+    },
+    "BenchmarkTest02013": {
+      "case_id": "BenchmarkTest02013",
+      "category": "weakrand",
+      "vulnerable": false,
+      "cwe": 330
+    },
+    "BenchmarkTest00418": {
+      "case_id": "BenchmarkTest00418",
+      "category": "weakrand",
+      "vulnerable": false,
+      "cwe": 330
+    },
+    "BenchmarkTest00400": {
+      "case_id": "BenchmarkTest00400",
+      "category": "weakrand",
+      "vulnerable": true,
+      "cwe": 330
+    },
+    "BenchmarkTest00238": {
+      "case_id": "BenchmarkTest00238",
+      "category": "weakrand",
+      "vulnerable": true,
+      "cwe": 330
+    },
+    "BenchmarkTest02503": {
+      "case_id": "BenchmarkTest02503",
+      "category": "weakrand",
+      "vulnerable": true,
+      "cwe": 330
+    },
+    "BenchmarkTest02370": {
+      "case_id": "BenchmarkTest02370",
+      "category": "xpathi",
+      "vulnerable": false,
+      "cwe": 643
+    },
+    "BenchmarkTest01893": {
+      "case_id": "BenchmarkTest01893",
+      "category": "xpathi",
+      "vulnerable": false,
+      "cwe": 643
+    },
+    "BenchmarkTest01632": {
+      "case_id": "BenchmarkTest01632",
+      "category": "xpathi",
+      "vulnerable": false,
+      "cwe": 643
+    },
+    "BenchmarkTest01223": {
+      "case_id": "BenchmarkTest01223",
+      "category": "xpathi",
+      "vulnerable": true,
+      "cwe": 643
+    },
+    "BenchmarkTest01892": {
+      "case_id": "BenchmarkTest01892",
+      "category": "xpathi",
+      "vulnerable": true,
+      "cwe": 643
+    },
+    "BenchmarkTest01316": {
+      "case_id": "BenchmarkTest01316",
+      "category": "xpathi",
+      "vulnerable": true,
+      "cwe": 643
+    },
+    "BenchmarkTest01769": {
+      "case_id": "BenchmarkTest01769",
+      "category": "xss",
+      "vulnerable": false,
+      "cwe": 79
+    },
+    "BenchmarkTest00282": {
+      "case_id": "BenchmarkTest00282",
+      "category": "xss",
+      "vulnerable": false,
+      "cwe": 79
+    },
+    "BenchmarkTest00886": {
+      "case_id": "BenchmarkTest00886",
+      "category": "xss",
+      "vulnerable": false,
+      "cwe": 79
+    },
+    "BenchmarkTest00807": {
+      "case_id": "BenchmarkTest00807",
+      "category": "xss",
+      "vulnerable": true,
+      "cwe": 79
+    },
+    "BenchmarkTest01172": {
+      "case_id": "BenchmarkTest01172",
+      "category": "xss",
+      "vulnerable": true,
+      "cwe": 79
+    },
+    "BenchmarkTest02227": {
+      "case_id": "BenchmarkTest02227",
+      "category": "xss",
+      "vulnerable": true,
+      "cwe": 79
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "BenchmarkTest00827:doGet",
+      "case_id": "BenchmarkTest00827",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00827.java::BenchmarkTest00827.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01779:doGet",
+      "case_id": "BenchmarkTest01779",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01779.java::BenchmarkTest01779.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02714:doGet",
+      "case_id": "BenchmarkTest02714",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02714.java::BenchmarkTest02714.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02244:doGet",
+      "case_id": "BenchmarkTest02244",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02244.java::BenchmarkTest02244.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01691:doGet",
+      "case_id": "BenchmarkTest01691",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01691.java::BenchmarkTest01691.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02411:doGet",
+      "case_id": "BenchmarkTest02411",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02411.java::BenchmarkTest02411.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00618:doGet",
+      "case_id": "BenchmarkTest00618",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00618.java::BenchmarkTest00618.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00121:doGet",
+      "case_id": "BenchmarkTest00121",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00121.java::BenchmarkTest00121.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00122:doGet",
+      "case_id": "BenchmarkTest00122",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00122.java::BenchmarkTest00122.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01016:doGet",
+      "case_id": "BenchmarkTest01016",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01016.java::BenchmarkTest01016.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00521:doGet",
+      "case_id": "BenchmarkTest00521",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00521.java::BenchmarkTest00521.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00258:doGet",
+      "case_id": "BenchmarkTest00258",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00258.java::BenchmarkTest00258.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01045:doGet",
+      "case_id": "BenchmarkTest01045",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01045.java::BenchmarkTest01045.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01652:doGet",
+      "case_id": "BenchmarkTest01652",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01652.java::BenchmarkTest01652.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01995:doGet",
+      "case_id": "BenchmarkTest01995",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01995.java::BenchmarkTest01995.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01761:doGet",
+      "case_id": "BenchmarkTest01761",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01761.java::BenchmarkTest01761.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00708:doGet",
+      "case_id": "BenchmarkTest00708",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00708.java::BenchmarkTest00708.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00875:doGet",
+      "case_id": "BenchmarkTest00875",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00875.java::BenchmarkTest00875.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02104:doGet",
+      "case_id": "BenchmarkTest02104",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02104.java::BenchmarkTest02104.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01492:doGet",
+      "case_id": "BenchmarkTest01492",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01492.java::BenchmarkTest01492.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00367:doGet",
+      "case_id": "BenchmarkTest00367",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00367.java::BenchmarkTest00367.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00694:doGet",
+      "case_id": "BenchmarkTest00694",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00694.java::BenchmarkTest00694.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02196:doGet",
+      "case_id": "BenchmarkTest02196",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02196.java::BenchmarkTest02196.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01242:doGet",
+      "case_id": "BenchmarkTest01242",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01242.java::BenchmarkTest01242.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02563:doGet",
+      "case_id": "BenchmarkTest02563",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02563.java::BenchmarkTest02563.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00954:doGet",
+      "case_id": "BenchmarkTest00954",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00954.java::BenchmarkTest00954.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01114:doGet",
+      "case_id": "BenchmarkTest01114",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01114.java::BenchmarkTest01114.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01496:doGet",
+      "case_id": "BenchmarkTest01496",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01496.java::BenchmarkTest01496.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00627:doGet",
+      "case_id": "BenchmarkTest00627",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00627.java::BenchmarkTest00627.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02567:doGet",
+      "case_id": "BenchmarkTest02567",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02567.java::BenchmarkTest02567.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01524:doGet",
+      "case_id": "BenchmarkTest01524",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01524.java::BenchmarkTest01524.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02508:doGet",
+      "case_id": "BenchmarkTest02508",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02508.java::BenchmarkTest02508.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01062:doGet",
+      "case_id": "BenchmarkTest01062",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01062.java::BenchmarkTest01062.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02142:doGet",
+      "case_id": "BenchmarkTest02142",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02142.java::BenchmarkTest02142.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02709:doGet",
+      "case_id": "BenchmarkTest02709",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02709.java::BenchmarkTest02709.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01187:doGet",
+      "case_id": "BenchmarkTest01187",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01187.java::BenchmarkTest01187.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01815:doGet",
+      "case_id": "BenchmarkTest01815",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01815.java::BenchmarkTest01815.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02368:doGet",
+      "case_id": "BenchmarkTest02368",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02368.java::BenchmarkTest02368.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00440:doGet",
+      "case_id": "BenchmarkTest00440",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00440.java::BenchmarkTest00440.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00192:doGet",
+      "case_id": "BenchmarkTest00192",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00192.java::BenchmarkTest00192.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01623:doGet",
+      "case_id": "BenchmarkTest01623",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01623.java::BenchmarkTest01623.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00850:doGet",
+      "case_id": "BenchmarkTest00850",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00850.java::BenchmarkTest00850.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02166:doGet",
+      "case_id": "BenchmarkTest02166",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02166.java::BenchmarkTest02166.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01144:doGet",
+      "case_id": "BenchmarkTest01144",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01144.java::BenchmarkTest01144.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00586:doGet",
+      "case_id": "BenchmarkTest00586",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00586.java::BenchmarkTest00586.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01206:doGet",
+      "case_id": "BenchmarkTest01206",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01206.java::BenchmarkTest01206.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01615:doGet",
+      "case_id": "BenchmarkTest01615",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01615.java::BenchmarkTest01615.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00834:doGet",
+      "case_id": "BenchmarkTest00834",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00834.java::BenchmarkTest00834.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00990:doGet",
+      "case_id": "BenchmarkTest00990",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00990.java::BenchmarkTest00990.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02013:doGet",
+      "case_id": "BenchmarkTest02013",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02013.java::BenchmarkTest02013.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00418:doGet",
+      "case_id": "BenchmarkTest00418",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00418.java::BenchmarkTest00418.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00400:doGet",
+      "case_id": "BenchmarkTest00400",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00400.java::BenchmarkTest00400.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00238:doGet",
+      "case_id": "BenchmarkTest00238",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00238.java::BenchmarkTest00238.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02503:doGet",
+      "case_id": "BenchmarkTest02503",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02503.java::BenchmarkTest02503.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02370:doGet",
+      "case_id": "BenchmarkTest02370",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02370.java::BenchmarkTest02370.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01893:doGet",
+      "case_id": "BenchmarkTest01893",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01893.java::BenchmarkTest01893.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01632:doGet",
+      "case_id": "BenchmarkTest01632",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01632.java::BenchmarkTest01632.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01223:doGet",
+      "case_id": "BenchmarkTest01223",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01223.java::BenchmarkTest01223.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01892:doGet",
+      "case_id": "BenchmarkTest01892",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01892.java::BenchmarkTest01892.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01316:doGet",
+      "case_id": "BenchmarkTest01316",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01316.java::BenchmarkTest01316.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01769:doGet",
+      "case_id": "BenchmarkTest01769",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01769.java::BenchmarkTest01769.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00282:doGet",
+      "case_id": "BenchmarkTest00282",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00282.java::BenchmarkTest00282.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00886:doGet",
+      "case_id": "BenchmarkTest00886",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00886.java::BenchmarkTest00886.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest00807:doGet",
+      "case_id": "BenchmarkTest00807",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest00807.java::BenchmarkTest00807.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest01172:doGet",
+      "case_id": "BenchmarkTest01172",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest01172.java::BenchmarkTest01172.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    },
+    {
+      "candidate_id": "BenchmarkTest02227:doGet",
+      "case_id": "BenchmarkTest02227",
+      "repository_id": "OWASP:BenchmarkJava-1.2beta",
+      "path": "org/owasp/benchmark/testcode/BenchmarkTest02227.java::BenchmarkTest02227.doGet@34",
+      "line": 34,
+      "query": "@Override\n\tpublic void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n\t\tdoPost(request, response);\n\t}",
+      "metadata": {}
+    }
+  ],
+  "identity": {
+    "code": {
+      "revision": "e8055e4a8d05e3cc9634ae36b8828ae175327fab",
+      "dirty": true
+    },
+    "datasets": {
+      "BenchmarkJava": {
+        "revision": "2734ae486356765ea4e45393a28e20bcb5047f8c",
+        "dirty": false
+      }
+    },
+    "uv_lock_tracked_by_code_revision": true
+  }
+}

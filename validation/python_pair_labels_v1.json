@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "labels": {
+    "langchain_template_vulnerable": {
+      "pair_id": "langchain_template_traversal",
+      "revision_role": "vulnerable",
+      "label": "VULNERABLE",
+      "required_validation_status": "CONFIRMED",
+      "required_fixture_status": "EXPLOITED"
+    },
+    "langchain_template_fixed": {
+      "pair_id": "langchain_template_traversal",
+      "revision_role": "fixed",
+      "label": "SAFE",
+      "required_validation_status": "REFUTED",
+      "required_fixture_status": "BLOCKED"
+    },
+    "jinja_attr_vulnerable": {
+      "pair_id": "jinja_attr_format_escape",
+      "revision_role": "vulnerable",
+      "label": "VULNERABLE",
+      "required_validation_status": "CONFIRMED",
+      "required_fixture_status": "EXPLOITED"
+    },
+    "jinja_attr_fixed": {
+      "pair_id": "jinja_attr_format_escape",
+      "revision_role": "fixed",
+      "label": "SAFE",
+      "required_validation_status": "REFUTED",
+      "required_fixture_status": "BLOCKED"
+    }
+  }
+}

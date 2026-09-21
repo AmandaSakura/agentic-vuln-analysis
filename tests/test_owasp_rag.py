@@ -80,6 +80,8 @@ def test_ast_call_graph_recovers_sink_from_servlet_delegate(tmp_path: Path):
         "base_context_tokens": 512,
         "augmentation_context_tokens": 1488,
         "graph_hops": 0,
+        "graph_direction": "forward",
+        "graph_ranking": "lexical",
         "total_context_tokens": 2000,
     }
     for system, count in diagnostics["max_context_token_count_per_case"].items():

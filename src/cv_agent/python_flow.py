@@ -94,6 +94,8 @@ def python_document_flow(
             if not isinstance(item, ast.Call):
                 continue
             name = ast.unparse(item.func)
+            parts = name.split(".")
+            name = ".".join([document.import_aliases.get(parts[0], parts[0]), *parts[1:]])
             call_text = name + "("
             arguments = tuple(tainted(arg, environment) for arg in item.args)
             keywords = tuple(
@@ -114,6 +116,18 @@ def python_document_flow(
                      "command-execution": "args", "outbound-request": "url"}.get(sink_category, ""),
                     False,
                 )
+                if sink_category == "command-execution" and name in {
+                    "subprocess.run", "subprocess.call", "subprocess.Popen",
+                }:
+                    shell = next((kw.value for kw in item.keywords if kw.arg == "shell"), ast.Constant(False))
+                    argv = item.args[0] if item.args else next(
+                        (kw.value for kw in item.keywords if kw.arg == "args"), None)
+                    if (isinstance(shell, ast.Constant) and shell.value is False
+                            and isinstance(argv, (ast.List, ast.Tuple)) and argv.elts
+                            and isinstance(argv.elts[0], ast.Constant)
+                            and isinstance(argv.elts[0].value, str)):
+                        # User data passed as argv to a fixed program is not shell text.
+                        relevant = False
                 sinks.append({
                     "category": rule.category, "line": line, "match": call_text,
                     "tainted": relevant, "text": text,
@@ -129,10 +143,13 @@ def python_document_flow(
             for child in target.elts:
                 assign(child, value, environment)
 
-    def visit(statements: list[ast.stmt], environment: set[str]) -> set[str]:
+    def visit(statements: list[ast.stmt], environment: set[str]) -> set[str] | None:
         for statement in statements:
             if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 continue
+            if isinstance(statement, (ast.Return, ast.Raise, ast.Break, ast.Continue)):
+                record(statement, environment)
+                return None
             if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
                 value = statement.value
                 record(value, environment)
@@ -147,31 +164,44 @@ def python_document_flow(
                 if isinstance(statement.test, ast.Constant):
                     environment = visit(statement.body if statement.test.value else statement.orelse, environment)
                 else:
-                    environment = visit(statement.body, set(environment)) | visit(statement.orelse, set(environment))
+                    branches = [visit(statement.body, set(environment)), visit(statement.orelse, set(environment))]
+                    remaining = [branch for branch in branches if branch is not None]
+                    environment = set().union(*remaining) if remaining else None
+                if environment is None:
+                    return None
             elif isinstance(statement, (ast.For, ast.AsyncFor, ast.While)):
                 expression = statement.test if isinstance(statement, ast.While) else statement.iter
                 record(expression, environment)
+                if isinstance(statement, ast.While) and isinstance(expression, ast.Constant) and not expression.value:
+                    environment = visit(statement.orelse, environment)
+                    if environment is None:
+                        return None
+                    continue
                 branch = set(environment)
                 if not isinstance(statement, ast.While):
                     assign(statement.target, tainted(expression, environment), branch)
-                environment |= visit(statement.body, branch)
-                environment |= visit(statement.orelse, set(environment))
+                environment |= visit(statement.body, branch) or set()
+                environment |= visit(statement.orelse, set(environment)) or set()
             elif isinstance(statement, (ast.With, ast.AsyncWith)):
                 for item in statement.items:
                     record(item.context_expr, environment)
                     if item.optional_vars is not None:
                         assign(item.optional_vars, tainted(item.context_expr, environment), environment)
                 environment = visit(statement.body, environment)
+                if environment is None:
+                    return None
             elif isinstance(statement, ast.Try):
                 branches = [visit(statement.body, set(environment))]
                 branches.extend(visit(handler.body, set(environment)) for handler in statement.handlers)
-                environment |= set().union(*branches)
+                environment |= set().union(*(branch for branch in branches if branch is not None))
                 environment = visit(statement.orelse + statement.finalbody, environment)
+                if environment is None:
+                    return None
             else:
                 record(statement, environment)
         return environment
 
-    environment = visit(node.body, set(initial_tainted))
+    environment = visit(node.body, set(initial_tainted)) or set()
     return {
         "path": document.path, "sources": tuple(sources), "sinks": tuple(sinks),
         "sanitizers": tuple(sanitizers), "tainted_variables": tuple(sorted(environment)),

@@ -1,0 +1,9 @@
+{
+  "source_prefix": "src/",
+  "model_config": "configs/micro_benchmark.json",
+  "repositories": ["https://github.com/google/adk-python", "https://github.com/PrefectHQ/fastmcp", "https://github.com/jlowin/fastmcp"],
+  "selection_seed": "cv-agent-real-source-smoke-20260919",
+  "systems": ["E3", "E4"],
+  "max_requests": 60,
+  "max_seconds": 900
+}

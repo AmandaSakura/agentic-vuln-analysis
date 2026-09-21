@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-project_root=/home/joker/AAA_NUS_SEM2/cv_agent
+project_root=/home/joker/AAA_NUS_SEM3/cv_agent
 raw_root="$project_root/data/raw"
 git_bin=/usr/bin/git
 

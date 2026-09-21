@@ -1,0 +1,10 @@
+{
+  "proxy_logs": "/home/joker/.config/cliproxyapi/auths/logs",
+  "log_pattern": "v1-chat-completions-2026-09-19T1533*.log",
+  "runs": [
+    "artifacts/langchain_agent_eval/600f45a8e9b847728666fb55fc2119de",
+    "artifacts/langchain_transport_probe/7a861083912943488c2f83ac20ea8858",
+    "artifacts/langchain_transport_probe/d8a1e7683da44c5dbe2d635a40c8602d"
+  ],
+  "output": "artifacts/langchain_transport_diagnosis_2026-09-19.json"
+}

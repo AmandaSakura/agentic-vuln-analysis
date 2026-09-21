@@ -1,5 +1,9 @@
 # End-to-end reproduction contract
 
+Current acceptance and remaining gaps are tracked in
+[PROJECT_STATUS_2026-09-19.md](PROJECT_STATUS_2026-09-19.md). This specification
+describes the target; it does not assert that every requirement has been validated.
+
 ## Objective
 
 Reproduce the architecture described in the resume as an executable vulnerability-hunting system:
@@ -7,7 +11,7 @@ Reproduce the architecture described in the resume as an executable vulnerabilit
 1. a LangGraph planner dynamically decomposes each candidate into validation subtasks;
 2. scanning, taint, and authorization specialists each run a genuine model/tool/observation ReAct loop;
 3. Code-RAG supplies AST, symbol, forward/reverse call, import, data-flow, route, and guard context across files;
-4. typed validation tools attempt static proofs, bounded tests, or loopback HTTP checks without executing arbitrary model-generated shell commands;
+4. typed tools collect static observations and perform bounded tests or loopback HTTP checks without executing arbitrary model-generated shell commands;
 5. a quorum-inspired full/fast adjudicator combines independent specialist evidence, preserves typed validator status, and skips the third specialist only when the first two form an irreversible high-confidence quorum;
 6. project-level evaluation separates development, held-out positive, paired negative, and oracle-diagnostic data.
 
@@ -62,6 +66,13 @@ includes every executed task, including a partially completed third expert.
 
 The runtime uses a provider-neutral chat-model protocol. A live model is configured at runtime with environment variables for endpoint, model name, and optional credential; secrets are never stored in Git or result files. Temperature is zero where supported. Every result records the provider protocol, model identifier returned by the endpoint, sampling parameters, and usage reported by the endpoint.
 
+Every actual model transport is admitted by the full offline pytest suite in the current
+process. Source, tests, scripts, configs and dependency declarations are fingerprinted;
+an edit during/after admission blocks transport and requires a new process. Test failure
+does not retry pytest on every remaining trial. Tests mock model transport and cannot
+contact the shared proxy. No disk stamp or environment variable bypasses this gate.
+Passing tests is a development prerequisite, not an effectiveness or safety claim.
+
 Two runtime modes exist:
 
 - `scripted`: deterministic responses for unit and wiring tests; never claim eligible;
@@ -110,9 +121,17 @@ for executing arbitrary hostile Python inside the agent's process memory.
 
 Material model predictions must cite retrieved evidence or runtime-generated tool
 citation IDs. `CONFIRMED` and `REFUTED` additionally require a matching cited typed
-validator observation; tool errors and truncated observations cannot establish those
+validator observation bound to the same candidate identity, repository, entry path and
+indexed-source digest; tool errors and truncated observations cannot establish those
 states. Reading code can support a prediction with `validation_status=UNRESOLVED`,
 but cannot manufacture a successful validation result.
+
+`trace_dataflow` reports `MAY_REACH` or `NOT_ESTABLISHED` as an analysis fact and always
+retains `UNRESOLVED` validation. Authorization-name/guard checks and source diffs likewise
+do not confirm vulnerabilities. Registered fixtures use `candidate_subject(index, candidate)`
+to bind their outcomes before execution. An unbound or wrong-subject fixture cannot validate
+a candidate. Python import aliases and module assignments are retained so that unresolved
+external calls and builtin shadowing cannot silently become concrete eval witnesses.
 
 ## Code-RAG tiers
 
@@ -180,8 +199,9 @@ No entry from a development repository can enter held-out results. Held-out repo
 
 Full review requires the declared quorum for material votes, including `CONFIRMED` votes.
 Typed validator status remains attached to each ballot for evidence inspection; it does not
-give one expert a quorum exemption. In particular, a static dataflow validator's `CONFIRMED`
-status is not a dynamic exploit reproduction. A single material vote with two abstentions
+give one expert a quorum exemption. Static dataflow now always remains `UNRESOLVED`;
+historical artifacts retain their old statuses and must not be reinterpreted as exploit proof.
+A single material vote with two abstentions
 therefore produces `ABSTAIN`, while retaining the supporting validator observation.
 
 The concrete-probe integration check is documented in `QUORUM_APPLICABLE_VERIFICATION.md`.

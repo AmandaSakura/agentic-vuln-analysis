@@ -3,6 +3,22 @@ from cv_agent.retrieval import RepositoryIndex, context_token_count, limit_evide
 from cv_agent.types import Candidate, CodeDocument, Evidence
 
 
+def test_explicit_bidirectional_graph_budget_admits_caller_only_when_requested():
+    service = CodeDocument(repository_id="r", path="service.py", text="def remove(key): return key", defines=("service.remove",))
+    route = CodeDocument(repository_id="r", path="route.py", text="def route(key): return remove(key)", calls=("service.remove",))
+    unrelated = CodeDocument(repository_id="r", path="unrelated.py", text="route remove key")
+    index = RepositoryIndex([service, route, unrelated])
+    candidate = Candidate(candidate_id="c", case_id="c", repository_id="r", path=service.path, line=1, query="remove")
+    budget = RetrievalBudget(top_k=1, base_context_tokens=32, augmentation_context_tokens=32, graph_hops=1)
+    original = index.retrieve_context(candidate, mode=RetrievalMode.GRAPH, budget=budget)
+    assert [item.path for item in original] == [service.path]
+    both = RetrievalBudget(**{**budget.model_dump(), "graph_direction": "both"})
+    result = index.retrieve_context(candidate, mode=RetrievalMode.GRAPH, budget=both)
+    assert [item.path for item in result] == [service.path, route.path]
+    assert context_token_count(result) <= both.total_context_tokens
+    assert result[0] == original[0]
+
+
 def _evidence(path: str, text: str) -> Evidence:
     return Evidence(
         evidence_id=f"text:{path}",

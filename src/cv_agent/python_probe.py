@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import ast
 import inspect
+import symtable
 import textwrap
 from dataclasses import dataclass
+from types import CodeType
 
 from .retrieval import RepositoryIndex
 
@@ -67,6 +69,13 @@ class _Interpreter:
         node = tree.body[0]
         if node.decorator_list or node.type_params or node.args.vararg or node.args.kwarg:
             raise UnsupportedProbe("decorators, generics and variadic parameters are unsupported")
+        # Compile only; never execute repository code. Compiler flags capture
+        # even unreachable yields while excluding yields in nested scopes.
+        module_code = compile(tree, doc.path, "exec", dont_inherit=True)
+        function_code = next(value for value in module_code.co_consts
+                             if isinstance(value, CodeType) and value.co_name == node.name)
+        if function_code.co_flags & inspect.CO_GENERATOR:
+            raise UnsupportedProbe("generator bodies require iteration, which the probe does not model")
         return doc, node
 
     def invoke(self, path, args, kwargs, depth=0):
@@ -87,9 +96,8 @@ class _Interpreter:
         bound = inspect.Signature(parameters).bind(*args, **kwargs)
         bound.apply_defaults()
         environment = dict(bound.arguments)
-        self.local_names[path] = {
-            item.id for item in ast.walk(node) if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Store)
-        }
+        symbols = symtable.symtable(textwrap.dedent(doc.text), doc.path, 'exec').get_children()[0]
+        self.local_names[path] = {item.get_name() for item in symbols.get_symbols() if item.is_local()}
         self.trace.append({"event": "enter", "path": path, "depth": depth})
         try:
             self.block(node.body, environment, doc, depth)
@@ -161,20 +169,34 @@ class _Interpreter:
             if len({kw.arg for kw in node.keywords}) != len(node.keywords):
                 raise UnsupportedProbe("duplicate keyword arguments")
             name = ast.unparse(node.func)
-            args = [self.expression(arg, env, doc, depth) for arg in node.args]
-            kwargs = {kw.arg: self.expression(kw.value, env, doc, depth) for kw in node.keywords}
+            # Python resolves the callable before evaluating its arguments. Do not
+            # collect nested witnesses through an unresolved callable expression.
             if name.split(".")[0] in env or name.split(".")[0] in self.local_names.get(doc.path, set()):
                 raise UnsupportedProbe("calls through local values are unsupported")
-            if name in doc.defines:
-                return self.invoke(doc.path, args, kwargs, depth + 1)
+            if name.split(".")[0] in doc.module_rebindings:
+                raise UnsupportedProbe("module assignment may replace the resolved callable")
+            parts = name.split(".")
+            resolved_name = ".".join([doc.import_aliases.get(parts[0], parts[0]), *parts[1:]])
             targets = [
                 target for path in self.index.graph_neighbors(doc.path, direction="forward")
-                if (target := self.index.document(path)) is not None and name in target.defines
+                if (target := self.index.document(path)) is not None and resolved_name in target.defines
             ]
-            if len(targets) == 1:
-                return self.invoke(targets[0].path, args, kwargs, depth + 1)
-            if targets or any(symbol.rsplit(".", 1)[-1] == name for symbol in doc.imports):
-                raise UnsupportedProbe("ambiguous or unresolved imported call")
+            if name in doc.defines:
+                target_path = doc.path
+            elif len(targets) == 1:
+                target_path = targets[0].path
+            else:
+                if targets or parts[0] in doc.import_aliases or any(symbol.rsplit(".", 1)[-1] == name for symbol in doc.imports):
+                    raise UnsupportedProbe("ambiguous or unresolved imported call")
+                if name in doc.module_bindings or "*" in doc.module_bindings:
+                    raise UnsupportedProbe("module binding may shadow the builtin call")
+                if name != 'eval' or name not in doc.calls:
+                    raise UnsupportedProbe(f"unsupported call: {name}")
+                target_path = None
+            args = [self.expression(arg, env, doc, depth) for arg in node.args]
+            kwargs = {kw.arg: self.expression(kw.value, env, doc, depth) for kw in node.keywords}
+            if target_path is not None:
+                return self.invoke(target_path, args, kwargs, depth + 1)
             if name == "eval" and name in doc.calls and len(args) == 1 and not kwargs and type(args[0]) is str:
                 if args[0] == self.payload and (self.sink_path is None or doc.path == self.sink_path):
                     raise _Witness(doc.path, node.lineno, self.trace)

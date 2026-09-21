@@ -24,6 +24,27 @@ def probe(files, *, admitted=None, max_hops=4):
     return observation, json.loads(observation.content)
 
 
+def test_candidate_bound_probe_cannot_bypass_entry_guards_via_retrieved_helper():
+    files={
+        'entry.py': "from service import helper\n\ndef entry(request):\n    if False:\n        return helper(request)\n    return 0\n",
+        'service.py': "def helper(request):\n    return eval(request.args['x'])\n",
+    }
+    docs=[span.document for path,source in files.items() for span in parse_python_source('test',path,source)]
+    entry=next(doc for doc in docs if doc.path.startswith('entry.py::entry@'))
+    helper=next(doc for doc in docs if doc.path.startswith('service.py::helper@'))
+    registry=ToolRegistry(full_agent_tools(RepositoryIndex(docs)),max_output_bytes=100000)
+    scope=ToolExecutionScope(frozenset(doc.path for doc in docs),8192,candidate_path=entry.path)
+    def invoke(path):
+        return registry.invoke(ModelToolCall(call_id='probe',name='probe_python_eval',
+            arguments={'source_path':path}),allowed=['probe_python_eval'],scope=scope)
+    bypass=invoke(helper.path)
+    assert bypass.status=='blocked'
+    assert bypass.validation_status is None
+    actual=invoke(entry.path)
+    assert actual.validation_status.value=='UNRESOLVED'
+    assert 'no witness' in actual.content
+
+
 @pytest.mark.parametrize("call,expected", [
     ("calculate(value, 'audit')", "CONFIRMED"),
     ("calculate(expression=value, audit_tag='audit')", "CONFIRMED"),
@@ -102,6 +123,39 @@ def test_source_named_eval_is_not_treated_as_builtin_eval():
         "service.py": "def eval(value):\n    return 0\n",
     })
     assert result["status"] == "UNRESOLVED"
+
+
+@pytest.mark.parametrize("tail", ["yield 1", "yield from ()", "if False:\n        yield 1"])
+def test_calling_generator_does_not_execute_its_body(tail):
+    source = "def entry(request):\n    eval(request.args['x'])\n    " + tail + "\n"
+    _, result = probe({"entry.py": source})
+    observed = []
+    namespace = {"eval": lambda value: observed.append(value)}
+    exec(source, namespace)  # Fixed project-owned fixture, never repository code.
+    namespace["entry"](SimpleNamespace(args={"x": "1 + 1"}))
+    assert observed == []
+    assert result["status"] == "UNRESOLVED"
+
+
+def test_unconsumed_helper_generator_does_not_produce_witness():
+    _, result = probe({
+        "entry.py": "from service import calculate\n\ndef entry(request):\n    return calculate(request.args['x'])\n",
+        "service.py": "def calculate(value):\n    eval(value)\n    yield 1\n",
+    })
+    assert result["status"] == "UNRESOLVED"
+
+
+def test_generator_argument_is_evaluated_before_generator_is_created():
+    _, result = probe({
+        "entry.py": "from service import calculate\n\ndef entry(request):\n    return calculate(eval(request.args['x']))\n",
+        "service.py": "def calculate(value):\n    yield value\n",
+    })
+    assert result["status"] == "CONFIRMED"
+
+
+def test_unreachable_nested_generator_does_not_make_outer_function_lazy():
+    _, result = probe({"entry.py": "def entry(request):\n    eval(request.args['x'])\n    def nested():\n        yield 1\n"})
+    assert result["status"] == "CONFIRMED"
 
 
 @pytest.mark.parametrize("source", [

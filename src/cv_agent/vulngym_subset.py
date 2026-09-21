@@ -113,7 +113,7 @@ def fetch_vulngym_subjects(data_root: Path) -> dict[str, object]:
     fetched: list[dict[str, object]] = []
     for selection in selections:
         cache_path, checkout_path = _subject_paths(data_root, selection)
-        if not cache_path.exists():
+        if not checkout_path.exists() and not cache_path.exists():
             _run_git(
                 [
                     "clone",
@@ -124,7 +124,7 @@ def fetch_vulngym_subjects(data_root: Path) -> dict[str, object]:
                     str(cache_path),
                 ]
             )
-        elif not (cache_path / ".git").is_dir():
+        elif not checkout_path.exists() and not (cache_path / ".git").is_dir():
             raise RuntimeError(f"subject cache exists but is not a Git repository: {cache_path}")
 
         if checkout_path.exists():

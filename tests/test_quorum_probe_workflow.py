@@ -22,7 +22,7 @@ def test_distinct_applicable_checks_reach_quorum_without_lowering_threshold(case
     }
     assert not set(fast.votes[0].evidence_ids) & set(fast.votes[1].evidence_ids)
     if label == "VULNERABLE":
-        assert all(vote.validation_status.value == "CONFIRMED" for vote in fast.votes)
+        assert [vote.validation_status.value for vote in fast.votes] == ["CONFIRMED", "UNRESOLVED"]
         assert not models["authz"].requests
     else:
         assert len(fast.votes) == 3

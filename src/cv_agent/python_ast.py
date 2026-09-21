@@ -212,6 +212,26 @@ def _import_aliases(tree: ast.AST, canonical_module: str) -> dict[str, str]:
     return aliases
 
 
+def _module_bindings(tree: ast.AST, *, assignments_only: bool = False) -> tuple[str, ...]:
+    """Bindings in module control-flow blocks, without entering function bodies."""
+    names: set[str] = set()
+    def visit(node: ast.AST) -> None:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if not assignments_only:
+                names.add(node.name)
+            return
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        if isinstance(node, ast.ExceptHandler) and node.name:
+            names.add(node.name)
+        if not assignments_only and isinstance(node, (ast.Import, ast.ImportFrom)):
+            names.update(alias.asname or alias.name.split(".")[0] for alias in node.names)
+        for child in ast.iter_child_nodes(node):
+            visit(child)
+    visit(tree)
+    return tuple(sorted(names))
+
+
 class _CallCollector(ast.NodeVisitor):
     def __init__(
         self,
@@ -219,12 +239,15 @@ class _CallCollector(ast.NodeVisitor):
         modules: tuple[str, ...],
         class_name: str | None,
         field_types: dict[str, tuple[str, ...]],
+        module_rebindings: tuple[str, ...],
     ) -> None:
         self.aliases = aliases
         self.modules = modules
         self.class_name = class_name
         self.field_types = field_types
+        self.module_rebindings = module_rebindings
         self.calls: set[str] = set()
+        self.local_aliases: dict[str, tuple[str, ...]] = {}
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         return
@@ -235,11 +258,58 @@ class _CallCollector(ast.NodeVisitor):
     def visit_Lambda(self, node: ast.Lambda) -> None:
         return
 
+    def _alias_targets(self, node: ast.expr) -> tuple[str, ...]:
+        if isinstance(node, ast.Name):
+            if node.id in self.aliases:
+                return (self.aliases[node.id],)
+            return self.local_aliases.get(node.id, ())
+        if isinstance(node, ast.IfExp):
+            return tuple(
+                sorted({
+                    *self._alias_targets(node.body),
+                    *self._alias_targets(node.orelse),
+                })
+            )
+        return ()
+
+    def _record_assignment_alias(self, target: ast.expr, value: ast.expr | None) -> None:
+        if not isinstance(target, ast.Name):
+            return
+        aliases = self._alias_targets(value) if value is not None else ()
+        if aliases:
+            self.local_aliases[target.id] = aliases
+        else:
+            self.local_aliases.pop(target.id, None)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        for target in node.targets:
+            self._record_assignment_alias(target, node.value)
+        self.visit(node.value)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        self._record_assignment_alias(node.target, node.value)
+        if node.value is not None:
+            self.visit(node.value)
+
     def visit_Call(self, node: ast.Call) -> None:
         parts = _attribute_parts(node.func)
         if parts:
+            if parts[0] in self.local_aliases and len(parts) > 1:
+                for alias in self.local_aliases[parts[0]]:
+                    resolved = [*alias.split("."), *parts[1:]]
+                    self.calls.add(".".join(resolved))
+                    self.calls.add(".".join(resolved[-2:]))
+                self.generic_visit(node)
+                return
+            if parts[0] in self.module_rebindings:
+                self.generic_visit(node)
+                return
             if parts[0] in self.aliases:
                 parts = [*self.aliases[parts[0]].split("."), *parts[1:]]
+                # A known qualified import must not also emit a bare-name edge.
+                self.calls.add(".".join(parts))
+                self.generic_visit(node)
+                return
             if parts[0] in {"self", "cls"} and self.class_name and len(parts) > 1:
                 method = parts[-1]
                 if len(parts) == 2:
@@ -264,13 +334,16 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
         relative_path: str,
         text: str,
         tree: ast.AST,
+        module_path: str | None = None,
     ) -> None:
         self.repository_id = repository_id
         self.relative_path = relative_path
         self.text = text
         self.lines = text.splitlines(keepends=True)
-        self.modules = _module_names(relative_path)
+        self.modules = _module_names(module_path if module_path is not None else relative_path)
         self.aliases = _import_aliases(tree, self.modules[0])
+        self.module_bindings = _module_bindings(tree)
+        self.module_rebindings = _module_bindings(tree, assignments_only=True)
         self.scope: list[str] = []
         self.class_scope: list[str] = []
         self.class_bases: list[tuple[str, ...]] = []
@@ -296,6 +369,7 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
             self.modules,
             self.class_scope[-1] if self.class_scope else None,
             self.class_field_types[-1] if self.class_field_types else {},
+            self.module_rebindings,
         )
         for decorator in node.decorator_list:
             collector.visit(decorator)
@@ -334,6 +408,9 @@ class _FunctionDocumentBuilder(ast.NodeVisitor):
             imports=tuple(sorted(set(self.aliases.values()))),
             routes=tuple(sorted(routes)),
             guards=tuple(sorted(guards)),
+            import_aliases=dict(self.aliases),
+            module_bindings=self.module_bindings,
+            module_rebindings=self.module_rebindings,
         )
         self.spans.append(
             PythonDocumentSpan(
@@ -382,9 +459,11 @@ def parse_python_source(
     repository_id: str,
     relative_path: str,
     text: str,
+    *,
+    module_path: str | None = None,
 ) -> tuple[PythonDocumentSpan, ...]:
     tree = ast.parse(text, filename=relative_path)
-    builder = _FunctionDocumentBuilder(repository_id, relative_path, text, tree)
+    builder = _FunctionDocumentBuilder(repository_id, relative_path, text, tree, module_path)
     builder.visit(tree)
     return tuple(builder.spans)
 

@@ -1,0 +1,64 @@
+diff --git a/internal/runtime/executor/antigravity_executor_buildrequest_test.go b/internal/runtime/executor/antigravity_executor_buildrequest_test.go
+index d0f0760..9c0e001 100644
+--- a/internal/runtime/executor/antigravity_executor_buildrequest_test.go
++++ b/internal/runtime/executor/antigravity_executor_buildrequest_test.go
+@@ -378,9 +378,34 @@ func assertNonSchemaRequestPreserved(t *testing.T, body map[string]any) {
+ 		t.Fatalf("x-extra should be preserved outside schema cleanup path, got=%v", nonSchema["x-extra"])
+ 	}
+ 
+-	if generationConfig, ok := request["generationConfig"].(map[string]any); ok {
+-		if _, ok := generationConfig["maxOutputTokens"]; ok {
+-			t.Fatalf("maxOutputTokens should still be removed for non-Claude requests")
++	generationConfig, ok := request["generationConfig"].(map[string]any)
++	if !ok || generationConfig["maxOutputTokens"] != float64(128) {
++		t.Fatalf("explicit maxOutputTokens should survive request construction")
++	}
++}
++
++func TestAntigravityBuildRequestPreservesExplicitOutputLimit(t *testing.T) {
++	for _, modelName := range []string{"gemini-3.8-flash", "claude-opus-4-6"} {
++		for _, toolsJSON := range []string{"[]", `[{"functionDeclarations":[{"name":"read","parametersJsonSchema":{"type":"object","properties":{"path":{"type":"string"}}}}]}]`} {
++			t.Run(modelName+toolsJSON, func(t *testing.T) {
++				payload := []byte(`{"request":{"contents":[{"role":"user","parts":[{"text":"hello"}]}],"generationConfig":{"maxOutputTokens":1200},"tools":` + toolsJSON + `}}`)
++				body := buildRequestBodyFromRawPayload(t, modelName, payload)
++				request := body["request"].(map[string]any)
++				generation := request["generationConfig"].(map[string]any)
++				if generation["maxOutputTokens"] != float64(1200) {
++					t.Fatalf("output limit was changed or removed: %v", generation["maxOutputTokens"])
++				}
++			})
++		}
++	}
++}
++
++func TestAntigravityBuildRequestDoesNotInventOutputLimit(t *testing.T) {
++	body := buildRequestBodyFromRawPayload(t, "gemini-3.8-flash", []byte(`{"request":{"contents":[{"role":"user","parts":[{"text":"hello"}]}]}}`))
++	request := body["request"].(map[string]any)
++	if generation, ok := request["generationConfig"].(map[string]any); ok {
++		if _, exists := generation["maxOutputTokens"]; exists {
++			t.Fatal("request without an output limit acquired one")
+ 		}
+ 	}
+ }
+diff --git a/internal/runtime/executor/antigravity_executor_request.go b/internal/runtime/executor/antigravity_executor_request.go
+index 5dfec83..a75980d 100644
+--- a/internal/runtime/executor/antigravity_executor_request.go
++++ b/internal/runtime/executor/antigravity_executor_request.go
+@@ -78,8 +78,6 @@ func (e *AntigravityExecutor) buildRequest(ctx context.Context, auth *cliproxyau
+ 		if strings.Contains(modelName, "claude") {
+ 			updated, _ := sjson.SetBytes([]byte(payloadStr), "request.toolConfig.functionCallingConfig.mode", "VALIDATED")
+ 			payloadStr = string(updated)
+-		} else {
+-			payloadStr, _ = sjson.Delete(payloadStr, "request.generationConfig.maxOutputTokens")
+ 		}
+ 
+ 		payloadStrBytes := applyAntigravityNativeSignatureReplayIfNeeded(modelName, []byte(payloadStr))
+@@ -90,8 +88,6 @@ func (e *AntigravityExecutor) buildRequest(ctx context.Context, auth *cliproxyau
+ 	} else {
+ 		if strings.Contains(modelName, "claude") {
+ 			payload, _ = sjson.SetBytes(payload, "request.toolConfig.functionCallingConfig.mode", "VALIDATED")
+-		} else {
+-			payload, _ = sjson.DeleteBytes(payload, "request.generationConfig.maxOutputTokens")
+ 		}
+ 
+ 		payload = applyAntigravityNativeSignatureReplayIfNeeded(modelName, payload)

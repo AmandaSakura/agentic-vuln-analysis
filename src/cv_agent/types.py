@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 
 VerdictLabel = Literal["VULNERABLE", "SAFE", "ABSTAIN"]
@@ -22,12 +22,16 @@ class SystemVersion(StrEnum):
 
 
 class Candidate(FrozenModel):
+    input_parameters: tuple[str, ...] = ()
+    entry_boolean_arguments: dict[str, StrictBool] = Field(default_factory=dict)
     candidate_id: str
     case_id: str
     repository_id: str
     path: str
     line: int = Field(ge=1)
     query: str
+    # Explicit detector-owned hypothesis; query/metadata remain retrieval-private.
+    analysis_scope: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -42,6 +46,10 @@ class CodeDocument(FrozenModel):
     imports: tuple[str, ...] = ()
     routes: tuple[str, ...] = ()
     guards: tuple[str, ...] = ()
+    # Preserve lexical binding information that cannot be recovered from a slice.
+    import_aliases: dict[str, str] = Field(default_factory=dict)
+    module_bindings: tuple[str, ...] = ()
+    module_rebindings: tuple[str, ...] = ()
 
 
 class Evidence(FrozenModel):

@@ -68,3 +68,21 @@ def test_subject_git_paths_are_absolute(tmp_path: Path, monkeypatch):
     assert checkout_path == (
         tmp_path / "data" / "subjects" / "example__project" / ("a" * 40)
     )
+
+
+def test_existing_verified_checkout_does_not_require_unused_git_cache(tmp_path,monkeypatch):
+    selection=subset.SubjectSelection('https://github.com/example/project','a'*40,('entry',))
+    monkeypatch.setattr(subset,'select_vulngym_subjects',lambda path:[selection])
+    cache,checkout=subset._subject_paths(tmp_path,selection)
+    checkout.mkdir(parents=True)
+    cache.mkdir(parents=True)  # retained empty cache without its obsolete worktree metadata
+    calls=[]
+    def git(arguments,**kwargs):
+        calls.append(arguments)
+        assert arguments==['-C',str(checkout),'rev-parse','HEAD']
+        return selection.commit
+    monkeypatch.setattr(subset,'_run_git',git)
+    result=subset.fetch_vulngym_subjects(tmp_path)
+    assert result['repository_count']==1
+    assert result['subjects'][0]['commit']==selection.commit
+    assert calls

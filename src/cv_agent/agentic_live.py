@@ -101,6 +101,23 @@ def load_owasp_agentic_inputs(
     )
 
 
+def select_owasp_entry(inputs: OwaspAgenticInput, method: str) -> tuple[Candidate, ...]:
+    """Use the same declared, label-independent entry protocol for pilot and full runs."""
+    candidates = []
+    for candidate in inputs.candidates:
+        source = candidate.path.split('::')[0]
+        entries = [doc for doc in inputs.index.documents.values()
+                   if doc.path.startswith(source + '::')
+                   and doc.path.split('::')[1].split('@')[0].endswith('.' + method)]
+        if len(entries) != 1:
+            raise ValueError('Expected one declared entry method per case')
+        entry = entries[0]
+        candidates.append(candidate.model_copy(update={
+            'candidate_id': candidate.case_id + ':' + method, 'path': entry.path,
+            'line': _line_from_document_path(entry.path), 'query': entry.text}))
+    return tuple(candidates)
+
+
 def _systems(system_ids: Sequence[str]) -> tuple[AgentSystemVersion, ...]:
     requested = _dedupe_requested(system_ids, "agentic system")
     systems: list[AgentSystemVersion] = []

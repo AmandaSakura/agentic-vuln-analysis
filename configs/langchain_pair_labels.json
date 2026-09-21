@@ -1,0 +1,21 @@
+{
+  "role": "evaluator_ground_truth_labels",
+  "dataset_role": "paired_differential_ground_truth",
+  "advisory": "GHSA-6qv9-48xg-fc7f",
+  "cve": "CVE-2025-65106",
+  "labels": {
+    "template_case_01": {
+      "ground_truth": "VULNERABLE",
+      "attack_type": "f-string_attribute_traversal",
+      "critical_sink": "libs/core/langchain_core/prompts/prompt.py:198",
+      "verified_by_reproducer": true
+    },
+    "template_case_02": {
+      "ground_truth": "FIXED_NEGATIVE",
+      "attack_type": "f-string_attribute_traversal",
+      "fix_commit": "c4b6ba254e1a49ed91f2e268e6484011c540542a",
+      "verified_by_reproducer": true,
+      "scope_note": "Negative label applies strictly to the tested entry and attack; whole repo is not labeled SAFE."
+    }
+  }
+}

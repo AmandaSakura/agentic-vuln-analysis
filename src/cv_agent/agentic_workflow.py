@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from .agent_tools import ToolExecutionScope, ToolRegistry
+from .agent_tools import ToolExecutionScope, ToolRegistry, candidate_subject
 from .agent_types import (
     AgentExpertVote,
     AgenticVerdict,
@@ -63,6 +63,7 @@ def _render_context_prompt(
                 "line": candidate.line,
                 "path": candidate.path,
                 "repository_id": candidate.repository_id,
+                **({"analysis_scope": candidate.analysis_scope} if candidate.analysis_scope is not None else {}),
             },
             "retrieved_code": [
                 {
@@ -119,9 +120,16 @@ class AgenticPipeline:
         system: AgentSystemVersion,
         models: Mapping[str, ChatModel],
         tools: ToolRegistry,
+        graph_direction: Literal["forward", "reverse", "both"] = "forward",
+        graph_ranking: Literal["lexical", "distance"] = "lexical",
     ) -> None:
         self.index = index
         self.system_spec: AgentSystemHarness = FULL_SYSTEM_HARNESS.system_spec(system)
+        budget = self.system_spec.budget.model_validate({
+            **self.system_spec.budget.model_dump(), "graph_direction": graph_direction,
+            "graph_ranking": graph_ranking,
+        })
+        self.system_spec = self.system_spec.model_copy(update={"budget": budget})
         self.models = dict(models)
         self.tools = tools
         required_roles = set(self.system_spec.expert_order)
@@ -197,16 +205,22 @@ class AgenticPipeline:
         selected = self._next_task(state)
         task = selected[1] if selected is not None and role != "planner" else None
         visible = self._visible_executions(state, role, task)
+        observation_ceiling = FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens
+        if task is not None and state["planner"] is not None:
+            task_count = sum(item.expert == role for item in state["planner"].plan.subtasks)
+            # Reserve each later subtask's share of this expert's fixed budget.
+            # Unspent earlier shares remain available to subsequent subtasks.
+            observation_ceiling = observation_ceiling * (len(previous) + 1) // task_count
         return ReActEngine(
             model=self.models[role],
             tools=self.tools,
             scope=ToolExecutionScope(
                 admitted_paths=frozenset(item.path for item in state["evidence"]),
                 initial_evidence_ids=frozenset(item.evidence_id for item in state["evidence"]),
+                candidate_path=state["candidate"].path,
+                subject=candidate_subject(self.index, state["candidate"]),
                 observed_tokens=sum(vote.tool_observation_token_count for vote in previous),
-                max_observation_tokens=(
-                    FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens
-                ),
+                max_observation_tokens=observation_ceiling,
             ),
             harness=FULL_SYSTEM_HARNESS.react_loop,
             prior_trace=tuple(step for item in visible for step in item.vote.trace),
@@ -226,7 +240,9 @@ class AgenticPipeline:
     def _plan(self, state: AgentWorkflowState) -> dict[str, object]:
         if not self.system_spec.planner_enabled:
             return {"planner": None}
-        allowed_tools = self._repository_tool_names()
+        allowed_tools = tuple(
+            name for name in ("read_span",) if name in self.tools.available_names
+        )
         if not allowed_tools:
             raise ValueError("planner has no registered repository tools")
         result = run_planner(
@@ -238,12 +254,38 @@ class AgenticPipeline:
             task_prompt=self._planner_prompt(state),
             allowed_tools=allowed_tools,
             max_subtasks=FULL_SYSTEM_HARNESS.planner_max_subtasks,
-            output_validator=lambda plan: self._validate_plan(plan, state["candidate"]),
+            output_validator=lambda plan: self._validate_plan(
+                plan, state["candidate"], state["evidence"]
+            ),
         )
         return {"planner": result}
 
     def _planner_prompt(self, state: AgentWorkflowState) -> str:
         validators = set(FULL_SYSTEM_HARNESS.validation.validators) & set(self.tools.available_names)
+        candidate = state["candidate"]
+        planner_context = {
+            "candidate": {
+                "candidate_id": candidate.candidate_id,
+                "line": candidate.line,
+                "path": candidate.path,
+                "repository_id": candidate.repository_id,
+                **({"analysis_scope": candidate.analysis_scope} if candidate.analysis_scope is not None else {}),
+            },
+            "retrieved_evidence_index": [
+                {
+                    "evidence_id": item.evidence_id,
+                    "graph_distance": item.graph_distance,
+                    "path": item.path,
+                    "retrieval": item.retrieval,
+                }
+                for item in state["evidence"]
+            ],
+            "instruction": (
+                "The evidence index lists paths, not source contents. "
+                "Read the candidate span once with read_span before planning; "
+                "do not browse the repository during planning."
+            ),
+        }
         capabilities = {
             "maximum_subtasks": FULL_SYSTEM_HARNESS.planner_max_subtasks,
             "expert_mandates": {
@@ -256,9 +298,19 @@ class AgenticPipeline:
                 "run without depending on one another's conclusions. A static sink search "
                 "only locates a candidate. Prefer registered execution fixtures when available "
                 "and relevant. Use authz for permission problems; outside scope it may abstain. "
-                "Do not request agreement, duplicate one validator result as independent "
-                "verification, or infer SAFE from an inconclusive probe. If available "
-                "capabilities cannot establish two applicable checks, retain that limitation."
+                "For os.chmod filesystem permission candidates, assign scan "
+                "validate_permission_mode and, when authz is scheduled, assign authz "
+                "validate_permission_mode for resource access-control semantics. For command "
+                "execution through admitted get_cmd helpers, assign scan and taint "
+                "inspect_command_construction before making an unsanitized shell-command judgment. "
+                "When a run_fixture_test subtask is available for this candidate, schedule it "
+                "before other advisory-scoped checks and make later non-fixture subtasks depend "
+                "on it so they can see the concrete validator observation. "
+                "Static checks provide hypotheses, not CONFIRMED or REFUTED evidence. "
+                "The declared quorum requires independent expert ballots; one validator "
+                "result does not replace it. Do not request agreement, duplicate one validator "
+                "result as independent verification, or infer SAFE from an inconclusive probe. "
+                "If available capabilities cannot establish two applicable checks, retain that limitation."
             ),
             "allowed_validators_by_expert": {
                 name: sorted(set(self._expert_spec(name).tools) & validators)
@@ -268,13 +320,27 @@ class AgenticPipeline:
                 definition["function"]["name"]: definition["function"]["description"]
                 for definition in self.tools.definitions(sorted(validators))
             },
+            "final_json_contract": (
+                "Keep the plan compact: prefer three or fewer subtasks. Every subtask object "
+                "must include task_id explicitly, using t1/t2/t3 in order; dependencies must "
+                "refer to those ids. Keep rationale under 120 characters, and keep each "
+                "objective and success_condition under 120 characters. Do not include code "
+                "excerpts, prose outside JSON, or Markdown fences."
+            ),
         }
         return (
-            f"{state['context_prompt']}\nPlanning capabilities: "
+            "Planning context: "
+            + json.dumps(planner_context, sort_keys=True, separators=(",", ":"))
+            + "\nPlanning capabilities: "
             + json.dumps(capabilities, sort_keys=True, separators=(",", ":"))
         )
 
-    def _validate_plan(self, plan: ValidationPlan, candidate: Candidate) -> None:
+    def _validate_plan(
+        self,
+        plan: ValidationPlan,
+        candidate: Candidate,
+        evidence: list[Evidence] | None = None,
+    ) -> None:
         if plan.candidate_id != candidate.candidate_id:
             raise ValueError("planner output carries the wrong candidate identity")
         if len(plan.subtasks) > FULL_SYSTEM_HARNESS.planner_max_subtasks:
@@ -301,6 +367,121 @@ class AgenticPipeline:
                     f"validator {task.allowed_validator} is unavailable for this run; "
                     "choose from Planning capabilities"
                 )
+        fixture_tasks = [
+            task.task_id for task in plan.subtasks
+            if task.allowed_validator == "run_fixture_test"
+        ]
+        evidence_text = "\n".join(item.text for item in (evidence or ()))
+        planning_text = "\n".join(
+            item
+            for item in (evidence_text, candidate.analysis_scope or "")
+            if item
+        )
+        planned_validators = {task.allowed_validator for task in plan.subtasks}
+        if (
+            "validate_permission_mode" in self.tools.available_names
+            and "os.chmod" in planning_text
+            and "validate_permission_mode" not in planned_validators
+        ):
+            raise ValueError(
+                "planner must schedule validate_permission_mode for os.chmod "
+                "filesystem permission candidates"
+            )
+        if (
+            "validate_permission_mode" in self.tools.available_names
+            and "os.chmod" in planning_text
+            and "authz" in self.system_spec.expert_order
+            and not any(
+                task.expert == "authz"
+                and task.allowed_validator == "validate_permission_mode"
+                for task in plan.subtasks
+            )
+        ):
+            raise ValueError(
+                "planner must assign authz validate_permission_mode for os.chmod "
+                "resource access-control semantics"
+            )
+        command_construction_candidate = (
+            "inspect_command_construction" in self.tools.available_names
+            and "get_cmd" in planning_text
+            and (
+                "subprocess.Popen" in planning_text
+                or "bash" in planning_text
+                or ".execute(" in planning_text
+                or "命令注入" in planning_text
+                or "command injection" in planning_text.casefold()
+            )
+        )
+        if (
+            command_construction_candidate
+            and "inspect_command_construction" not in planned_validators
+        ):
+            raise ValueError(
+                "planner must schedule inspect_command_construction for admitted "
+                "get_cmd shell-command candidates"
+            )
+        if (
+            command_construction_candidate
+            and "scan" in self.system_spec.expert_order
+            and not any(
+                task.expert == "scan"
+                and task.allowed_validator == "inspect_command_construction"
+                for task in plan.subtasks
+            )
+        ):
+            raise ValueError(
+                "planner must assign scan inspect_command_construction for admitted "
+                "get_cmd shell-command candidates"
+            )
+        if (
+            command_construction_candidate
+            and "taint" in self.system_spec.expert_order
+            and not any(
+                task.expert == "taint"
+                and task.allowed_validator == "inspect_command_construction"
+                for task in plan.subtasks
+            )
+        ):
+            raise ValueError(
+                "planner must assign taint inspect_command_construction for admitted "
+                "get_cmd shell-command candidates"
+            )
+        if command_construction_candidate:
+            redundant_scan = [
+                task for task in plan.subtasks
+                if task.expert == "scan"
+                and task.allowed_validator != "inspect_command_construction"
+            ]
+            if redundant_scan:
+                raise ValueError(
+                    "planner must not schedule redundant scan validators after "
+                    "scan inspect_command_construction for admitted get_cmd "
+                    "shell-command candidates"
+                )
+        if fixture_tasks:
+            dependencies = {task.task_id: set(task.dependencies) for task in plan.subtasks}
+
+            def reaches(start: str, target: str) -> bool:
+                pending = list(dependencies[start])
+                seen: set[str] = set()
+                while pending:
+                    current = pending.pop()
+                    if current == target:
+                        return True
+                    if current in seen:
+                        continue
+                    seen.add(current)
+                    pending.extend(dependencies.get(current, ()))
+                return False
+
+            for task in plan.subtasks:
+                if task.allowed_validator == "run_fixture_test":
+                    continue
+                if not any(reaches(task.task_id, fixture_task) for fixture_task in fixture_tasks):
+                    raise ValueError(
+                        "planner must make non-fixture subtasks depend on run_fixture_test "
+                        "so concrete validator evidence is visible"
+                    )
 
     @staticmethod
     def _expert_spec(name: str) -> ExpertAgentHarness:
@@ -315,6 +496,25 @@ class AgenticPipeline:
         if not allowed:
             raise ValueError(f"expert {name} has no registered tools")
         return allowed
+
+    def _allowed_task_tools(
+        self,
+        name: str,
+        task: ValidationSubtask | None,
+    ) -> tuple[str, ...]:
+        allowed = self._allowed_expert_tools(name)
+        if task is None:
+            return allowed
+        if task.allowed_validator not in allowed:
+            raise ValueError(
+                f"task {task.task_id} selected unavailable validator {task.allowed_validator}"
+            )
+        if task.allowed_validator == "inspect_command_construction":
+            focused_tools = {"read_span", "get_callers", "get_callees", task.allowed_validator}
+            return tuple(tool for tool in allowed if tool in focused_tools)
+        validators = set(FULL_SYSTEM_HARNESS.validation.validators)
+        return tuple(tool for tool in allowed
+                     if tool == task.allowed_validator or tool not in validators)
 
     def _visible_executions(
         self, state: AgentWorkflowState, name: str, task: ValidationSubtask | None,
@@ -349,9 +549,10 @@ class AgenticPipeline:
             {
                 "task_id": item.task_id,
                 "expert": item.vote.expert,
-                "label": item.vote.label,
-                "validation_status": item.vote.validation_status.value,
-                "rationale": item.vote.rationale,
+                **({"label": item.vote.label,
+                    "validation_status": item.vote.validation_status.value,
+                    "rationale": item.vote.rationale}
+                   if item.vote.expert == name else {}),
                 "evidence_ids": item.vote.evidence_ids,
                 "observations": [self.tools.prompt_payload(step.observation) for step in item.vote.trace],
             }
@@ -363,6 +564,8 @@ class AgenticPipeline:
             f"Completed dependencies and prior own tasks: {json.dumps(dependencies, separators=(',', ':'))}\n"
             "Execute this task's validator, then give your current overall candidate judgment "
             "for your specialty, taking the prior own task results into account. "
+            "Peer dependencies supply observations only; derive your own conclusion from "
+            "the evidence and the candidate's analysis_scope. "
             "A completed task may remain UNRESOLVED; do not treat completion as validation success."
         )
 
@@ -377,7 +580,7 @@ class AgenticPipeline:
             expert=spec.expert,
             system_prompt=spec.mandate,
             task_prompt=self._expert_prompt(state, name, task),
-            allowed_tools=self._allowed_expert_tools(name),
+            allowed_tools=self._allowed_task_tools(name, task),
             required_validators=(task.allowed_validator,) if task is not None else (),
         )
         executions = [*state["task_executions"], ValidationTaskExecution(

@@ -38,11 +38,12 @@ def _index_and_candidate(
     *,
     query: str | None = None,
     metadata: dict[str, object] | None = None,
+    source: str | None = None,
 ) -> tuple[RepositoryIndex, Candidate]:
     document = CodeDocument(
         repository_id="repo",
         path=ENTRY_PATH,
-        text=(
+        text=source if source is not None else (
             "def handle(request):\n"
             "    command = request.args['command']\n"
             "    return eval(command)\n"
@@ -140,6 +141,13 @@ def _expert_model(
         "rationale": f"{expert} completed its assigned validation task.",
     }
     tool_reply = _tool_reply(expert)
+    if expert == "taint" and label == "SAFE":
+        tool_reply = tool_reply.model_copy(update={"tool_calls": (
+            *tool_reply.tool_calls,
+            ModelToolCall(call_id="taint-sanitizers", name="find_sanitizers",
+                          arguments={"path": ENTRY_PATH}),
+        )})
+        conclusion["evidence_ids"] = ["taint/tool:2"]
     conclusion_reply = ModelReply(
         model_id=f"scripted-{expert}",
         content=json.dumps(conclusion),
@@ -183,7 +191,7 @@ def _models() -> dict[str, ScriptedChatModel]:
         ),
         "authz": _expert_model(
             "authz",
-            label="SAFE",
+            label="ABSTAIN",
             confidence=0.9,
             validation_status="UNRESOLVED",
         ),
@@ -193,8 +201,10 @@ def _models() -> dict[str, ScriptedChatModel]:
 def _pipeline(
     system: AgentSystemVersion,
     models: dict[str, ScriptedChatModel],
+    *,
+    source: str | None = None,
 ) -> tuple[AgenticPipeline, Candidate]:
-    index, candidate = _index_and_candidate()
+    index, candidate = _index_and_candidate(source=source)
     tools = ToolRegistry(
         full_agent_tools(index),
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
@@ -240,6 +250,20 @@ def _complete_tool_registry(index: RepositoryIndex) -> ToolRegistry:
         tools,
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
     )
+
+
+def test_planner_can_inspect_context_with_the_configured_observation_budget():
+    models = _models()
+    pipeline, candidate = _pipeline(AgentSystemVersion.E4_GRAPH_MULTI, models)
+
+    result = pipeline.run(candidate)
+
+    assert result.planner is not None
+    assert 0 < result.planner.tool_observation_token_count <= (
+        FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens
+    )
+    assert len(models["planner"].requests) == 2
+    assert result.label == "VULNERABLE"
 
 
 def test_agentic_fast_quorum_skips_authz_and_matches_full_review():
@@ -290,14 +314,29 @@ def test_agentic_fast_system_falls_back_on_conflict_and_matches_full_review():
             confidence=0.9,
             validation_status="UNRESOLVED",
         )
+        models["authz"] = _expert_model(
+            "authz", label="SAFE", confidence=0.9, validation_status="UNRESOLVED",
+        )
+
+    # The two SAFE predictions have observable counter-evidence. The first scan
+    # still predicts a possible eval issue so the quorum must resolve conflict.
+    guarded_source = (
+        "def handle(request):\n"
+        "    require_permission(request.user, 'manage')\n"
+        "    command = int(request.args['command'])\n"
+        "    database.delete(command)\n"
+        "    return eval(str(command))\n"
+    )
 
     full_pipeline, candidate = _pipeline(
         AgentSystemVersion.E4_GRAPH_MULTI,
         full_models,
+        source=guarded_source,
     )
     fast_pipeline, _ = _pipeline(
         AgentSystemVersion.E5_GRAPH_FAST,
         fast_models,
+        source=guarded_source,
     )
 
     full = full_pipeline.run(candidate)
@@ -437,23 +476,35 @@ def test_planner_invalid_validator_is_rejected_and_can_be_corrected(validator, e
 
 
 @pytest.mark.parametrize("system", [AgentSystemVersion.E4_GRAPH_MULTI, AgentSystemVersion.E5_GRAPH_FAST])
-def test_validator_status_survives_workflow_without_overriding_quorum(system):
+def test_unopposed_typed_validator_status_does_not_replace_workflow_quorum(system):
     models = _models()
-    for role in ("scan", "authz"):
+    for role in ("taint", "authz"):
         models[role] = _expert_model(
             role, label="ABSTAIN", confidence=0.9, validation_status="UNRESOLVED",
         )
-    models["taint"] = _expert_model(
-        "taint", label="VULNERABLE", confidence=1.0, validation_status="CONFIRMED",
-    )
-    pipeline, candidate = _pipeline(system, models)
+    # A real bounded probe is confirmation; the static taint tool no longer is.
+    models["planner"] = _planner_model(scan_validator="probe_python_eval")
+    models["scan"] = ScriptedChatModel([
+        ModelReply(model_id="offline", tool_calls=(ModelToolCall(
+            call_id="probe", name="probe_python_eval", arguments={"source_path": ENTRY_PATH}),)),
+        ModelReply(model_id="offline", content=json.dumps(dict(expert="scan", label="VULNERABLE",
+            confidence=1.0, validation_status="CONFIRMED", evidence_ids=["scan/tool:1"],
+            rationale="Two inputs reached builtin eval"))),
+    ])
+    index, candidate = _index_and_candidate()
+    from cv_agent.python_ast import parse_python_source
+    index = RepositoryIndex(span.document for span in parse_python_source(
+        "repo", "handler.py", index.document(ENTRY_PATH).text))
+    pipeline = AgenticPipeline(index=index, system=system, models=models,
+        tools=ToolRegistry(full_agent_tools(index), max_output_bytes=1000000))
     verdict = pipeline.run(candidate)
-    taint = next(vote for vote in verdict.votes if vote.expert == "taint")
-    ballot = next(vote for vote in pipeline._consensus_votes(list(verdict.votes)) if vote.expert == "taint")
-    assert taint.validation_status.value == ballot.validation_status == "CONFIRMED"
-    assert ballot.evidence_ids == ("taint/tool:1",)
+    scan = next(vote for vote in verdict.votes if vote.expert == "scan")
+    ballot = next(vote for vote in pipeline._consensus_votes(list(verdict.votes)) if vote.expert == "scan")
+    assert scan.validation_status.value == ballot.validation_status == "CONFIRMED"
+    assert ballot.evidence_ids == ("scan/tool:1",)
     assert verdict.label == "ABSTAIN"
     assert verdict.path == "slow"
+    assert "Fewer than 2" in verdict.rationale
     assert len(verdict.votes) == 3
 
 
@@ -462,10 +513,18 @@ def test_planner_receives_registered_validator_names_for_each_expert():
     pipeline, candidate = _pipeline(AgentSystemVersion.E4_GRAPH_MULTI, models)
     pipeline.run(candidate)
     prompt = models["planner"].requests[0][0][1].content
+    context = json.loads(prompt.split("Planning context: ", 1)[1].split("\nPlanning capabilities: ", 1)[0])
     capabilities = json.loads(
         prompt.split("Planning capabilities: ", 1)[1].split("\n\nUse the registered tools", 1)[0]
     )
+    assert context["candidate"]["path"] == candidate.path
+    assert context["retrieved_evidence_index"][0]["path"] == candidate.path
+    assert "retrieved_code" not in context
+    assert "request.args" not in prompt
     assert capabilities["maximum_subtasks"] == FULL_SYSTEM_HARNESS.planner_max_subtasks
+    assert "Read the candidate span once" in context["instruction"]
+    assert "requires independent expert ballots" in capabilities["verification_guidance"]
+    assert "Keep the plan compact" in capabilities["final_json_contract"]
     assert capabilities["allowed_validators_by_expert"] == {
         "scan": ["run_static_check"],
         "taint": ["trace_dataflow"],

@@ -28,7 +28,14 @@ class QuorumPolicy:
         self.quorum = quorum
         self.fast_confidence = fast_confidence
 
+    @staticmethod
+    def _validate_ballots(votes: Sequence[ExpertVote]) -> None:
+        experts = [vote.expert for vote in votes]
+        if len(experts) != len(set(experts)):
+            raise ValueError('Duplicate expert ballots cannot form an independent quorum')
+
     def try_fast(self, votes: Sequence[ExpertVote]) -> Verdict | None:
+        self._validate_ballots(votes)
         material = [vote for vote in votes if vote.label != "ABSTAIN"]
         confident = [vote for vote in material if vote.confidence >= self.fast_confidence]
         labels = Counter(vote.label for vote in confident)
@@ -47,6 +54,7 @@ class QuorumPolicy:
         )
 
     def decide(self, votes: Sequence[ExpertVote]) -> Verdict:
+        self._validate_ballots(votes)
         if self.fast_enabled:
             fast = self.try_fast(votes)
             if fast is not None:
@@ -54,8 +62,7 @@ class QuorumPolicy:
 
         material = [vote for vote in votes if vote.label != "ABSTAIN"]
         if len(material) < self.quorum:
-            # Validator status describes evidence; it does not grant extra votes
-            # or exempt a specialist from the declared quorum policy.
+            # Validator status does not create extra independent ballots.
             return Verdict(
                 label="ABSTAIN",
                 confidence=max((vote.confidence for vote in material), default=0.0),

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, StrictBool, model_validator
 
 from .harness import AgentRuntimeMode, ExpertName
 from .types import FrozenModel, VerdictLabel
@@ -48,6 +48,17 @@ class ModelReply(FrozenModel):
         return self
 
 
+class ValidationSubject(FrozenModel):
+    input_parameters: tuple[str, ...] = ()
+    entry_boolean_arguments: dict[str, StrictBool] = Field(default_factory=dict)
+    candidate_id: str
+    repository_id: str
+    entry_path: str
+    entry_line: int | None = Field(default=None, ge=1)
+    source_digest: str
+    analysis_scope: str | None = None
+
+
 class ToolObservation(FrozenModel):
     tool: str
     status: Literal["ok", "error", "blocked"]
@@ -56,6 +67,7 @@ class ToolObservation(FrozenModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     citation_id: str | None = None
     validation_status: ValidationStatus | None = None
+    subject: ValidationSubject | None = None
 
 
 class ReActStep(FrozenModel):
@@ -71,7 +83,10 @@ class AgentExpertConclusion(FrozenModel):
     confidence: float = Field(ge=0.0, le=1.0)
     validation_status: ValidationStatus
     evidence_ids: tuple[str, ...] = ()
-    rationale: str
+    supporting_observation_ids: tuple[str, ...] = ()
+    counter_observation_ids: tuple[str, ...] = ()
+    unresolved_observation_ids: tuple[str, ...] = ()
+    rationale: Annotated[str, Field(max_length=360)]
 
 
 class AgentExpertVote(AgentExpertConclusion):
@@ -85,19 +100,19 @@ class AgentExpertVote(AgentExpertConclusion):
 
 
 class ValidationSubtask(FrozenModel):
-    task_id: str
-    objective: str
+    task_id: Annotated[str, Field(max_length=64)]
+    objective: Annotated[str, Field(max_length=280)]
     expert: ExpertName
-    allowed_validator: str
+    allowed_validator: Annotated[str, Field(max_length=80)]
     dependencies: tuple[str, ...] = ()
-    success_condition: str
+    success_condition: Annotated[str, Field(max_length=220)]
 
 
 class ValidationPlan(FrozenModel):
     candidate_id: str
-    vulnerability_hypotheses: tuple[str, ...]
+    vulnerability_hypotheses: tuple[Annotated[str, Field(max_length=180)], ...]
     subtasks: tuple[ValidationSubtask, ...]
-    rationale: str
+    rationale: Annotated[str, Field(max_length=600)]
 
     @model_validator(mode="after")
     def validate_task_graph(self) -> ValidationPlan:

@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 from pydantic import Field, ValidationError
 
-from .agent_types import ModelToolCall, ToolObservation
+from .agent_types import ModelToolCall, ToolObservation, ValidationSubject, ValidationStatus
 from .retrieval import (
     RepositoryIndex,
     prompt_token_upper_bound as context_text_token_count,
     fit_text_to_serialized_context,
 )
-from .types import FrozenModel
+from .types import FrozenModel, Candidate
 
 
 class SearchSymbolsInput(FrozenModel):
@@ -35,16 +36,37 @@ class ToolExecutionScope:
     max_observation_tokens: int
     observed_tokens: int = 0
     initial_evidence_ids: frozenset[str] = frozenset()
+    candidate_path: str | None = None
+    subject: ValidationSubject | None = None
 
     def __post_init__(self) -> None:
         if self.max_observation_tokens < 1:
             raise ValueError("tool-observation token budget must be positive")
         if self.observed_tokens < 0 or self.observed_tokens > self.max_observation_tokens:
             raise ValueError("observed tool tokens must fit inside the scope budget")
+        if self.subject is not None and self.candidate_path is not None and self.subject.entry_path != self.candidate_path:
+            raise ValueError("validation subject entry must match the candidate path")
 
     @property
     def remaining_tokens(self) -> int:
         return self.max_observation_tokens - self.observed_tokens
+
+
+def repository_source_digest(index: RepositoryIndex) -> str:
+    return hashlib.sha256(json.dumps(
+        [index.documents[path].model_dump(mode="json") for path in sorted(index.documents)],
+        sort_keys=True, separators=(",", ":"),
+    ).encode()).hexdigest()
+
+
+def candidate_subject(index: RepositoryIndex, candidate: Candidate) -> ValidationSubject:
+    """One identity constructor shared by the pipeline and registered fixtures."""
+    return ValidationSubject(candidate_id=candidate.candidate_id, repository_id=candidate.repository_id,
+                             entry_path=candidate.path, source_digest=repository_source_digest(index),
+                             entry_line=candidate.line,
+                             input_parameters=candidate.input_parameters,
+                             entry_boolean_arguments=candidate.entry_boolean_arguments,
+                             analysis_scope=candidate.analysis_scope)
 
 
 @dataclass(frozen=True)
@@ -55,6 +77,7 @@ class AgentTool:
     handler: Callable[[FrozenModel, ToolExecutionScope], ToolObservation]
     content_type: Literal["text", "json"] = "text"
     available: bool = True
+    validation_statuses: tuple[ValidationStatus, ...] = ()
 
     def definition(self) -> dict[str, Any]:
         return {

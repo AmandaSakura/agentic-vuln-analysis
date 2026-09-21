@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import signal
@@ -6,8 +7,8 @@ import time
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry
-from cv_agent.agent_types import ModelToolCall
+from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry, repository_source_digest
+from cv_agent.agent_types import ModelToolCall, ValidationSubject
 from cv_agent.agentic_workflow import AgenticPipeline
 from cv_agent.harness import (
     FULL_SYSTEM_HARNESS,
@@ -25,20 +26,41 @@ from cv_agent.validation_tools import (
     LoopbackRequest,
     LoopbackResponse,
     ValidationStatus,
-    _run_fixture_case,
     full_agent_tools,
 )
+from cv_agent.validation_tools.fixtures import _run_fixture_case
 
 
 SOCKET_ALIAS = socket.socket
 
 
-def _scope(*paths: str) -> ToolExecutionScope:
+@pytest.mark.parametrize("guarded", [False, True])
+def test_route_registration_is_not_a_runtime_delete_action(guarded):
+    route = CodeDocument(repository_id="r", path="route.py", text=(
+        '@router.delete(\n    "/{key_id}",\n)\n'
+        'async def route(key_id, current_user):\n'
+        '    return await delete_key(key_id, current_user.id)\n'
+    ), calls=("delete_key",), language="python")
+    service = CodeDocument(repository_id="r", path="service.py", text=(
+        'async def delete_key(key, user_id):\n'
+        + ('    if key.user_id != user_id:\n        raise ValueError("denied")\n' if guarded else '')
+        + '    return session.delete(key)\n'
+    ), defines=("delete_key",), language="python")
+    result = _invoke(_registry(RepositoryIndex([route, service])), "compare_route_and_service_guard",
+                     {"route_path": route.path}, _scope(route.path, service.path))
+    payload = json.loads(result.content)
+    assert payload["records"][0]["sensitive_lines"] == []
+    assert payload["recognized_guard_precedes_actions"] is guarded
+    assert result.validation_status == "UNRESOLVED"
+
+
+def _scope(*paths: str, subject: ValidationSubject | None = None) -> ToolExecutionScope:
     return ToolExecutionScope(
         admitted_paths=frozenset(paths),
         max_observation_tokens=(
             FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens
         ),
+        subject=subject,
     )
 
 
@@ -161,6 +183,300 @@ def test_unconfigured_validators_are_not_advertised_as_available():
     assert "case-17" in definition["function"]["description"]
 
 
+def test_static_permission_patterns_do_not_confirm_or_refute_candidate():
+    vulnerable = CodeDocument(
+        repository_id="repo",
+        path="perm.py::tmp@1-3",
+        text="def tmp():\n    os.chmod(tmp_dir, 0o777)\n",
+    )
+    fixed = CodeDocument(
+        repository_id="repo",
+        path="perm.py::tmp_fixed@1-3",
+        text="def tmp():\n    os.chmod(tmp_dir, 0o750)\n",
+    )
+    registry = _registry(RepositoryIndex([vulnerable, fixed]))
+    subject = ValidationSubject(
+        candidate_id="perm",
+        repository_id="repo",
+        entry_path=vulnerable.path,
+        entry_line=1,
+        source_digest="digest",
+    )
+
+    vulnerable_result = _invoke(
+        registry,
+        "run_static_check",
+        {"path": vulnerable.path},
+        _scope(vulnerable.path, fixed.path, subject=subject),
+    )
+    fixed_result = _invoke(
+        registry,
+        "run_static_check",
+        {"path": fixed.path},
+        _scope(vulnerable.path, fixed.path, subject=subject),
+    )
+
+    assert vulnerable_result.validation_status == ValidationStatus.UNRESOLVED
+    assert vulnerable_result.subject is None
+    assert fixed_result.validation_status == ValidationStatus.UNRESOLVED
+    assert fixed_result.subject is None
+    assert json.loads(vulnerable_result.content)["permission_mode_check"]["modes"][0]["mode"] == "0o777"
+    assert json.loads(fixed_result.content)["permission_mode_check"]["modes"][0]["mode"] == "0o750"
+
+
+def test_static_check_cannot_use_unadmitted_mlserver_helper_as_candidate_proof():
+    backend = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        text=(
+            "def serve(model_uri):\n"
+            "    server_implementation = mlserver\n"
+            "    command, command_env = server_implementation.get_cmd(model_uri)\n"
+            "    return subprocess.Popen(command)\n"
+        ),
+    )
+    unquoted = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/mlserver.py::get_cmd@1-5",
+        text=(
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"mlserver start {model_uri}\"\n"
+            "    return cmd, {}\n"
+        ),
+    )
+    quoted = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/mlserver.py::get_cmd@1-6",
+        text=(
+            "def get_cmd(model_uri):\n"
+            "    import shlex\n"
+            "    cmd = f\"mlserver start {shlex.quote(model_uri)}\"\n"
+            "    return cmd, {}\n"
+        ),
+    )
+
+    confirmed = _invoke(
+        _registry(RepositoryIndex([backend, unquoted])),
+        "run_static_check",
+        {"path": backend.path},
+        _scope(backend.path),
+    )
+    refuted = _invoke(
+        _registry(RepositoryIndex([backend, quoted])),
+        "run_static_check",
+        {"path": backend.path},
+        _scope(backend.path),
+    )
+
+    assert confirmed.validation_status == ValidationStatus.UNRESOLVED
+    assert refuted.validation_status == ValidationStatus.UNRESOLVED
+    assert confirmed.content == refuted.content
+    assert "mlserver_command_check" not in json.loads(refuted.content)
+
+
+def _command_documents(helper_text: str) -> tuple[CodeDocument, CodeDocument]:
+    # Keep the caller signature and helper call valid even for mutation cases
+    # with extra external inputs such as suffix or replacement.
+    function = ast.parse(helper_text).body[0]
+    parameters = [argument.arg for argument in (*function.args.posonlyargs, *function.args.args)]
+    keyword_parameters = [argument.arg for argument in function.args.kwonlyargs]
+    signature = ", ".join([*parameters, *keyword_parameters])
+    arguments = ", ".join([*parameters, *(f"{name}={name}" for name in keyword_parameters)])
+    backend = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        text=(
+            f"def serve({signature}):\n"
+            f"    command, command_env = mlserver.get_cmd({arguments})\n"
+            "    command = \"exec \" + command\n"
+            "    return subprocess.Popen([\"bash\", \"-c\", command])\n"
+        ),
+        defines=("PyFuncBackend.serve",),
+        calls=("mlflow.pyfunc.mlserver.get_cmd", "subprocess.Popen"),
+    )
+    helper = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/mlserver.py::get_cmd@1-8",
+        text=helper_text,
+        defines=("mlflow.pyfunc.mlserver.get_cmd", "get_cmd"),
+    )
+    return backend, helper
+
+
+@pytest.mark.parametrize(
+    "helper_text, expected",
+    [
+        (
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"mlserver start {model_uri}\"\n"
+            "    return cmd, {}\n",
+            "UNSANITIZED",
+        ),
+        (
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"mlserver start {shlex.quote(model_uri)}\"\n"
+            "    return cmd, {}\n",
+            "SANITIZED",
+        ),
+        (
+            "def get_cmd(model_uri):\n"
+            "    quoted = shlex.quote(model_uri)\n"
+            "    cmd = f\"mlserver start {model_uri}\"\n"
+            "    return cmd, {}\n",
+            "UNSANITIZED",
+        ),
+        (
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"mlserver start {shlex.quote(model_uri)}\"\n"
+            "    cmd = build_command(model_uri)\n"
+            "    return cmd, {}\n",
+            "AMBIGUOUS",
+        ),
+        (
+            "def get_cmd(model_uri, suffix):\n"
+            "    cmd = f\"mlserver start {shlex.quote(model_uri)}\"\n"
+            "    cmd += suffix\n"
+            "    return cmd, {}\n",
+            "UNSANITIZED",
+        ),
+        (
+            "def get_cmd(model_uri, replacement):\n"
+            "    shlex = replacement\n"
+            "    cmd = f\"mlserver start {shlex.quote(model_uri)}\"\n"
+            "    return cmd, {}\n",
+            "AMBIGUOUS",
+        ),
+        (
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"mlserver start {shlex.quote(model_uri)}\"\n"
+            "    return f\"mlserver start {model_uri}\", {}\n",
+            "UNSANITIZED",
+        ),
+    ],
+)
+def test_command_construction_inspection_classifies_admitted_helpers(helper_text, expected):
+    backend, helper = _command_documents(helper_text)
+    result = _invoke(
+        _registry(RepositoryIndex([backend, helper])),
+        "inspect_command_construction",
+        {"source_path": backend.path},
+        _scope(backend.path, helper.path),
+    )
+    payload = json.loads(result.content)
+
+    assert result.validation_status == ValidationStatus.UNRESOLVED
+    assert payload["command_construction_status"] == expected
+    assert payload["helpers"][0]["path"] == helper.path
+
+
+def test_command_construction_inspection_keeps_unavailable_callee_unresolved():
+    backend, _ = _command_documents(
+        "def get_cmd(model_uri):\n"
+        "    cmd = f\"mlserver start {model_uri}\"\n"
+        "    return cmd, {}\n"
+    )
+    result = _invoke(
+        _registry(RepositoryIndex([backend])),
+        "inspect_command_construction",
+        {"source_path": backend.path},
+        _scope(backend.path),
+    )
+    payload = json.loads(result.content)
+
+    assert payload["command_construction_status"] == "UNAVAILABLE"
+    assert payload["helpers"] == []
+
+
+@pytest.mark.parametrize("mode, others_write", [("0o777", True), ("0o750", False), ("777", False)])
+def test_static_permission_signal_interprets_python_integer_literals(mode, others_write):
+    document = CodeDocument(repository_id="repo", path="perm.py", text=f"os.chmod(path, {mode})")
+    result = _invoke(_registry(RepositoryIndex([document])), "run_static_check",
+                     {"path": document.path}, _scope(document.path))
+    assessment = json.loads(result.content)["permission_mode_check"]
+    assert assessment["modes"][0]["others_write"] is others_write
+    assert assessment["status"] == "UNRESOLVED"
+    assert result.validation_status == ValidationStatus.UNRESOLVED
+
+
+@pytest.mark.parametrize(
+    "source, expected",
+    [
+        ("def tmp():\n    os.chmod(tmp_dir, 0o777)\n", "CONFIRMED"),
+        ("def tmp():\n    os.chmod(tmp_dir, 0o750)\n", "REFUTED"),
+        ("def tmp():\n    os.chmod(tmp_dir, 777)\n", "REFUTED"),
+        ("def tmp():\n    if False:\n        os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
+        ("def tmp():\n    return tmp_dir\n    os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
+        ("def tmp():\n    raise RuntimeError()\n    os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
+        (
+            "def tmp(enabled):\n"
+            "    if enabled:\n"
+            "        return tmp_dir\n"
+            "    os.chmod(tmp_dir, 0o777)\n",
+            "UNRESOLVED",
+        ),
+        ("def tmp():\n    for unused in []:\n        os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
+        ("def tmp(enabled):\n    if enabled:\n        os.chmod(tmp_dir, 0o777)\n", "CONFIRMED"),
+        (
+            "def tmp():\n"
+            "    import pathlib as os\n"
+            "    os.chmod(tmp_dir, 0o777)\n",
+            "UNRESOLVED",
+        ),
+        (
+            "def tmp(replacement):\n"
+            "    if True:\n"
+            "        os = replacement\n"
+            "        os.chmod(tmp_dir, 0o750)\n",
+            "UNRESOLVED",
+        ),
+        ("def tmp(os):\n    os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
+        (
+            "def tmp():\n"
+            "    os.chmod(tmp_dir, 0o777)\n"
+            "    os.chmod(other_dir, 0o777)\n",
+            "UNRESOLVED",
+        ),
+        (
+            "def tmp():\n"
+            "    os.chmod(tmp_dir, 0o777)\n"
+            "    os.chmod(tmp_dir, 0o750)\n",
+            "UNRESOLVED",
+        ),
+    ],
+)
+def test_permission_mode_validator_has_bounded_positive_negative_and_unresolved_cases(
+    source, expected,
+):
+    document = CodeDocument(repository_id="repo", path="perm.py::tmp@1-5", text=source)
+    index = RepositoryIndex([document])
+    subject = ValidationSubject(
+        candidate_id="perm",
+        repository_id="repo",
+        entry_path=document.path,
+        entry_line=1,
+        source_digest="placeholder",
+    )
+    subject = subject.model_copy(update={"source_digest": repository_source_digest(index)})
+    result = _invoke(
+        _registry(index),
+        "validate_permission_mode",
+        {"path": document.path},
+        ToolExecutionScope(
+            admitted_paths=frozenset({document.path}),
+            max_observation_tokens=10000,
+            candidate_path=document.path,
+            subject=subject,
+        ),
+    )
+    payload = json.loads(result.content)
+
+    assert payload["status"] == expected
+    assert result.validation_status.value == expected
+    if expected in {"CONFIRMED", "REFUTED"}:
+        assert result.subject == subject
+    else:
+        assert result.subject is None
+
 def test_full_registry_satisfies_live_pipeline_construction_without_network_call():
     index, _ = cross_file_fixture()
     registry = _registry(index)
@@ -223,7 +539,8 @@ def test_static_source_sink_and_cross_file_taint_tools_confirm_fixture():
     )
     assert json.loads(static.content)["finding_count"] == 1
     trace_payload = json.loads(trace.content)
-    assert trace_payload["status"] == "CONFIRMED"
+    assert trace_payload["status"] == "UNRESOLVED"
+    assert trace_payload["flow_status"] == "MAY_REACH"
     assert [step["path"] for step in trace_payload["trace"]] == [
         "controller.py",
         "service.py",
@@ -259,7 +576,8 @@ def test_java_servlet_sources_and_sinks_are_detected():
 
     assert json.loads(sources.content)["finding_count"] == 2
     assert json.loads(sinks.content)["findings"][0]["category"] == "sql"
-    assert json.loads(trace.content)["status"] == "CONFIRMED"
+    assert json.loads(trace.content)["status"] == "UNRESOLVED"
+    assert json.loads(trace.content)["flow_status"] == "MAY_REACH"
 
 
 def test_java_taint_trace_propagates_through_typed_method_parameter():
@@ -301,7 +619,8 @@ def test_java_taint_trace_propagates_through_typed_method_parameter():
     )
     payload = json.loads(trace.content)
 
-    assert payload["status"] == "CONFIRMED"
+    assert payload["status"] == "UNRESOLVED"
+    assert payload["flow_status"] == "MAY_REACH"
     assert [step["path"] for step in payload["trace"]] == [source.path, service.path]
 
 
@@ -509,7 +828,8 @@ def test_authorization_tools_model_principal_resource_and_guard_coverage():
     assert json.loads(principal.content)["principals"]
     assert json.loads(resource.content)["resources"]
     assert json.loads(routes.content)["routes"] == ["DELETE:/users/:user_id"]
-    assert json.loads(comparison.content)["status"] == "CONFIRMED"
+    assert json.loads(comparison.content)["status"] == "UNRESOLVED"
+    assert json.loads(comparison.content)["recognized_guard_precedes_actions"] is False
 
     guarded_index, _ = guarded_delete_fixture()
     guard_evidence = _invoke(
@@ -526,6 +846,33 @@ def test_authorization_tools_model_principal_resource_and_guard_coverage():
     )
     assert "require_permission" in json.loads(guard_evidence.content)["guards"]
     assert json.loads(guarded.content)["status"] == "UNRESOLVED"
+
+    owner_guard = CodeDocument(
+        repository_id="repo",
+        path="owner.py",
+        text=(
+            "def delete_api_key(api_key, user_id):\n"
+            "    if api_key.user_id != user_id:\n"
+            "        raise ValueError('not found')\n"
+            "    return session.delete(api_key)\n"
+        ),
+        defines=("delete_api_key",),
+    )
+    owner_guard_evidence = _invoke(
+        _registry(RepositoryIndex([owner_guard])),
+        "get_guards",
+        {"path": "owner.py"},
+        _scope("owner.py"),
+    )
+    owner_guarded = _invoke(
+        _registry(RepositoryIndex([owner_guard])),
+        "compare_route_and_service_guard",
+        {"route_path": "owner.py", "max_hops": 1},
+        _scope("owner.py"),
+    )
+    assert "api_key.user_id != user_id" in json.loads(owner_guard_evidence.content)["guards"]
+    assert json.loads(owner_guarded.content)["status"] == "UNRESOLVED"
+    assert json.loads(owner_guarded.content)["recognized_guard_precedes_actions"] is True
 
     late_guard = CodeDocument(
         repository_id="repo",
@@ -544,7 +891,8 @@ def test_authorization_tools_model_principal_resource_and_guard_coverage():
         {"route_path": "late.py", "max_hops": 1},
         _scope("late.py"),
     )
-    assert json.loads(late.content)["status"] == "CONFIRMED"
+    assert json.loads(late.content)["status"] == "UNRESOLVED"
+    assert json.loads(late.content)["recognized_guard_precedes_actions"] is False
 
 
 def test_guard_on_sibling_branch_cannot_dominate_sensitive_path():
@@ -592,7 +940,8 @@ def test_guard_on_sibling_branch_cannot_dominate_sensitive_path():
         _scope("root.py", "guarded.py", "open.py", "sensitive.py"),
     )
 
-    assert json.loads(result.content)["status"] == "CONFIRMED"
+    assert json.loads(result.content)["status"] == "UNRESOLVED"
+    assert json.loads(result.content)["recognized_guard_precedes_actions"] is False
 
 
 def test_structured_only_guard_without_line_position_does_not_prove_authorization():
@@ -617,7 +966,8 @@ def test_structured_only_guard_without_line_position_does_not_prove_authorizatio
 
     assert payload["records"][0]["guards"] == ["require_permission"]
     assert payload["records"][0]["guard_lines"] == []
-    assert payload["status"] == "CONFIRMED"
+    assert payload["status"] == "UNRESOLVED"
+    assert payload["recognized_guard_precedes_actions"] is False
 
 
 def test_unlocatable_edge_call_does_not_let_upstream_guard_dominate():
@@ -647,7 +997,8 @@ def test_unlocatable_edge_call_does_not_let_upstream_guard_dominate():
         _scope("route.py", "service.py"),
     )
 
-    assert json.loads(result.content)["status"] == "CONFIRMED"
+    assert json.loads(result.content)["status"] == "UNRESOLVED"
+    assert json.loads(result.content)["recognized_guard_precedes_actions"] is False
 
 
 def test_verified_fixed_pair_comparison_is_registered_not_model_selected():
@@ -679,7 +1030,8 @@ def test_verified_fixed_pair_comparison_is_registered_not_model_selected():
     )
     payload = json.loads(comparison.content)
 
-    assert payload["status"] == "CONFIRMED"
+    assert payload["status"] == "UNRESOLVED"
+    assert payload["source_difference_supports_fix_hypothesis"] is True
     assert payload["vulnerable_sink_count"] == 1
     assert payload["fixed_sink_count"] == 0
 
@@ -724,7 +1076,8 @@ def test_fixed_pair_pre_sink_guard_with_retained_sink_supports_fix():
     )
     payload = json.loads(comparison.content)
 
-    assert payload["status"] == "CONFIRMED"
+    assert payload["status"] == "UNRESOLVED"
+    assert payload["source_difference_supports_fix_hypothesis"] is True
     assert payload["fixed_sink_count"] == 1
     assert payload["fixed_guard_precedes_sinks"] is True
 

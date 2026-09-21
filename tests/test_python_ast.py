@@ -38,6 +38,52 @@ def test_python_ast_call_graph_retrieves_imported_function(tmp_path: Path):
     assert any(item.path == target.document.path for item in graph)
 
 
+def test_python_ast_resolves_local_module_alias_assignment(tmp_path: Path):
+    package = tmp_path / "mlflow/pyfunc"
+    package.mkdir(parents=True)
+    (tmp_path / "mlflow/__init__.py").write_text("", encoding="utf-8")
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "backend.py").write_text(
+        "from mlflow.pyfunc import mlserver, scoring_server\n\n"
+        "class PyFuncBackend:\n"
+        "    def serve(self, enable_mlserver):\n"
+        "        server_implementation = mlserver if enable_mlserver else scoring_server\n"
+        "        return server_implementation.get_cmd('model')\n",
+        encoding="utf-8",
+    )
+    (package / "mlserver.py").write_text(
+        "def get_cmd(model_uri):\n"
+        "    return f'mlserver start {model_uri}'\n",
+        encoding="utf-8",
+    )
+    (package / "scoring_server.py").write_text(
+        "def get_cmd(model_uri):\n"
+        "    return 'python -m scoring_server'\n",
+        encoding="utf-8",
+    )
+
+    repository = load_python_repository("repo", tmp_path)
+    entry = repository.locate("mlflow/pyfunc/backend.py", 4)
+    helper = repository.locate("mlflow/pyfunc/mlserver.py", 1)
+
+    assert entry is not None
+    assert helper is not None
+    assert "mlflow.pyfunc.mlserver.get_cmd" in entry.document.calls
+    graph = RepositoryIndex(repository.documents).graph_search(
+        Candidate(
+            candidate_id="entry",
+            case_id="entry",
+            repository_id="repo",
+            path=entry.document.path,
+            line=4,
+            query="mlserver get_cmd model_uri",
+        ),
+        top_k=8,
+        max_hops=4,
+    )
+    assert any(item.path == helper.document.path for item in graph)
+
+
 def test_python_ast_resolves_typed_self_field_to_concrete_override(tmp_path: Path):
     (tmp_path / "base_loader.py").write_text(
         """

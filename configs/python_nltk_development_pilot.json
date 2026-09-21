@@ -1,0 +1,17 @@
+{
+  "dataset_role": "development_pilot",
+  "model_config_path": "configs/micro_benchmark_gemini_native.json",
+  "systems": ["E3", "E5"],
+  "candidate_limit_per_subject": 1,
+  "max_requests": 48,
+  "max_seconds": 600,
+  "subjects": [
+    {
+      "repository_id": "subject-03",
+      "repository_url": "https://github.com/nltk/nltk",
+      "commit": "40d0bc1d484a3458d6a63ecb5ba4957ab16ba14e",
+      "checkout": "data/heldout-subjects/nltk/40d0bc1d484a3458d6a63ecb5ba4957ab16ba14e",
+      "source_prefix": "."
+    }
+  ]
+}

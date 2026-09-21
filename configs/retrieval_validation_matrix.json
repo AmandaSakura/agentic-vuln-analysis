@@ -1,0 +1,8 @@
+{
+  "categories": ["cmdi", "pathtraver", "sqli", "xss"],
+  "selection": "first frozen-manifest case in each category and label stratum",
+  "variants": [["E2_metadata_bm25", "E2"], ["E3_metadata_bm25_graph", "E3"]],
+  "schedule": "alternate variant order per case",
+  "max_requests": 80,
+  "max_seconds": 1200
+}

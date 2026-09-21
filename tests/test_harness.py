@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from cv_agent.harness import (
     COMMAND_POLICIES,
+    FULL_SYSTEM_HARNESS,
     OWASP_HARNESS,
     VULNGYM_RETRIEVAL_HARNESS,
     DatasetRole,
@@ -49,6 +50,13 @@ def test_project_harness_is_internally_consistent():
     assert description["status"] == "PASS"
     assert description["owasp"]["dataset_role"] == DatasetRole.DEVELOPMENT.value
     assert description["owasp"]["claim_eligible"] is False
+
+
+def test_scan_expert_can_collect_guard_evidence_for_safe_predictions():
+    scan = next(expert for expert in FULL_SYSTEM_HARNESS.experts if expert.expert == "scan")
+    assert "get_guards" in scan.tools
+    assert "get_guards" in scan.mandate
+    assert "Static checks remain UNRESOLVED" in scan.mandate
 
 
 def test_every_cli_command_is_registered_in_project_harness():

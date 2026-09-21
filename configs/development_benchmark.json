@@ -1,0 +1,10 @@
+{
+  "per_category_per_label": 3,
+  "systems": ["E1", "E2", "E3", "E4", "E5"],
+  "pilot_category": "cmdi",
+  "pilot_max_model_requests": 30,
+  "pilot_wall_seconds": 600,
+  "model_config": "configs/micro_benchmark_gemini_native.json",
+  "entry_method": "doPost",
+  "concurrency": 1
+}

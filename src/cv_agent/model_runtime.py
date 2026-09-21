@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.request
+from contextvars import ContextVar
+from uuid import uuid4
 from collections.abc import Callable, Sequence
 from typing import Any, Literal, Protocol
 
@@ -14,6 +17,11 @@ from .agent_types import (
     ModelUsage,
 )
 from .harness import AgentRuntimeMode, ModelRuntimeHarness
+from .live_gate import require_passing_tests
+from .proxy_diagnostics import collect_diagnostic
+
+
+_request_id: ContextVar[str | None] = ContextVar('model_request_id', default=None)
 
 
 class ChatModel(Protocol):
@@ -62,6 +70,8 @@ class OpenAICompatibleChatModel:
         timeout_seconds: int,
         max_tokens: int | None = None,
         thinking_mode: Literal["enabled", "disabled"] | None = None,
+        proxy_log_dir: str | None = None,
+        observer: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         if not base_url.strip() or not model.strip():
             raise ValueError("live model base URL and model name are required")
@@ -76,6 +86,8 @@ class OpenAICompatibleChatModel:
         self.timeout_seconds = timeout_seconds
         self.max_tokens = max_tokens
         self.thinking_mode = thinking_mode
+        self.observer = observer
+        self.proxy_log_dir = proxy_log_dir
 
     @staticmethod
     def _optional_positive_integer_environment(name: str | None) -> int | None:
@@ -222,12 +234,52 @@ class OpenAICompatibleChatModel:
         messages: Sequence[ChatMessage],
         tools: Sequence[dict[str, Any]],
     ) -> ModelReply:
+        require_passing_tests()
+        token = _request_id.set(uuid4().hex)
+        try:
+            self._observe({
+                "event": "model_start",
+                "messages": [message.model_dump(mode="json") for message in messages],
+                "tools": list(tools),
+            })
+            try:
+                reply = self._complete(messages, tools)
+            except BaseException as error:
+                self._observe({"event": "model_error", "error_type": type(error).__name__, "error": str(error)})
+                raise
+            self._observe({"event": "model_reply", "reply": reply.model_dump(mode="json")})
+            return reply
+        finally:
+            _request_id.reset(token)
+
+    def _observe(self, event: dict[str, Any]) -> None:
+        if self.observer is not None:
+            self.observer({**event, 'request_id': _request_id.get()})
+
+    def _record_response(self, raw: object) -> tuple[dict[str, Any], object]:
+        safe = json.dumps(raw, ensure_ascii=False)
+        if self._api_key:
+            safe = safe.replace(self._api_key, "[REDACTED]")
+        redacted = json.loads(safe)
+        summary = ({key: redacted[key] for key in ("id", "model", "usage", "error") if key in redacted}
+                   if isinstance(redacted, dict) else {"response_type": type(redacted).__name__})
+        self._observe({"event": "model_response_received", "summary": summary, "raw_response": redacted})
+        return summary, redacted
+
+    def _complete(
+        self,
+        messages: Sequence[ChatMessage],
+        tools: Sequence[dict[str, Any]],
+    ) -> ModelReply:
         body = self._request_body(messages, tools)
+        request_id = _request_id.get()
+        started_at = time.time()
         request = urllib.request.Request(
             self._endpoint(),
             data=json.dumps(body).encode("utf-8"),
             headers={
                 "Content-Type": "application/json",
+                **({"X-Cv-Agent-Request-Id": request_id} if self.proxy_log_dir else {}),
                 **(
                     {"Authorization": f"Bearer {self._api_key}"}
                     if self._api_key
@@ -244,18 +296,58 @@ class OpenAICompatibleChatModel:
                 raw = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as error:
             detail = error.read(4_096).decode("utf-8", errors="replace")
+            if self._api_key:
+                detail = detail.replace(self._api_key, "[REDACTED]")
+            self._observe({'event': 'model_http_error', 'status_code': error.code})
+            try:
+                payload = json.loads(detail)
+            except ValueError:
+                pass
+            else:
+                self._record_response(payload)
             raise RuntimeError(
                 f"model endpoint returned HTTP {error.code}: {detail}"
             ) from error
+        except (UnicodeError, json.JSONDecodeError):
+            self._observe({'event': 'model_invalid_response',
+                           'summary': {'response_type': 'invalid_json_or_encoding'}})
+            raise
         except (urllib.error.URLError, TimeoutError) as error:
             raise RuntimeError(f"model endpoint request failed: {error}") from error
 
+        # Record usage before validating content, tool JSON, or the reply schema.
+        summary, raw = self._record_response(raw)
+        diagnostic = None
+        if self.proxy_log_dir:
+            diagnostic = collect_diagnostic(self.proxy_log_dir, request_id,
+                                            raw.get('id') if isinstance(raw, dict) else None,
+                                            started_at)
+            diagnostic['requested_max_output_tokens'] = self.max_tokens
+            upstream_limit = diagnostic.get('upstream_max_output_tokens')
+            diagnostic['output_limit_status'] = (
+                'not_requested' if self.max_tokens is None else
+                'unverified' if diagnostic['diagnosis'].startswith('native_evidence_') else
+                'missing' if upstream_limit is None else
+                'matched' if upstream_limit == self.max_tokens else 'mismatch')
+            self._observe({"event": "model_proxy_diagnostic", "diagnostic": diagnostic})
+        try:
+            if diagnostic and diagnostic['diagnosis'] == 'upstream_blocked':
+                raise ValueError('upstream_blocked: ' + diagnostic['block_reason'])
+            return self._parse_response(raw)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            self._observe({"event": "model_invalid_response", "summary": summary,
+                           "response_keys": sorted(raw) if isinstance(raw, dict) else []})
+            raise
+
+    def _parse_response(self, raw: object) -> ModelReply:
         choices = raw.get("choices") if isinstance(raw, dict) else None
         if not isinstance(choices, list) or not choices:
             raise ValueError("model response contains no choices")
-        message = choices[0].get("message")
+        message = choices[0].get("message") if isinstance(choices[0], dict) else None
         if not isinstance(message, dict):
             raise ValueError("model response choice contains no message")
+        if message.get('content') is not None and not isinstance(message['content'], str):
+            raise ValueError('model response content must be text or null')
         usage_raw = raw.get("usage") if isinstance(raw.get("usage"), dict) else {}
         return ModelReply(
             model_id=str(raw.get("model") or self.model),

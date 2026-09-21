@@ -140,7 +140,7 @@ def _case_models(
                     [
                         _tool_reply(
                             "planner",
-                            "get_callees",
+                            "read_span",
                             {"path": case.candidate.path},
                         ),
                         _planner_reply(case.candidate),
@@ -216,8 +216,8 @@ def _fixtures() -> tuple[ScriptedAgenticCase, ...]:
             index=negative_index,
             candidate=negative_candidate,
             scan_label="VULNERABLE",
-            taint_label="SAFE",
-            authz_label="SAFE",
+            taint_label="ABSTAIN",
+            authz_label="ABSTAIN",
             scan_path="admin.py",
             taint_path="admin.py",
             authz_path="admin.py",

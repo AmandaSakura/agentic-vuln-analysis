@@ -1,0 +1,17 @@
+{
+  "dataset_role": "heldout_pilot",
+  "model_config_path": "configs/micro_benchmark_gemini_native.json",
+  "systems": ["E3", "E5"],
+  "candidate_limit_per_subject": 1,
+  "max_requests": 48,
+  "max_seconds": 600,
+  "subjects": [
+    {
+      "repository_id": "subject-04",
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "commit": "083eac9cd0be4a8934fac7010f9248c7888c6da4",
+      "checkout": "data/heldout-subjects/mlflow/083eac9cd0be4a8934fac7010f9248c7888c6da4",
+      "source_prefix": "."
+    }
+  ]
+}

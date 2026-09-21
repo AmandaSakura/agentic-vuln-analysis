@@ -1,0 +1,11 @@
+{
+  "case_ids": ["BenchmarkTest00827", "BenchmarkTest02244"],
+  "systems": ["E1", "E2", "E3", "E4", "E5"],
+  "concurrency": 1,
+  "max_trials": 10,
+  "max_requests": 200,
+  "max_seconds": 1800,
+  "model_config": "configs/micro_benchmark_gemini_native.json",
+  "entry_method": "doPost",
+  "acceptance": "Exactly ten distinct declared cells must match frozen labels and include matching candidate/source/line-bound validator evidence; all requests must have valid replies and unambiguous usage. An uninterrupted matching source/config/dataset snapshot is required for full expansion."
+}

@@ -29,7 +29,7 @@ def test_scripted_agentic_eval_exercises_fast_and_slow_quorum_paths():
         "taint",
     ]
 
-    assert e5_traces["guarded-delete-1"]["label"] == "SAFE"
+    assert e5_traces["guarded-delete-1"]["label"] == "ABSTAIN"
     assert e5_traces["guarded-delete-1"]["path"] == "slow"
     assert [vote["expert"] for vote in e5_traces["guarded-delete-1"]["votes"]] == [
         "scan",

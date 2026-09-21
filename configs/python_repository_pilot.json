@@ -1,0 +1,24 @@
+{
+  "dataset_role": "development_pilot",
+  "model_config_path": "configs/micro_benchmark_gemini_native.json",
+  "systems": ["E3", "E5"],
+  "candidate_limit_per_subject": 2,
+  "max_requests": 160,
+  "max_seconds": 1200,
+  "subjects": [
+    {
+      "repository_id": "subject-01",
+      "repository_url": "https://github.com/langchain-ai/langchain",
+      "commit": "b7d1831f9d3560ed4fb45134861eef3f4544eff3",
+      "checkout": "data/diagnostics/langchain-vulnerable",
+      "source_prefix": "libs/core"
+    },
+    {
+      "repository_id": "subject-02",
+      "repository_url": "https://github.com/langchain-ai/langchain",
+      "commit": "c4b6ba254e1a49ed91f2e268e6484011c540542a",
+      "checkout": "data/diagnostics/langchain-fixed",
+      "source_prefix": "libs/core"
+    }
+  ]
+}

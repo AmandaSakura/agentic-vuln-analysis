@@ -1,10 +1,21 @@
 from __future__ import annotations
 
 from cv_agent.consensus import QuorumPolicy
+from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.synthetic import cross_file_fixture, guarded_delete_fixture
 from cv_agent.types import Candidate, CodeDocument, ExpertVote, SystemVersion
 from cv_agent.workflow import AgentPipeline, PipelineConfig
+
+
+def test_one_expert_cannot_form_a_quorum_with_duplicate_ballots():
+    import pytest
+    vote = ExpertVote(expert='scan', label='VULNERABLE', confidence=0.95, rationale='one check')
+    for policy in (QuorumPolicy(), QuorumPolicy(fast_enabled=False)):
+        with pytest.raises(ValueError, match='Duplicate expert'):
+            policy.decide([vote, vote])
+    with pytest.raises(ValueError, match='Duplicate expert'):
+        QuorumPolicy().try_fast([vote, vote])
 
 
 def test_graph_retrieval_recovers_cross_file_sink():
@@ -39,6 +50,94 @@ def test_pure_graph_does_not_use_a_disconnected_lexical_seed():
     index = RepositoryIndex(documents)
     assert [item.path for item in index.graph_search(candidate)] == ["entry.py"]
     assert "disconnected.py" in {item.path for item in index.hybrid_search(candidate)}
+
+
+def test_text_search_prioritizes_explicit_path_queries():
+    target = CodeDocument(
+        repository_id="repo",
+        path="src/backend/base/langflow/api/v1/api_key.py::delete_api_key@1-4",
+        text="def delete_api_key():\n    return service.delete_api_key()\n",
+        defines=("delete_api_key",),
+    )
+    noisy = CodeDocument(
+        repository_id="repo",
+        path="src/backend/base/langflow/__main__.py::<module>@1-120",
+        text="\n".join("api key delete service" for _ in range(120)),
+    )
+    index = RepositoryIndex([noisy, target])
+
+    assert index.text_search("api_key.py", top_k=1)[0].path == target.path
+
+
+def test_text_search_boosts_explicit_filename_over_large_common_module():
+    target = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/mlserver.py::get_cmd@1-4",
+        text="def get_cmd(model_uri):\n    return model_uri\n",
+        defines=("get_cmd",),
+    )
+    noisy = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/__init__.py::<module>@1-400",
+        text="\n".join("model serving command model_uri backend pyfunc" for _ in range(400)),
+    )
+    index = RepositoryIndex([noisy, target])
+
+    assert index.text_search("MLflow command injection mlserver.py model_uri", top_k=1)[0].path == target.path
+
+
+def test_text_retrieval_keeps_get_cmd_helper_in_initial_command_context():
+    candidate_doc = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        text=(
+            "def serve(model_uri):\n"
+            "    command, command_env = mlserver.get_cmd(model_uri)\n"
+            "    command = 'exec ' + command\n"
+            "    return subprocess.Popen(['bash', '-c', command])\n"
+        ),
+        defines=("PyFuncBackend.serve",),
+    )
+    helper = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/mlserver.py::get_cmd@1-5",
+        text=(
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"mlserver start {model_uri}\"\n"
+            "    return cmd, {}\n"
+        ),
+        defines=("get_cmd", "mlflow.pyfunc.mlserver.get_cmd"),
+    )
+    noisy = [
+        CodeDocument(
+            repository_id="repo",
+            path=f"mlflow/pyfunc/backend.py::noise_{index}@1-20",
+            text="\n".join(
+                "backend pyfunc serve command model_uri MLflow injection"
+                for _ in range(20)
+            ),
+        )
+        for index in range(12)
+    ]
+    candidate = Candidate(
+        candidate_id="serve",
+        case_id="serve",
+        repository_id="repo",
+        path=candidate_doc.path,
+        line=1,
+        query=(
+            "MLflow command injection mlserver.py model_uri "
+            "mlflow/pyfunc/backend.py subprocess.Popen"
+        ),
+    )
+    spec = FULL_SYSTEM_HARNESS.system_spec(AgentSystemVersion.E2_TEXT_SINGLE)
+    evidence = RepositoryIndex([candidate_doc, *noisy, helper]).retrieve_context(
+        candidate,
+        mode=spec.retrieval,
+        budget=spec.budget,
+    )
+
+    assert [item.path for item in evidence[:2]] == [candidate_doc.path, helper.path]
 
 
 def test_call_graph_is_forward_directed():
@@ -182,7 +281,7 @@ def test_slow_policy_requires_two_material_votes():
     assert verdict.path == "slow"
 
 
-def test_slow_policy_requires_quorum_even_with_validator_confirmed_vote():
+def test_slow_policy_requires_quorum_even_for_unopposed_typed_validator_vote():
     votes = [
         ExpertVote(
             expert="scan",
@@ -209,6 +308,7 @@ def test_slow_policy_requires_quorum_even_with_validator_confirmed_vote():
     verdict = QuorumPolicy(fast_enabled=False).decide(votes)
     assert verdict.label == "ABSTAIN"
     assert verdict.path == "slow"
+    assert "Fewer than 2" in verdict.rationale
 
 
 def test_confirmed_vote_cannot_override_conflict_below_configured_quorum():

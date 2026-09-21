@@ -1,6 +1,6 @@
 # Experiment harness constraints
 
-The executable source of truth is `src/cv_agent/harness.py`. This document explains that contract; experiment modules must consume the typed specs rather than repeat budgets, expert orders, dataset roles, or claim rules. Every CLI command is registered as an experiment, diagnostic, data-preparation action, or harness action; an unregistered command cannot run. `cv-agent harness-check` validates and prints the active project contract.
+The executable source of truth is `src/cv_agent/harness/`: `models.py` defines the typed contract, `defaults.py` declares active settings and command policies, and `validation.py` checks their consistency. Result checks live in `owasp_results.py` and `vulngym_results.py`, with shared shape checks in `results.py`. This document explains that contract; experiment modules must consume the typed specs rather than repeat budgets, expert orders, dataset roles, or claim rules. Every CLI command is registered as an experiment, diagnostic, data-preparation action, or harness action; an unregistered command cannot run. `cv-agent harness-check` validates and prints the active project contract.
 
 ## Scope
 

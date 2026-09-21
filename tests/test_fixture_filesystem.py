@@ -1,7 +1,8 @@
 from cv_agent.validation_tools import (
-    FixtureCase, FixtureOutcome, ValidationStatus, _run_fixture_case,
-    LoopbackCase, LoopbackResponse, _run_loopback_case,
+    FixtureCase, FixtureOutcome, ValidationStatus,
+    LoopbackCase, LoopbackResponse,
 )
+from cv_agent.validation_tools.fixtures import _run_fixture_case, _run_loopback_case
 
 
 def test_registered_read_root_is_readable_but_cannot_be_written(tmp_path):
@@ -53,7 +54,7 @@ def test_fixture_has_no_ambient_read_permission(tmp_path):
 
 
 def test_missing_isolation_stops_before_running_fixture(monkeypatch, tmp_path):
-    import cv_agent.validation_tools as validation_tools
+    from cv_agent.validation_tools import fixtures
     marker = tmp_path / "must-not-exist"
 
     def unavailable(roots):
@@ -63,7 +64,7 @@ def test_missing_isolation_stops_before_running_fixture(monkeypatch, tmp_path):
         marker.write_text("should not run")
         return FixtureOutcome(status=ValidationStatus.CONFIRMED, summary="unexpected execution")
 
-    monkeypatch.setattr(validation_tools, "restrict_fixture_filesystem", unavailable)
+    monkeypatch.setattr(fixtures, "restrict_fixture_filesystem", unavailable)
     result = _run_fixture_case(FixtureCase("unavailable", runner), 2)
     assert result.status == ValidationStatus.UNRESOLVED
     assert not marker.exists()
