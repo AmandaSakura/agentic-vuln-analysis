@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.provenance import GitIdentity
-from cv_agent.repository_pilot import RepositoryPilotConfig, validate_heldout_membership
+from cv_agent.runtime.provenance import GitIdentity
+from cv_agent.evaluation.repository import RepositoryPilotConfig, validate_heldout_membership
 
 
 def config_dict():
@@ -18,8 +18,7 @@ def config_dict():
 
 
 def runner(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    return importlib.import_module('run_python_repository_pilot')
+    return importlib.import_module('cv_agent.evaluation.runners.run_python_repository_pilot')
 
 
 @pytest.mark.parametrize('change', [
@@ -58,7 +57,7 @@ def test_runner_records_all_candidates_before_analysis_and_stops_on_failure(monk
     events = []
     monkeypatch.setattr(mod, 'require_passing_tests', lambda: events.append('full_gate'))
     monkeypatch.setattr(mod, 'git_identity', lambda path: GitIdentity(revision='a'*40, dirty=False))
-    monkeypatch.setattr(mod, 'snapshot_sources', lambda path: {})
+    monkeypatch.setattr(mod, 'snapshot_sources', lambda root, path: {})
 
     def fail(index, candidate, system, journal, budget, **kwargs):
         assert events == ['full_gate']
@@ -85,7 +84,7 @@ def test_runner_can_complete_a_bounded_scripted_pair(monkeypatch, tmp_path):
     config_path = setup_pilot(tmp_path)
     monkeypatch.setattr(mod, 'require_passing_tests', lambda: None)
     monkeypatch.setattr(mod, 'git_identity', lambda path: GitIdentity(revision='a'*40, dirty=False))
-    monkeypatch.setattr(mod, 'snapshot_sources', lambda path: {})
+    monkeypatch.setattr(mod, 'snapshot_sources', lambda root, path: {})
     called = []
 
     def complete(index, candidate, system, journal, budget, **kwargs):

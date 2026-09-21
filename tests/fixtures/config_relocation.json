@@ -1,0 +1,182 @@
+[
+  {
+    "old": "configs/datasets/advisory_pairs_v4.json",
+    "new": "configs/datasets/advisory_pairs_v4.json",
+    "sha256": "e3e6ba85f0e7c4084633cfc9f2776a782de99ca8a73eebdf38ed3a621f23be5e"
+  },
+  {
+    "old": "configs/development_benchmark.json",
+    "new": "configs/experiments/development_benchmark.json",
+    "sha256": "c48d7dd0caa90b4fe59af67765b73771d0204fc746bd6524a17733ce6afd68d0"
+  },
+  {
+    "old": "configs/development_manifest.json",
+    "new": "configs/datasets/development_manifest.json",
+    "sha256": "b920176b7bb960f8fd2ccef178c15aef82d5e27b4e79d9bc966e79d220fb794b"
+  },
+  {
+    "old": "configs/development_ten_trial.json",
+    "new": "configs/experiments/development_ten_trial.json",
+    "sha256": "d2dba844aaa0a723cbf29b0b0689a0ff911dba8494e341b7e27f413ce211b7c8"
+  },
+  {
+    "old": "configs/heldout_preparation_v2.json",
+    "new": "configs/preparation/heldout_preparation_v2.json",
+    "sha256": "e6d424fec4c17ed67b93543aeae6733adce889f7b53562e8652dca516bad4780"
+  },
+  {
+    "old": "configs/heldout_preparation_v3.json",
+    "new": "configs/preparation/heldout_preparation_v3.json",
+    "sha256": "f528d56294031319d2f9fc1f2feb2d686c872d52d36dcaa3b99cb2eb3d50eb59"
+  },
+  {
+    "old": "configs/langchain_pair_eval.json",
+    "new": "configs/experiments/langchain_pair_eval.json",
+    "sha256": "2dd26c8157b18eb92f6589adabfa655f8d4bae8960c1d496e88818e249a90c3d"
+  },
+  {
+    "old": "configs/langchain_pair_labels.json",
+    "new": "configs/datasets/langchain_pair_labels.json",
+    "sha256": "40dbb9f8b0dcb65c3cac85e9261da5ce08141f2ec09bc0559275dee3e525799b"
+  },
+  {
+    "old": "configs/langchain_transport_audit.json",
+    "new": "configs/diagnostics/langchain_transport_audit.json",
+    "sha256": "e4451ba250f32dee339154437ffb181cda5c4c519f765bcd59178ec55b18d891"
+  },
+  {
+    "old": "configs/langchain_transport_probe.json",
+    "new": "configs/diagnostics/langchain_transport_probe.json",
+    "sha256": "1f86ac2f373e9ca4dee7ce63f505b6349b8a08cf83c28e66a572af851f8e8876"
+  },
+  {
+    "old": "configs/micro_benchmark.json",
+    "new": "configs/models/micro_benchmark.json",
+    "sha256": "47f4c5ba30b85436c3b685e787164bd4f0d985a36cb9de2b50bda94b4ddba74a"
+  },
+  {
+    "old": "configs/micro_benchmark_gemini_native.json",
+    "new": "configs/models/micro_benchmark_gemini_native.json",
+    "sha256": "47f4c5ba30b85436c3b685e787164bd4f0d985a36cb9de2b50bda94b4ddba74a"
+  },
+  {
+    "old": "configs/profiles/advisory_gate_v4.json",
+    "new": "configs/profiles/advisory_gate_v4.json",
+    "sha256": "af3bc25ce1e8d9825800b4673e61769f94bbccc3c5628a740796e1604b0c714b"
+  },
+  {
+    "old": "configs/profiles/advisory_matrix_v4.json",
+    "new": "configs/profiles/advisory_matrix_v4.json",
+    "sha256": "5fd484548bc31a8afe1ce618f45566f4306ca3c12bd6bce27ba109de4dbef66a"
+  },
+  {
+    "old": "configs/project_readiness_review.json",
+    "new": "configs/diagnostics/project_readiness_review.json",
+    "sha256": "2a19d61c45f9d8c65d49783f4e2dcedae085b7cbc520e00184cc9ae3b4909973"
+  },
+  {
+    "old": "configs/proxy_logging_check.json",
+    "new": "configs/diagnostics/proxy_logging_check.json",
+    "sha256": "63192228a34c9fd92685f5bd5e76562deb71560478adcd3d515064bd00b3a02d"
+  },
+  {
+    "old": "configs/python_heldout_pair_gate_v2.json",
+    "new": "configs/history/python_heldout_pair_gate_v2.json",
+    "sha256": "3609dd14883b256a67d4c8a3e23b67041ce698f578b0b8f48e6ee3a873b731ea"
+  },
+  {
+    "old": "configs/python_heldout_pair_gate_v3.json",
+    "new": "configs/history/python_heldout_pair_gate_v3.json",
+    "sha256": "32fd2ad688aba5b23a959d48d6651171c9cdc934b9e36bfa26c59796520400be"
+  },
+  {
+    "old": "configs/python_heldout_pair_gate_v4.json",
+    "new": "configs/history/python_heldout_pair_gate_v4.json",
+    "sha256": "19c8559c62f3951bdac84b6f7dab7fb55db0681ba644da87fbc94017394e7236"
+  },
+  {
+    "old": "configs/python_heldout_pairs.json",
+    "new": "configs/history/python_heldout_pairs.json",
+    "sha256": "03ff18ab0d6d5241f5d3cecea325e132cf0b886a912f8d2d2e7836fe54c44e86"
+  },
+  {
+    "old": "configs/python_heldout_pairs_v2.json",
+    "new": "configs/history/python_heldout_pairs_v2.json",
+    "sha256": "e10b63e51f4cc747e689279dc90e7395e13a999016a1f5b05ba8d9d7419b9a4a"
+  },
+  {
+    "old": "configs/python_heldout_pairs_v3.json",
+    "new": "configs/history/python_heldout_pairs_v3.json",
+    "sha256": "20f3637d4fe1b829bf67cb51d060b9d69423f0946a4e37e3b30e0b246510b7fb"
+  },
+  {
+    "old": "configs/python_heldout_pairs_v4.json",
+    "new": "configs/history/python_heldout_pairs_v4.json",
+    "sha256": "b90ea0f4c8cbc1085dadd5b6bdc04e05d00eaedf2b71c03cb928d22ade1823da"
+  },
+  {
+    "old": "configs/python_heldout_pilot.json",
+    "new": "configs/experiments/python_heldout_pilot.json",
+    "sha256": "09d2fe86bdc852d404c1d90d4777a8fb26fb7a237f56f25e0561ce041cea192e"
+  },
+  {
+    "old": "configs/python_nltk_development_pilot.json",
+    "new": "configs/experiments/python_nltk_development_pilot.json",
+    "sha256": "54ce95b2bb2237a7a15ded499f60aa6653fec29f4cd15abb3a73d0222ab1ed7c"
+  },
+  {
+    "old": "configs/python_pair_gate.json",
+    "new": "configs/experiments/python_pair_gate.json",
+    "sha256": "957cefb9e3e13e7a14ee92b6811de41feb2c771eb75f569891d884201738276a"
+  },
+  {
+    "old": "configs/python_pair_matrix.json",
+    "new": "configs/experiments/python_pair_matrix.json",
+    "sha256": "d53976a1247535c6ca26bef0c7f23cbd9091ef9d976fb89b8c34998542a7abb5"
+  },
+  {
+    "old": "configs/python_repository_pilot.json",
+    "new": "configs/experiments/python_repository_pilot.json",
+    "sha256": "086a14a369e2363cbd3db70e9cda2354b073798cc9423b09ba90065627dbd750"
+  },
+  {
+    "old": "configs/real_source_smoke.json",
+    "new": "configs/experiments/real_source_smoke.json",
+    "sha256": "fa3be4ab65f1ab0ab182ea589e3e7917f2a3951631cd6ae52a26f45fe4d2de2b"
+  },
+  {
+    "old": "configs/real_source_smoke_native.json",
+    "new": "configs/experiments/real_source_smoke_native.json",
+    "sha256": "4363f7de03031745deecbc27322b4c4ce1318e58a9792b8af3f0c3524bd0804c"
+  },
+  {
+    "old": "configs/retrieval_validation_matrix.json",
+    "new": "configs/experiments/retrieval_validation_matrix.json",
+    "sha256": "607261511893d827daa78d5809f6145c19197f30531b66cb2840996f95a11c12"
+  },
+  {
+    "old": "configs/ten_trial_offline_review.json",
+    "new": "configs/diagnostics/ten_trial_offline_review.json",
+    "sha256": "5ceae5fcae7c1714601258af2e62bf59aca07d6b85f416c7def407daee453337"
+  },
+  {
+    "old": "configs/transport_token_probe.json",
+    "new": "configs/diagnostics/transport_token_probe.json",
+    "sha256": "de6ff99c49f613599d1da1f4f30626949d6232336d3af75416d93108253ac750"
+  },
+  {
+    "old": "configs/vulngym_heldout_inputs.json",
+    "new": "configs/datasets/vulngym_heldout_inputs.json",
+    "sha256": "83cc276261ee5fb33d3a57231c687a6fc53c3abc3e77145bb85a7da188c4a607"
+  },
+  {
+    "old": "configs/vulngym_heldout_inputs_v2.json",
+    "new": "configs/datasets/vulngym_heldout_inputs_v2.json",
+    "sha256": "5cd8361a2bd8db22ff7243b57511bf3d05968861247ced02f3d80071bbcd5828"
+  },
+  {
+    "old": "configs/vulngym_heldout_inputs_v3.json",
+    "new": "configs/datasets/vulngym_heldout_inputs_v3.json",
+    "sha256": "c9634f6cefc6120db3d24c8b39a7af3aaaa0cd4c73e431d6223fc47c10132ccb"
+  }
+]

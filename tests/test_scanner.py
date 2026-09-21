@@ -1,5 +1,5 @@
-from cv_agent.scanner import StaticScanner
-from cv_agent.types import CodeDocument
+from cv_agent.agents.scanner import StaticScanner
+from cv_agent.domain.types import CodeDocument
 import pytest
 
 
@@ -36,7 +36,7 @@ def test_javascript_byte_disambiguator_keeps_retrieval_line_bounds():
     'factory.from_template(template)',
 ])
 def test_template_candidates_follow_python_call_syntax_without_reference_paths(expression):
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     docs = [span.document for span in parse_python_source('repo', 'renamed/engine.py',
              'def build(template, params, kind):\n    return ' + expression + '\n')]
     candidates = StaticScanner().scan('repo', docs)
@@ -45,7 +45,7 @@ def test_template_candidates_follow_python_call_syntax_without_reference_paths(e
 
 
 def test_template_discovery_ignores_comments_and_strings_but_keeps_benign_calls():
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = '''def build():
     # renderer.render(untrusted)
     example = "format_handlers[kind](untrusted)"
@@ -59,7 +59,7 @@ def test_template_discovery_ignores_comments_and_strings_but_keeps_benign_calls(
 
 
 def test_python_discovery_uses_calls_instead_of_comment_and_string_patterns():
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = '''def entry(value):
     # eval(value); subprocess.run(value)
     example = "eval(value); subprocess.run(value)"
@@ -71,7 +71,7 @@ def test_python_discovery_uses_calls_instead_of_comment_and_string_patterns():
 
 
 def test_python_import_aliases_and_multiline_database_calls_are_discovered():
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = '''from subprocess import run as launch
 import os as operating
 def entry(value, cursor):
@@ -89,7 +89,7 @@ def entry(value, cursor):
 
 
 def test_nested_spans_do_not_duplicate_the_same_source_operation():
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = 'def outer():\n    def inner(value):\n        return eval(value)\n    return inner\n'
     docs = [s.document for s in parse_python_source('repo', 'entry.py', source)]
     found = StaticScanner().scan('repo', docs)
@@ -99,7 +99,7 @@ def test_nested_spans_do_not_duplicate_the_same_source_operation():
 
 
 def test_indented_method_with_unindented_multiline_string_is_parsed_without_rewriting_it():
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = 'class Engine:\n    def entry(self, value):\n        text = """example\nnot indented\n"""\n        return eval(value)\n'
     docs = [s.document for s in parse_python_source('repo', 'engine.py', source)]
     found = StaticScanner().scan('repo', docs)
@@ -108,7 +108,7 @@ def test_indented_method_with_unindented_multiline_string_is_parsed_without_rewr
 
 @pytest.mark.parametrize('decorator', ['router.get("/records/{id}")', 'app.route("/records")'])
 def test_authorization_boundary_is_discovered_even_without_injection_sink(decorator):
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = f'@{decorator}\ndef read_record(id):\n    return records[id]\n'
     docs = [s.document for s in parse_python_source('repo', 'routes.py', source)]
     found = StaticScanner().scan('repo', docs)
@@ -124,7 +124,7 @@ def test_authorization_boundary_is_discovered_even_without_injection_sink(decora
     ('from os import _exit as stop\n', 'stop(0)', 'process-control'),
 ])
 def test_source_only_discovery_covers_reflection_and_process_control(binding, expression, rule):
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = binding + 'def operation(record, field):\n    return ' + expression + '\n'
     docs = [s.document for s in parse_python_source('repo', 'renamed/operations.py', source)]
     found = StaticScanner().scan('repo', docs)
@@ -135,7 +135,7 @@ def test_source_only_discovery_covers_reflection_and_process_control(binding, ex
 
 
 def test_fixed_attribute_names_and_reflection_decoys_do_not_imply_dynamic_access():
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     source = '''def operation(record):
     # getattr(record, field); os._exit(0)
     example = "getattr(record, field); os._exit(0)"

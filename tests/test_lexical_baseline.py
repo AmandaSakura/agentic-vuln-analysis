@@ -1,6 +1,6 @@
-from cv_agent.lexical_baseline import MetadataBM25Index
-from cv_agent.harness import FULL_SYSTEM_HARNESS,AgentSystemVersion
-from cv_agent.types import CodeDocument,Candidate
+from cv_agent.retrieval.bm25 import MetadataBM25Index
+from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
+from cv_agent.domain.types import CodeDocument, Candidate
 import pytest
 
 

@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 import pytest
-from cv_agent.benchmark_evaluation import metrics, paired, select_cases, wilson, replay_fast_prefix, provider_usage
+from cv_agent.evaluation.metrics import metrics, paired, select_cases, wilson, replay_fast_prefix, provider_usage
 
 
 def test_interleaved_trials_count_received_usage_once_per_stream():
@@ -117,8 +117,7 @@ def test_received_usage_is_not_double_counted_with_reply_or_invalid_event():
 def test_raw_diagnostic_audit_counts_legacy_once_and_prefers_new_journals(tmp_path, monkeypatch):
     import json
     from pathlib import Path
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    from summarize_live_usage import audit_usage
+    from cv_agent.evaluation.diagnostics.summarize_live_usage import audit_usage
     for name in ('legacy', 'journaled'):
         directory = tmp_path / 'artifacts/transport_raw_diagnostic' / name
         directory.mkdir(parents=True)
@@ -167,8 +166,7 @@ def test_prefix_replay_counts_only_suffix_tasks_and_compares_full_label():
 def test_budget_rejects_before_recording_unmade_request(monkeypatch):
     import sys
     from pathlib import Path
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1]/'scripts'))
-    from run_development_benchmark import Budget, BudgetExceeded
+    from cv_agent.evaluation.runners.run_development_benchmark import Budget, BudgetExceeded
     recorded=[]
     budget=Budget(1,60)
     observe=budget.observer(SimpleNamespace(record=recorded.append),'scan')
@@ -182,13 +180,13 @@ def test_budget_rejects_before_recording_unmade_request(monkeypatch):
 
 def test_development_runner_serializes_real_verdict_label(tmp_path, monkeypatch):
     from pathlib import Path
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1]/'scripts'))
     monkeypatch.setenv('ANTIGRAVITY_API_KEY','offline')
-    from run_development_benchmark import run_candidate, Budget, AgentSystemVersion, Journal
-    from cv_agent.agent_types import AgenticVerdict, ModelUsage
-    from cv_agent.agentic_workflow import AgenticPipeline
+    from cv_agent.evaluation.runners.run_development_benchmark import run_candidate, Budget, AgentSystemVersion, Journal
+    from cv_agent.domain.review import AgenticVerdict
+    from cv_agent.domain.chat import ModelUsage
+    from cv_agent.agents.workflow import AgenticPipeline
     from cv_agent.retrieval import RepositoryIndex
-    from cv_agent.types import Candidate, CodeDocument
+    from cv_agent.domain.types import Candidate, CodeDocument
     verdict = AgenticVerdict(runtime_mode='scripted', label='ABSTAIN', confidence=0.2,
         path='single', rationale='Insufficient evidence', votes=(), model_calls=1, tool_calls=1,
         usage=ModelUsage(), retrieval_context_token_count=0, tool_observation_token_count=0,
@@ -206,14 +204,13 @@ def test_development_runner_serializes_real_verdict_label(tmp_path, monkeypatch)
 def test_real_pipeline_probe_and_collector_keep_matching_counts(tmp_path,monkeypatch):
     from pathlib import Path
     import json
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1]/'scripts'))
     monkeypatch.setenv('ANTIGRAVITY_API_KEY','offline')
-    from run_development_benchmark import run_candidate,Budget,Journal,AgentSystemVersion
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.evaluation.runners.run_development_benchmark import run_candidate, Budget, Journal, AgentSystemVersion
+    from cv_agent.code_adapters.python import parse_python_source
     from cv_agent.retrieval import RepositoryIndex
-    from cv_agent.types import Candidate
-    from cv_agent.model_runtime import OpenAICompatibleChatModel
-    from cv_agent.agent_types import ModelReply,ModelToolCall
+    from cv_agent.domain.types import Candidate
+    from cv_agent.runtime.model import OpenAICompatibleChatModel
+    from cv_agent.domain.chat import ModelReply, ModelToolCall
     documents=[span.document for span in parse_python_source('test','entry.py',
         "def entry(request):\n    return eval(request.args['x'])\n")]
     path=documents[0].path

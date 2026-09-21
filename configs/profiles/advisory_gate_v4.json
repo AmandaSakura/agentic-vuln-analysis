@@ -1,0 +1,60 @@
+{
+  "dataset_name": "Python held-out GitHub advisory paired gate — retrieval protocol v4",
+  "model_config": "configs/models/micro_benchmark_gemini_native.json",
+  "systems": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+  ],
+  "concurrency": 2,
+  "limits": {
+    "max_requests": 300,
+    "max_seconds": 3600
+  },
+  "selected_cells": [
+    {
+      "case_id": "hp001_a",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp001_a",
+      "system": "E5"
+    },
+    {
+      "case_id": "hp001_b",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp001_b",
+      "system": "E5"
+    },
+    {
+      "case_id": "hp002_a",
+      "system": "E5"
+    },
+    {
+      "case_id": "hp002_b",
+      "system": "E2"
+    },
+    {
+      "case_id": "hp002_b",
+      "system": "E5"
+    },
+    {
+      "case_id": "hp003_a",
+      "system": "E5"
+    },
+    {
+      "case_id": "hp003_b",
+      "system": "E4"
+    },
+    {
+      "case_id": "hp003_b",
+      "system": "E5"
+    }
+  ],
+  "graph_direction": "both",
+  "graph_ranking": "distance"
+}

@@ -1,8 +1,5 @@
-from cv_agent.validation_tools import (
-    FixtureCase, FixtureOutcome, ValidationStatus,
-    LoopbackCase, LoopbackResponse,
-)
-from cv_agent.validation_tools.fixtures import _run_fixture_case, _run_loopback_case
+from cv_agent.tools.validation import FixtureCase, FixtureOutcome, ValidationStatus, LoopbackCase, LoopbackResponse
+from cv_agent.tools.validation.fixtures import _run_fixture_case, _run_loopback_case
 
 
 def test_registered_read_root_is_readable_but_cannot_be_written(tmp_path):
@@ -54,7 +51,7 @@ def test_fixture_has_no_ambient_read_permission(tmp_path):
 
 
 def test_missing_isolation_stops_before_running_fixture(monkeypatch, tmp_path):
-    from cv_agent.validation_tools import fixtures
+    from cv_agent.tools.validation import fixtures
     marker = tmp_path / "must-not-exist"
 
     def unavailable(roots):

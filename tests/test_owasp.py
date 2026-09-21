@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.owasp import detect_owasp_sources, evaluate_owasp_predictions, strip_java_comments
-from cv_agent.types import OwaspLabel
+from cv_agent.baselines.owasp import detect_owasp_sources, evaluate_owasp_predictions, strip_java_comments
+from cv_agent.domain.types import OwaspLabel
 
 
 def test_strip_java_comments_preserves_strings_and_line_numbers():

@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import re
 
-from ..java_lexical import STRING_LITERAL_RE
-from ..types import CodeDocument
-from .dependencies import _assignment_dependency_context, _is_low_priority_initializer
-from .tokens import CONTEXT_TOKEN_RE, context_text_token_count, tokenize
+from cv_agent.code_adapters.java_lexical import STRING_LITERAL_RE
+from cv_agent.domain.types import CodeDocument
+from cv_agent.retrieval.dependencies import _assignment_dependency_context, _is_low_priority_initializer
+from cv_agent.retrieval.tokens import CONTEXT_TOKEN_RE, context_text_token_count, tokenize
 
 
 DOCUMENT_SPAN_RE = re.compile(

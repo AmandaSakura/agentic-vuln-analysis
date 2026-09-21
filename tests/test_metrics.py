@@ -1,4 +1,4 @@
-from cv_agent.metrics import evaluate_ternary
+from cv_agent.evaluation.classification import evaluate_ternary
 
 
 def test_ternary_metrics_do_not_count_abstentions_as_safe():

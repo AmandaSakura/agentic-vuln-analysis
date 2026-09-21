@@ -1,4 +1,4 @@
-from cv_agent.heldout_manifest import prepare_heldout
+from cv_agent.evaluation.datasets.heldout_manifest import prepare_heldout
 import pytest
 
 
@@ -30,17 +30,17 @@ def test_duplicate_reference_ids_are_rejected():
 def test_effective_split_excludes_the_pilot_used_for_scanner_development():
     import json
     from pathlib import Path
-    from cv_agent.repository_pilot import RepositoryPilotConfig, validate_heldout_membership
+    from cv_agent.evaluation.repository import RepositoryPilotConfig, validate_heldout_membership
     from cv_agent.harness import FULL_SYSTEM_HARNESS
     root = Path(__file__).parents[1]
-    frozen = json.loads((root / 'configs/vulngym_heldout_inputs_v3.json').read_text())
+    frozen = json.loads((root / 'configs/datasets/vulngym_heldout_inputs_v3.json').read_text())
     assert frozen['split_version'] == 3
     assert {'https://github.com/langchain-ai/langchain', 'https://github.com/nltk/nltk'} <= set(
         FULL_SYSTEM_HARNESS.development_repositories)
     assert not any(subject['repository_url'] == 'https://github.com/nltk/nltk'
                    for subject in frozen['subjects'])
-    next_pilot = RepositoryPilotConfig.model_validate_json((root / 'configs/python_heldout_pilot.json').read_text())
+    next_pilot = RepositoryPilotConfig.model_validate_json((root / 'configs/experiments/python_heldout_pilot.json').read_text())
     validate_heldout_membership(next_pilot, frozen)
-    used_pilot = RepositoryPilotConfig.model_validate_json((root / 'configs/python_nltk_development_pilot.json').read_text())
+    used_pilot = RepositoryPilotConfig.model_validate_json((root / 'configs/experiments/python_nltk_development_pilot.json').read_text())
     with pytest.raises(ValueError, match='frozen independent'):
         validate_heldout_membership(used_pilot, frozen)

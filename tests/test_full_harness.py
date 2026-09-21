@@ -1,11 +1,6 @@
 import pytest
 
-from cv_agent.harness import (
-    FULL_SYSTEM_HARNESS,
-    AgentRuntimeMode,
-    AgentSystemVersion,
-    validate_full_system_harness,
-)
+from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemVersion, validate_full_system_harness
 
 
 def test_full_system_harness_requires_live_claims_and_three_react_experts():

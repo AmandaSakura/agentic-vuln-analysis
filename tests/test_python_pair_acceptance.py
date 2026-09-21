@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.agent_types import ValidationSubject
-from cv_agent.python_pair_acceptance import pair_acceptance_issues, require_python_pair_gate
-from cv_agent.python_pair_config import PythonPairExperimentConfig, PythonPairLabels
-from cv_agent.live_gate import source_fingerprint
+from cv_agent.domain.evidence import ValidationSubject
+from cv_agent.evaluation.protocols.python_pair import pair_acceptance_issues, require_python_pair_gate
+from cv_agent.evaluation.datasets.python_pair_config import PythonPairExperimentConfig, PythonPairLabels
+from cv_agent.runtime.admission import source_fingerprint
 
 
 ROOT = Path(__file__).parents[1]
@@ -15,7 +15,7 @@ ROOT = Path(__file__).parents[1]
 
 def load_gate():
     config = PythonPairExperimentConfig.model_validate_json(
-        (ROOT / "configs/python_pair_gate.json").read_text()
+        (ROOT / "configs/experiments/python_pair_gate.json").read_text()
     )
     labels = PythonPairLabels.model_validate_json((ROOT / config.label_file).read_text())
     return config, labels
@@ -113,7 +113,7 @@ def test_pair_acceptance_requires_exact_cells_and_bound_evidence():
 
 def test_gate_pointer_cannot_escape(tmp_path):
     matrix = PythonPairExperimentConfig.model_validate_json(
-        (ROOT / "configs/python_pair_matrix.json").read_text()
+        (ROOT / "configs/experiments/python_pair_matrix.json").read_text()
     )
     (tmp_path / "artifacts").mkdir()
     (tmp_path / "artifacts/python_pair_gate.json").write_text(json.dumps({"run_directory": "/tmp/outside"}))
@@ -123,7 +123,7 @@ def test_gate_pointer_cannot_escape(tmp_path):
 
 def test_matrix_refuses_stale_gate_before_trusting_boolean(tmp_path):
     matrix = PythonPairExperimentConfig.model_validate_json(
-        (ROOT / "configs/python_pair_matrix.json").read_text()
+        (ROOT / "configs/experiments/python_pair_matrix.json").read_text()
     )
     gate_dir = tmp_path / "artifacts/python_pair_gate/old"
     gate_dir.mkdir(parents=True)
@@ -131,7 +131,7 @@ def test_matrix_refuses_stale_gate_before_trusting_boolean(tmp_path):
         json.dumps({"run_directory": "artifacts/python_pair_gate/old"})
     )
     (gate_dir / "metadata.json").write_text(json.dumps({
-        "config": json.loads((ROOT / "configs/python_pair_gate.json").read_text()),
+        "config": json.loads((ROOT / "configs/experiments/python_pair_gate.json").read_text()),
         "source_fingerprint": "stale",
         "model_config": {},
     }))

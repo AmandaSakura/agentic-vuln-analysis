@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import cv_agent.vulngym_subset as subset
+import cv_agent.evaluation.datasets.vulngym_subset as subset
 
 
 def _row(entry_id: str, repository_url: str, commit: str, verify: int) -> dict:

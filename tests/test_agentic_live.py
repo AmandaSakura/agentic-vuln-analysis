@@ -2,10 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.agentic_live import (
-    load_owasp_agentic_inputs,
-    run_agentic_owasp_live,
-)
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, run_agentic_owasp_live
 from cv_agent.harness import FULL_SYSTEM_HARNESS
 
 

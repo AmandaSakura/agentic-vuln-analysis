@@ -6,11 +6,11 @@ from urllib.error import HTTPError
 
 import pytest
 
-from cv_agent.agent_tools import candidate_subject
-from cv_agent.benchmark_evaluation import provider_usage
-from cv_agent.model_runtime import OpenAICompatibleChatModel
+from cv_agent.tools.identity import candidate_subject
+from cv_agent.evaluation.metrics import provider_usage
+from cv_agent.runtime.model import OpenAICompatibleChatModel
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate, CodeDocument
+from cv_agent.domain.types import Candidate, CodeDocument
 
 
 def model(events):
@@ -26,10 +26,10 @@ def test_subject_changes_when_candidate_line_changes():
 
 
 def test_probe_cannot_stamp_another_index_witness_with_the_callers_subject():
-    from cv_agent.python_ast import parse_python_source
-    from cv_agent.agent_tools import ToolRegistry, ToolExecutionScope
-    from cv_agent.agent_types import ModelToolCall
-    from cv_agent.validation_tools import full_agent_tools
+    from cv_agent.code_adapters.python import parse_python_source
+    from cv_agent.tools.registry import ToolRegistry, ToolExecutionScope
+    from cv_agent.domain.chat import ModelToolCall
+    from cv_agent.tools.validation import full_agent_tools
     def index(source):
         return RepositoryIndex(span.document for span in parse_python_source('repo', 'entry.py', source))
     safe = index('def entry(request):\n    return 1\n')
@@ -130,7 +130,7 @@ def test_request_ids_bind_all_model_events_and_survive_interleaving(monkeypatch)
 
 
 def test_unreadable_unrelated_proxy_log_does_not_hide_current_evidence(tmp_path, monkeypatch):
-    from cv_agent import proxy_diagnostics as mod
+    from cv_agent.runtime import diagnostics as mod
     first = tmp_path / 'v1-chat-completions-1.log'
     second = tmp_path / 'v1-chat-completions-2.log'
     first.write_text('unrelated')
@@ -149,13 +149,13 @@ def test_unreadable_unrelated_proxy_log_does_not_hide_current_evidence(tmp_path,
 
 
 def test_full_matrix_cannot_start_without_ten_trial_acceptance(monkeypatch, tmp_path):
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    import run_development_benchmark as mod
+    import cv_agent.evaluation.runners.run_development_benchmark as mod
     monkeypatch.setattr(mod, 'project_root', tmp_path)
     monkeypatch.setenv('ANTIGRAVITY_API_KEY', 'offline')
     (tmp_path / 'configs').mkdir()
     original = Path(__file__).parents[1] / 'configs'
-    for name in ('development_manifest.json', 'development_benchmark.json'):
+    for name in ('datasets/development_manifest.json', 'experiments/development_benchmark.json'):
+        (tmp_path / 'configs' / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / 'configs' / name).write_bytes((original / name).read_bytes())
     def no_loading(*a, **k):
         pytest.fail('full matrix loaded data before checking ten-trial acceptance')

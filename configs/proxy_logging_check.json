@@ -1,6 +1,0 @@
-{
-  "model_config": "configs/micro_benchmark_gemini_native.json",
-  "prompt": "Reply with OK.",
-  "max_requests": 1,
-  "max_seconds": 120
-}

@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from ..types import FrozenModel, SystemVersion
+from cv_agent.domain.types import FrozenModel, SystemVersion
 
 
 ExpertName = Literal["scan", "taint", "authz"]

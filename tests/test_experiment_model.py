@@ -1,6 +1,6 @@
 import json
 import pytest
-from cv_agent.experiment_model import load_experiment_model
+from cv_agent.runtime.provider import load_experiment_model
 
 
 @pytest.mark.parametrize("provider", ["deepseek", "gemini"])

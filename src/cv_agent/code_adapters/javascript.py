@@ -11,9 +11,9 @@ import tree_sitter_javascript
 import tree_sitter_typescript
 from tree_sitter import Language, Node, Parser
 
-from ..types import CodeDocument
-from .common import GUARD_RE, _descendants, _node_text
-from .models import ParsedSource, SourceDocumentSpan
+from cv_agent.domain.types import CodeDocument
+from cv_agent.code_adapters.common import GUARD_RE, _descendants, _node_text
+from cv_agent.code_adapters.models import ParsedSource, SourceDocumentSpan
 
 
 JAVASCRIPT_LANGUAGE = Language(tree_sitter_javascript.language())

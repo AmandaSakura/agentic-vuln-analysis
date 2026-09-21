@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from cv_agent.model_runtime import OpenAICompatibleChatModel
+from cv_agent.runtime.model import OpenAICompatibleChatModel
 
 
 def test_runtime_records_bound_native_block_without_leaking_credentials(tmp_path, monkeypatch):
@@ -28,7 +28,7 @@ def test_runtime_records_bound_native_block_without_leaking_credentials(tmp_path
     assert diagnostic['diagnosis'] == 'upstream_blocked'
     assert diagnostic['upstream_total_tokens'] == 12
     assert 'secret-' not in json.dumps(events)
-    from cv_agent.benchmark_evaluation import provider_usage
+    from cv_agent.evaluation.metrics import provider_usage
     assert provider_usage(events)['reported_total_tokens'] == 12
     assert provider_usage(events)['invalid_responses'] == 1
 
@@ -42,7 +42,7 @@ class Response:
 
 @pytest.mark.parametrize('kind', ['unrelated_request', 'wrong_response', 'partial', 'missing'])
 def test_missing_or_unmatched_log_never_becomes_block(tmp_path, monkeypatch, kind):
-    from cv_agent import proxy_diagnostics
+    from cv_agent.runtime import diagnostics as proxy_diagnostics
     monkeypatch.setattr(proxy_diagnostics, 'LOG_WAIT_SECONDS', 0)
     def respond(request, **kwargs):
         request_id = request.get_header('X-cv-agent-request-id')
@@ -66,7 +66,7 @@ def test_missing_or_unmatched_log_never_becomes_block(tmp_path, monkeypatch, kin
 
 
 def test_valid_reply_survives_unavailable_logs(tmp_path, monkeypatch):
-    from cv_agent import proxy_diagnostics
+    from cv_agent.runtime import diagnostics as proxy_diagnostics
     monkeypatch.setattr(proxy_diagnostics, 'LOG_WAIT_SECONDS', 0)
     monkeypatch.setattr('urllib.request.urlopen', lambda *a, **k:
                         Response({'choices': [{'message': {'content': 'ok'}}]}))
@@ -76,7 +76,7 @@ def test_valid_reply_survives_unavailable_logs(tmp_path, monkeypatch):
 
 
 def test_collector_waits_for_completed_log_and_preserves_positive_control(tmp_path, monkeypatch):
-    from cv_agent import proxy_diagnostics as mod
+    from cv_agent.runtime import diagnostics as mod
     path = tmp_path / 'v1-chat-completions-test.log'
     path.write_text('unfinished')
     def finish(_):
@@ -92,7 +92,7 @@ def test_collector_waits_for_completed_log_and_preserves_positive_control(tmp_pa
 
 
 def test_collector_rejects_conflicting_evidence(tmp_path):
-    from cv_agent.proxy_diagnostics import collect_diagnostic
+    from cv_agent.runtime.diagnostics import collect_diagnostic
     for i, feedback in enumerate([{}, {'blockReason': 'OTHER'}]):
         (tmp_path / f'v1-chat-completions-{i}.log').write_text(
             '=== REQUEST INFO ===\nX-Cv-Agent-Request-Id: abc\n'
@@ -102,7 +102,7 @@ def test_collector_rejects_conflicting_evidence(tmp_path):
 
 
 def test_filesystem_timestamp_rounding_does_not_drop_matching_evidence(tmp_path):
-    from cv_agent.proxy_diagnostics import collect_diagnostic
+    from cv_agent.runtime.diagnostics import collect_diagnostic
     path = tmp_path / 'v1-chat-completions-one.log'
     path.write_text('=== REQUEST INFO ===\nX-Cv-Agent-Request-Id: abc\n'
         '=== API RESPONSE 1 ===\nBody:\n' + json.dumps({'response': {'responseId': 'one'}}) +
@@ -112,7 +112,7 @@ def test_filesystem_timestamp_rounding_does_not_drop_matching_evidence(tmp_path)
 
 
 def test_unspecified_native_block_reason_does_not_claim_filter_block(tmp_path):
-    from cv_agent.proxy_diagnostics import collect_diagnostic
+    from cv_agent.runtime.diagnostics import collect_diagnostic
     (tmp_path / 'v1-chat-completions-one.log').write_text(
         '=== REQUEST INFO ===\nX-Cv-Agent-Request-Id: abc\n'
         '=== API RESPONSE 1 ===\nBody:\n' + json.dumps({'response': {

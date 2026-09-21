@@ -31,7 +31,7 @@ def test_concurrent_first_callers_share_one_in_progress_test_run(gate, monkeypat
 
 @pytest.fixture
 def gate(tmp_path, monkeypatch):
-    from cv_agent import live_gate
+    from cv_agent.runtime import admission as live_gate
     (tmp_path / "src").mkdir()
     (tmp_path / "tests").mkdir()
     (tmp_path / "src/code.py").write_text("value = 1\n")
@@ -114,7 +114,7 @@ def test_validation_harness_changes_invalidate_identity(gate):
 
 
 def test_gate_rejection_happens_before_model_start_or_http(monkeypatch):
-    from cv_agent import model_runtime
+    from cv_agent.runtime import model as model_runtime
     events = []
     def reject():
         raise RuntimeError("pytest failed")
@@ -129,7 +129,13 @@ def test_gate_rejection_happens_before_model_start_or_http(monkeypatch):
 def test_no_experiment_script_implements_an_ungated_model_http_transport():
     import ast
     root = Path(__file__).parents[1]
-    for path in (root / "scripts").glob("*.py"):
+    # Dataset acquisition may fetch public advisory pages. Experiment execution
+    # and every relocated script must still use the gated model transport.
+    evaluation = root / "src/cv_agent/evaluation"
+    paths = [*(root / "scripts").rglob("*.py"), evaluation / "execution.py",
+             *(path for group in ("runners", "preparation", "diagnostics")
+               for path in (evaluation / group).rglob("*.py"))]
+    for path in paths:
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):

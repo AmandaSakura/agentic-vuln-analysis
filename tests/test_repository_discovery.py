@@ -1,4 +1,4 @@
-from cv_agent.repository_discovery import discover_python_repository, select_pilot_candidates
+from cv_agent.agents.discovery import discover_python_repository, select_pilot_candidates
 
 
 def test_module_and_function_operations_are_discovered_without_reference_locations(tmp_path):

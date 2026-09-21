@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from ..types import SystemVersion
-from .defaults import OWASP_HARNESS
-from .results import _mapping, _require_keys, _validate_run_identity
+from cv_agent.domain.types import SystemVersion
+from cv_agent.harness.defaults import OWASP_HARNESS
+from cv_agent.harness.results import _mapping, _require_keys, _validate_run_identity
 
 
 def validate_owasp_result_payload(payload: Mapping[str, object]) -> None:

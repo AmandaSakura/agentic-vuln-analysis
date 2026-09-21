@@ -4,26 +4,8 @@ from __future__ import annotations
 
 from typing import Literal
 
-from ..types import SystemVersion
-from .models import (
-    AgentRuntimeMode,
-    AgentSystemHarness,
-    AgentSystemVersion,
-    CommandPolicy,
-    DatasetRole,
-    EndToEndHarness,
-    ExperimentHarness,
-    ExpertAgentHarness,
-    ExpertName,
-    ModelRuntimeHarness,
-    OwaspExpertName,
-    ReActLoopHarness,
-    RetrievalBudget,
-    RetrievalEvaluationHarness,
-    RetrievalMode,
-    SystemHarness,
-    ValidationRuntimeHarness,
-)
+from cv_agent.domain.types import SystemVersion
+from cv_agent.harness.models import AgentRuntimeMode, AgentSystemHarness, AgentSystemVersion, CommandPolicy, DatasetRole, EndToEndHarness, ExperimentHarness, ExpertAgentHarness, ExpertName, ModelRuntimeHarness, OwaspExpertName, ReActLoopHarness, RetrievalBudget, RetrievalEvaluationHarness, RetrievalMode, SystemHarness, ValidationRuntimeHarness
 
 
 COMPARABLE_BASE_TOKENS = 512

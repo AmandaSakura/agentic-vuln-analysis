@@ -3,9 +3,9 @@ import json
 import io
 from urllib.error import HTTPError
 
-from cv_agent.agent_types import ChatMessage, ModelToolCall
+from cv_agent.domain.chat import ChatMessage, ModelToolCall
 from cv_agent.harness import FULL_SYSTEM_HARNESS
-from cv_agent.model_runtime import OpenAICompatibleChatModel
+from cv_agent.runtime.model import OpenAICompatibleChatModel
 
 
 @pytest.mark.parametrize("choices", [
@@ -13,7 +13,7 @@ from cv_agent.model_runtime import OpenAICompatibleChatModel
     [{"message": {"tool_calls": [{"id": "one", "function": {"name": "read_span", "arguments": "{broken"}}]}}],
 ])
 def test_all_malformed_responses_keep_reported_usage(monkeypatch, choices):
-    from cv_agent.benchmark_evaluation import provider_usage
+    from cv_agent.evaluation.metrics import provider_usage
     class Response:
         def __enter__(self): return self
         def __exit__(self, *args): return False

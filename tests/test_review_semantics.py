@@ -6,17 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, repository_source_digest
-from cv_agent.agent_types import (
-    AgentExpertConclusion, ModelToolCall, ReActStep, ToolObservation, ValidationSubject,
-)
-from cv_agent.python_heldout_pair_acceptance import heldout_pair_acceptance_issues
-from cv_agent.python_heldout_pair_config import (
-    PythonHeldoutPairExperimentConfig, heldout_truth, planned_heldout_cells,
-)
-from cv_agent.react_engine import validate_conclusion
+from cv_agent.tools.registry import ToolExecutionScope
+from cv_agent.tools.identity import repository_source_digest
+from cv_agent.domain.review import AgentExpertConclusion
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.domain.evidence import ReActStep, ToolObservation, ValidationSubject
+from cv_agent.evaluation.protocols.advisory import heldout_pair_acceptance_issues
+from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig, heldout_truth, planned_heldout_cells
+from cv_agent.agents.react import validate_conclusion
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import CodeDocument
+from cv_agent.domain.types import CodeDocument
 from test_python_heldout_pair_config import config_dict
 from test_validation_tools import _command_documents, _invoke, _registry
 
@@ -176,8 +175,7 @@ def test_review_disclosed_static_counter_evidence_does_not_veto_supported_predic
 
 
 def test_review_saved_results_preserve_unexpected_rows_without_counting_them(tmp_path):
-    sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
-    runner = importlib.import_module("run_python_heldout_pair_matrix")
+    runner = importlib.import_module('cv_agent.evaluation.results')
     config = PythonHeldoutPairExperimentConfig.model_validate(config_dict())
     rows = [dict(case_id=case.case_id, system=system.value, pair_id=pair.pair_id,
                  revision_role=case.revision_role, status="completed",
@@ -326,8 +324,7 @@ def test_review_async_helper_call_is_not_a_synchronous_command_return():
 
 
 def test_review_duplicate_rows_do_not_inflate_summary_denominator(tmp_path):
-    sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
-    runner = importlib.import_module("run_python_heldout_pair_matrix")
+    runner = importlib.import_module('cv_agent.evaluation.results')
     config = PythonHeldoutPairExperimentConfig.model_validate(config_dict())
     row = dict(case_id="hp001_a", system="E1", status="completed", predicted_label="VULNERABLE",
                model_calls=1, tool_calls=0, latency_sec=0.1, verdict=None)

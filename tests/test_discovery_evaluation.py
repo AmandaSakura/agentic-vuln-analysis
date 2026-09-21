@@ -1,6 +1,6 @@
 import pytest
 
-from cv_agent.discovery_evaluation import score_discovery
+from cv_agent.evaluation.discovery import score_discovery
 
 
 def inventory():

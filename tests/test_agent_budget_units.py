@@ -2,11 +2,12 @@ import json
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry, repository_tools
-from cv_agent.agent_types import ModelToolCall
-from cv_agent.agentic_workflow import _bounded_context_prompt
+from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
+from cv_agent.tools.repository import repository_tools
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.agents.workflow import _bounded_context_prompt
 from cv_agent.retrieval import RepositoryIndex, context_text_token_count, prompt_token_upper_bound
-from cv_agent.types import Candidate, CodeDocument, Evidence
+from cv_agent.domain.types import Candidate, CodeDocument, Evidence
 
 
 @pytest.mark.parametrize("text", ["Q" * 100000, "中文" * 50000])

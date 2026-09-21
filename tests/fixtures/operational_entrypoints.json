@@ -1,0 +1,237 @@
+[
+  {
+    "script": "audit_heldout_evidence_v3.py",
+    "module": "cv_agent.evaluation.diagnostics.audit_heldout_evidence_v3",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "audit_heldout_evidence_v4.py",
+    "module": "cv_agent.evaluation.diagnostics.audit_heldout_evidence_v4",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "audit_langchain_transport.py",
+    "module": "cv_agent.evaluation.diagnostics.audit_langchain_transport",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "audit_project_readiness.py",
+    "module": "cv_agent.evaluation.diagnostics.audit_project_readiness",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "audit_python_discovery.py",
+    "module": "cv_agent.evaluation.diagnostics.audit_python_discovery",
+    "guard": "if __name__ == '__main__':\n    audit(project_root / 'configs/python_repository_pilot.json')\n    audit(project_root / 'configs/python_nltk_development_pilot.json')"
+  },
+  {
+    "script": "audit_python_heldout_pair_repairs.py",
+    "module": "cv_agent.evaluation.diagnostics.audit_python_heldout_pair_repairs",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "inspect_development_context.py",
+    "module": "cv_agent.evaluation.diagnostics.inspect_development_context",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "luna_flow_simulation.py",
+    "module": "cv_agent.evaluation.diagnostics.luna_flow_simulation",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "prepare_development_benchmark.py",
+    "module": "cv_agent.evaluation.preparation.prepare_development_benchmark",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "prepare_heldout_inputs.py",
+    "module": "cv_agent.evaluation.preparation.prepare_heldout_inputs",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "prepare_heldout_inputs_v3.py",
+    "module": "cv_agent.evaluation.preparation.prepare_heldout_inputs_v3",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "prepare_jinja_pair.py",
+    "module": "cv_agent.evaluation.preparation.prepare_jinja_pair",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "prepare_python_heldout_pairs.py",
+    "module": "cv_agent.evaluation.preparation.prepare_python_heldout_pairs",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "prepare_python_heldout_pilot.py",
+    "module": "cv_agent.evaluation.preparation.prepare_python_heldout_pilot",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "probe_empty_response_transport.py",
+    "module": "cv_agent.evaluation.diagnostics.probe_empty_response_transport",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "probe_langchain_transport.py",
+    "module": "cv_agent.evaluation.diagnostics.probe_langchain_transport",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "probe_raw_proxy_response.py",
+    "module": "cv_agent.evaluation.diagnostics.probe_raw_proxy_response",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "probe_transport_tokens.py",
+    "module": "cv_agent.evaluation.diagnostics.probe_transport_tokens",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "profile_development_sources.py",
+    "module": "cv_agent.evaluation.diagnostics.profile_development_sources",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "profile_langchain_scanner_coverage.py",
+    "module": "cv_agent.evaluation.diagnostics.profile_langchain_scanner_coverage",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "replay_development_positive.py",
+    "module": "cv_agent.evaluation.diagnostics.replay_development_positive",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "reproduce_jinja_attr_pair.py",
+    "module": "cv_agent.evaluation.runners.reproduce_jinja_attr_pair",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "reproduce_langchain_template_pair.py",
+    "module": "cv_agent.evaluation.runners.reproduce_langchain_template_pair",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "restore_development_git_metadata.py",
+    "module": "cv_agent.evaluation.preparation.restore_development_git_metadata",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "review_ten_trial_results.py",
+    "module": "cv_agent.evaluation.diagnostics.review_ten_trial_results",
+    "guard": "if __name__ == '__main__':\n    run()"
+  },
+  {
+    "script": "run_development_benchmark.py",
+    "module": "cv_agent.evaluation.runners.run_development_benchmark",
+    "guard": "if __name__ == '__main__':\n    run(pilot=False)"
+  },
+  {
+    "script": "run_development_fast_check.py",
+    "module": "cv_agent.evaluation.runners.run_development_fast_check",
+    "guard": "if __name__ == '__main__':\n    run(pilot=True, fast_check=True)"
+  },
+  {
+    "script": "run_development_graph_check.py",
+    "module": "cv_agent.evaluation.runners.run_development_graph_check",
+    "guard": "if __name__ == '__main__':\n    run(pilot=True, graph_check=True)"
+  },
+  {
+    "script": "run_development_lexical_check.py",
+    "module": "cv_agent.evaluation.runners.run_development_lexical_check",
+    "guard": "if __name__ == '__main__':\n    run(pilot=True, lexical_check=True)"
+  },
+  {
+    "script": "run_development_pilot.py",
+    "module": "cv_agent.evaluation.runners.run_development_pilot",
+    "guard": "if __name__ == '__main__':\n    run(pilot=True)"
+  },
+  {
+    "script": "run_development_positive_check.py",
+    "module": "cv_agent.evaluation.runners.run_development_positive_check",
+    "guard": "if __name__ == '__main__':\n    run(pilot=True, positive_check=True)"
+  },
+  {
+    "script": "run_development_ten_trial.py",
+    "module": "cv_agent.evaluation.runners.run_development_ten_trial",
+    "guard": "if __name__ == '__main__':\n    run()"
+  },
+  {
+    "script": "run_langchain_pair_eval.py",
+    "module": "cv_agent.evaluation.runners.run_langchain_pair_eval",
+    "guard": "if __name__ == '__main__':\n    run()"
+  },
+  {
+    "script": "run_micro_benchmark.py",
+    "module": "cv_agent.evaluation.runners.run_micro_benchmark",
+    "guard": "if __name__ == \"__main__\":\n    main()"
+  },
+  {
+    "script": "run_python_evidence_check.py",
+    "module": "cv_agent.evaluation.runners.run_python_evidence_check",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "run_python_heldout_pair_gate.py",
+    "module": "cv_agent.evaluation.runners.run_python_heldout_pair_gate",
+    "guard": "if __name__ == \"__main__\":\n    run()"
+  },
+  {
+    "script": "run_python_heldout_pair_matrix.py",
+    "module": "cv_agent.evaluation.runners.run_python_heldout_pair_matrix",
+    "guard": "if __name__ == \"__main__\":\n    run()"
+  },
+  {
+    "script": "run_python_heldout_pilot.py",
+    "module": "cv_agent.evaluation.runners.run_python_heldout_pilot",
+    "guard": "if __name__ == '__main__':\n    run(project_root / 'configs/python_heldout_pilot.json')"
+  },
+  {
+    "script": "run_python_pair_gate.py",
+    "module": "cv_agent.evaluation.runners.run_python_pair_gate",
+    "guard": "if __name__ == \"__main__\":\n    run()"
+  },
+  {
+    "script": "run_python_pair_matrix.py",
+    "module": "cv_agent.evaluation.runners.run_python_pair_matrix",
+    "guard": "if __name__ == \"__main__\":\n    run()"
+  },
+  {
+    "script": "run_python_repository_pilot.py",
+    "module": "cv_agent.evaluation.runners.run_python_repository_pilot",
+    "guard": "if __name__ == '__main__':\n    run(project_root / 'configs/python_repository_pilot.json')"
+  },
+  {
+    "script": "run_real_source_smoke.py",
+    "module": "cv_agent.evaluation.runners.run_real_source_smoke",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "run_real_source_smoke_native.py",
+    "module": "cv_agent.evaluation.runners.run_real_source_smoke_native",
+    "guard": "if __name__ == '__main__':\n    main('configs/real_source_smoke_native.json')"
+  },
+  {
+    "script": "run_retrieval_validation_matrix.py",
+    "module": "cv_agent.evaluation.runners.run_retrieval_validation_matrix",
+    "guard": "if __name__=='__main__':\n    main()"
+  },
+  {
+    "script": "score_python_repository_pilot.py",
+    "module": "cv_agent.evaluation.diagnostics.score_python_repository_pilot",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "summarize_live_usage.py",
+    "module": "cv_agent.evaluation.diagnostics.summarize_live_usage",
+    "guard": "if __name__ == '__main__':\n    main()"
+  },
+  {
+    "script": "verify_proxy_logging.py",
+    "module": "cv_agent.evaluation.diagnostics.verify_proxy_logging",
+    "guard": "if __name__ == '__main__':\n    main()"
+  }
+]

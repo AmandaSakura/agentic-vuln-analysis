@@ -4,13 +4,16 @@ import pytest
 
 
 
-from cv_agent.agent_tools import AgentTool, ReadSpanInput, ToolExecutionScope, ToolRegistry, repository_tools
-from cv_agent.agent_types import AgentExpertConclusion, ModelReply, ModelToolCall, ReActStep, ToolObservation, ValidationStatus, ValidationSubject
+from cv_agent.tools.registry import AgentTool, ToolExecutionScope, ToolRegistry
+from cv_agent.tools.repository import ReadSpanInput, repository_tools
+from cv_agent.domain.review import AgentExpertConclusion
+from cv_agent.domain.chat import ModelReply, ModelToolCall
+from cv_agent.domain.evidence import ReActStep, ToolObservation, ValidationStatus, ValidationSubject
 from cv_agent.harness import FULL_SYSTEM_HARNESS
-from cv_agent.model_runtime import ScriptedChatModel
-from cv_agent.react_engine import ReActEngine, run_expert, validate_conclusion
+from cv_agent.runtime.model import ScriptedChatModel
+from cv_agent.agents.react import ReActEngine, run_expert, validate_conclusion
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import CodeDocument
+from cv_agent.domain.types import CodeDocument
 
 
 PATH = "entry.py"
@@ -119,8 +122,9 @@ def test_abstention_remains_possible_despite_a_concrete_witness():
 
 @pytest.mark.parametrize('status,label', [('CONFIRMED', 'SAFE'), ('REFUTED', 'VULNERABLE')])
 def test_concrete_conflict_check_is_symmetric_and_candidate_bound(status, label):
-    from cv_agent.agent_types import AgentExpertConclusion, ReActStep
-    from cv_agent.react_engine import validate_conclusion
+    from cv_agent.domain.review import AgentExpertConclusion
+    from cv_agent.domain.evidence import ReActStep
+    from cv_agent.agents.react import validate_conclusion
     output = AgentExpertConclusion(expert='scan', label=label, confidence=0.9,
         validation_status='UNRESOLVED', evidence_ids=('local:entry',), rationale='Source prediction')
     observation = ToolObservation(tool='validator', status='ok', content='witness',

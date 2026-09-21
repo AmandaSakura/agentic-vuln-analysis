@@ -4,17 +4,17 @@ import argparse
 import json
 from pathlib import Path
 
-from .agentic_live import run_agentic_owasp_live
-from .agentic_smoke import run_agentic_smoke
-from .agentic_eval import run_agentic_scripted_eval
-from .experiment import run_synthetic_experiment
-from .harness import AgentSystemVersion, command_policy, describe_project_harness
-from .java_ast import profile_owasp_java_ast
-from .owasp import run_owasp_static_baseline
-from .owasp_rag import run_owasp_rag_experiment
-from .profile import profile_public_data
-from .vulngym_subset import describe_vulngym_subjects, fetch_vulngym_subjects
-from .vulngym_retrieval import run_vulngym_retrieval_experiment
+from cv_agent.evaluation.datasets.owasp_live import run_agentic_owasp_live
+from cv_agent.evaluation.smoke import run_agentic_smoke
+from cv_agent.evaluation.scripted import run_agentic_scripted_eval
+from cv_agent.baselines.synthetic_experiment import run_synthetic_experiment
+from cv_agent.harness import AgentSystemVersion, command_policy, describe_project_harness
+from cv_agent.code_adapters.java import profile_owasp_java_ast
+from cv_agent.baselines.owasp import run_owasp_static_baseline
+from cv_agent.baselines.owasp_rag import run_owasp_rag_experiment
+from cv_agent.evaluation.datasets.profile import profile_public_data
+from cv_agent.evaluation.datasets.vulngym_subset import describe_vulngym_subjects, fetch_vulngym_subjects
+from cv_agent.evaluation.datasets.vulngym_retrieval import run_vulngym_retrieval_experiment
 
 
 def build_parser() -> argparse.ArgumentParser:

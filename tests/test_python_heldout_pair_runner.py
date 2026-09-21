@@ -3,15 +3,16 @@ import json
 import sys
 from pathlib import Path
 
+from cv_agent.evaluation import lifecycle
 from cv_agent.harness import AgentSystemVersion
-from cv_agent.python_heldout_pair_config import PythonHeldoutPairExperimentConfig
-from cv_agent.types import Candidate
+from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig
+from cv_agent.domain.types import Candidate
 
 from test_python_heldout_pair_config import config_dict
+from advisory_config_fixtures import write_advisory_config
 
 
 ROOT = Path(__file__).parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class EmptyIndex:
@@ -22,7 +23,7 @@ def setup_config(tmp_path):
     (tmp_path / "configs").mkdir()
     (tmp_path / "artifacts").mkdir()
     data = config_dict()
-    (tmp_path / "configs/python_heldout_pairs_v4.json").write_text(json.dumps(data))
+    write_advisory_config(tmp_path, data, "matrix")
     (tmp_path / "configs/model.json").write_text("{}")
     (tmp_path / "artifacts/manifest.json").write_text(json.dumps({"summary": {"pairs": 1}}))
     return data
@@ -40,7 +41,7 @@ def setup_gate_config(tmp_path):
         for case in data["pairs"][0]["cases"]
         for system in data["systems"]
     ]
-    (tmp_path / "configs/python_heldout_pair_gate_v4.json").write_text(json.dumps(data))
+    write_advisory_config(tmp_path, data, "gate")
     (tmp_path / "configs/model.json").write_text("{}")
     (tmp_path / "artifacts/manifest.json").write_text(json.dumps({"summary": {"pairs": 1}}))
     return data
@@ -48,7 +49,7 @@ def setup_gate_config(tmp_path):
 
 def test_runner_gates_before_trials_and_preserves_full_denominator(monkeypatch, tmp_path):
     data = setup_config(tmp_path)
-    mod = importlib.import_module("run_python_heldout_pair_matrix")
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_python_heldout_pair_matrix')
     events = []
     candidate = Candidate(
         candidate_id="hp001_a",
@@ -59,9 +60,9 @@ def test_runner_gates_before_trials_and_preserves_full_denominator(monkeypatch, 
         query="example",
     )
     tasks = [("pair", "vulnerable", EmptyIndex(), candidate, (), AgentSystemVersion.E1_LOCAL_SINGLE)]
-    monkeypatch.setattr(mod, "build_tasks", lambda root, config: (tasks, {}, {}))
-    monkeypatch.setattr(mod, "snapshot_sources", lambda path: {})
-    monkeypatch.setattr(mod, "source_fingerprint", lambda root: "fingerprint")
+    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: (tasks, {}, {}))
+    monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
+    monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
     monkeypatch.setenv("ANTIGRAVITY_API_KEY", "test-key")
 
     def gate():
@@ -81,8 +82,8 @@ def test_runner_gates_before_trials_and_preserves_full_denominator(monkeypatch, 
             "verdict": None,
         }
 
-    monkeypatch.setattr(mod, "require_passing_tests", gate)
-    monkeypatch.setattr(mod, "run_candidate", complete)
+    monkeypatch.setattr(lifecycle, "require_passing_tests", gate)
+    monkeypatch.setattr(lifecycle, "run_candidate", complete)
     output = mod.run(root=tmp_path, output=tmp_path / "run")
 
     rows = json.loads((output / "results.json").read_text())
@@ -95,7 +96,7 @@ def test_runner_gates_before_trials_and_preserves_full_denominator(monkeypatch, 
 
 def test_rows_with_truth_preserves_duplicate_result_cells():
     parsed = PythonHeldoutPairExperimentConfig.model_validate(config_dict())
-    mod = importlib.import_module("run_python_heldout_pair_matrix")
+    mod = importlib.import_module('cv_agent.evaluation.results')
     completed = {
         "case_id": "hp001_a",
         "system": "E1",
@@ -118,7 +119,7 @@ def test_rows_with_truth_preserves_duplicate_result_cells():
 
 def test_heldout_gate_runs_exactly_ten_cells_and_updates_pointer(monkeypatch, tmp_path):
     data = setup_gate_config(tmp_path)
-    mod = importlib.import_module("run_python_heldout_pair_gate")
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_python_heldout_pair_gate')
     events = []
     candidates = {
         case["case_id"]: Candidate(
@@ -155,11 +156,11 @@ def test_heldout_gate_runs_exactly_ten_cells_and_updates_pointer(monkeypatch, tm
             "verdict": None,
         }
 
-    monkeypatch.setattr(mod, "build_tasks", fake_build_tasks)
-    monkeypatch.setattr(mod, "snapshot_sources", lambda path: {})
-    monkeypatch.setattr(mod, "source_fingerprint", lambda root: "fingerprint")
-    monkeypatch.setattr(mod, "require_passing_tests", lambda: events.append(("gate",)))
-    monkeypatch.setattr(mod, "run_candidate", complete)
+    monkeypatch.setattr(lifecycle, "build_tasks", fake_build_tasks)
+    monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
+    monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
+    monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: events.append(("gate",)))
+    monkeypatch.setattr(lifecycle, "run_candidate", complete)
     monkeypatch.setenv("ANTIGRAVITY_API_KEY", "test-key")
     output = mod.run(root=tmp_path, output=tmp_path / "run")
 
@@ -184,10 +185,10 @@ def test_heldout_gate_runs_exactly_ten_cells_and_updates_pointer(monkeypatch, tm
 
 def test_runner_blocks_without_api_key_after_full_gate(monkeypatch, tmp_path):
     setup_config(tmp_path)
-    mod = importlib.import_module("run_python_heldout_pair_matrix")
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_python_heldout_pair_matrix')
     events = []
-    monkeypatch.setattr(mod, "build_tasks", lambda root, config: ([], {}, {}))
-    monkeypatch.setattr(mod, "require_passing_tests", lambda: events.append("gate"))
+    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: ([], {}, {}))
+    monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: events.append("gate"))
     monkeypatch.delenv("ANTIGRAVITY_API_KEY", raising=False)
 
     try:
@@ -201,7 +202,7 @@ def test_runner_blocks_without_api_key_after_full_gate(monkeypatch, tmp_path):
 
 def test_runner_continues_after_abstain(monkeypatch, tmp_path):
     setup_config(tmp_path)
-    mod = importlib.import_module("run_python_heldout_pair_matrix")
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_python_heldout_pair_matrix')
     candidates = [
         Candidate(
             candidate_id="hp001_a",
@@ -224,10 +225,10 @@ def test_runner_continues_after_abstain(monkeypatch, tmp_path):
         ("pair", "vulnerable", EmptyIndex(), candidates[0], (), AgentSystemVersion.E1_LOCAL_SINGLE),
         ("pair", "fixed", EmptyIndex(), candidates[1], (), AgentSystemVersion.E1_LOCAL_SINGLE),
     ]
-    monkeypatch.setattr(mod, "build_tasks", lambda root, config: (tasks, {}, {}))
-    monkeypatch.setattr(mod, "require_passing_tests", lambda: None)
-    monkeypatch.setattr(mod, "snapshot_sources", lambda path: {})
-    monkeypatch.setattr(mod, "source_fingerprint", lambda root: "fingerprint")
+    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: (tasks, {}, {}))
+    monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: None)
+    monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
+    monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
     monkeypatch.setenv("ANTIGRAVITY_API_KEY", "test-key")
     calls = []
 
@@ -255,7 +256,7 @@ def test_runner_continues_after_abstain(monkeypatch, tmp_path):
             "verdict": None,
         }
 
-    monkeypatch.setattr(mod, "run_candidate", scripted)
+    monkeypatch.setattr(lifecycle, "run_candidate", scripted)
     output = mod.run(root=tmp_path, output=tmp_path / "run")
     rows = json.loads((output / "results.json").read_text())
     observed = {(row["case_id"], row["system"]): row["status"] for row in rows}
@@ -266,7 +267,7 @@ def test_runner_continues_after_abstain(monkeypatch, tmp_path):
 
 def test_runner_continues_after_failed_cell(monkeypatch, tmp_path):
     setup_config(tmp_path)
-    mod = importlib.import_module("run_python_heldout_pair_matrix")
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_python_heldout_pair_matrix')
     candidates = [
         Candidate(
             candidate_id="hp001_a",
@@ -289,10 +290,10 @@ def test_runner_continues_after_failed_cell(monkeypatch, tmp_path):
         ("pair", "vulnerable", EmptyIndex(), candidates[0], (), AgentSystemVersion.E1_LOCAL_SINGLE),
         ("pair", "fixed", EmptyIndex(), candidates[1], (), AgentSystemVersion.E1_LOCAL_SINGLE),
     ]
-    monkeypatch.setattr(mod, "build_tasks", lambda root, config: (tasks, {}, {}))
-    monkeypatch.setattr(mod, "require_passing_tests", lambda: None)
-    monkeypatch.setattr(mod, "snapshot_sources", lambda path: {})
-    monkeypatch.setattr(mod, "source_fingerprint", lambda root: "fingerprint")
+    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: (tasks, {}, {}))
+    monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: None)
+    monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
+    monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
     monkeypatch.setenv("ANTIGRAVITY_API_KEY", "test-key")
     calls = []
 
@@ -321,7 +322,7 @@ def test_runner_continues_after_failed_cell(monkeypatch, tmp_path):
             "verdict": None,
         }
 
-    monkeypatch.setattr(mod, "run_candidate", scripted)
+    monkeypatch.setattr(lifecycle, "run_candidate", scripted)
     output = mod.run(root=tmp_path, output=tmp_path / "run")
     rows = json.loads((output / "results.json").read_text())
     observed = {(row["case_id"], row["system"]): row["status"] for row in rows}

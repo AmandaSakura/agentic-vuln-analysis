@@ -1,10 +1,5 @@
-from cv_agent.experts import (
-    AuthorizationExpert,
-    FlowRefutationExpert,
-    ScanExpert,
-    TaintExpert,
-)
-from cv_agent.types import Candidate, Evidence
+from cv_agent.baselines.experts import AuthorizationExpert, FlowRefutationExpert, ScanExpert, TaintExpert
+from cv_agent.domain.types import Candidate, Evidence
 
 
 def _candidate() -> Candidate:

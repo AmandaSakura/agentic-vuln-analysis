@@ -4,14 +4,13 @@ from pathlib import Path
 
 
 def runner(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    return importlib.import_module('run_development_ten_trial')
+    return importlib.import_module('cv_agent.evaluation.runners.run_development_ten_trial')
 
 
 def test_parallel_workers_cannot_exceed_global_request_budget(monkeypatch, tmp_path):
     mod = runner(monkeypatch)
-    from run_micro_benchmark import Trial
-    from run_development_benchmark import BudgetExceeded
+    from cv_agent.evaluation.runners.run_micro_benchmark import Trial
+    from cv_agent.evaluation.runners.run_development_benchmark import BudgetExceeded
     journal = mod.LockedJournal(tmp_path / 'events.jsonl')
     budget = mod.LockedBudget(7, 30)
     def attempt(i):
@@ -30,7 +29,7 @@ def test_declared_matrix_cannot_duplicate_trials_or_expand_concurrency(monkeypat
     import json
     import pytest
     mod = runner(monkeypatch)
-    config = json.loads((Path(__file__).parents[1] / 'configs/development_ten_trial.json').read_text())
+    config = json.loads((Path(__file__).parents[1] / 'configs/experiments/development_ten_trial.json').read_text())
     mod.validate_configuration(config)
     for changes in ({'case_ids': ['one', 'one']}, {'max_trials': 11}, {'concurrency': 4},
                     {'systems': ['E1'] * 5}):
@@ -55,7 +54,7 @@ def test_interrupt_stops_active_worker_admission_and_never_schedules_remainder(m
     from threading import Event
     import pytest
     mod = runner(monkeypatch)
-    from run_development_benchmark import BudgetStopped
+    from cv_agent.evaluation.runners.run_development_benchmark import BudgetStopped
     budget = mod.LockedBudget(100, 60)
     second_started = Event()
     calls = []

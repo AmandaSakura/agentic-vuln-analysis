@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import cv_agent.provenance as provenance
+import cv_agent.runtime.provenance as provenance
 
 
 def test_find_project_root_walks_up_to_git_pyproject(tmp_path: Path):

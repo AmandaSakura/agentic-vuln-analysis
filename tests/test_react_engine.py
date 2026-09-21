@@ -1,28 +1,16 @@
 import json
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry, repository_tools
-from cv_agent.agent_types import (
-    AgentExpertConclusion,
-    ModelReply,
-    ModelToolCall,
-    ModelUsage,
-    ReActStep,
-    ToolObservation,
-    ValidationStatus,
-    ValidationPlan,
-)
+from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
+from cv_agent.tools.repository import repository_tools
+from cv_agent.domain.review import AgentExpertConclusion, ValidationPlan
+from cv_agent.domain.chat import ModelReply, ModelToolCall, ModelUsage
+from cv_agent.domain.evidence import ReActStep, ToolObservation, ValidationStatus
 from cv_agent.harness import FULL_SYSTEM_HARNESS
-from cv_agent.model_runtime import ScriptedChatModel
-from cv_agent.react_engine import (
-    ReActEngine,
-    run_expert,
-    run_planner,
-    parse_final_json,
-    validate_conclusion,
-)
+from cv_agent.runtime.model import ScriptedChatModel
+from cv_agent.agents.react import ReActEngine, run_expert, run_planner, parse_final_json, validate_conclusion
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import CodeDocument
+from cv_agent.domain.types import CodeDocument
 
 
 ENTRY_PATH = "entry.py::entry@1-2"

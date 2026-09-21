@@ -1,0 +1,392 @@
+{
+  "dataset_name": "Python held-out GitHub advisory paired matrix",
+  "dataset_role": "paired_heldout_advisory",
+  "claim_eligible": false,
+  "model_config": "configs/models/micro_benchmark_gemini_native.json",
+  "systems": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+  ],
+  "concurrency": 1,
+  "limits": {
+    "max_requests": 900,
+    "max_seconds": 14400
+  },
+  "source_manifest": "artifacts/python_heldout_pair_preparation/manifest.json",
+  "pairs": [
+    {
+      "pair_id": "hp001_entry_00062_ghsa_c6xv_rcvw_v685",
+      "entry_id": "entry-00062",
+      "repository_url": "https://github.com/open-webui/open-webui",
+      "advisory": "GHSA-C6XV-RCVW-V685",
+      "source_link": "https://github.com/advisories/GHSA-c6xv-rcvw-v685",
+      "vuln_ids": [
+        "CVE-2025-65958",
+        "GHSA-C6XV-RCVW-V685"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "Open WebUI SSRF via /api/v1/retrieval/process/web 缺失云元数据端点拦截 (CVE-2025-65958)",
+      "source_scope": "注入 / 服务端请求伪造 at backend/open_webui/retrieval/web/utils.py:556; entry backend/open_webui/routers/retrieval.py:1778",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: Open WebUI SSRF via /api/v1/retrieval/process/web 缺失云元数据端点拦截 (CVE-2025-65958). Entry point code:     request: Request, form_data: ProcessUrlForm, user=Depends(get_verified_user). Critical operation code:                     async with session.get(. Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "    request: Request, form_data: ProcessUrlForm, user=Depends(get_verified_user)",
+        "desc": "process_web 路由函数的参数声明，通过 ProcessUrlForm 接收用户提交的 url 字段；get_verified_user 仅要求已登录账户，无需管理员权限。外部可控的 url 从此处进入漏洞链路，是 SSRF 攻击的起始注入点。",
+        "file": "backend/open_webui/routers/retrieval.py",
+        "line": 1778
+      },
+      "critical_operation": {
+        "code": "                    async with session.get(",
+        "desc": "SafeWebBaseLoader 内部经由 aiohttp 客户端会话发起真实 HTTP GET 请求，目标地址即来自上游未经充分过滤的 url；此处是整条 SSRF 利用链的最终执行点，服务器将主动向攻击者指定的任意地址发送网络请求并返回响应内容。",
+        "file": "backend/open_webui/retrieval/web/utils.py",
+        "line": 556
+      },
+      "cases": [
+        {
+          "case_id": "hp001_a",
+          "revision_role": "vulnerable",
+          "commit": "6cdb13d5cb26b7bceebfe0b85723d8a61aebae3b",
+          "checkout": "data/heldout-pair-subjects/open-webui__open-webui/6cdb13d5cb26b7bceebfe0b85723d8a61aebae3b",
+          "file_path": "backend/open_webui/retrieval/web/utils.py",
+          "line_hint": 556
+        },
+        {
+          "case_id": "hp001_b",
+          "revision_role": "fixed",
+          "commit": "02238d3113e966c353fce18f1b65117380896774",
+          "checkout": "data/heldout-pair-subjects/open-webui__open-webui/02238d3113e966c353fce18f1b65117380896774",
+          "file_path": "backend/open_webui/retrieval/web/utils.py",
+          "line_hint": 556
+        }
+      ]
+    },
+    {
+      "pair_id": "hp002_entry_00101_ghsa_4x5p_f36r_mxxr",
+      "entry_id": "entry-00101",
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "advisory": "GHSA-4X5P-F36R-MXXR",
+      "source_link": "https://github.com/advisories/GHSA-4x5p-f36r-mxxr",
+      "vuln_ids": [
+        "CVE-2025-10279",
+        "GHSA-4X5P-F36R-MXXR"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "MLflow 临时目录世界可写权限致本地竞态条件代码执行 - file_utils.py",
+      "source_scope": "权限绕过 / 不安全的临时文件/目录权限 at mlflow/utils/file_utils.py:761; entry mlflow/pyfunc/__init__.py:2049",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: MLflow 临时目录世界可写权限致本地竞态条件代码执行 - file_utils.py. Entry point code: def spark_udf(. Critical operation code:         os.chmod(tmp_dir, 0o777). Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "def spark_udf(",
+        "desc": "spark_udf() 是 MLflow 对外暴露的 Spark UDF 推理函数，负责将已注册模型包装为可在 Spark 集群中分布式执行的推理逻辑。在漏洞链路中，此函数是最外层的公开攻击入口：外部调用者通过 Spark 任务触发此函数后，将间接启动模型制品下载流程，进而引发存在权限缺陷的临时目录创建操作，是整条漏洞路径的外部触发节点。",
+        "file": "mlflow/pyfunc/__init__.py",
+        "line": 2049
+      },
+      "critical_operation": {
+        "code": "        os.chmod(tmp_dir, 0o777)",
+        "desc": "os.chmod(tmp_dir, 0o777) 将临时目录权限从 mkdtemp() 建立时的 0o700 强制扩展为全局可写的 0o777，是本漏洞的核心危险操作。该行执行后目录立即对所有本地用户开放写权限，在 MLflow 随后向目录写入可执行文件之前形成可利用的竞态时间窗口，本地攻击者可趁此注入恶意脚本并在模型加载阶段触发任意代码执行。",
+        "file": "mlflow/utils/file_utils.py",
+        "line": 761
+      },
+      "cases": [
+        {
+          "case_id": "hp002_a",
+          "revision_role": "vulnerable",
+          "commit": "ba41980d604d7fd7964b038945989a5077d1a645",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/ba41980d604d7fd7964b038945989a5077d1a645",
+          "file_path": "mlflow/utils/file_utils.py",
+          "line_hint": 761
+        },
+        {
+          "case_id": "hp002_b",
+          "revision_role": "fixed",
+          "commit": "1d7c8d4cf0a67d407499a8a4ffac387ea4f8194a",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/1d7c8d4cf0a67d407499a8a4ffac387ea4f8194a",
+          "file_path": "mlflow/utils/file_utils.py",
+          "line_hint": 761
+        }
+      ]
+    },
+    {
+      "pair_id": "hp003_entry_00102_ghsa_4x5p_f36r_mxxr",
+      "entry_id": "entry-00102",
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "advisory": "GHSA-4X5P-F36R-MXXR",
+      "source_link": "https://github.com/advisories/GHSA-4x5p-f36r-mxxr",
+      "vuln_ids": [
+        "CVE-2025-10279",
+        "GHSA-4X5P-F36R-MXXR"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "MLflow 临时目录世界可写权限致本地竞态条件代码执行 - file_utils.py",
+      "source_scope": "权限绕过 / 不安全的临时文件/目录权限 at mlflow/utils/file_utils.py:794; entry mlflow/utils/file_utils.py:768",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: MLflow 临时目录世界可写权限致本地竞态条件代码执行 - file_utils.py. Entry point code: def get_or_create_nfs_tmp_dir():. Critical operation code:         os.chmod(tmp_nfs_dir, 0o777). Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "def get_or_create_nfs_tmp_dir():",
+        "desc": "函数 get_or_create_nfs_tmp_dir 作为 NFS 临时目录的统一获取或创建入口，在非 Databricks 运行时路径下依次调用 tempfile.mkdtemp 和 os.chmod，是整个不安全权限链路的起始节点，外部调用者通过此处进入后续可能触发竞态的操作序列。",
+        "file": "mlflow/utils/file_utils.py",
+        "line": 768
+      },
+      "critical_operation": {
+        "code": "        os.chmod(tmp_nfs_dir, 0o777)",
+        "desc": "此处将 tempfile.mkdtemp 所创建目录的权限从初始的 0o700 改写为 0o777，使系统上所有本地用户均可向该目录写入文件。此次权限扩展与后续可执行内容写入之间形成竞态窗口，本地攻击者可趁机植入恶意脚本，是该漏洞得以成立的关键操作节点。",
+        "file": "mlflow/utils/file_utils.py",
+        "line": 794
+      },
+      "cases": [
+        {
+          "case_id": "hp003_a",
+          "revision_role": "vulnerable",
+          "commit": "ba41980d604d7fd7964b038945989a5077d1a645",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/ba41980d604d7fd7964b038945989a5077d1a645",
+          "file_path": "mlflow/utils/file_utils.py",
+          "line_hint": 794
+        },
+        {
+          "case_id": "hp003_b",
+          "revision_role": "fixed",
+          "commit": "1d7c8d4cf0a67d407499a8a4ffac387ea4f8194a",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/1d7c8d4cf0a67d407499a8a4ffac387ea4f8194a",
+          "file_path": "mlflow/utils/file_utils.py",
+          "line_hint": 794
+        }
+      ]
+    },
+    {
+      "pair_id": "hp004_entry_00171_ghsa_gq3w_7jj3_x7gr",
+      "entry_id": "entry-00171",
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "advisory": "GHSA-GQ3W-7JJ3-X7GR",
+      "source_link": "https://github.com/advisories/GHSA-gq3w-7jj3-x7gr",
+      "vuln_ids": [
+        "CVE-2026-2635",
+        "GHSA-GQ3W-7JJ3-X7GR"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "MLflow Basic Auth 硬编码默认凭据导致管理员认证绕过（CVE-2026-2635）",
+      "source_scope": "业务逻辑 / BL-INSECURE-DEFAULT(不安全默认配置) at mlflow/server/auth/__init__.py:493-494; entry mlflow/server/auth/basic_auth.ini:5",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: MLflow Basic Auth 硬编码默认凭据导致管理员认证绕过（CVE-2026-2635）. Entry point code: admin_password = password. Critical operation code:     if sender_is_admin():\n        return. Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "admin_password = password",
+        "desc": "basic_auth.ini 第5行将 admin_password 以明文形式固定为字符串 password，该文件随代码库公开分发，任何能获取源码的一方均可得知此值。服务器首次启动时会无条件读取该行并将其作为管理员账户的真实密码写入存储，这是整条漏洞传播路径的根因起点。",
+        "file": "mlflow/server/auth/basic_auth.ini",
+        "line": 5
+      },
+      "critical_operation": {
+        "code": "    if sender_is_admin():\n        return",
+        "desc": "sender_is_admin() 在 _before_request 中充当最终授权门卫，一旦返回 True 便立即 return，跳过此后所有权限校验逻辑。由于前序 authenticate_request() 已凭借硬编码密码完成身份验证并将 admin 身份写入请求上下文，sender_is_admin() 此处必然为真，令整个鉴权拦截对持有默认凭据的请求彻底失效，是漏洞链路的终点。",
+        "file": "mlflow/server/auth/__init__.py",
+        "line": "493-494"
+      },
+      "cases": [
+        {
+          "case_id": "hp004_a",
+          "revision_role": "vulnerable",
+          "commit": "83b9416cf1cf13216406c81842a5c98c5b1f06fc",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/83b9416cf1cf13216406c81842a5c98c5b1f06fc",
+          "file_path": "mlflow/server/auth/__init__.py",
+          "line_hint": 493
+        },
+        {
+          "case_id": "hp004_b",
+          "revision_role": "fixed",
+          "commit": "5bf2ec2bd4222a18d78631183ac7f6b752afe8a4",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/5bf2ec2bd4222a18d78631183ac7f6b752afe8a4",
+          "file_path": "mlflow/server/auth/__init__.py",
+          "line_hint": 493
+        }
+      ]
+    },
+    {
+      "pair_id": "hp005_entry_00317_ghsa_rf6x_r45m_xv3w",
+      "entry_id": "entry-00317",
+      "repository_url": "https://github.com/langflow-ai/langflow",
+      "advisory": "GHSA-RF6X-R45M-XV3W",
+      "source_link": "https://github.com/advisories/GHSA-rf6x-r45m-xv3w",
+      "vuln_ids": [
+        "CVE-2026-33053",
+        "GHSA-RF6X-R45M-XV3W"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "Langflow API Key 删除接口 IDOR 越权漏洞 (CVE-2026-33053)",
+      "source_scope": "业务逻辑 / BL-AUTHZ-BROKEN(授权逻辑错误) at src/backend/base/langflow/services/database/models/api_key/crud.py:45; entry src/backend/base/langflow/api/v1/api_key.py:44",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: Langflow API Key 删除接口 IDOR 越权漏洞 (CVE-2026-33053). Entry point code: @router.delete(\"/{api_key_id}\", dependencies=[Depends(auth_utils.get_current_active_user)]). Critical operation code:     api_key = await session.get(ApiKey, api_key_id). Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "@router.delete(\"/{api_key_id}\", dependencies=[Depends(auth_utils.get_current_active_user)])",
+        "desc": "@router.delete 装饰器将 HTTP DELETE 方法绑定至路径 /{api_key_id}，并通过 dependencies 参数注入 get_current_active_user 完成调用者登录态验证。装饰器未将当前用户对象传入函数签名，仅确认已登录即放行请求，构成漏洞链路的网络层入口，使任意已认证用户的删除请求得以在无归属约束的情况下向下流转。",
+        "file": "src/backend/base/langflow/api/v1/api_key.py",
+        "line": 44
+      },
+      "critical_operation": {
+        "code": "    api_key = await session.get(ApiKey, api_key_id)",
+        "desc": "session.get(ApiKey, api_key_id) 以调用方传入的 api_key_id 为唯一查询键，直接从数据库加载对应的 ApiKey 对象，查询过程中不附加任何归属过滤条件。在调用栈下游，这行代码是 IDOR 漏洞的核心操作点：只要记录存在便返回成功，后续的 session.delete 随即无条件执行，最终使跨用户删除得以实现。",
+        "file": "src/backend/base/langflow/services/database/models/api_key/crud.py",
+        "line": 45
+      },
+      "cases": [
+        {
+          "case_id": "hp005_a",
+          "revision_role": "vulnerable",
+          "commit": "36eea7ee9db1ce6119dfd85364f870a219ea2f7c",
+          "checkout": "data/heldout-pair-subjects/langflow-ai__langflow/36eea7ee9db1ce6119dfd85364f870a219ea2f7c",
+          "file_path": "src/backend/base/langflow/services/database/models/api_key/crud.py",
+          "line_hint": 45
+        },
+        {
+          "case_id": "hp005_b",
+          "revision_role": "fixed",
+          "commit": "fdc1b3b1448ff3317d73d3e769a6c4a1717f74d7",
+          "checkout": "data/heldout-pair-subjects/langflow-ai__langflow/fdc1b3b1448ff3317d73d3e769a6c4a1717f74d7",
+          "file_path": "src/backend/base/langflow/services/database/models/api_key/crud.py",
+          "line_hint": 45
+        }
+      ]
+    },
+    {
+      "pair_id": "hp006_entry_00389_ghsa_rvhj_8chj_8v3c",
+      "entry_id": "entry-00389",
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "advisory": "GHSA-RVHJ-8CHJ-8V3C",
+      "source_link": "https://github.com/advisories/GHSA-rvhj-8chj-8v3c",
+      "vuln_ids": [
+        "CVE-2026-0596",
+        "GHSA-RVHJ-8CHJ-8V3C"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "MLflow model serving 命令注入漏洞（enable_mlserver=True）CVE-2026-0596 - mlserver.py",
+      "source_scope": "命令注入 / OS命令注入 at mlflow/pyfunc/backend.py:311-317; entry mlflow/pyfunc/backend.py:229-231",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: MLflow model serving 命令注入漏洞（enable_mlserver=True）CVE-2026-0596 - mlserver.py. Entry point code:     def serve(\n        self,\n        model_uri,. Critical operation code:             child_proc = subprocess.Popen(\n                command,\n                env=command_env,\n                preexec_fn=setup_sigterm_on_parent_death,\n                stdout=stdout,\n                stderr=stderr,\n            ). Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "    def serve(\n        self,\n        model_uri,",
+        "desc": "serve 方法是 pyfunc 后端暴露给外部的模型服务入口，接受 model_uri 作为必传参数。该参数来自调用方（CLI 命令行或 API 层），在 serve 内部不做 shell 特殊字符过滤就直接传入下游构造命令的函数，因此 serve 是漏洞链路中外部可控字符串进入系统的第一道门。",
+        "file": "mlflow/pyfunc/backend.py",
+        "line": "229-231"
+      },
+      "critical_operation": {
+        "code": "            child_proc = subprocess.Popen(\n                command,\n                env=command_env,\n                preexec_fn=setup_sigterm_on_parent_death,\n                stdout=stdout,\n                stderr=stderr,\n            )",
+        "desc": "subprocess.Popen 以 command 列表为参数启动子进程，其中 command 已被包装为 bash -c 形式。bash 在解析命令字符串时展开未经转义的 shell 元字符，将 model_uri 携带的命令替换表达式执行为真实系统命令。这是漏洞链路中任意命令执行最终发生的节点。",
+        "file": "mlflow/pyfunc/backend.py",
+        "line": "311-317"
+      },
+      "cases": [
+        {
+          "case_id": "hp006_a",
+          "revision_role": "vulnerable",
+          "commit": "d1312edfca36c7acae0d064ef6a094eded88e14f",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f",
+          "file_path": "mlflow/pyfunc/backend.py",
+          "line_hint": 311
+        },
+        {
+          "case_id": "hp006_b",
+          "revision_role": "fixed",
+          "commit": "202fac4c83ccc8544c087c142b80196d0e60695c",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c",
+          "file_path": "mlflow/pyfunc/backend.py",
+          "line_hint": 311
+        }
+      ]
+    },
+    {
+      "pair_id": "hp007_entry_00390_ghsa_rvhj_8chj_8v3c",
+      "entry_id": "entry-00390",
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "advisory": "GHSA-RVHJ-8CHJ-8V3C",
+      "source_link": "https://github.com/advisories/GHSA-rvhj-8chj-8v3c",
+      "vuln_ids": [
+        "CVE-2026-0596",
+        "GHSA-RVHJ-8CHJ-8V3C"
+      ],
+      "source_root": ".",
+      "exclude_path_parts": [
+        "tests",
+        "test",
+        "testing",
+        "docs",
+        "examples",
+        "__pycache__"
+      ],
+      "vulnerability_title": "MLflow model serving 命令注入漏洞（enable_mlserver=True）CVE-2026-0596 - environment.py",
+      "source_scope": "命令注入 / OS命令注入 at mlflow/utils/environment.py:1014; entry mlflow/models/cli.py:24",
+      "analysis_scope": "Assess only the advisory-scoped weakness described here for this exact source snapshot. Title: MLflow model serving 命令注入漏洞（enable_mlserver=True）CVE-2026-0596 - environment.py. Entry point code: @commands.command(\"serve\"). Critical operation code:         command = [\"bash\", \"-c\", command] if not is_windows() else [\"cmd\", \"/c\", command]. Use repository evidence; do not infer the answer from case identity or commit ordering.",
+      "entry_point": {
+        "code": "@commands.command(\"serve\")",
+        "desc": "@commands.command 将 mlflow models serve 注册为 Click CLI 子命令，配套的 @cli_args.MODEL_URI 声明 model_uri 为必填参数。serve() 函数直接接收外部传入的 model_uri 原始值，缺乏 shell 元字符过滤逻辑。这是 OS 命令注入链路的起点——model_uri 在此以用户原始输入进入后端处理流程，未经任何净化便向下游传递。",
+        "file": "mlflow/models/cli.py",
+        "line": 24
+      },
+      "critical_operation": {
+        "code": "        command = [\"bash\", \"-c\", command] if not is_windows() else [\"cmd\", \"/c\", command]",
+        "desc": "Environment.execute() 将已携带未净化 model_uri 的命令字符串包装为 [\"bash\", \"-c\", command] 列表，触发 subprocess 执行。此赋值是命令注入漏洞的终点——bash 收到该字符串后，对其中的 shell 元字符（如 $() 或反引号）执行命令展开，使 model_uri 中嵌入的任意 OS 命令在服务器进程上下文中运行。",
+        "file": "mlflow/utils/environment.py",
+        "line": 1014
+      },
+      "cases": [
+        {
+          "case_id": "hp007_a",
+          "revision_role": "vulnerable",
+          "commit": "d1312edfca36c7acae0d064ef6a094eded88e14f",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f",
+          "file_path": "mlflow/utils/environment.py",
+          "line_hint": 1014
+        },
+        {
+          "case_id": "hp007_b",
+          "revision_role": "fixed",
+          "commit": "202fac4c83ccc8544c087c142b80196d0e60695c",
+          "checkout": "data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c",
+          "file_path": "mlflow/utils/environment.py",
+          "line_hint": 1014
+        }
+      ]
+    }
+  ]
+}

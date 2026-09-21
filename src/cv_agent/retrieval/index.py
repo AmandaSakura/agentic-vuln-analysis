@@ -8,15 +8,10 @@ from typing import Literal
 import math
 import re
 
-from ..harness import RetrievalBudget, RetrievalMode
-from ..types import Candidate, CodeDocument, Evidence
-from .context import (
-    _focused_text,
-    _is_textual_get_cmd_helper,
-    _line_bounds_from_path,
-    _uses_get_cmd_shell_construction,
-)
-from .tokens import limit_evidence_context, tokenize
+from cv_agent.harness import RetrievalBudget, RetrievalMode
+from cv_agent.domain.types import Candidate, CodeDocument, Evidence
+from cv_agent.retrieval.context import _focused_text, _is_textual_get_cmd_helper, _line_bounds_from_path, _uses_get_cmd_shell_construction
+from cv_agent.retrieval.tokens import limit_evidence_context, tokenize
 
 
 class RepositoryIndex:

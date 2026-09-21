@@ -1,13 +1,9 @@
-from cv_agent.agent_tools import (
-    AgentTool,
-    ReadSpanInput,
-    ToolExecutionScope,
-    ToolRegistry,
-    repository_tools,
-)
-from cv_agent.agent_types import ModelToolCall, ToolObservation
+from cv_agent.tools.registry import AgentTool, ToolExecutionScope, ToolRegistry
+from cv_agent.tools.repository import ReadSpanInput, repository_tools
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.domain.evidence import ToolObservation
 from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count
-from cv_agent.types import CodeDocument, FrozenModel
+from cv_agent.domain.types import CodeDocument, FrozenModel
 
 
 def _index() -> RepositoryIndex:

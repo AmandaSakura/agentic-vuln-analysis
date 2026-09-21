@@ -1,4 +1,4 @@
-from cv_agent.agentic_smoke import run_agentic_smoke
+from cv_agent.evaluation.smoke import run_agentic_smoke
 
 
 def test_agentic_smoke_is_scripted_non_claim_react_diagnostic():

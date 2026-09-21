@@ -4,17 +4,12 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path, PurePosixPath
 
-from ..python_ast import parse_python_source
-from ..source_files import read_source_bytes
-from .fallback import FALLBACK_SUFFIXES, _fallback_language, parse_fallback_source
-from .go import parse_go_source
-from .javascript import (
-    JAVASCRIPT_SUFFIXES,
-    TYPESCRIPT_SUFFIXES,
-    parse_javascript_source,
-    parse_typescript_source,
-)
-from .models import CodeRepositoryDocuments, ParsedSource, SourceDocumentSpan
+from cv_agent.code_adapters.python import parse_python_source
+from cv_agent.code_adapters.source_files import read_source_bytes
+from cv_agent.code_adapters.fallback import FALLBACK_SUFFIXES, _fallback_language, parse_fallback_source
+from cv_agent.code_adapters.go import parse_go_source
+from cv_agent.code_adapters.javascript import JAVASCRIPT_SUFFIXES, TYPESCRIPT_SUFFIXES, parse_javascript_source, parse_typescript_source
+from cv_agent.code_adapters.models import CodeRepositoryDocuments, ParsedSource, SourceDocumentSpan
 
 
 SKIPPED_DIRECTORIES = frozenset(

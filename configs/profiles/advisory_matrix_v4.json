@@ -1,0 +1,28 @@
+{
+  "dataset_name": "Python held-out GitHub advisory paired matrix — retrieval protocol v4",
+  "model_config": "configs/models/micro_benchmark_gemini_native.json",
+  "systems": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+  ],
+  "concurrency": 2,
+  "limits": {
+    "max_requests": 900,
+    "max_seconds": 14400
+  },
+  "expected_abstentions": [
+    {
+      "case_id": "hp003_a",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp003_b",
+      "system": "E1"
+    }
+  ],
+  "graph_direction": "both",
+  "graph_ranking": "distance"
+}

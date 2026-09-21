@@ -1,10 +1,10 @@
 import pytest
 
 from cv_agent.code_adapters import load_code_repository
-from cv_agent.java_ast import load_java_repository
-from cv_agent.python_ast import load_python_repository, parse_python_source
+from cv_agent.code_adapters.java import load_java_repository
+from cv_agent.code_adapters.python import load_python_repository, parse_python_source
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.source_files import read_source_bytes
+from cv_agent.code_adapters.source_files import read_source_bytes
 
 
 @pytest.mark.parametrize("loader,suffix,source", [
