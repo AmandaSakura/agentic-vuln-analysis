@@ -2,23 +2,9 @@
 
 from __future__ import annotations
 
-from ..types import SystemVersion
-from .defaults import (
-    COMMAND_POLICIES,
-    FULL_SYSTEM_HARNESS,
-    OWASP_HARNESS,
-    VULNGYM_RETRIEVAL_HARNESS,
-)
-from .models import (
-    AgentRuntimeMode,
-    AgentSystemVersion,
-    DatasetRole,
-    EndToEndHarness,
-    ExperimentHarness,
-    RetrievalEvaluationHarness,
-    RetrievalMode,
-    SystemHarness,
-)
+from cv_agent.domain.types import SystemVersion
+from cv_agent.harness.defaults import COMMAND_POLICIES, FULL_SYSTEM_HARNESS, OWASP_HARNESS, VULNGYM_RETRIEVAL_HARNESS
+from cv_agent.harness.models import AgentRuntimeMode, AgentSystemVersion, DatasetRole, EndToEndHarness, ExperimentHarness, RetrievalEvaluationHarness, RetrievalMode, SystemHarness
 
 
 def _same_comparable_budget(left: SystemHarness, right: SystemHarness) -> bool:

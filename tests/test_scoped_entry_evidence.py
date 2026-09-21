@@ -1,14 +1,15 @@
 import json
 from pathlib import Path
 
-from cv_agent.agent_tools import ToolExecutionScope, candidate_subject
-from cv_agent.command_analysis import analyze_command, command_status
+from cv_agent.tools.registry import ToolExecutionScope
+from cv_agent.tools.identity import candidate_subject
+from cv_agent.tools.analysis.commands import analyze_command, command_status
 from cv_agent.harness import RetrievalBudget, RetrievalMode
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate, CodeDocument
+from cv_agent.domain.types import Candidate, CodeDocument
 from test_validation_tools import _invoke, _registry
-from cv_agent.python_heldout_pair_config import PythonHeldoutPairExperimentConfig
-from cv_agent.python_heldout_pair_source import model_visible_analysis_scope
+from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig
+from cv_agent.evaluation.datasets.advisory_source import model_visible_analysis_scope
 
 
 def test_direct_callees_precede_distant_lexical_matches_when_requested():
@@ -63,8 +64,8 @@ def test_scope_conditions_are_bound_to_validation_identity():
 def test_v4_keeps_gate_cells_and_declares_same_scenario_on_both_revisions():
     root = Path(__file__).resolve().parents[1]
     for stem in ("python_heldout_pair_gate", "python_heldout_pairs"):
-        old = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/{stem}_v3.json").read_text())
-        new = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/{stem}_v4.json").read_text())
+        old = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/history/{stem}_v3.json").read_text())
+        new = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/history/{stem}_v4.json").read_text())
         assert new.graph_ranking == "distance"
         assert old.selected_cells == new.selected_cells
         assert old.expected_abstentions == new.expected_abstentions

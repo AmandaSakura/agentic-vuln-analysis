@@ -6,13 +6,15 @@ import json
 from dataclasses import replace
 from pathlib import Path
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry, candidate_subject
-from cv_agent.agent_types import ModelToolCall, ValidationStatus
-from cv_agent.agentic_live import load_owasp_agentic_inputs, select_owasp_entry
-from cv_agent.experiment_acceptance import require_verification_capability
+from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
+from cv_agent.tools.identity import candidate_subject
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.domain.evidence import ValidationStatus
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, select_owasp_entry
+from cv_agent.evaluation.protocols.development import require_verification_capability
 from cv_agent.harness import FULL_SYSTEM_HARNESS
-from cv_agent.java_fixture import JavaCommandValidator, java_command_fixture_cases
-from cv_agent.validation_tools import full_agent_tools
+from cv_agent.evaluation.datasets.java_fixture import JavaCommandValidator, java_command_fixture_cases
+from cv_agent.tools.validation import full_agent_tools
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

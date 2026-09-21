@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from cv_agent.datasets import load_owasp_expected_results, load_vulngym_entries
+from cv_agent.evaluation.datasets.loaders import load_owasp_expected_results, load_vulngym_entries
 
 
 def test_vulngym_detector_view_excludes_ground_truth(tmp_path):

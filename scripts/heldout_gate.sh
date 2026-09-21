@@ -5,4 +5,4 @@ set -a
 source .env.experiments
 set +a
 export PYTHONUNBUFFERED=1
-uv run --no-sync python scripts/run_python_heldout_pair_gate.py
+uv run --no-sync python -m cv_agent.evaluation.runners.run_python_heldout_pair_gate

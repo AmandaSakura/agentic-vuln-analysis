@@ -7,8 +7,7 @@ import pytest
 
 @pytest.fixture
 def audit(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    return importlib.import_module('audit_langchain_transport')
+    return importlib.import_module('cv_agent.evaluation.diagnostics.audit_langchain_transport')
 
 
 def log_text(response):
@@ -64,8 +63,7 @@ def test_conflicting_response_ids_are_not_used_as_evidence(audit):
 
 
 def test_usage_audit_includes_transport_probes_once(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    from summarize_live_usage import audit_usage
+    from cv_agent.evaluation.diagnostics.summarize_live_usage import audit_usage
     directory = tmp_path / 'artifacts/langchain_transport_probe/run'
     directory.mkdir(parents=True)
     (directory / 'metadata.json').write_text('{}')

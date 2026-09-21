@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.python_heldout_pair_config import PythonHeldoutPairExperimentConfig
-from cv_agent.python_heldout_pair_acceptance import heldout_pair_acceptance_issues
+from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig
+from cv_agent.evaluation.protocols.advisory import heldout_pair_acceptance_issues
 
 
 def config_dict():
@@ -58,8 +58,8 @@ def config_dict():
 def test_v3_declares_retrieval_change_and_preserves_v2_cells_and_limits():
     root = Path(__file__).resolve().parents[1]
     for stem in ("python_heldout_pair_gate", "python_heldout_pairs"):
-        old = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/{stem}_v2.json").read_text())
-        new = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/{stem}_v3.json").read_text())
+        old = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/history/{stem}_v2.json").read_text())
+        new = PythonHeldoutPairExperimentConfig.model_validate_json((root / f"configs/history/{stem}_v3.json").read_text())
         assert old.graph_direction == "forward"
         assert new.graph_direction == "both"
         assert old.limits == new.limits

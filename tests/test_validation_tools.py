@@ -7,28 +7,18 @@ import time
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry, repository_source_digest
-from cv_agent.agent_types import ModelToolCall, ValidationSubject
-from cv_agent.agentic_workflow import AgenticPipeline
-from cv_agent.harness import (
-    FULL_SYSTEM_HARNESS,
-    AgentRuntimeMode,
-    AgentSystemVersion,
-)
-from cv_agent.model_runtime import OpenAICompatibleChatModel
+from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
+from cv_agent.tools.identity import repository_source_digest
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.domain.evidence import ValidationSubject
+from cv_agent.agents.workflow import AgenticPipeline
+from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemVersion
+from cv_agent.runtime.model import OpenAICompatibleChatModel
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.synthetic import cross_file_fixture, guarded_delete_fixture
-from cv_agent.types import CodeDocument
-from cv_agent.validation_tools import (
-    FixtureCase,
-    FixtureOutcome,
-    LoopbackCase,
-    LoopbackRequest,
-    LoopbackResponse,
-    ValidationStatus,
-    full_agent_tools,
-)
-from cv_agent.validation_tools.fixtures import _run_fixture_case
+from cv_agent.baselines.synthetic import cross_file_fixture, guarded_delete_fixture
+from cv_agent.domain.types import CodeDocument
+from cv_agent.tools.validation import FixtureCase, FixtureOutcome, LoopbackCase, LoopbackRequest, LoopbackResponse, ValidationStatus, full_agent_tools
+from cv_agent.tools.validation.fixtures import _run_fixture_case
 
 
 SOCKET_ALIAS = socket.socket

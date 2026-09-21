@@ -1,0 +1,2094 @@
+{
+  "agentic_eval": {
+    "harness_id": "agentic-vulnerability-system-v1",
+    "runtime_mode": "scripted",
+    "claim_eligible": false,
+    "dataset": "controlled-agentic-two-case-diagnostic",
+    "purpose": "Validate LangGraph/ReAct/quorum wiring and directional false-positive behavior only; not a reported benchmark result.",
+    "cases": [
+      {
+        "case_id": "cross-file-1",
+        "label": "positive",
+        "rationale": "cross-file request-to-subprocess command execution"
+      },
+      {
+        "case_id": "guarded-delete-1",
+        "label": "negative",
+        "rationale": "delete operation is protected by require_permission"
+      }
+    ],
+    "systems": {
+      "E1": {
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 1,
+          "abstain_negative": 0,
+          "strict_recall": 0.0,
+          "covered_recall": null,
+          "population_false_positive_rate": 1.0,
+          "covered_false_positive_rate": 1.0,
+          "precision": 0.0,
+          "coverage": 0.5,
+          "abstain_rate": 0.5
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.9,
+            "path": "single",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "ABSTAIN",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 0,
+            "model_calls": 2,
+            "tool_calls": 1,
+            "context_token_count": 507
+          },
+          "guarded-delete-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "path": "single",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 0,
+            "model_calls": 2,
+            "tool_calls": 1,
+            "context_token_count": 522
+          }
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": 0.0,
+        "relative_false_positive_reduction_vs_graph_single": 0.0
+      },
+      "E3": {
+        "predictions": {
+          "cross-file-1": "VULNERABLE",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "confusion": {
+          "tp": 1,
+          "fp": 1,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 0,
+          "abstain_negative": 0,
+          "strict_recall": 1.0,
+          "covered_recall": 1.0,
+          "population_false_positive_rate": 1.0,
+          "covered_false_positive_rate": 1.0,
+          "precision": 0.5,
+          "coverage": 1.0,
+          "abstain_rate": 0.0
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "path": "single",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 0,
+            "model_calls": 2,
+            "tool_calls": 1,
+            "context_token_count": 835
+          },
+          "guarded-delete-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "path": "single",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 0,
+            "model_calls": 2,
+            "tool_calls": 1,
+            "context_token_count": 522
+          }
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": 0.0,
+        "relative_false_positive_reduction_vs_graph_single": 0.0
+      },
+      "E4": {
+        "predictions": {
+          "cross-file-1": "VULNERABLE",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 0,
+          "abstain_negative": 1,
+          "strict_recall": 1.0,
+          "covered_recall": 1.0,
+          "population_false_positive_rate": 0.0,
+          "covered_false_positive_rate": null,
+          "precision": 1.0,
+          "coverage": 0.5,
+          "abstain_rate": 0.5
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "path": "slow",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "taint",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "authz",
+                "label": "ABSTAIN",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 3,
+            "model_calls": 8,
+            "tool_calls": 4,
+            "context_token_count": 2427
+          },
+          "guarded-delete-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.9,
+            "path": "slow",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "taint",
+                "label": "ABSTAIN",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "authz",
+                "label": "ABSTAIN",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 3,
+            "model_calls": 8,
+            "tool_calls": 4,
+            "context_token_count": 1510
+          }
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": -100.0,
+        "relative_false_positive_reduction_vs_graph_single": 1.0
+      },
+      "E5": {
+        "predictions": {
+          "cross-file-1": "VULNERABLE",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 0,
+          "abstain_negative": 1,
+          "strict_recall": 1.0,
+          "covered_recall": 1.0,
+          "population_false_positive_rate": 0.0,
+          "covered_false_positive_rate": null,
+          "precision": 1.0,
+          "coverage": 0.5,
+          "abstain_rate": 0.5
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "path": "fast",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "taint",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 3,
+            "model_calls": 6,
+            "tool_calls": 3,
+            "context_token_count": 1757
+          },
+          "guarded-delete-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.9,
+            "path": "slow",
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "VULNERABLE",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "taint",
+                "label": "ABSTAIN",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              },
+              {
+                "expert": "authz",
+                "label": "ABSTAIN",
+                "validation_status": "UNRESOLVED",
+                "tool_calls": 1
+              }
+            ],
+            "planner_subtask_count": 3,
+            "model_calls": 8,
+            "tool_calls": 4,
+            "context_token_count": 1510
+          }
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": -100.0,
+        "relative_false_positive_reduction_vs_graph_single": 1.0
+      }
+    }
+  },
+  "agentic_smoke": {
+    "harness_id": "agentic-vulnerability-system-v1",
+    "runtime_mode": "scripted",
+    "claim_eligible": false,
+    "purpose": "wiring-only ReAct and LangGraph diagnostic",
+    "verdict": {
+      "runtime_mode": "scripted",
+      "label": "VULNERABLE",
+      "confidence": 0.9,
+      "path": "fast",
+      "rationale": "2 high-confidence experts formed an early quorum.",
+      "planner": {
+        "runtime_mode": "scripted",
+        "plan": {
+          "candidate_id": "cross-file-1",
+          "vulnerability_hypotheses": [
+            "command injection"
+          ],
+          "subtasks": [
+            {
+              "task_id": "find-command-sink",
+              "objective": "Locate the cross-file command sink.",
+              "expert": "scan",
+              "allowed_validator": "run_static_check",
+              "dependencies": [],
+              "success_condition": "A command execution sink is located."
+            },
+            {
+              "task_id": "trace-request",
+              "objective": "Trace request input into the command sink.",
+              "expert": "taint",
+              "allowed_validator": "trace_dataflow",
+              "dependencies": [
+                "find-command-sink"
+              ],
+              "success_condition": "The unsanitized source-to-sink path is established."
+            }
+          ],
+          "rationale": "The entry delegates a request-derived command to another file."
+        },
+        "trace": [
+          {
+            "step": 1,
+            "model_id": "scripted-planner",
+            "tool_call": {
+              "call_id": "planner-tool-1",
+              "name": "read_span",
+              "arguments": {
+                "path": "controller.py"
+              }
+            },
+            "observation": {
+              "tool": "read_span",
+              "status": "ok",
+              "content": "def handle(request):\n    command = request.args['cmd']\n    return run_command(command)\n",
+              "evidence_ids": [
+                "span:controller.py"
+              ],
+              "metadata": {
+                "adapter_tier": "unknown",
+                "language": "unknown",
+                "path": "controller.py",
+                "defines": [
+                  "handle"
+                ],
+                "calls": [
+                  "run_command"
+                ],
+                "imports": [],
+                "routes": [],
+                "guards": [],
+                "observation_token_count": 168,
+                "observation_truncated": false,
+                "model_payload_suppressed": false
+              },
+              "citation_id": "planner/tool:1",
+              "validation_status": null,
+              "subject": null
+            }
+          }
+        ],
+        "model_ids": [
+          "scripted-planner"
+        ],
+        "model_calls": 2,
+        "tool_calls": 1,
+        "tool_observation_token_count": 168,
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null
+        }
+      },
+      "votes": [
+        {
+          "expert": "scan",
+          "label": "VULNERABLE",
+          "confidence": 0.9,
+          "validation_status": "UNRESOLVED",
+          "evidence_ids": [
+            "scan/tool:1"
+          ],
+          "supporting_observation_ids": [],
+          "counter_observation_ids": [],
+          "unresolved_observation_ids": [],
+          "rationale": "scan reached a scripted fixture conclusion.",
+          "runtime_mode": "scripted",
+          "trace": [
+            {
+              "step": 1,
+              "model_id": "scripted-scan",
+              "tool_call": {
+                "call_id": "scan-tool-1",
+                "name": "run_static_check",
+                "arguments": {
+                  "path": "service.py"
+                }
+              },
+              "observation": {
+                "tool": "run_static_check",
+                "status": "ok",
+                "content": "{\"finding_count\":1,\"findings\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"text\":\"return subprocess.run(command, shell=True)\"}],\"path\":\"service.py\"}",
+                "evidence_ids": [
+                  "static:service.py"
+                ],
+                "metadata": {
+                  "observation_token_count": 309,
+                  "observation_truncated": false,
+                  "model_payload_suppressed": false
+                },
+                "citation_id": "scan/tool:1",
+                "validation_status": "UNRESOLVED",
+                "subject": null
+              }
+            }
+          ],
+          "model_ids": [
+            "scripted-scan"
+          ],
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 309,
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null
+          }
+        },
+        {
+          "expert": "taint",
+          "label": "VULNERABLE",
+          "confidence": 0.9,
+          "validation_status": "UNRESOLVED",
+          "evidence_ids": [
+            "taint/tool:1"
+          ],
+          "supporting_observation_ids": [],
+          "counter_observation_ids": [],
+          "unresolved_observation_ids": [],
+          "rationale": "taint reached a scripted fixture conclusion.",
+          "runtime_mode": "scripted",
+          "trace": [
+            {
+              "step": 1,
+              "model_id": "scripted-taint",
+              "tool_call": {
+                "call_id": "taint-tool-1",
+                "name": "trace_dataflow",
+                "arguments": {
+                  "source_path": "controller.py"
+                }
+              },
+              "observation": {
+                "tool": "trace_dataflow",
+                "status": "ok",
+                "content": "{\"declared_input_parameters\":[],\"flow_status\":\"MAY_REACH\",\"status\":\"UNRESOLVED\",\"trace\":[{\"path\":\"controller.py\",\"sanitizers\":[],\"sinks\":[],\"sources\":[{\"categories\":[\"untrusted-input\"],\"line\":2,\"text\":\"command = request.args['cmd']\"}],\"tainted_calls\":[\"run_command\"],\"tainted_variables\":[]},{\"path\":\"service.py\",\"sanitizers\":[],\"sinks\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"tainted\":true,\"text\":\"return subprocess.run(command, shell=True)\"}],\"sources\":[],\"tainted_calls\":[\"subprocess.run\"],\"tainted_variables\":[]}],\"unresolved_edges\":[]}",
+                "evidence_ids": [
+                  "taint:controller.py",
+                  "taint:service.py"
+                ],
+                "metadata": {
+                  "observation_token_count": 754,
+                  "observation_truncated": false,
+                  "model_payload_suppressed": false
+                },
+                "citation_id": "taint/tool:1",
+                "validation_status": "UNRESOLVED",
+                "subject": null
+              }
+            }
+          ],
+          "model_ids": [
+            "scripted-taint"
+          ],
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 754,
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null
+          }
+        }
+      ],
+      "task_executions": [
+        {
+          "task_id": "find-command-sink",
+          "vote": {
+            "expert": "scan",
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "validation_status": "UNRESOLVED",
+            "evidence_ids": [
+              "scan/tool:1"
+            ],
+            "supporting_observation_ids": [],
+            "counter_observation_ids": [],
+            "unresolved_observation_ids": [],
+            "rationale": "scan reached a scripted fixture conclusion.",
+            "runtime_mode": "scripted",
+            "trace": [
+              {
+                "step": 1,
+                "model_id": "scripted-scan",
+                "tool_call": {
+                  "call_id": "scan-tool-1",
+                  "name": "run_static_check",
+                  "arguments": {
+                    "path": "service.py"
+                  }
+                },
+                "observation": {
+                  "tool": "run_static_check",
+                  "status": "ok",
+                  "content": "{\"finding_count\":1,\"findings\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"text\":\"return subprocess.run(command, shell=True)\"}],\"path\":\"service.py\"}",
+                  "evidence_ids": [
+                    "static:service.py"
+                  ],
+                  "metadata": {
+                    "observation_token_count": 309,
+                    "observation_truncated": false,
+                    "model_payload_suppressed": false
+                  },
+                  "citation_id": "scan/tool:1",
+                  "validation_status": "UNRESOLVED",
+                  "subject": null
+                }
+              }
+            ],
+            "model_ids": [
+              "scripted-scan"
+            ],
+            "model_calls": 2,
+            "tool_calls": 1,
+            "tool_observation_token_count": 309,
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "total_tokens": null
+            }
+          }
+        },
+        {
+          "task_id": "trace-request",
+          "vote": {
+            "expert": "taint",
+            "label": "VULNERABLE",
+            "confidence": 0.9,
+            "validation_status": "UNRESOLVED",
+            "evidence_ids": [
+              "taint/tool:1"
+            ],
+            "supporting_observation_ids": [],
+            "counter_observation_ids": [],
+            "unresolved_observation_ids": [],
+            "rationale": "taint reached a scripted fixture conclusion.",
+            "runtime_mode": "scripted",
+            "trace": [
+              {
+                "step": 1,
+                "model_id": "scripted-taint",
+                "tool_call": {
+                  "call_id": "taint-tool-1",
+                  "name": "trace_dataflow",
+                  "arguments": {
+                    "source_path": "controller.py"
+                  }
+                },
+                "observation": {
+                  "tool": "trace_dataflow",
+                  "status": "ok",
+                  "content": "{\"declared_input_parameters\":[],\"flow_status\":\"MAY_REACH\",\"status\":\"UNRESOLVED\",\"trace\":[{\"path\":\"controller.py\",\"sanitizers\":[],\"sinks\":[],\"sources\":[{\"categories\":[\"untrusted-input\"],\"line\":2,\"text\":\"command = request.args['cmd']\"}],\"tainted_calls\":[\"run_command\"],\"tainted_variables\":[]},{\"path\":\"service.py\",\"sanitizers\":[],\"sinks\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"tainted\":true,\"text\":\"return subprocess.run(command, shell=True)\"}],\"sources\":[],\"tainted_calls\":[\"subprocess.run\"],\"tainted_variables\":[]}],\"unresolved_edges\":[]}",
+                  "evidence_ids": [
+                    "taint:controller.py",
+                    "taint:service.py"
+                  ],
+                  "metadata": {
+                    "observation_token_count": 754,
+                    "observation_truncated": false,
+                    "model_payload_suppressed": false
+                  },
+                  "citation_id": "taint/tool:1",
+                  "validation_status": "UNRESOLVED",
+                  "subject": null
+                }
+              }
+            ],
+            "model_ids": [
+              "scripted-taint"
+            ],
+            "model_calls": 2,
+            "tool_calls": 1,
+            "tool_observation_token_count": 754,
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "total_tokens": null
+            }
+          }
+        }
+      ],
+      "model_calls": 6,
+      "tool_calls": 3,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      },
+      "retrieval_context_token_count": 526,
+      "tool_observation_token_count": 1231,
+      "context_token_count": 1757,
+      "context_accounting": "utf8-byte-upper-bound"
+    }
+  },
+  "synthetic": {
+    "dataset": "controlled-two-case-smoke",
+    "purpose": "validate directional wiring only; not a reported benchmark result",
+    "systems": {
+      "V1": {
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.35,
+            "path": "single",
+            "experts": [
+              "scan"
+            ]
+          },
+          "guarded-delete-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.8500000000000001,
+            "path": "single",
+            "experts": [
+              "scan"
+            ]
+          }
+        },
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 1,
+          "abstain_negative": 0
+        },
+        "strict_recall": 0.0,
+        "population_false_positive_rate": 1.0,
+        "coverage": 0.5
+      },
+      "V2": {
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.35,
+            "path": "single",
+            "experts": [
+              "scan"
+            ]
+          },
+          "guarded-delete-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.8500000000000001,
+            "path": "single",
+            "experts": [
+              "scan"
+            ]
+          }
+        },
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 1,
+          "abstain_negative": 0
+        },
+        "strict_recall": 0.0,
+        "population_false_positive_rate": 1.0,
+        "coverage": 0.5
+      },
+      "V3": {
+        "predictions": {
+          "cross-file-1": "VULNERABLE",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.8500000000000001,
+            "path": "single",
+            "experts": [
+              "scan"
+            ]
+          },
+          "guarded-delete-1": {
+            "label": "VULNERABLE",
+            "confidence": 0.8500000000000001,
+            "path": "single",
+            "experts": [
+              "scan"
+            ]
+          }
+        },
+        "confusion": {
+          "tp": 1,
+          "fp": 1,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 0,
+          "abstain_negative": 0
+        },
+        "strict_recall": 1.0,
+        "population_false_positive_rate": 1.0,
+        "coverage": 1.0
+      },
+      "V4": {
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.8500000000000001,
+            "path": "slow",
+            "experts": [
+              "scan",
+              "taint",
+              "flow"
+            ]
+          },
+          "guarded-delete-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.8500000000000001,
+            "path": "slow",
+            "experts": [
+              "scan",
+              "taint",
+              "authz"
+            ]
+          }
+        },
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 1,
+          "abstain_negative": 1
+        },
+        "strict_recall": 0.0,
+        "population_false_positive_rate": 0.0,
+        "coverage": 0.0
+      },
+      "V5": {
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "traces": {
+          "cross-file-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.8500000000000001,
+            "path": "slow",
+            "experts": [
+              "scan",
+              "taint",
+              "flow"
+            ]
+          },
+          "guarded-delete-1": {
+            "label": "ABSTAIN",
+            "confidence": 0.8500000000000001,
+            "path": "slow",
+            "experts": [
+              "scan",
+              "taint",
+              "authz"
+            ]
+          }
+        },
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "abstain_positive": 1,
+          "abstain_negative": 1
+        },
+        "strict_recall": 0.0,
+        "population_false_positive_rate": 0.0,
+        "coverage": 0.0
+      }
+    }
+  },
+  "schemas": {
+    "ChatMessage": {
+      "$defs": {
+        "ModelToolCall": {
+          "additionalProperties": false,
+          "properties": {
+            "call_id": {
+              "title": "Call Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "arguments": {
+              "additionalProperties": true,
+              "title": "Arguments",
+              "type": "object"
+            }
+          },
+          "required": [
+            "call_id",
+            "name",
+            "arguments"
+          ],
+          "title": "ModelToolCall",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "tool_call_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Call Id"
+        },
+        "tool_calls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ModelToolCall"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ChatMessage",
+      "type": "object"
+    },
+    "ModelReply": {
+      "$defs": {
+        "ModelToolCall": {
+          "additionalProperties": false,
+          "properties": {
+            "call_id": {
+              "title": "Call Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "arguments": {
+              "additionalProperties": true,
+              "title": "Arguments",
+              "type": "object"
+            }
+          },
+          "required": [
+            "call_id",
+            "name",
+            "arguments"
+          ],
+          "title": "ModelToolCall",
+          "type": "object"
+        },
+        "ModelUsage": {
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Input Tokens"
+            },
+            "output_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Output Tokens"
+            },
+            "total_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Total Tokens"
+            }
+          },
+          "title": "ModelUsage",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "title": "Model Id",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        },
+        "tool_calls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ModelToolCall"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        },
+        "usage": {
+          "$ref": "#/$defs/ModelUsage"
+        }
+      },
+      "required": [
+        "model_id"
+      ],
+      "title": "ModelReply",
+      "type": "object"
+    },
+    "ValidationSubject": {
+      "additionalProperties": false,
+      "properties": {
+        "input_parameters": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Parameters",
+          "type": "array"
+        },
+        "entry_boolean_arguments": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Entry Boolean Arguments",
+          "type": "object"
+        },
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "repository_id": {
+          "title": "Repository Id",
+          "type": "string"
+        },
+        "entry_path": {
+          "title": "Entry Path",
+          "type": "string"
+        },
+        "entry_line": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entry Line"
+        },
+        "source_digest": {
+          "title": "Source Digest",
+          "type": "string"
+        },
+        "analysis_scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Analysis Scope"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "repository_id",
+        "entry_path",
+        "source_digest"
+      ],
+      "title": "ValidationSubject",
+      "type": "object"
+    },
+    "ToolObservation": {
+      "$defs": {
+        "ValidationStatus": {
+          "enum": [
+            "CONFIRMED",
+            "REFUTED",
+            "UNRESOLVED"
+          ],
+          "title": "ValidationStatus",
+          "type": "string"
+        },
+        "ValidationSubject": {
+          "additionalProperties": false,
+          "properties": {
+            "input_parameters": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Input Parameters",
+              "type": "array"
+            },
+            "entry_boolean_arguments": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "title": "Entry Boolean Arguments",
+              "type": "object"
+            },
+            "candidate_id": {
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "repository_id": {
+              "title": "Repository Id",
+              "type": "string"
+            },
+            "entry_path": {
+              "title": "Entry Path",
+              "type": "string"
+            },
+            "entry_line": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Entry Line"
+            },
+            "source_digest": {
+              "title": "Source Digest",
+              "type": "string"
+            },
+            "analysis_scope": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Analysis Scope"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "repository_id",
+            "entry_path",
+            "source_digest"
+          ],
+          "title": "ValidationSubject",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "error",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "citation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation Id"
+        },
+        "validation_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationSubject"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "tool",
+        "status",
+        "content"
+      ],
+      "title": "ToolObservation",
+      "type": "object"
+    },
+    "AgentExpertConclusion": {
+      "$defs": {
+        "ValidationStatus": {
+          "enum": [
+            "CONFIRMED",
+            "REFUTED",
+            "UNRESOLVED"
+          ],
+          "title": "ValidationStatus",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "expert": {
+          "enum": [
+            "scan",
+            "taint",
+            "authz"
+          ],
+          "title": "Expert",
+          "type": "string"
+        },
+        "label": {
+          "enum": [
+            "VULNERABLE",
+            "SAFE",
+            "ABSTAIN"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "validation_status": {
+          "$ref": "#/$defs/ValidationStatus"
+        },
+        "evidence_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "supporting_observation_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Supporting Observation Ids",
+          "type": "array"
+        },
+        "counter_observation_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Counter Observation Ids",
+          "type": "array"
+        },
+        "unresolved_observation_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Unresolved Observation Ids",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 360,
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "expert",
+        "label",
+        "confidence",
+        "validation_status",
+        "rationale"
+      ],
+      "title": "AgentExpertConclusion",
+      "type": "object"
+    },
+    "ValidationPlan": {
+      "$defs": {
+        "ValidationSubtask": {
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {
+              "maxLength": 64,
+              "title": "Task Id",
+              "type": "string"
+            },
+            "objective": {
+              "maxLength": 280,
+              "title": "Objective",
+              "type": "string"
+            },
+            "expert": {
+              "enum": [
+                "scan",
+                "taint",
+                "authz"
+              ],
+              "title": "Expert",
+              "type": "string"
+            },
+            "allowed_validator": {
+              "maxLength": 80,
+              "title": "Allowed Validator",
+              "type": "string"
+            },
+            "dependencies": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Dependencies",
+              "type": "array"
+            },
+            "success_condition": {
+              "maxLength": 220,
+              "title": "Success Condition",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "objective",
+            "expert",
+            "allowed_validator",
+            "success_condition"
+          ],
+          "title": "ValidationSubtask",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "vulnerability_hypotheses": {
+          "items": {
+            "maxLength": 180,
+            "type": "string"
+          },
+          "title": "Vulnerability Hypotheses",
+          "type": "array"
+        },
+        "subtasks": {
+          "items": {
+            "$ref": "#/$defs/ValidationSubtask"
+          },
+          "title": "Subtasks",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "vulnerability_hypotheses",
+        "subtasks",
+        "rationale"
+      ],
+      "title": "ValidationPlan",
+      "type": "object"
+    },
+    "AgenticVerdict": {
+      "$defs": {
+        "AgentExpertVote": {
+          "additionalProperties": false,
+          "properties": {
+            "expert": {
+              "enum": [
+                "scan",
+                "taint",
+                "authz"
+              ],
+              "title": "Expert",
+              "type": "string"
+            },
+            "label": {
+              "enum": [
+                "VULNERABLE",
+                "SAFE",
+                "ABSTAIN"
+              ],
+              "title": "Label",
+              "type": "string"
+            },
+            "confidence": {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Confidence",
+              "type": "number"
+            },
+            "validation_status": {
+              "$ref": "#/$defs/ValidationStatus"
+            },
+            "evidence_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "supporting_observation_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Supporting Observation Ids",
+              "type": "array"
+            },
+            "counter_observation_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Counter Observation Ids",
+              "type": "array"
+            },
+            "unresolved_observation_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Unresolved Observation Ids",
+              "type": "array"
+            },
+            "rationale": {
+              "maxLength": 360,
+              "title": "Rationale",
+              "type": "string"
+            },
+            "runtime_mode": {
+              "$ref": "#/$defs/AgentRuntimeMode"
+            },
+            "trace": {
+              "items": {
+                "$ref": "#/$defs/ReActStep"
+              },
+              "title": "Trace",
+              "type": "array"
+            },
+            "model_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Model Ids",
+              "type": "array"
+            },
+            "model_calls": {
+              "minimum": 1,
+              "title": "Model Calls",
+              "type": "integer"
+            },
+            "tool_calls": {
+              "minimum": 1,
+              "title": "Tool Calls",
+              "type": "integer"
+            },
+            "tool_observation_token_count": {
+              "minimum": 0,
+              "title": "Tool Observation Token Count",
+              "type": "integer"
+            },
+            "usage": {
+              "$ref": "#/$defs/ModelUsage"
+            }
+          },
+          "required": [
+            "expert",
+            "label",
+            "confidence",
+            "validation_status",
+            "rationale",
+            "runtime_mode",
+            "trace",
+            "model_ids",
+            "model_calls",
+            "tool_calls",
+            "tool_observation_token_count",
+            "usage"
+          ],
+          "title": "AgentExpertVote",
+          "type": "object"
+        },
+        "AgentRuntimeMode": {
+          "enum": [
+            "scripted",
+            "live"
+          ],
+          "title": "AgentRuntimeMode",
+          "type": "string"
+        },
+        "ModelToolCall": {
+          "additionalProperties": false,
+          "properties": {
+            "call_id": {
+              "title": "Call Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "arguments": {
+              "additionalProperties": true,
+              "title": "Arguments",
+              "type": "object"
+            }
+          },
+          "required": [
+            "call_id",
+            "name",
+            "arguments"
+          ],
+          "title": "ModelToolCall",
+          "type": "object"
+        },
+        "ModelUsage": {
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Input Tokens"
+            },
+            "output_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Output Tokens"
+            },
+            "total_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Total Tokens"
+            }
+          },
+          "title": "ModelUsage",
+          "type": "object"
+        },
+        "PlannerResult": {
+          "additionalProperties": false,
+          "properties": {
+            "runtime_mode": {
+              "$ref": "#/$defs/AgentRuntimeMode"
+            },
+            "plan": {
+              "$ref": "#/$defs/ValidationPlan"
+            },
+            "trace": {
+              "items": {
+                "$ref": "#/$defs/ReActStep"
+              },
+              "title": "Trace",
+              "type": "array"
+            },
+            "model_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Model Ids",
+              "type": "array"
+            },
+            "model_calls": {
+              "minimum": 1,
+              "title": "Model Calls",
+              "type": "integer"
+            },
+            "tool_calls": {
+              "minimum": 1,
+              "title": "Tool Calls",
+              "type": "integer"
+            },
+            "tool_observation_token_count": {
+              "minimum": 0,
+              "title": "Tool Observation Token Count",
+              "type": "integer"
+            },
+            "usage": {
+              "$ref": "#/$defs/ModelUsage"
+            }
+          },
+          "required": [
+            "runtime_mode",
+            "plan",
+            "trace",
+            "model_ids",
+            "model_calls",
+            "tool_calls",
+            "tool_observation_token_count",
+            "usage"
+          ],
+          "title": "PlannerResult",
+          "type": "object"
+        },
+        "ReActStep": {
+          "additionalProperties": false,
+          "properties": {
+            "step": {
+              "minimum": 1,
+              "title": "Step",
+              "type": "integer"
+            },
+            "model_id": {
+              "title": "Model Id",
+              "type": "string"
+            },
+            "tool_call": {
+              "$ref": "#/$defs/ModelToolCall"
+            },
+            "observation": {
+              "$ref": "#/$defs/ToolObservation"
+            }
+          },
+          "required": [
+            "step",
+            "model_id",
+            "tool_call",
+            "observation"
+          ],
+          "title": "ReActStep",
+          "type": "object"
+        },
+        "ToolObservation": {
+          "additionalProperties": false,
+          "properties": {
+            "tool": {
+              "title": "Tool",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "ok",
+                "error",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "content": {
+              "title": "Content",
+              "type": "string"
+            },
+            "evidence_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "metadata": {
+              "additionalProperties": true,
+              "title": "Metadata",
+              "type": "object"
+            },
+            "citation_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Citation Id"
+            },
+            "validation_status": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ValidationStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "subject": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ValidationSubject"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "tool",
+            "status",
+            "content"
+          ],
+          "title": "ToolObservation",
+          "type": "object"
+        },
+        "ValidationPlan": {
+          "additionalProperties": false,
+          "properties": {
+            "candidate_id": {
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "vulnerability_hypotheses": {
+              "items": {
+                "maxLength": 180,
+                "type": "string"
+              },
+              "title": "Vulnerability Hypotheses",
+              "type": "array"
+            },
+            "subtasks": {
+              "items": {
+                "$ref": "#/$defs/ValidationSubtask"
+              },
+              "title": "Subtasks",
+              "type": "array"
+            },
+            "rationale": {
+              "maxLength": 600,
+              "title": "Rationale",
+              "type": "string"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "vulnerability_hypotheses",
+            "subtasks",
+            "rationale"
+          ],
+          "title": "ValidationPlan",
+          "type": "object"
+        },
+        "ValidationStatus": {
+          "enum": [
+            "CONFIRMED",
+            "REFUTED",
+            "UNRESOLVED"
+          ],
+          "title": "ValidationStatus",
+          "type": "string"
+        },
+        "ValidationSubject": {
+          "additionalProperties": false,
+          "properties": {
+            "input_parameters": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Input Parameters",
+              "type": "array"
+            },
+            "entry_boolean_arguments": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "title": "Entry Boolean Arguments",
+              "type": "object"
+            },
+            "candidate_id": {
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "repository_id": {
+              "title": "Repository Id",
+              "type": "string"
+            },
+            "entry_path": {
+              "title": "Entry Path",
+              "type": "string"
+            },
+            "entry_line": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Entry Line"
+            },
+            "source_digest": {
+              "title": "Source Digest",
+              "type": "string"
+            },
+            "analysis_scope": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Analysis Scope"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "repository_id",
+            "entry_path",
+            "source_digest"
+          ],
+          "title": "ValidationSubject",
+          "type": "object"
+        },
+        "ValidationSubtask": {
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {
+              "maxLength": 64,
+              "title": "Task Id",
+              "type": "string"
+            },
+            "objective": {
+              "maxLength": 280,
+              "title": "Objective",
+              "type": "string"
+            },
+            "expert": {
+              "enum": [
+                "scan",
+                "taint",
+                "authz"
+              ],
+              "title": "Expert",
+              "type": "string"
+            },
+            "allowed_validator": {
+              "maxLength": 80,
+              "title": "Allowed Validator",
+              "type": "string"
+            },
+            "dependencies": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Dependencies",
+              "type": "array"
+            },
+            "success_condition": {
+              "maxLength": 220,
+              "title": "Success Condition",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "objective",
+            "expert",
+            "allowed_validator",
+            "success_condition"
+          ],
+          "title": "ValidationSubtask",
+          "type": "object"
+        },
+        "ValidationTaskExecution": {
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task Id"
+            },
+            "vote": {
+              "$ref": "#/$defs/AgentExpertVote"
+            }
+          },
+          "required": [
+            "task_id",
+            "vote"
+          ],
+          "title": "ValidationTaskExecution",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "runtime_mode": {
+          "$ref": "#/$defs/AgentRuntimeMode"
+        },
+        "label": {
+          "enum": [
+            "VULNERABLE",
+            "SAFE",
+            "ABSTAIN"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "path": {
+          "enum": [
+            "single",
+            "fast",
+            "slow"
+          ],
+          "title": "Path",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "planner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlannerResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "votes": {
+          "items": {
+            "$ref": "#/$defs/AgentExpertVote"
+          },
+          "title": "Votes",
+          "type": "array"
+        },
+        "task_executions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ValidationTaskExecution"
+          },
+          "title": "Task Executions",
+          "type": "array"
+        },
+        "model_calls": {
+          "minimum": 1,
+          "title": "Model Calls",
+          "type": "integer"
+        },
+        "tool_calls": {
+          "minimum": 1,
+          "title": "Tool Calls",
+          "type": "integer"
+        },
+        "usage": {
+          "$ref": "#/$defs/ModelUsage"
+        },
+        "retrieval_context_token_count": {
+          "minimum": 0,
+          "title": "Retrieval Context Token Count",
+          "type": "integer"
+        },
+        "tool_observation_token_count": {
+          "minimum": 0,
+          "title": "Tool Observation Token Count",
+          "type": "integer"
+        },
+        "context_token_count": {
+          "minimum": 0,
+          "title": "Context Token Count",
+          "type": "integer"
+        },
+        "context_accounting": {
+          "const": "utf8-byte-upper-bound",
+          "default": "utf8-byte-upper-bound",
+          "title": "Context Accounting",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runtime_mode",
+        "label",
+        "confidence",
+        "path",
+        "rationale",
+        "votes",
+        "model_calls",
+        "tool_calls",
+        "usage",
+        "retrieval_context_token_count",
+        "tool_observation_token_count",
+        "context_token_count"
+      ],
+      "title": "AgenticVerdict",
+      "type": "object"
+    }
+  }
+}

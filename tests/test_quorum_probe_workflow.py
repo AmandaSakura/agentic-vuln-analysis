@@ -1,7 +1,7 @@
 import pytest
 
 from cv_agent.harness import AgentSystemVersion
-from cv_agent.quorum_probe_smoke import run_probe_case
+from cv_agent.evaluation.quorum_probe import run_probe_case
 
 
 @pytest.mark.parametrize("case,label,path,saved_calls", [

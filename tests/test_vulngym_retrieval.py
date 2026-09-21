@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 
-import cv_agent.vulngym_retrieval as retrieval
-from cv_agent.python_ast import PythonDocumentSpan, parse_python_source
-from cv_agent.provenance import GitIdentity
+import cv_agent.evaluation.datasets.vulngym_retrieval as retrieval
+from cv_agent.code_adapters.python import PythonDocumentSpan, parse_python_source
+from cv_agent.runtime.provenance import GitIdentity
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import CodeDocument, Evidence
-from cv_agent.vulngym_retrieval import _hit
+from cv_agent.domain.types import CodeDocument, Evidence
+from cv_agent.evaluation.datasets.vulngym_retrieval import _hit
 
 
 def test_subject_checkout_revision_must_match_selection(

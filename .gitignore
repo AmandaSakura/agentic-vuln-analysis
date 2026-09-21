@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 .pytest_cache/
+.coverage
 *.py[cod]
 data/raw/
 data/derived/

@@ -1,6 +1,6 @@
 from cv_agent.harness import RetrievalBudget, RetrievalMode
 from cv_agent.retrieval import RepositoryIndex, context_token_count, limit_evidence_context
-from cv_agent.types import Candidate, CodeDocument, Evidence
+from cv_agent.domain.types import Candidate, CodeDocument, Evidence
 
 
 def test_explicit_bidirectional_graph_budget_admits_caller_only_when_requested():

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from cv_agent.python_ast import load_python_repository
+from cv_agent.code_adapters.python import load_python_repository
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate
+from cv_agent.domain.types import Candidate
 
 
 def test_python_ast_call_graph_retrieves_imported_function(tmp_path: Path):

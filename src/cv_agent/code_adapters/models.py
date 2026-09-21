@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Literal
 
-from ..types import CodeDocument
+from cv_agent.domain.types import CodeDocument
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,6 @@
+{
+  "source": "artifacts/real_source_smoke/d1891dbaa76244d7a4dc76888c9e4dbc/events.jsonl",
+  "model_config": "configs/models/micro_benchmark_gemini_native.json",
+  "probes": [["PrefectHQ", 1200], ["PrefectHQ", 8192], ["jlowin", 8192], ["jlowin", 1200]],
+  "max_requests": 4
+}

@@ -3,15 +3,7 @@ from __future__ import annotations
 
 import re
 
-from ..java_lexical import (
-    ASSIGNMENT_RE,
-    COLLECTION_GET_RE,
-    COLLECTION_PUT_RE,
-    SINK_VALUE_NAMES,
-    STRING_LITERAL_RE,
-    split_first_argument as _split_first_argument,
-    value_identifiers as _value_identifiers,
-)
+from cv_agent.code_adapters.java_lexical import ASSIGNMENT_RE, COLLECTION_GET_RE, COLLECTION_PUT_RE, SINK_VALUE_NAMES, STRING_LITERAL_RE, split_first_argument as _split_first_argument, value_identifiers as _value_identifiers
 
 
 INLINE_IF_RE = re.compile(r"^\s*if\s*\([^)]*\)\s*(?P<trailing>.+)$")

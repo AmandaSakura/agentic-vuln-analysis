@@ -1,16 +1,9 @@
-import importlib.util
+import importlib
 from pathlib import Path
 import sys
 import pytest
 
-SCRIPTS_DIR = Path(__file__).parents[1] / "scripts"
-spec = importlib.util.spec_from_file_location(
-    "reproduce_langchain_template_pair",
-    SCRIPTS_DIR / "reproduce_langchain_template_pair.py",
-)
-reproduce_mod = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = reproduce_mod
-spec.loader.exec_module(reproduce_mod)
+reproduce_mod = importlib.import_module("cv_agent.evaluation.runners.reproduce_langchain_template_pair")
 
 VULN_CHECKOUT = reproduce_mod.VULN_CHECKOUT
 FIXED_CHECKOUT = reproduce_mod.FIXED_CHECKOUT

@@ -1,5 +1,5 @@
-from cv_agent.python_heldout_pair_config import PythonHeldoutPairExperimentConfig
-from cv_agent.python_heldout_pair_source import build_pair_input, document_symbol
+from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig
+from cv_agent.evaluation.datasets.advisory_source import build_pair_input, document_symbol
 
 from test_python_heldout_pair_config import config_dict
 

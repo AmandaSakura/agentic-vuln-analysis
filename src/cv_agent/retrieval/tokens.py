@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 import re
 
-from ..types import Evidence
+from cv_agent.domain.types import Evidence
 
 
 TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{1,}")

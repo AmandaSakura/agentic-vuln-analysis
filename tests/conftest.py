@@ -5,7 +5,7 @@ import urllib.request
 
 import pytest
 
-from cv_agent import model_runtime
+from cv_agent.runtime import model as model_runtime
 
 
 @pytest.fixture(autouse=True)

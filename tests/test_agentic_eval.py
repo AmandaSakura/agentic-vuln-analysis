@@ -1,4 +1,4 @@
-from cv_agent.agentic_eval import run_agentic_scripted_eval
+from cv_agent.evaluation.scripted import run_agentic_scripted_eval
 
 
 def test_scripted_agentic_eval_reduces_false_positives_vs_graph_single():

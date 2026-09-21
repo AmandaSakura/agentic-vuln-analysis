@@ -1,11 +1,7 @@
 from pathlib import Path
 
-from cv_agent.owasp_rag import (
-    _sink_evidence_origin,
-    evaluate_owasp_rag,
-    predict_owasp_rag,
-)
-from cv_agent.types import OwaspLabel
+from cv_agent.baselines.owasp_rag import _sink_evidence_origin, evaluate_owasp_rag, predict_owasp_rag
+from cv_agent.domain.types import OwaspLabel
 
 
 def test_sink_evidence_origin_distinguishes_candidate_case_and_shared_code():

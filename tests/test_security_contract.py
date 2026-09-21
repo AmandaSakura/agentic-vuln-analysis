@@ -3,11 +3,11 @@ import json
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry
-from cv_agent.agent_types import ModelToolCall
-from cv_agent.python_ast import parse_python_source
+from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.code_adapters.python import parse_python_source
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.validation_tools import full_agent_tools
+from cv_agent.tools.validation import full_agent_tools
 
 
 def make_index(files):
@@ -126,6 +126,6 @@ def test_dataflow_cannot_start_at_another_retrieved_entry():
 
 def test_detector_pair_ids_are_neutral():
     from pathlib import Path
-    config = json.loads((Path(__file__).parents[1] / "configs/langchain_pair_eval.json").read_text())
+    config = json.loads((Path(__file__).parents[1] / "configs/experiments/langchain_pair_eval.json").read_text())
     for case in config["detector_cases"]:
         assert not any(word in case["case_id"].lower() for word in ("vulnerable", "fixed", "safe", "cve"))

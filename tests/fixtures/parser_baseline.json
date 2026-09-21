@@ -1,0 +1,101 @@
+{
+  "python": [
+    {
+      "relative_path": "src/backend/base/api.py",
+      "start_line": 4,
+      "end_line": 6,
+      "document": {
+        "repository_id": "repo",
+        "path": "src/backend/base/api.py::entry@4-6",
+        "text": "def entry(request):\n    external.client.run(request)\n    return run(request)\n",
+        "language": "python",
+        "adapter_tier": "ast",
+        "defines": [
+          "api.entry",
+          "entry"
+        ],
+        "calls": [
+          "external.client.run",
+          "service.run"
+        ],
+        "imports": [
+          "external",
+          "service.run"
+        ],
+        "routes": [],
+        "guards": [],
+        "import_aliases": {
+          "run": "service.run",
+          "external": "external"
+        },
+        "module_bindings": [
+          "entry",
+          "external",
+          "run"
+        ],
+        "module_rebindings": []
+      }
+    },
+    {
+      "relative_path": "src/backend/base/api.py",
+      "start_line": 8,
+      "end_line": 9,
+      "document": {
+        "repository_id": "repo",
+        "path": "src/backend/base/api.py::run@8-9",
+        "text": "def run(value):\n    return value\n",
+        "language": "python",
+        "adapter_tier": "ast",
+        "defines": [
+          "api.run",
+          "run"
+        ],
+        "calls": [],
+        "imports": [
+          "external",
+          "service.run"
+        ],
+        "routes": [],
+        "guards": [],
+        "import_aliases": {
+          "run": "service.run",
+          "external": "external"
+        },
+        "module_bindings": [
+          "entry",
+          "external",
+          "run"
+        ],
+        "module_rebindings": []
+      }
+    }
+  ],
+  "java": {
+    "documents": [
+      {
+        "repository_id": "repo",
+        "path": "demo/Handler.java::Handler.handle@4",
+        "text": "public void handle(Statement stmt, String input) throws Exception {\n    stmt.executeQuery(input);\n  }",
+        "language": "java",
+        "adapter_tier": "ast",
+        "defines": [
+          "Handler.handle",
+          "Handler.handle#2",
+          "Handler.handle(Statement,String)",
+          "handle"
+        ],
+        "calls": [
+          "Statement.executeQuery",
+          "Statement.executeQuery(String)"
+        ],
+        "imports": [],
+        "routes": [],
+        "guards": [],
+        "import_aliases": {},
+        "module_bindings": [],
+        "module_rebindings": []
+      }
+    ],
+    "has_error": false
+  }
+}

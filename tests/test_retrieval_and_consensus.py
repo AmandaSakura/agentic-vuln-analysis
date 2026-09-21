@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from cv_agent.consensus import QuorumPolicy
+from cv_agent.agents.voting import QuorumPolicy
 from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.synthetic import cross_file_fixture, guarded_delete_fixture
-from cv_agent.types import Candidate, CodeDocument, ExpertVote, SystemVersion
-from cv_agent.workflow import AgentPipeline, PipelineConfig
+from cv_agent.baselines.synthetic import cross_file_fixture, guarded_delete_fixture
+from cv_agent.domain.types import Candidate, CodeDocument, ExpertVote, SystemVersion
+from cv_agent.baselines.workflow import AgentPipeline, PipelineConfig
 
 
 def test_one_expert_cannot_form_a_quorum_with_duplicate_ballots():

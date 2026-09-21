@@ -4,9 +4,9 @@ from __future__ import annotations
 import re
 from pathlib import PurePosixPath
 
-from ..harness import FULL_SYSTEM_HARNESS
-from ..types import CodeDocument
-from .models import ParsedSource, SourceDocumentSpan
+from cv_agent.harness import FULL_SYSTEM_HARNESS
+from cv_agent.domain.types import CodeDocument
+from cv_agent.code_adapters.models import ParsedSource, SourceDocumentSpan
 
 
 FALLBACK_SUFFIXES = frozenset(FULL_SYSTEM_HARNESS.fallback_suffixes)

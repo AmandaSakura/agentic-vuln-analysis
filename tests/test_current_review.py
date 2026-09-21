@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.agent_tools import candidate_subject
-from cv_agent.agentic_workflow import _bounded_context_prompt
-from cv_agent.python_ast import parse_python_source
-from cv_agent.python_probe import probe_python_eval
+from cv_agent.tools.identity import candidate_subject
+from cv_agent.agents.workflow import _bounded_context_prompt
+from cv_agent.code_adapters.python import parse_python_source
+from cv_agent.tools.analysis.python_probe import probe_python_eval
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate
+from cv_agent.domain.types import Candidate
 
 
 def index_for(source):
@@ -51,8 +51,8 @@ def test_explicit_scope_reaches_model_without_retrieval_query_or_labels():
 
 
 def test_active_heldout_excludes_newly_used_development_repository():
-    from cv_agent.heldout_manifest import prepare_heldout
-    config = json.loads((Path(__file__).parents[1] / 'configs/heldout_preparation_v2.json').read_text())
+    from cv_agent.evaluation.datasets.heldout_manifest import prepare_heldout
+    config = json.loads((Path(__file__).parents[1] / 'configs/preparation/heldout_preparation_v2.json').read_text())
     rows = [dict(entry_id=identity, repo_url=repo, report_id=advisory, verify=1, commit='a'*40)
             for identity, repo, advisory in [
                 ('dev', 'https://github.com/langchain-ai/langchain', 'shared'),
@@ -60,13 +60,12 @@ def test_active_heldout_excludes_newly_used_development_repository():
                 ('heldout', 'https://github.com/other/project', 'independent')]]
     prepared = prepare_heldout(rows, config['development_repositories'])
     assert set(prepared['evaluator_labels']) == {'heldout'}
-    assert config['detector_output'] != 'configs/vulngym_heldout_inputs.json'
+    assert config['detector_output'] != 'configs/datasets/vulngym_heldout_inputs.json'
 
 
 def test_scanner_coverage_requires_exact_source_and_line(monkeypatch, tmp_path):
     from types import SimpleNamespace
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[1] / 'scripts'))
-    import profile_langchain_scanner_coverage as mod
+    import cv_agent.evaluation.diagnostics.profile_langchain_scanner_coverage as mod
     candidate = Candidate(candidate_id='one', case_id='one', repository_id='review',
         path='langchain_core/prompts/prompt.py::other@180-210', line=200, query='eval')
     monkeypatch.setattr(mod, 'git_identity', lambda _: SimpleNamespace(revision='a'*40))

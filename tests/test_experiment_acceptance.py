@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from cv_agent.agent_types import ValidationSubject
+from cv_agent.domain.evidence import ValidationSubject
 
 
 def evidence_rows():
@@ -31,7 +31,7 @@ def evidence_rows():
 
 
 def test_acceptance_requires_exact_ten_cells_and_bound_validator_evidence():
-    from cv_agent.experiment_acceptance import acceptance_issues
+    from cv_agent.evaluation.protocols.development import acceptance_issues
     rows, summary, expected, subjects = evidence_rows()
     assert acceptance_issues(rows, summary, expected, subjects) == []
     for mutate in ('unresolved', 'no_trace', 'wrong_subject', 'wrong_label', 'duplicate', 'missing', 'usage'):
@@ -55,7 +55,7 @@ def test_acceptance_requires_exact_ten_cells_and_bound_validator_evidence():
 
 
 def test_full_gate_rejects_stale_fingerprint_and_changed_protocol(tmp_path, monkeypatch):
-    from cv_agent.experiment_acceptance import require_development_acceptance
+    from cv_agent.evaluation.protocols.development import require_development_acceptance
     import json
     directory = tmp_path / 'artifacts/development_benchmark/pilot'
     directory.mkdir(parents=True)
@@ -66,7 +66,7 @@ def test_full_gate_rejects_stale_fingerprint_and_changed_protocol(tmp_path, monk
 
 
 def test_transport_acceptance_does_not_treat_stripped_limit_as_effective():
-    from cv_agent.experiment_acceptance import transport_issues
+    from cv_agent.evaluation.protocols.development import transport_issues
     events = [dict(event='model_start', request_id='one'),
               dict(event='model_proxy_diagnostic', request_id='one',
                    diagnostic=dict(diagnosis='upstream_response', output_limit_status='missing'))]
@@ -78,10 +78,10 @@ def test_transport_acceptance_does_not_treat_stripped_limit_as_effective():
 
 
 def test_verification_batch_rejects_prediction_only_tools_before_live_calls():
-    from cv_agent.experiment_acceptance import require_verification_capability
-    from cv_agent.validation_tools import full_agent_tools
+    from cv_agent.evaluation.protocols.development import require_verification_capability
+    from cv_agent.tools.validation import full_agent_tools
     from cv_agent.retrieval import RepositoryIndex
-    from cv_agent.types import CodeDocument
+    from cv_agent.domain.types import CodeDocument
     from dataclasses import replace
     index = RepositoryIndex([CodeDocument(repository_id='repo', path='Entry.java',
                             text='public void doPost() {}', language='java', adapter_tier='ast')])
@@ -94,8 +94,8 @@ def test_verification_batch_rejects_prediction_only_tools_before_live_calls():
 
 def test_full_gate_revalidates_evidence_not_the_stored_pass_boolean(tmp_path):
     import json
-    from cv_agent.experiment_acceptance import require_development_acceptance
-    from cv_agent.live_gate import source_fingerprint
+    from cv_agent.evaluation.protocols.development import require_development_acceptance
+    from cv_agent.runtime.admission import source_fingerprint
     rows, summary, expected, subjects = evidence_rows()
     directory = tmp_path / 'artifacts/development_benchmark/pilot'
     directory.mkdir(parents=True)

@@ -2,29 +2,16 @@ import json
 
 import pytest
 
-from cv_agent.agent_tools import (
-    AgentTool,
-    ReadSpanInput,
-    ToolExecutionScope,
-    ToolRegistry,
-    repository_tools,
-)
-from cv_agent.agent_types import (
-    ModelReply,
-    ModelToolCall,
-    ModelUsage,
-    ToolObservation,
-)
-from cv_agent.agentic_workflow import AgenticPipeline
-from cv_agent.harness import (
-    FULL_SYSTEM_HARNESS,
-    AgentRuntimeMode,
-    AgentSystemVersion,
-)
-from cv_agent.model_runtime import OpenAICompatibleChatModel, ScriptedChatModel
+from cv_agent.tools.registry import AgentTool, ToolExecutionScope, ToolRegistry
+from cv_agent.tools.repository import ReadSpanInput, repository_tools
+from cv_agent.domain.chat import ModelReply, ModelToolCall, ModelUsage
+from cv_agent.domain.evidence import ToolObservation
+from cv_agent.agents.workflow import AgenticPipeline
+from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemVersion
+from cv_agent.runtime.model import OpenAICompatibleChatModel, ScriptedChatModel
 from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count
-from cv_agent.types import Candidate, CodeDocument, FrozenModel
-from cv_agent.validation_tools import full_agent_tools
+from cv_agent.domain.types import Candidate, CodeDocument, FrozenModel
+from cv_agent.tools.validation import full_agent_tools
 
 
 ENTRY_PATH = "handler.py::handle@1-3"
@@ -492,7 +479,7 @@ def test_unopposed_typed_validator_status_does_not_replace_workflow_quorum(syste
             rationale="Two inputs reached builtin eval"))),
     ])
     index, candidate = _index_and_candidate()
-    from cv_agent.python_ast import parse_python_source
+    from cv_agent.code_adapters.python import parse_python_source
     index = RepositoryIndex(span.document for span in parse_python_source(
         "repo", "handler.py", index.document(ENTRY_PATH).text))
     pipeline = AgenticPipeline(index=index, system=system, models=models,

@@ -6,11 +6,10 @@ import pytest
 
 
 ROOT = Path(__file__).parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
 
 
 def test_advisory_parser_extracts_same_repository_commit_and_versions():
-    mod = importlib.import_module("prepare_python_heldout_pairs")
+    mod = importlib.import_module('cv_agent.evaluation.preparation.prepare_python_heldout_pairs')
     html = """
       <div>Package pip mlflow ( pip )</div>
       <div>Affected versions &lt; 3.4.0rc0</div>
@@ -33,13 +32,13 @@ def test_advisory_parser_extracts_same_repository_commit_and_versions():
 
 
 def test_line_parser_accepts_ranges():
-    mod = importlib.import_module("prepare_python_heldout_pairs")
+    mod = importlib.import_module('cv_agent.evaluation.preparation.prepare_python_heldout_pairs')
     assert mod.first_line("493-494") == 493
     assert mod.first_line(761) == 761
 
 
 def test_fixed_commit_selection_skips_unrelated_advisory_commit(monkeypatch):
-    mod = importlib.import_module("prepare_python_heldout_pairs")
+    mod = importlib.import_module('cv_agent.evaluation.preparation.prepare_python_heldout_pairs')
     row = {
         "repo_url": "https://github.com/example/project",
         "commit": "a" * 40,
@@ -86,7 +85,7 @@ def test_fixed_commit_selection_skips_unrelated_advisory_commit(monkeypatch):
 
 
 def test_fixed_commit_selection_rejects_partial_same_file_fix(monkeypatch):
-    mod = importlib.import_module("prepare_python_heldout_pairs")
+    mod = importlib.import_module('cv_agent.evaluation.preparation.prepare_python_heldout_pairs')
     row = {
         "repo_url": "https://github.com/example/project",
         "commit": "a" * 40,
@@ -130,7 +129,7 @@ def test_fixed_commit_selection_rejects_partial_same_file_fix(monkeypatch):
 
 
 def test_scope_mentions_uncommon_helper_basename_only():
-    mod = importlib.import_module("prepare_python_heldout_pairs")
+    mod = importlib.import_module('cv_agent.evaluation.preparation.prepare_python_heldout_pairs')
     row = {
         "vuln_title": "MLflow command injection in mlserver.py",
         "vuln_category_l1": "injection",
@@ -159,7 +158,7 @@ def test_scope_mentions_uncommon_helper_basename_only():
     ("changed_helper", "candidate_specific_repair_observed"),
 ])
 def test_repair_admission_requires_bound_source_and_observed_change(monkeypatch, mode, expected_reason):
-    mod = importlib.import_module("prepare_python_heldout_pairs")
+    mod = importlib.import_module('cv_agent.evaluation.preparation.prepare_python_heldout_pairs')
     row = {
         "vuln_title": "Command injection in command_helper.py",
         "vuln_category_l1": "injection", "vuln_category_l2": "command",

@@ -7,9 +7,9 @@ from collections import defaultdict
 import tree_sitter_go
 from tree_sitter import Language, Node, Parser
 
-from ..types import CodeDocument
-from .common import GUARD_RE, _descendants, _node_text
-from .models import ParsedSource, SourceDocumentSpan
+from cv_agent.domain.types import CodeDocument
+from cv_agent.code_adapters.common import GUARD_RE, _descendants, _node_text
+from cv_agent.code_adapters.models import ParsedSource, SourceDocumentSpan
 
 
 GO_LANGUAGE = Language(tree_sitter_go.language())

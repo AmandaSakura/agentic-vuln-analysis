@@ -3,13 +3,13 @@ import json
 
 import pytest
 
-from cv_agent.agent_tools import ToolRegistry
-from cv_agent.agent_types import ModelReply, ModelToolCall
-from cv_agent.agentic_workflow import AgenticPipeline
+from cv_agent.tools.registry import ToolRegistry
+from cv_agent.domain.chat import ModelReply, ModelToolCall
+from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.harness import AgentSystemVersion
-from cv_agent.model_runtime import ScriptedChatModel
-from cv_agent.repository_discovery import discover_python_repository
-from cv_agent.validation_tools import full_agent_tools
+from cv_agent.runtime.model import ScriptedChatModel
+from cv_agent.agents.discovery import discover_python_repository
+from cv_agent.tools.validation import full_agent_tools
 
 
 @pytest.mark.parametrize('expression,label,status', [

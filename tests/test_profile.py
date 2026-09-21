@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from cv_agent.profile import profile_public_data
+from cv_agent.evaluation.datasets.profile import profile_public_data
 
 
 def test_profile_reports_aggregates_only(tmp_path):

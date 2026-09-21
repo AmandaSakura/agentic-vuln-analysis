@@ -4,11 +4,10 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / 'scripts'))
 
 
 def test_neutral_candidate_and_bound_evidence(tmp_path, monkeypatch):
-    mod = importlib.import_module('run_langchain_pair_eval')
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_langchain_pair_eval')
     source = tmp_path / 'prompt.py'
     source.write_text('class PromptTemplate:\n    def from_template(template):\n        return template\n')
     case = dict(case_id='template_case_01', file_path='prompt.py',
@@ -33,7 +32,7 @@ def test_neutral_candidate_and_bound_evidence(tmp_path, monkeypatch):
 
 
 def test_unknown_fixture_is_rejected():
-    mod = importlib.import_module('run_langchain_pair_eval')
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_langchain_pair_eval')
     with pytest.raises(ValueError):
         mod.PairInput(fixture_id='arbitrary-execution')
 
@@ -41,11 +40,11 @@ def test_unknown_fixture_is_rejected():
 @pytest.mark.parametrize('status,label', [('CONFIRMED', 'VULNERABLE'), ('REFUTED', 'SAFE')])
 def test_fixture_through_agent_pipeline(tmp_path, monkeypatch, status, label):
     import json
-    from cv_agent.agentic_workflow import AgenticPipeline
-    from cv_agent.agent_tools import ToolRegistry
-    from cv_agent.agent_types import ModelReply, ModelToolCall
-    from cv_agent.model_runtime import ScriptedChatModel
-    mod = importlib.import_module('run_langchain_pair_eval')
+    from cv_agent.agents.workflow import AgenticPipeline
+    from cv_agent.tools.registry import ToolRegistry
+    from cv_agent.domain.chat import ModelReply, ModelToolCall
+    from cv_agent.runtime.model import ScriptedChatModel
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_langchain_pair_eval')
     (tmp_path / 'prompt.py').write_text('class PromptTemplate:\n    def from_template(template):\n        return template\n')
     case = dict(case_id='template_case_01', file_path='prompt.py', entry_symbol='PromptTemplate.from_template')
     index, candidate = mod.build_input(tmp_path, case)
@@ -67,9 +66,9 @@ def test_fixture_through_agent_pipeline(tmp_path, monkeypatch, status, label):
 
 
 def test_real_pair_entry_is_located():
-    mod = importlib.import_module('run_langchain_pair_eval')
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_langchain_pair_eval')
     import json
-    config = json.loads((mod.project_root / 'configs/langchain_pair_eval.json').read_text())
+    config = json.loads((mod.project_root / 'configs/experiments/langchain_pair_eval.json').read_text())
     for case in config['detector_cases']:
         checkout = mod.project_root / config['runner_private_checkouts'][case['case_id']]
         if not checkout.exists():

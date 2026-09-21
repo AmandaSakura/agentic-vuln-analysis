@@ -3,10 +3,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, ToolRegistry
-from cv_agent.agent_types import ModelToolCall
-from cv_agent.python_ast import parse_python_source
-from cv_agent.validation_tools import full_agent_tools
+from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
+from cv_agent.domain.chat import ModelToolCall
+from cv_agent.code_adapters.python import parse_python_source
+from cv_agent.tools.validation import full_agent_tools
 from cv_agent.retrieval import RepositoryIndex
 
 

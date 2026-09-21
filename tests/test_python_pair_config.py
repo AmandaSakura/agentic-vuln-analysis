@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.python_pair_config import PythonPairExperimentConfig, PythonPairLabels
+from cv_agent.evaluation.datasets.python_pair_config import PythonPairExperimentConfig, PythonPairLabels
 
 
 ROOT = Path(__file__).parents[1]
@@ -11,10 +11,10 @@ ROOT = Path(__file__).parents[1]
 
 def test_pair_configs_are_fixed_size_and_labels_are_evaluator_only():
     gate = PythonPairExperimentConfig.model_validate_json(
-        (ROOT / "configs/python_pair_gate.json").read_text()
+        (ROOT / "configs/experiments/python_pair_gate.json").read_text()
     )
     matrix = PythonPairExperimentConfig.model_validate_json(
-        (ROOT / "configs/python_pair_matrix.json").read_text()
+        (ROOT / "configs/experiments/python_pair_matrix.json").read_text()
     )
     labels = PythonPairLabels.model_validate_json(
         (ROOT / gate.label_file).read_text()
@@ -35,15 +35,15 @@ def test_pair_configs_are_fixed_size_and_labels_are_evaluator_only():
 
 
 def test_config_rejects_expansion_duplicate_systems_and_path_escape():
-    value = json.loads((ROOT / "configs/python_pair_gate.json").read_text())
+    value = json.loads((ROOT / "configs/experiments/python_pair_gate.json").read_text())
     value["pairs"].append(value["pairs"][0])
     with pytest.raises(ValueError, match="exactly ten"):
         PythonPairExperimentConfig.model_validate(value)
-    value = json.loads((ROOT / "configs/python_pair_gate.json").read_text())
+    value = json.loads((ROOT / "configs/experiments/python_pair_gate.json").read_text())
     value["systems"] = ["E1", "E1", "E3", "E4", "E5"]
     with pytest.raises(ValueError, match="E1 through E5"):
         PythonPairExperimentConfig.model_validate(value)
-    value = json.loads((ROOT / "configs/python_pair_gate.json").read_text())
+    value = json.loads((ROOT / "configs/experiments/python_pair_gate.json").read_text())
     value["pairs"][0]["cases"][0]["checkout"] = "../outside"
     with pytest.raises(ValueError, match="relative"):
         PythonPairExperimentConfig.model_validate(value)

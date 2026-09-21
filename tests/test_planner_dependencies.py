@@ -3,15 +3,15 @@ from collections import Counter
 
 import pytest
 
-from cv_agent.agent_tools import ToolRegistry
-from cv_agent.agent_types import ModelReply, ModelToolCall
-from cv_agent.agentic_workflow import AgenticPipeline
+from cv_agent.tools.registry import ToolRegistry
+from cv_agent.domain.chat import ModelReply, ModelToolCall
+from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.harness import AgentSystemVersion, FULL_SYSTEM_HARNESS
-from cv_agent.model_runtime import ScriptedChatModel
+from cv_agent.runtime.model import ScriptedChatModel
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate, CodeDocument, Evidence
-from cv_agent.validation_tools import FixtureCase, FixtureOutcome, full_agent_tools
-from cv_agent.agent_types import ValidationPlan
+from cv_agent.domain.types import Candidate, CodeDocument, Evidence
+from cv_agent.tools.validation import FixtureCase, FixtureOutcome, full_agent_tools
+from cv_agent.domain.review import ValidationPlan
 
 
 PATH = "entry.py"
@@ -412,7 +412,7 @@ def test_assigned_validator_keeps_repository_inspection_available():
 
 
 def test_small_budget_cannot_be_borrowed_from_a_later_expert_subtask(monkeypatch):
-    import cv_agent.agentic_workflow as workflow
+    import cv_agent.agents.workflow as workflow
     modified = FULL_SYSTEM_HARNESS.model_copy(update={
         "react_loop": FULL_SYSTEM_HARNESS.react_loop.model_copy(update={
             "max_tool_observation_tokens": 400,

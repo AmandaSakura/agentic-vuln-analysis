@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from cv_agent.java_ast import load_java_repository, parse_java_source
+from cv_agent.code_adapters.java import load_java_repository, parse_java_source
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate
+from cv_agent.domain.types import Candidate
 
 
 def test_java_ast_extracts_method_definitions_and_calls():

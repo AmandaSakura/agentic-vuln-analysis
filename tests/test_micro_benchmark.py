@@ -1,21 +1,17 @@
-import importlib.util
+import importlib
 import json
 from pathlib import Path
 import sys
 
 import pytest
 
-from cv_agent.agent_types import ChatMessage, ModelReply, ModelToolCall
-from cv_agent.agent_tools import ToolExecutionScope
+from cv_agent.domain.chat import ChatMessage, ModelReply, ModelToolCall
+from cv_agent.tools.registry import ToolExecutionScope
 from cv_agent.harness import AgentRuntimeMode
-from cv_agent.model_runtime import OpenAICompatibleChatModel, trusted_runtime_mode
+from cv_agent.runtime.model import OpenAICompatibleChatModel, trusted_runtime_mode
 
 
-spec = importlib.util.spec_from_file_location(
-    "micro_benchmark", Path(__file__).parents[1] / "scripts/run_micro_benchmark.py")
-bench = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = bench
-spec.loader.exec_module(bench)
+bench = importlib.import_module("cv_agent.evaluation.runners.run_micro_benchmark")
 
 
 @pytest.fixture
@@ -100,7 +96,8 @@ def test_partial_agent_failure_preserves_actual_calls_and_tool_evidence(journal,
 
 
 def test_agent_verdict_is_not_reduced_to_vote_summary(journal, monkeypatch):
-    from cv_agent.agent_types import AgenticVerdict, ModelUsage
+    from cv_agent.domain.review import AgenticVerdict
+    from cv_agent.domain.chat import ModelUsage
     verdict = AgenticVerdict(
         runtime_mode="scripted", label="VULNERABLE", confidence=0.9,
         path="single", rationale="test evidence", votes=(), model_calls=1, tool_calls=1,
@@ -128,9 +125,10 @@ def test_interrupt_preserves_partial_result_and_propagates(journal, monkeypatch)
 
 def test_main_continues_after_failure_and_checkpoints_before_next_trial(tmp_path, monkeypatch):
     monkeypatch.setenv("ANTIGRAVITY_API_KEY", "offline")
+    settings = bench.load_default_model_config()
+    (tmp_path / "configs/models").mkdir(parents=True)
+    (tmp_path / "configs/models/micro_benchmark.json").write_text(json.dumps(settings))
     monkeypatch.setattr(bench, "project_root", tmp_path)
-    monkeypatch.setattr(bench, "__file__", str(tmp_path / "script.py"))
-    (tmp_path / "script.py").write_text("offline test")
     monkeypatch.setattr(bench, "BENCHMARK_CASES", bench.BENCHMARK_CASES[:2])
     monkeypatch.setattr(bench, "SYSTEMS", [("baseline", None)])
     calls = []

@@ -3,24 +3,12 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
-from cv_agent.harness import (
-    COMMAND_POLICIES,
-    FULL_SYSTEM_HARNESS,
-    OWASP_HARNESS,
-    VULNGYM_RETRIEVAL_HARNESS,
-    DatasetRole,
-    RetrievalBudget,
-    describe_project_harness,
-    validate_owasp_harness,
-    validate_owasp_result_payload,
-    validate_project_harness,
-    validate_vulngym_result_payload,
-)
+from cv_agent.harness import COMMAND_POLICIES, FULL_SYSTEM_HARNESS, OWASP_HARNESS, VULNGYM_RETRIEVAL_HARNESS, DatasetRole, RetrievalBudget, describe_project_harness, validate_owasp_harness, validate_owasp_result_payload, validate_project_harness, validate_vulngym_result_payload
 from cv_agent.cli import build_parser
-from cv_agent.owasp_rag import evaluate_owasp_rag
+from cv_agent.baselines.owasp_rag import evaluate_owasp_rag
 from cv_agent.retrieval import RepositoryIndex, context_token_count
-from cv_agent.types import Candidate, CodeDocument, OwaspLabel, SystemVersion
-from cv_agent.workflow import PipelineConfig
+from cv_agent.domain.types import Candidate, CodeDocument, OwaspLabel, SystemVersion
+from cv_agent.baselines.workflow import PipelineConfig
 
 
 def _run_identity() -> dict[str, object]:

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from cv_agent.code_adapters import load_code_repository
 from cv_agent.retrieval import RepositoryIndex
-from cv_agent.types import Candidate
+from cv_agent.domain.types import Candidate
 
 
 def _candidate(span) -> Candidate:

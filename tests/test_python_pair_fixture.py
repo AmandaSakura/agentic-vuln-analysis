@@ -2,15 +2,11 @@ import json
 
 import pytest
 
-from cv_agent.agent_tools import ToolExecutionScope, candidate_subject
+from cv_agent.tools.registry import ToolExecutionScope
+from cv_agent.tools.identity import candidate_subject
 from cv_agent.harness import AgentSystemVersion, FULL_SYSTEM_HARNESS
-from cv_agent.python_pair_config import PythonPair, PythonPairCase
-from cv_agent.python_pair_fixture import (
-    PythonPairFixtureInput,
-    build_pair_input,
-    fixture_validation_status,
-    pair_fixture_tool,
-)
+from cv_agent.evaluation.datasets.python_pair_config import PythonPair, PythonPairCase
+from cv_agent.evaluation.datasets.python_pair_fixture import PythonPairFixtureInput, build_pair_input, fixture_validation_status, pair_fixture_tool
 
 
 def pair_and_case():
@@ -70,7 +66,7 @@ def langchain_observations():
 def test_full_package_index_binds_fixture_to_candidate_and_source(monkeypatch, tmp_path):
     checkout = write_package(tmp_path)
     pair, case = pair_and_case()
-    monkeypatch.setattr("cv_agent.python_pair_fixture.require_clean_checkout", lambda checkout, commit: None)
+    monkeypatch.setattr("cv_agent.evaluation.datasets.python_pair_fixture.require_clean_checkout", lambda checkout, commit: None)
     index, candidate, source_hashes = build_pair_input(tmp_path, pair, case)
     assert "pkg/b.py" in json.dumps(sorted(index.documents))
     assert "pkg/tests/test_a.py" not in json.dumps(sorted(index.documents))
@@ -110,7 +106,7 @@ def test_fixture_status_is_derived_from_strict_probe_invariants():
 def test_unknown_fixture_id_is_rejected(monkeypatch, tmp_path):
     write_package(tmp_path)
     pair, case = pair_and_case()
-    monkeypatch.setattr("cv_agent.python_pair_fixture.require_clean_checkout", lambda checkout, commit: None)
+    monkeypatch.setattr("cv_agent.evaluation.datasets.python_pair_fixture.require_clean_checkout", lambda checkout, commit: None)
     index, candidate, _ = build_pair_input(tmp_path, pair, case)
     tool = pair_fixture_tool(tmp_path, pair, case, index, candidate, langchain_observations())
     subject = candidate_subject(index, candidate)

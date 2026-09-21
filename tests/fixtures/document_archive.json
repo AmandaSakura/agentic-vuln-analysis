@@ -1,0 +1,272 @@
+[
+  {
+    "original_path": "docs/HANDOFF_2026-09-19.md",
+    "path": "docs/history/records/HANDOFF_2026-09-19.md",
+    "content_sha256": "c7946a1a649a39792846b673c63fdfe2a62932f739d3431155c7d4b70164d6f0"
+  },
+  {
+    "original_path": "docs/DEEPSEEK_OUTPUT_REPAIR_2026-09-21.md",
+    "path": "docs/history/records/DEEPSEEK_OUTPUT_REPAIR_2026-09-21.md",
+    "content_sha256": "b7ad47639576aaf5eba8b6ea03de7576a055a1bda2cac7884a9247328e55caf5"
+  },
+  {
+    "original_path": "docs/HANDOFF_BEFORE_DEEP_REVIEW_2026-09-19.md",
+    "path": "docs/history/records/HANDOFF_BEFORE_DEEP_REVIEW_2026-09-19.md",
+    "content_sha256": "c69eb9fe35655381641c9208359fc297587505a427dde0757241b8216e06f825"
+  },
+  {
+    "original_path": "docs/EXPERIMENT_START_2026-09-19.md",
+    "path": "docs/history/records/EXPERIMENT_START_2026-09-19.md",
+    "content_sha256": "9df8e3b377bd1f4f28dc51950d6991315f0dcc3c4f651079e83e9404d260a8b6"
+  },
+  {
+    "original_path": "docs/FULL_DEVELOPMENT_MATRIX_RESULT_2026-09-19.md",
+    "path": "docs/history/records/FULL_DEVELOPMENT_MATRIX_RESULT_2026-09-19.md",
+    "content_sha256": "845f0d875751ffae3c6d567a4a8b8a8d587275469e569c9cc9e31f0bf59d8224"
+  },
+  {
+    "original_path": "docs/OWASP_DEVELOPMENT_RESULT.md",
+    "path": "docs/history/records/OWASP_DEVELOPMENT_RESULT.md",
+    "content_sha256": "476567b68b4c813598f1ee687a536117b105654653931945732e3791b60fadc5"
+  },
+  {
+    "original_path": "docs/PYTHON_PAIR_RESULT_REVIEW_2026-09-20.md",
+    "path": "docs/history/records/PYTHON_PAIR_RESULT_REVIEW_2026-09-20.md",
+    "content_sha256": "32b6a398de2d36c0e9c19c714306842bc8978a1f263d109b991a8a50247941ec"
+  },
+  {
+    "original_path": "docs/LUNA_CLEAN_CONTEXT_SIMULATION.md",
+    "path": "docs/history/records/LUNA_CLEAN_CONTEXT_SIMULATION.md",
+    "content_sha256": "7302823d599406b99994041667a6e625180092506bf581eb0da6ae17c57e4be7"
+  },
+  {
+    "original_path": "docs/SMOKE_RESULT.md",
+    "path": "docs/history/records/SMOKE_RESULT.md",
+    "content_sha256": "af5976fe80ebdd2181befe50e2801e98af1285a9f490120af9b9cd06d6cedcad"
+  },
+  {
+    "original_path": "docs/JAVA_VALIDATION_IMPLEMENTATION_2026-09-19.md",
+    "path": "docs/history/records/JAVA_VALIDATION_IMPLEMENTATION_2026-09-19.md",
+    "content_sha256": "c380a49bc366e2c928fe4904a4e1e17e155137a797c4824fc7e6085b03167222"
+  },
+  {
+    "original_path": "docs/DEEPSEEK_ABSTENTION_AUDIT_2026-09-21.md",
+    "path": "docs/history/records/DEEPSEEK_ABSTENTION_AUDIT_2026-09-21.md",
+    "content_sha256": "293b97e28307bdf9a901c32f4fd96f719acc48530670aef3d82e6776b3358ecf"
+  },
+  {
+    "original_path": "docs/PROXY_LOGGING_INTEGRATION_2026-09-19.md",
+    "path": "docs/history/records/PROXY_LOGGING_INTEGRATION_2026-09-19.md",
+    "content_sha256": "862d58b50bdd58f55b95bc8edb405506d99aba75142fb5616dfad6bf194b5399"
+  },
+  {
+    "original_path": "docs/PYTHON_PAIR_EXPERIMENT_2026-09-20.md",
+    "path": "docs/history/records/PYTHON_PAIR_EXPERIMENT_2026-09-20.md",
+    "content_sha256": "d5e190c21b23430590c708a5d30166ae3cfbaa34b9368e1cd0f4043f48114499"
+  },
+  {
+    "original_path": "docs/HANDOFF_2026-09-07.md",
+    "path": "docs/history/records/HANDOFF_2026-09-07.md",
+    "content_sha256": "e2b96e6303fdeb4400b1bacd2d806050a4592e1e5dd9ee65b2126d6c07c17450"
+  },
+  {
+    "original_path": "docs/MICRO_BENCHMARK.md",
+    "path": "docs/history/records/MICRO_BENCHMARK.md",
+    "content_sha256": "8f24a86118e9d500643748b9619b5aaecbafae13c6bc700dee2dd1b615717051"
+  },
+  {
+    "original_path": "docs/PROXY_OUTPUT_LIMIT_REPAIR_2026-09-19.md",
+    "path": "docs/history/records/PROXY_OUTPUT_LIMIT_REPAIR_2026-09-19.md",
+    "content_sha256": "d9f6d23a8f5eebcafc592327b109efe2172632225cd080ddddb95de0804f5e73"
+  },
+  {
+    "original_path": "docs/CODE_REVIEW_2026-09-20.md",
+    "path": "docs/history/records/CODE_REVIEW_2026-09-20.md",
+    "content_sha256": "dd117f0a0859d603bdf217f4405580283567a931e22f856c068b30ad49b9251d"
+  },
+  {
+    "original_path": "docs/DEEP_REVIEW_RESULT_2026-09-19.md",
+    "path": "docs/history/records/DEEP_REVIEW_RESULT_2026-09-19.md",
+    "content_sha256": "53da9878877e29458a096314544f16d2b4ad0d13671fc5bd14159aa996b822c0"
+  },
+  {
+    "original_path": "docs/CURRENT_REVIEW_RESULT_2026-09-19.md",
+    "path": "docs/history/records/CURRENT_REVIEW_RESULT_2026-09-19.md",
+    "content_sha256": "78c87549bced11122d2b6958d8d3ab36b640caf5a1cf69f4d9a12940915e6cee"
+  },
+  {
+    "original_path": "docs/REACT_CORRECTION_REPAIR_2026-09-21.md",
+    "path": "docs/history/records/REACT_CORRECTION_REPAIR_2026-09-21.md",
+    "content_sha256": "0a5914e0edd4b3f5cc218149ea7091d76746370564cd352e907e78fcd3898501"
+  },
+  {
+    "original_path": "docs/LANGCHAIN_TRANSPORT_DIAGNOSIS_2026-09-19.md",
+    "path": "docs/history/records/LANGCHAIN_TRANSPORT_DIAGNOSIS_2026-09-19.md",
+    "content_sha256": "31b43032beafdfb868008b2457e25086efbf19196f7680a9cc17fc3cfc879130"
+  },
+  {
+    "original_path": "docs/PROJECT_STATUS_BEFORE_CURRENT_REVIEW_2026-09-19.md",
+    "path": "docs/history/records/PROJECT_STATUS_BEFORE_CURRENT_REVIEW_2026-09-19.md",
+    "content_sha256": "d58364697f01e3a61c35ff0a4e5215187cb6c7c2fbf7073db3d87bc6731a26df"
+  },
+  {
+    "original_path": "docs/DEVELOPMENT_PILOT_2026-09-19.md",
+    "path": "docs/history/records/DEVELOPMENT_PILOT_2026-09-19.md",
+    "content_sha256": "ed3b6d979d1134d9bf9e7b50760771cfa6da9c4d65ff93d0e8ab7c87bbd8d1c3"
+  },
+  {
+    "original_path": "docs/DEVELOPMENT_BENCHMARK.md",
+    "path": "docs/history/records/DEVELOPMENT_BENCHMARK.md",
+    "content_sha256": "0a6b1b2d3561a8e3edc0e5e2c658c13318e17017d7d31de4e1ca986b5d186687"
+  },
+  {
+    "original_path": "docs/PROJECT_REVIEW_2026-09-19.md",
+    "path": "docs/history/records/PROJECT_REVIEW_2026-09-19.md",
+    "content_sha256": "8d19f8a09a7212fcb8954600a40c304c0b086af1d7876273226ccd117511e318"
+  },
+  {
+    "original_path": "docs/E5_UPSTREAM_DIAGNOSIS_2026-09-21.md",
+    "path": "docs/history/records/E5_UPSTREAM_DIAGNOSIS_2026-09-21.md",
+    "content_sha256": "8e583cf06094b4699dd4a37f17293d51f0d4ac31ee507b1ce24940ab9c15c845"
+  },
+  {
+    "original_path": "docs/CODE_REVIEW_FIX_2026-09-20.md",
+    "path": "docs/history/records/CODE_REVIEW_FIX_2026-09-20.md",
+    "content_sha256": "a355e0d8f480e66b0b7542b046cfd1b7b20ed7f413280088a07affe7cd87d78f"
+  },
+  {
+    "original_path": "docs/TEN_TRIAL_PROTOCOL_2026-09-19.md",
+    "path": "docs/history/records/TEN_TRIAL_PROTOCOL_2026-09-19.md",
+    "content_sha256": "c83fc02d3e3665030c361359fd055ab5700bde7b85dbf3dd165ff2279f2f08c9"
+  },
+  {
+    "original_path": "docs/HELDOUT_V4_REPAIR_LOOP_2026-09-21.md",
+    "path": "docs/history/records/HELDOUT_V4_REPAIR_LOOP_2026-09-21.md",
+    "content_sha256": "4aa262562aaf7667d7d31da85533123d02cd6f000c0f755cf98a925fc92fe8f4"
+  },
+  {
+    "original_path": "docs/BUGFIX_VERIFICATION.md",
+    "path": "docs/history/records/BUGFIX_VERIFICATION.md",
+    "content_sha256": "be622c8e2accc0b8bc13d97d4710a0a416a44cb3c924c6cd00f9de1f39ad8b1b"
+  },
+  {
+    "original_path": "docs/REFACTOR_2026-09-21.md",
+    "path": "docs/history/records/REFACTOR_2026-09-21.md",
+    "content_sha256": "9ad52ccfd9ea67156aa10b1a5d819ec3d5ed3b11fbb376117af7f6b52eed4438"
+  },
+  {
+    "original_path": "docs/HELDOUT_EVIDENCE_REPAIR_2026-09-21.md",
+    "path": "docs/history/records/HELDOUT_EVIDENCE_REPAIR_2026-09-21.md",
+    "content_sha256": "a7e89d33909d039719bbabf5988d860b55d1055eb9da79bb3cc8f85d66cc2fd6"
+  },
+  {
+    "original_path": "docs/QUORUM_APPLICABLE_VERIFICATION.md",
+    "path": "docs/history/records/QUORUM_APPLICABLE_VERIFICATION.md",
+    "content_sha256": "d05f3ae42861fa8adea8f3eccd9f59fd1841e782c74db3413c3eab446576dc43"
+  },
+  {
+    "original_path": "docs/PROJECT_STATUS_BEFORE_DEEP_REVIEW_2026-09-19.md",
+    "path": "docs/history/records/PROJECT_STATUS_BEFORE_DEEP_REVIEW_2026-09-19.md",
+    "content_sha256": "d18b11280ae9e59b9348fbdfa43a15489ac151baa0fcff93c5e6d4f98683857b"
+  },
+  {
+    "original_path": "docs/TEST_REPAIR_RESULT_2026-09-19.md",
+    "path": "docs/history/records/TEST_REPAIR_RESULT_2026-09-19.md",
+    "content_sha256": "294a7a595cf8b3e15e977ccc8eaa91ebadc2c4cdebc83dfb31e71d34343ffff4"
+  },
+  {
+    "original_path": "docs/LANGCHAIN_AGENT_RESULT_2026-09-19.md",
+    "path": "docs/history/records/LANGCHAIN_AGENT_RESULT_2026-09-19.md",
+    "content_sha256": "a4ed6690c7ade65b57c710be8eafcff988a15ab80532010b59dbc677a591afe6"
+  },
+  {
+    "original_path": "docs/VULNGYM_RETRIEVAL_RESULT.md",
+    "path": "docs/history/records/VULNGYM_RETRIEVAL_RESULT.md",
+    "content_sha256": "bb3f30145fdbdccbe89ca6200fbb3a6d1b66817ac42583d3cef99c0bc7dc223a"
+  },
+  {
+    "original_path": "docs/PYTHON_REPOSITORY_PIPELINE_2026-09-19.md",
+    "path": "docs/history/records/PYTHON_REPOSITORY_PIPELINE_2026-09-19.md",
+    "content_sha256": "69fd724b0289493d54d089c6860426a21c412222fc88c0f6ff052e911196c9cc"
+  },
+  {
+    "original_path": "docs/PYTHON_HELDOUT_PAIR_RESULT_2026-09-20.md",
+    "path": "docs/history/records/PYTHON_HELDOUT_PAIR_RESULT_2026-09-20.md",
+    "content_sha256": "bee3d29ab975ed9d560dd5f156f457900a5ef00329ac13fda1606ded70ecb362"
+  },
+  {
+    "original_path": "docs/HANDOFF_BEFORE_CURRENT_REVIEW_2026-09-19.md",
+    "path": "docs/history/records/HANDOFF_BEFORE_CURRENT_REVIEW_2026-09-19.md",
+    "content_sha256": "d4b1f7be670bd6195a915ef25b795855763138d2d72b7bc804bc479db78c1d98"
+  },
+  {
+    "original_path": "docs/LUNA_POSTFIX_VERIFICATION.md",
+    "path": "docs/history/records/LUNA_POSTFIX_VERIFICATION.md",
+    "content_sha256": "e3987ebd06ac675e185fa8c622f0a149b4ea7e385e8f6788828c1ccca769975b"
+  },
+  {
+    "original_path": "docs/PROJECT_STATUS_2026-09-19.md",
+    "path": "docs/history/records/PROJECT_STATUS_2026-09-19.md",
+    "content_sha256": "3c146d32659b4f73a5054062cf29ebdd487107cc6c85a14dbe26e2a880c7f2d6"
+  },
+  {
+    "original_path": "docs/patches/cliproxyapi-v7.3.6-preserve-output-limit.patch",
+    "path": "docs/history/patches/cliproxyapi-v7.3.6-preserve-output-limit.patch",
+    "content_sha256": "456f1fe7656d082b00cff48cfb8648565b39ec7748e3c80bf823a409fa37654c"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-21-project-restructure.md",
+    "path": "docs/history/plans/2026-09-21-project-restructure.md",
+    "content_sha256": "93250acfdbfa89cbabacaeb94f3fd9ff7125d3248a843d1c9f0651cb5e643e42"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-19-micro-benchmark-repair.md",
+    "path": "docs/history/plans/2026-09-19-micro-benchmark-repair.md",
+    "content_sha256": "52c114e2cf95cbd12d26b16dcb050e741953f53b811c07b1ebfc50957e9738ad"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-19-test-contract-and-repair.md",
+    "path": "docs/history/plans/2026-09-19-test-contract-and-repair.md",
+    "content_sha256": "fbcae81cf02e979f179f17f6aa7289954196b9c53370ad5fa017a60fabe6f84d"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-20-heldout-pair-audit-repair.md",
+    "path": "docs/history/plans/2026-09-20-heldout-pair-audit-repair.md",
+    "content_sha256": "5fec4c7d116e48ead0d663020e70c9830b308f4dbaad21dabe7721c7bd8c92d3"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-20-review-semantic-repairs.md",
+    "path": "docs/history/plans/2026-09-20-review-semantic-repairs.md",
+    "content_sha256": "1a62f2631d76eaaa86d5844a59588d0187d644c77ab41d84178ee0084f413948"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-20-python-paired-admission.md",
+    "path": "docs/history/plans/2026-09-20-python-paired-admission.md",
+    "content_sha256": "dbf2ff8cfe88fde82306b951ab5f4fde4abf36a1e3920265391c8a8e1f1c94c5"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-19-real-pairs.md",
+    "path": "docs/history/plans/2026-09-19-real-pairs.md",
+    "content_sha256": "ef3d6a82c920e6cb6f8a04b65e46c97a18256196bd2383c342d5fb59d62265a4"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-19-evidence-loop.md",
+    "path": "docs/history/plans/2026-09-19-evidence-loop.md",
+    "content_sha256": "414cd8e7c628b1ce6a92ed2fb7e006de48f710fe45d71b37c797e506c1f31742"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-19-langchain-agent-integration.md",
+    "path": "docs/history/plans/2026-09-19-langchain-agent-integration.md",
+    "content_sha256": "e2cefecc365e8617370fed4018410ee4a358388c3290d13375ce697bf614988e"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-21-remove-legacy-facades.md",
+    "path": "docs/history/plans/2026-09-21-remove-legacy-facades.md",
+    "content_sha256": "bb820357cf0ed7090d3719fae945348e8bfb663ec832aa7ee914f11e393b6d89"
+  },
+  {
+    "original_path": "docs/superpowers/plans/2026-09-19-python-discovery-and-evidence.md",
+    "path": "docs/history/plans/2026-09-19-python-discovery-and-evidence.md",
+    "content_sha256": "33138d4f5ded65d015ca30c7f84c8f60129d89fa754d750427b2289882f2dc76"
+  }
+]

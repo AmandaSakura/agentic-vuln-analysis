@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from .defaults import VULNGYM_RETRIEVAL_HARNESS
-from .models import RetrievalMode
-from .results import _list, _mapping, _require_keys, _validate_run_identity
+from cv_agent.harness.defaults import VULNGYM_RETRIEVAL_HARNESS
+from cv_agent.harness.models import RetrievalMode
+from cv_agent.harness.results import _list, _mapping, _require_keys, _validate_run_identity
 
 
 def _vulngym_summary(
