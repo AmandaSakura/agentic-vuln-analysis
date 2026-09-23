@@ -58,8 +58,7 @@ def _local_resource_operations(document: CodeDocument) -> list[dict[str, Any]]:
     parameters = set(parameter_names(function))
     principals = sorted(name for name in parameters
                         if PRINCIPAL_PATTERN.search(name) or name in {"user_id", "owner_id", "tenant_id"})
-    lookups: dict[str, tuple[ast.Call, int]] = {}
-    comparisons: list[ast.Compare] = []
+    lookups: dict[str, tuple[ast.Call, int, list[ast.Compare]]] = {}
     facts = []
     for statement in function.body:
         if isinstance(statement, (ast.Return, ast.Raise)):
@@ -71,7 +70,13 @@ def _local_resource_operations(document: CodeDocument) -> list[dict[str, Any]]:
                    if name not in rebound and not any(
                        isinstance(node, ast.Name) and node.id in rebound
                        for node in ast.walk(binding[0].func.value))}
-        comparisons.extend(node for node in ast.walk(statement) if isinstance(node, ast.Compare))
+        for node in ast.walk(statement):
+            if isinstance(node, ast.Compare):
+                for name, binding in lookups.items():
+                    if any(isinstance(sub, ast.Attribute) and isinstance(sub.value, ast.Name)
+                           and sub.value.id == name and sub.attr in {"user_id", "owner_id", "tenant_id"}
+                           for sub in ast.walk(node)):
+                        binding[2].append(node)
         expression = getattr(statement, "value", None)
         call = expression.value if isinstance(expression, ast.Await) else expression
         if not isinstance(call, ast.Call) or not isinstance(call.func, ast.Attribute):
@@ -79,23 +84,19 @@ def _local_resource_operations(document: CodeDocument) -> list[dict[str, Any]]:
         if (isinstance(statement, ast.Assign) and len(statement.targets) == 1
                 and isinstance(statement.targets[0], ast.Name)
                 and call.func.attr == "get" and len(call.args) == 2 and not call.keywords):
-            lookups[statement.targets[0].id] = (call, statement.lineno)
+            lookups[statement.targets[0].id] = (call, statement.lineno, [])
         if not (isinstance(statement, ast.Expr) and call.func.attr == "delete"
                 and len(call.args) == 1 and isinstance(call.args[0], ast.Name)):
             continue
         resource = call.args[0].id
         if resource not in lookups:
             continue
-        lookup, line = lookups[resource]
+        lookup, line, comparisons = lookups[resource]
         if ast.dump(lookup.func.value) != ast.dump(call.func.value):
             continue
         key_parameters = sorted({node.id for node in ast.walk(lookup.args[1])
                                  if isinstance(node, ast.Name)} & parameters)
-        owner_comparisons = [ast.unparse(comparison) for comparison in comparisons if any(
-            isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
-            and node.value.id == resource and node.attr in {"user_id", "owner_id", "tenant_id"}
-            for node in ast.walk(comparison)
-        )]
+        owner_comparisons = list(dict.fromkeys(ast.unparse(comparison) for comparison in comparisons))
         facts.append({
             "resource_variable": resource, "lookup": ast.unparse(lookup.func),
             "lookup_line": line, "lookup_key_parameters": key_parameters,

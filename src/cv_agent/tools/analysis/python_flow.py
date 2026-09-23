@@ -20,6 +20,76 @@ INTERPRETER_NAME_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+LAUNCHER_COMMANDS = {
+    "env", "sudo", "su", "doas", "nohup", "nice", "ionice", "stdbuf", "time", "runuser",
+}
+
+
+def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str | None, bool]:
+    """Return (executable_basename, is_known) from an argv list, resolving launchers."""
+    if not elts:
+        return None, False
+    first = elts[0]
+    if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
+        return None, False
+    exe = first.value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+    idx = 1
+    while exe in LAUNCHER_COMMANDS:
+        found_cmd = False
+        while idx < len(elts):
+            elt = elts[idx]
+            idx += 1
+            if not (isinstance(elt, ast.Constant) and isinstance(elt.value, str)):
+                return None, False
+            val = elt.value
+            if val == "--":
+                if idx < len(elts):
+                    next_elt = elts[idx]
+                    idx += 1
+                    if isinstance(next_elt, ast.Constant) and isinstance(next_elt.value, str):
+                        exe = next_elt.value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        found_cmd = True
+                        break
+                    return None, False
+                return None, False
+            if exe == "env":
+                if val in {"-u", "--unset", "-C", "--chdir"}:
+                    idx += 1
+                    continue
+                if val.startswith(("-u", "-C")):
+                    continue
+                if val.startswith("-S") or val == "--split-string":
+                    return None, False
+                if val.startswith("-") or "=" in val:
+                    continue
+            elif exe == "sudo":
+                if val in {"-u", "-g", "-p", "-h", "-c", "-C", "-D", "-R", "-T", "-U"}:
+                    idx += 1
+                    continue
+                if val.startswith("-"):
+                    continue
+            elif exe in {"nice", "ionice"}:
+                if val in {"-n", "-c", "-p"}:
+                    idx += 1
+                    continue
+                if val.startswith("-"):
+                    continue
+            elif exe in {"stdbuf"}:
+                if val in {"-i", "-o", "-e"}:
+                    idx += 1
+                    continue
+                if val.startswith("-"):
+                    continue
+            else:
+                if val.startswith("-"):
+                    continue
+            exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+            found_cmd = True
+            break
+        if not found_cmd:
+            return None, False
+    return exe, True
+
 
 @dataclass(frozen=True)
 class CallBinding:
@@ -107,11 +177,11 @@ def python_document_flow(
     def ordinary_argv(expression: ast.AST | None) -> bool:
         if isinstance(expression, ast.Name):
             expression = fixed_argv.get(expression.id)
-        if not (isinstance(expression, (ast.List, ast.Tuple)) and expression.elts
-                and isinstance(expression.elts[0], ast.Constant)
-                and isinstance(expression.elts[0].value, str)):
+        if not (isinstance(expression, (ast.List, ast.Tuple)) and expression.elts):
             return False
-        executable = expression.elts[0].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+        executable, known = resolve_executable(expression.elts)
+        if not known or executable is None:
+            return False
         # shell=False does not prevent the explicitly launched interpreter from
         # executing its command argument. Preserve possible flow in that case.
         return not bool(INTERPRETER_NAME_PATTERN.match(executable))

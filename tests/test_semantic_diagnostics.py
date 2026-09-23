@@ -92,10 +92,18 @@ def test_permission_complete_structured_control_flow(body, expected):
     ('["sh", "-c", value]', "MAY_REACH"),
     ('["python3.12", "-c", value]', "MAY_REACH"),
     ('["python.exe", "-c", value]', "MAY_REACH"),
+    ('["env", "bash", "-c", value]', "MAY_REACH"),
+    ('["env", "-i", "python3.12", "-c", value]', "MAY_REACH"),
+    ('["/usr/bin/env", "sh", "-c", value]', "MAY_REACH"),
+    ('["sudo", "bash", "-c", value]', "MAY_REACH"),
     ('["echo", value]', "NOT_ESTABLISHED"),
     ('["git", "commit", "-m", value]', "NOT_ESTABLISHED"),
+    ('["env", "git", "status", value]', "NOT_ESTABLISHED"),
+    ('["env", "FOO=bar", "echo", value]', "NOT_ESTABLISHED"),
     ('["bash", "-c", "echo fixed"]', "NOT_ESTABLISHED"),
-], ids=["bash-command", "sh-command", "python312-command", "python-exe-command", "ordinary-argv", "git-argv", "constant-command"])
+], ids=["bash-command", "sh-command", "python312-command", "python-exe-command",
+        "env-bash", "env-i-python", "usr-bin-env-sh", "sudo-bash",
+        "ordinary-argv", "git-argv", "env-git", "env-echo", "constant-command"])
 def test_command_flow_preserves_argv_semantics(api, assigned, argv, expected):
     setup = f"    command = {argv}\n" if assigned else ""
     argument = "command" if assigned else argv

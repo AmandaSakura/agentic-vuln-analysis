@@ -42,6 +42,33 @@ def test_local_owner_comparison_is_reported_without_claiming_dominance():
     assert "does not establish" in fact["scope_note"]
 
 
+def test_rebound_resource_clears_prior_owner_comparison():
+    payload = inspect(
+        "record = await session.get(Resource, resource_id)\n"
+        "    if record.user_id != user_id:\n        raise ValueError('denied')\n"
+        "    record = await session.get(Resource, other_id)\n"
+        "    await session.delete(record)",
+        "session, resource_id, other_id, user_id"
+    )
+    fact, = payload["local_resource_operations"]
+    assert fact["lookup_key_parameters"] == ["other_id"]
+    assert fact["owner_comparisons"] == []
+
+
+def test_rebound_resource_preserves_only_current_owner_comparison():
+    payload = inspect(
+        "record = await session.get(Resource, resource_id)\n"
+        "    if record.user_id != user_id:\n        raise ValueError('denied')\n"
+        "    record = await session.get(Resource, other_id)\n"
+        "    if record.owner_id == user_id:\n        pass\n"
+        "    await session.delete(record)",
+        "session, resource_id, other_id, user_id"
+    )
+    fact, = payload["local_resource_operations"]
+    assert fact["lookup_key_parameters"] == ["other_id"]
+    assert fact["owner_comparisons"] == ["record.owner_id == user_id"]
+
+
 @pytest.mark.parametrize("tail", [
     "return record",
     "await session.delete(other)",
