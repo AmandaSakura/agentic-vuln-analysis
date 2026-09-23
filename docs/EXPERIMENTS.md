@@ -85,7 +85,7 @@ transport 和 interruption 问题，其 `legacy_passed` 不能替代完整
 
 ## VulnGym 全量源码发现评估
 
-`configs/datasets/vulngym_heldout_inputs_v4.json` 是独立于先前 MLflow 矩阵的 152 个提交、17 个仓库输入清单；对应 369 条 VulnGym 正例参考只保存在 evaluator 侧。由于没有验证过的修复负例，`claim_eligible=false`，不能估计误报率或据此宣称研究泛化。
+`configs/datasets/vulngym_heldout_inputs_v4.json` 是独立于先前 MLflow 与 Langflow 矩阵的 146 个提交、16 个仓库输入清单；对应 358 条 VulnGym 正例参考只保存在 evaluator 侧。由于没有验证过的修复负例，`claim_eligible=false`，不能估计误报率或据此宣称研究泛化。
 
 从仓库根目录依次执行：
 
@@ -97,4 +97,4 @@ uv run --no-sync python -m cv_agent.evaluation.runners.run_vulngym_discovery
 uv run --no-sync python -m cv_agent.evaluation.diagnostics.score_vulngym_discovery artifacts/vulngym_discovery/RUN_ID artifacts/vulngym_heldout_preparation_v4/labels.json
 ```
 
-准备阶段只创建每仓库一个浅层 Git cache。全量发现按提交创建临时干净 worktree，完成源码哈希和候选记录后移除该 worktree，避免同时占用 152 份检出空间。发现会处理清单中的每个提交及该源码树上的全部 Python 候选；它不读取 evaluator 标签、不调用模型，也没有 first-N 截断。最后一步才按仓库、提交、路径和行号精确计分。正例位置匹配属于源码发现指标，不能解释为 agent 漏洞判断或 exploit 确认。
+准备阶段只创建每仓库一个浅层 Git cache。全量发现按提交创建临时干净 worktree，完成源码哈希和候选记录后移除该 worktree，避免同时占用 146 份检出空间。发现会处理清单中的每个提交及该源码树上的全部 Python 候选；它不读取 evaluator 标签、不调用模型，也没有 first-N 截断。最后一步才按仓库、提交、路径和行号精确计分。正例位置匹配属于源码发现指标，不能解释为 agent 漏洞判断或 exploit 确认。

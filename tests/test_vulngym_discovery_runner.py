@@ -204,7 +204,65 @@ def test_runner_rejects_dataset_mismatch_on_resume(tmp_path):
         "subjects": [],
     }
     (run_dir / "inventory.json").write_text(json.dumps(inventory))
+    (run_dir / "metadata.json").write_text(json.dumps({"manifest": manifest(), "source_sha256": {}}))
     with pytest.raises(ValueError, match="Dataset identity mismatch on resume"):
+        mod.run(manifest_path, root=tmp_path, output=run_dir)
+
+
+def test_runner_rejects_manifest_mismatch_or_reordering_on_resume(tmp_path):
+    mod = module()
+    c1, c2 = "1" * 40, "2" * 40
+    manifest1 = {
+        "dataset_identity": {"revision": "a" * 40, "dirty": False},
+        "role": "heldout_candidate_inputs",
+        "claim_eligible": False,
+        "split_version": 4,
+        "subjects": [
+            {"repository_url": "https://github.com/example/repo", "commit": c1},
+            {"repository_url": "https://github.com/example/repo", "commit": c2},
+        ],
+    }
+    manifest_swapped = {
+        **manifest1,
+        "subjects": [
+            {"repository_url": "https://github.com/example/repo", "commit": c2},
+            {"repository_url": "https://github.com/example/repo", "commit": c1},
+        ],
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest_swapped))
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "inventory.json").write_text(json.dumps({
+        "dataset_identity": manifest1["dataset_identity"],
+        "run_state": "interrupted",
+        "subjects": [],
+    }))
+    (run_dir / "metadata.json").write_text(json.dumps({
+        "manifest": manifest1,
+        "source_sha256": {},
+    }))
+    with pytest.raises(ValueError, match="Detector manifest mismatch on resume"):
+        mod.run(manifest_path, root=tmp_path, output=run_dir)
+
+
+def test_runner_rejects_source_code_change_on_resume(tmp_path):
+    mod = module()
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest()))
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "inventory.json").write_text(json.dumps({
+        "dataset_identity": manifest()["dataset_identity"],
+        "run_state": "interrupted",
+        "subjects": [],
+    }))
+    # Saved metadata has expected hash for a file, but current has empty or different
+    (run_dir / "metadata.json").write_text(json.dumps({
+        "manifest": manifest(),
+        "source_sha256": {"src/cv_agent/scanner.py": "old_hash"},
+    }))
+    with pytest.raises(ValueError, match="Analysis source fingerprint mismatch on resume"):
         mod.run(manifest_path, root=tmp_path, output=run_dir)
 
 

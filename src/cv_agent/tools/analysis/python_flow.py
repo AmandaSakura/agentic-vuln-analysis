@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 import ast
+import re
 import textwrap
 from dataclasses import dataclass
 from typing import Any, Iterable
 
 from cv_agent.domain.types import CodeDocument
+
+
+INTERPRETER_NAME_PATTERN = re.compile(
+    r"^(?:"
+    r"sh|bash|dash|zsh|ksh|fish|csh|tcsh|busybox|"
+    r"cmd|powershell|pwsh|"
+    r"(?:python|pypy|perl|ruby|node|nodejs|php)(?:[0-9]+(?:\.[0-9]+)*)?"
+    r")(?:\.exe)?$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -103,11 +114,7 @@ def python_document_flow(
         executable = expression.elts[0].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
         # shell=False does not prevent the explicitly launched interpreter from
         # executing its command argument. Preserve possible flow in that case.
-        return executable not in {
-            "sh", "bash", "dash", "zsh", "ksh", "fish", "csh", "tcsh", "busybox",
-            "cmd", "cmd.exe", "powershell", "powershell.exe", "pwsh", "pwsh.exe",
-            "python", "python3", "node", "ruby", "perl",
-        }
+        return not bool(INTERPRETER_NAME_PATTERN.match(executable))
 
     def source(expression: ast.AST) -> bool:
         if isinstance(expression, ast.Call):

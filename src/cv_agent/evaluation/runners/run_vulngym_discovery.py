@@ -12,6 +12,7 @@ from cv_agent.evaluation.preparation.prepare_vulngym_checkouts import (
     ensure_checkout,
     remove_checkout,
 )
+from cv_agent.runtime.admission import fingerprint_files
 from cv_agent.runtime.paths import PROJECT_ROOT
 from cv_agent.runtime.provenance import git_identity
 from cv_agent.runtime.snapshots import snapshot_sources
@@ -56,6 +57,13 @@ def verify_source_snapshot(source_root: Path, report: dict) -> None:
             raise ValueError(f"Pinned source changed during discovery: {relative}")
 
 
+def current_source_hashes(root: Path) -> dict[str, str]:
+    return {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in fingerprint_files(root)
+    }
+
+
 def run(manifest_path: Path, *, root: Path = PROJECT_ROOT, output: Path | None = None) -> Path:
     manifest = json.loads(manifest_path.read_text())
     validate_detector_manifest(manifest)
@@ -63,6 +71,14 @@ def run(manifest_path: Path, *, root: Path = PROJECT_ROOT, output: Path | None =
         inventory_path = output / "inventory.json"
         if not inventory_path.exists():
             raise FileExistsError(f"Output directory exists without inventory: {output}")
+        metadata_path = output / "metadata.json"
+        if not metadata_path.exists():
+            raise FileExistsError(f"Output directory exists without metadata: {output}")
+        metadata = json.loads(metadata_path.read_text())
+        if metadata.get("manifest") != manifest:
+            raise ValueError("Detector manifest mismatch on resume")
+        if current_source_hashes(root) != metadata.get("source_sha256"):
+            raise ValueError("Analysis source fingerprint mismatch on resume")
         inventory = json.loads(inventory_path.read_text())
         if inventory.get("run_state") == "complete":
             return output

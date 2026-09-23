@@ -75,9 +75,9 @@ def build_split(inputs: dict[str, Any], labels: dict[str, dict[str, Any]],
     return detector, evaluator, summary
 
 
-def write_frozen(path: Path, value: Any) -> None:
+def write_frozen(path: Path, value: Any, *, overwrite: bool = False) -> None:
     rendered = json.dumps(value, ensure_ascii=False, indent=2) + "\n"
-    if path.exists():
+    if path.exists() and not overwrite:
         if path.read_text() != rendered:
             raise FileExistsError(f"Refusing to replace a different frozen artifact: {path}")
         return
@@ -87,19 +87,28 @@ def write_frozen(path: Path, value: Any) -> None:
     temporary.replace(path)
 
 
-def prepare(config_path: Path, root: Path = PROJECT_ROOT) -> dict:
+def prepare(config_path: Path, root: Path = PROJECT_ROOT, *, force: bool = False) -> dict:
     config = json.loads(config_path.read_text())
     inputs = json.loads((root / config["source_inputs"]).read_text())
     labels = json.loads((root / config["source_labels"]).read_text())
     detector, evaluator, summary = build_split(
         inputs, labels, config["previously_evaluated_repositories"], config["split_version"]
     )
-    write_frozen(root / config["detector_output"], detector)
+    write_frozen(root / config["detector_output"], detector, overwrite=force)
     output = root / config["evaluator_output"]
-    write_frozen(output / "labels.json", evaluator)
-    write_frozen(output / "summary.json", summary)
+    write_frozen(output / "labels.json", evaluator, overwrite=force)
+    write_frozen(output / "summary.json", summary, overwrite=force)
     return summary
 
 
+def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser(description="Prepare frozen VulnGym evaluation split")
+    parser.add_argument("config", type=Path, nargs="?", default=PROJECT_ROOT / "configs/preparation/vulngym_evaluation_v4.json")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing frozen artifacts if split changed")
+    args = parser.parse_args()
+    print(json.dumps(prepare(args.config, force=args.force), indent=2))
+
+
 if __name__ == "__main__":
-    print(json.dumps(prepare(PROJECT_ROOT / "configs/preparation/vulngym_evaluation_v4.json"), indent=2))
+    main()

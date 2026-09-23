@@ -244,6 +244,7 @@ def _collect_permission_mode_calls(document: CodeDocument) -> tuple[
                 continue
             if isinstance(statement, ast.If):
                 issues.append("permission mode check crosses a nonconstant branch")
+                collect_expression(statement.test, shadowed_os)
                 body_shadowed, body_terminated = collect_statements(statement.body, shadowed_os)
                 else_shadowed, else_terminated = collect_statements(statement.orelse, shadowed_os)
                 shadowed_os = body_shadowed or else_shadowed

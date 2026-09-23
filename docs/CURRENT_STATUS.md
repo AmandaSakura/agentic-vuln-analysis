@@ -1,16 +1,16 @@
 # 当前状态（2026-09-23）
 
-完成独立 VulnGym 评测集全量源码发现与评估，建立无标签泄露的端到端基线。离线测试全量通过（**836 项通过**）。针对多语言仓库处理中的 `RepositoryIndex` 空文档异常已完成通用修复与防回归测试，全量 152 提交、17 仓库无一解析失败，抽取 53,667 项候选。详见 [VulnGym 独立评测报告](history/records/VULNGYM_INDEPENDENT_EVALUATION_2026-09-23.md)。
+完成独立 VulnGym 评测集全量源码发现与评估，建立无标签泄露的端到端基线。离线测试全量通过（**852 项通过**）。彻底排除历史矩阵暴露过的 MLflow 和 Langflow 仓库，满足真正的仓库级独立无接触评估；修复权限分支条件副作用漏检、解释器版本号污点流中断、断点恢复前清单与代码指纹核验等问题。全量 146 提交、16 仓库无一解析失败，抽取 49,901 项候选。详见 [VulnGym 独立评测报告](history/records/VULNGYM_INDEPENDENT_EVALUATION_2026-09-23.md)。
 
 在此之前，结构重构之后已修复权限控制流、shell argv、证据角色冲突、权限证据门槛绕过与局部鉴权证据呈现问题，并完成五轮真实完整矩阵。**第五轮原有验收通过：passed=true，issues=[]。** 过程见 [闭环记录](history/records/EXPERIMENT_LOOP_2026-09-22.md)，指标与限制见 [最终验收报告](history/records/EXPERIMENT_ACCEPTANCE_2026-09-22.md)。
 
 ## 能做什么
 
-本次修复后的完整离线测试为 **836 项通过**。
+本次修复后的完整离线测试为 **852 项通过**。
 
 - E1–E5 的检索、规划、ReAct 工具循环、专家调度、投票和日志记账可以运行。
 - Python/Java/JS/TS/Go 源码适配器、图检索、静态分析和部分受控动态夹具已有离线验证。
-- 独立 VulnGym 全量源码发现 runner 支持浅检出缓存、动态 worktree 清理和断点恢复（durable partial progress）。
+- 独立 VulnGym 全量源码发现 runner 支持浅检出缓存、动态 worktree 清理和带代码指纹核验的断点恢复（durable partial progress）。
 - 每次真实运行保留来源、事件、结果、usage、summary 和验收；首次模型请求需要当前源码的完整 pytest 通过。
 - 库、实验生命周期、数据集协议、启动入口和确定性基线已有明确模块归属。
 

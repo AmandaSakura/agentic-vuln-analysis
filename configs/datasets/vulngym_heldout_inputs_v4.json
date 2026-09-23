@@ -68,30 +68,6 @@
       "commit": "f0c1294173a55f26e0b972c39c0c16917f5ca9e7"
     },
     {
-      "repository_url": "https://github.com/langflow-ai/langflow",
-      "commit": "198fab1dc7d4e018fd92767e226b6da6057cd704"
-    },
-    {
-      "repository_url": "https://github.com/langflow-ai/langflow",
-      "commit": "36eea7ee9db1ce6119dfd85364f870a219ea2f7c"
-    },
-    {
-      "repository_url": "https://github.com/langflow-ai/langflow",
-      "commit": "73c1f203b0205d00928a0af7fa0e0fc93170f03e"
-    },
-    {
-      "repository_url": "https://github.com/langflow-ai/langflow",
-      "commit": "908c141d972118286d682124ce53ced16a4140ea"
-    },
-    {
-      "repository_url": "https://github.com/langflow-ai/langflow",
-      "commit": "922a49acac1449bebcc50b2e4ac253e7a1235c92"
-    },
-    {
-      "repository_url": "https://github.com/langflow-ai/langflow",
-      "commit": "e8bbae8eeb8729abd650f07bfc55957cbdbc1636"
-    },
-    {
       "repository_url": "https://github.com/milvus-io/milvus",
       "commit": "2fad5b34f7d3cf44cf0436ae7f1f31fabf17b6a0"
     },

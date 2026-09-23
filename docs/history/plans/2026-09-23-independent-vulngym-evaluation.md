@@ -19,7 +19,7 @@
 
 - [x] **Step 1: Audit prior exposure and current split**
 
-The prior live matrix used MLflow. The v3 source manifest has 156 commits and the evaluator file has 378 positive entries. Excluding the whole MLflow repository leaves 152 commits, 17 repositories, 369 positive entries, and 169 advisories. Do not use entry IDs, lines, or labels in the detector manifest.
+The prior live matrix used MLflow and Langflow. The v3 source manifest has 156 commits and the evaluator file has 378 positive entries. Excluding MLflow and Langflow leaves 146 commits, 16 repositories, and 358 positive entries. Do not use entry IDs, lines, or labels in the detector manifest.
 
 - [x] **Step 2: Freeze the repository-level exclusion**
 
@@ -65,7 +65,7 @@ Load the full candidate inventory and then evaluator labels; match repository, c
 
 Run `uv run --no-sync pytest -o addopts=''`. Before any model API experiment, require the project live gate to pass on the unchanged source/config/test snapshot.
 
-- [x] **Step 3: Run full 152-commit source discovery and review results**
+- [x] **Step 3: Run full 146-commit source discovery and review results**
 
 Do not send API requests from this stage. If analysis shows a parser/scanner/evaluator bug, add a failing general regression test, fix it, rerun the full suite, and regenerate the complete inventory in a new immutable run directory. If no implementation bug is found, write the report with the positive-only and dataset-label limitations stated prominently.
 
@@ -73,5 +73,5 @@ Do not send API requests from this stage. If analysis shows a parser/scanner/eva
 
 - No detector code branches on repository, commit, entry ID, line, label, or expected result.
 - Candidate selection is source-only and includes the complete inventory; there is no first-N truncation.
-- The 152-commit source inventory and 369 references remain development evidence until dataset verification and fixed negatives are independently established.
+- The 146-commit source inventory and 358 references remain development evidence until dataset verification and fixed negatives are independently established.
 - Model classification of every candidate is a separate budgeted stage. Do not describe source-discovery coverage as end-to-end agent recall or exploit confirmation.

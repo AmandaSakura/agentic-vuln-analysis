@@ -9,6 +9,10 @@
     {
       "repository_url": "https://github.com/mlflow/mlflow",
       "reason": "Repository appeared in the five prior live advisory-matrix runs. Exclude all its commits from this repository-level independent evaluation."
+    },
+    {
+      "repository_url": "https://github.com/langflow-ai/langflow",
+      "reason": "Repository appeared in the five prior live advisory-matrix runs. Exclude all its commits from this repository-level independent evaluation."
     }
   ]
 }

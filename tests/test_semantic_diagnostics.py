@@ -76,6 +76,8 @@ def test_permission_diagnostic_controls(body, expected):
     ("try:\n        pass\n    except replace_bindings():\n        pass\n    os.chmod(path, 0o750)", "UNRESOLVED"),
     ("try:\n        pass\n    except Exception:\n        os.chmod(path, 0o777)", "UNRESOLVED"),
     ("try:\n        os.chmod(path, 0o750)\n    except Exception:\n        os.chmod(path, 0o777)", "UNRESOLVED"),
+    ("if os.chmod(path, 0o777):\n        pass\n    os.chmod(path, 0o750)", "UNRESOLVED"),
+    ("if os.chmod(path, 0o777) or enabled:\n        pass\n    os.chmod(path, 0o750)", "UNRESOLVED"),
 ])
 def test_permission_complete_structured_control_flow(body, expected):
     result = permission_result(body)
@@ -88,9 +90,12 @@ def test_permission_complete_structured_control_flow(body, expected):
 @pytest.mark.parametrize("argv, expected", [
     ('["bash", "-c", value]', "MAY_REACH"),
     ('["sh", "-c", value]', "MAY_REACH"),
+    ('["python3.12", "-c", value]', "MAY_REACH"),
+    ('["python.exe", "-c", value]', "MAY_REACH"),
     ('["echo", value]', "NOT_ESTABLISHED"),
+    ('["git", "commit", "-m", value]', "NOT_ESTABLISHED"),
     ('["bash", "-c", "echo fixed"]', "NOT_ESTABLISHED"),
-], ids=["bash-command", "sh-command", "ordinary-argv", "constant-command"])
+], ids=["bash-command", "sh-command", "python312-command", "python-exe-command", "ordinary-argv", "git-argv", "constant-command"])
 def test_command_flow_preserves_argv_semantics(api, assigned, argv, expected):
     setup = f"    command = {argv}\n" if assigned else ""
     argument = "command" if assigned else argv

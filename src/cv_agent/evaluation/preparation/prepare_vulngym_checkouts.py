@@ -48,10 +48,15 @@ def ensure_checkout(repository_url: str, commit: str, cache_root: Path,
     if len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit):
         raise ValueError(f"Invalid pinned commit: {commit}")
     cache = ensure_repository_cache(repository_url, cache_root)
-    run_git(["fetch", "--filter=blob:none", "--depth=1", "origin", commit], cwd=cache)
-    fetched = run_git(["rev-parse", "FETCH_HEAD"], cwd=cache)
-    if fetched != commit:
-        raise ValueError(f"Fetched commit mismatch: expected {commit}, got {fetched}")
+    has_commit = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=cache, capture_output=True,
+    ).returncode == 0
+    if not has_commit:
+        run_git(["fetch", "--filter=blob:none", "--depth=1", "origin", commit], cwd=cache)
+        fetched = run_git(["rev-parse", "FETCH_HEAD"], cwd=cache)
+        if fetched != commit:
+            raise ValueError(f"Fetched commit mismatch: expected {commit}, got {fetched}")
 
     checkout = checkout_root / repository_slug(repository_url) / commit
     if not checkout.exists():
