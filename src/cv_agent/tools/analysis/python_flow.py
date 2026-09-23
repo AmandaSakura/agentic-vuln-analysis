@@ -48,7 +48,10 @@ def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str
                 val = elt.value
                 if val == "--":
                     if idx < len(elts) and isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str):
-                        exe = elts[idx].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        next_val = elts[idx].value
+                        if "=" in next_val or next_val.startswith("-"):
+                            return None, False
+                        exe = next_val.replace("\\", "/").rsplit("/", 1)[-1].lower()
                         idx += 1
                         found = True
                         break
@@ -84,7 +87,10 @@ def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str
                     return "sh", True
                 if val == "--":
                     if idx < len(elts) and isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str):
-                        exe = elts[idx].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        next_val = elts[idx].value
+                        if "=" in next_val or next_val.startswith("-"):
+                            return None, False
+                        exe = next_val.replace("\\", "/").rsplit("/", 1)[-1].lower()
                         idx += 1
                         found = True
                         break
