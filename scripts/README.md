@@ -21,6 +21,16 @@ uv run --no-sync python -m cv_agent.evaluation.runners.run_micro_benchmark
 
 该示例会运行模型实验，不是离线检查。其他 `run_*` / `reproduce_*` 实现在 `evaluation.runners`，数据准备在 `evaluation.preparation`，审计在 `evaluation.diagnostics`；使用 `python -m` 加对应完整模块名。各模块保留原来的参数和配置，不存在自动选择实验的总入口。运行前检查模块用途；诊断或准备命令也可能写入文件。
 
+VulnGym 的正例来源发现分成三步，保持 detector 输入与 evaluator 标签分开：
+
+```sh
+uv run --no-sync python -m cv_agent.evaluation.preparation.prepare_vulngym_evaluation_v4
+uv run --no-sync python -m cv_agent.evaluation.preparation.prepare_vulngym_checkouts
+uv run --no-sync python -m cv_agent.evaluation.runners.run_vulngym_discovery
+```
+
+缓存准备只保留每个仓库一个 Git cache。发现阶段逐提交建立临时 worktree，扫描完成后移除，不调用模型。结果生成后，单独运行 `uv run --no-sync python -m cv_agent.evaluation.diagnostics.score_vulngym_discovery RUN_DIR artifacts/vulngym_heldout_preparation_v4/labels.json`；正例-only 参考不支持误报率。
+
 ## 独立探针
 
 `probes/jinja_attr_probe.py` 和 `probes/langchain_template_probe.py` 由对应 reproduction runner 在目标项目解释器中按文件路径启动。它们不依赖安装本项目，不是日常实验入口。

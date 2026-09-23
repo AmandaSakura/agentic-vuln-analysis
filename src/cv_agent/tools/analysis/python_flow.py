@@ -48,6 +48,67 @@ def python_document_flow(
     sanitizers: list[dict[str, Any]] = []
     bindings: list[CallBinding] = []
 
+    subprocess_sinks = {"subprocess.run", "subprocess.call", "subprocess.Popen"}
+
+    def qualified_call(call: ast.Call) -> str:
+        parts = ast.unparse(call.func).split(".")
+        return ".".join([document.import_aliases.get(parts[0], parts[0]), *parts[1:]])
+
+    # Only propagate argv structure for a dominating local assignment whose
+    # container never escapes or mutates. Taint itself remains flow-sensitive.
+    # A boolean taint environment cannot safely track arbitrary list aliases.
+    parents = {child: parent for parent in ast.walk(node) for child in ast.iter_child_nodes(parent)}
+    fixed_argv: dict[str, ast.List | ast.Tuple] = {}
+    for statement in node.body:
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+            target = statement.targets[0]
+        elif isinstance(statement, ast.AnnAssign):
+            target = statement.target
+        else:
+            continue
+        if not isinstance(target, ast.Name) or not isinstance(statement.value, (ast.List, ast.Tuple)):
+            continue
+        references = [item for item in ast.walk(node) if isinstance(item, ast.Name) and item.id == target.id]
+        if any(item is not target and not isinstance(item.ctx, ast.Load) for item in references):
+            continue
+        if any(
+            (isinstance(item, (ast.Global, ast.Nonlocal)) and target.id in item.names)
+            or (isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and item.name == target.id)
+            or (isinstance(item, ast.alias) and (item.asname or item.name.split(".")[0]) == target.id)
+            for item in ast.walk(node)
+        ):
+            continue
+        for reference in references:
+            if reference is target:
+                continue
+            parent = parents[reference]
+            call = parents.get(parent) if isinstance(parent, ast.keyword) and parent.arg == "args" else parent
+            if not (
+                reference.lineno > statement.end_lineno
+                and isinstance(call, ast.Call) and qualified_call(call) in subprocess_sinks
+                and ((call.args and call.args[0] is reference)
+                     or (isinstance(parent, ast.keyword) and parent.arg == "args"))
+            ):
+                break
+        else:
+            fixed_argv[target.id] = statement.value
+
+    def ordinary_argv(expression: ast.AST | None) -> bool:
+        if isinstance(expression, ast.Name):
+            expression = fixed_argv.get(expression.id)
+        if not (isinstance(expression, (ast.List, ast.Tuple)) and expression.elts
+                and isinstance(expression.elts[0], ast.Constant)
+                and isinstance(expression.elts[0].value, str)):
+            return False
+        executable = expression.elts[0].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+        # shell=False does not prevent the explicitly launched interpreter from
+        # executing its command argument. Preserve possible flow in that case.
+        return executable not in {
+            "sh", "bash", "dash", "zsh", "ksh", "fish", "csh", "tcsh", "busybox",
+            "cmd", "cmd.exe", "powershell", "powershell.exe", "pwsh", "pwsh.exe",
+            "python", "python3", "node", "ruby", "perl",
+        }
+
     def source(expression: ast.AST) -> bool:
         if isinstance(expression, ast.Call):
             text = ast.unparse(expression.func) + "("
@@ -93,9 +154,7 @@ def python_document_flow(
                     sources.append(value)
             if not isinstance(item, ast.Call):
                 continue
-            name = ast.unparse(item.func)
-            parts = name.split(".")
-            name = ".".join([document.import_aliases.get(parts[0], parts[0]), *parts[1:]])
+            name = qualified_call(item)
             call_text = name + "("
             arguments = tuple(tainted(arg, environment) for arg in item.args)
             keywords = tuple(
@@ -116,16 +175,13 @@ def python_document_flow(
                      "command-execution": "args", "outbound-request": "url"}.get(sink_category, ""),
                     False,
                 )
-                if sink_category == "command-execution" and name in {
-                    "subprocess.run", "subprocess.call", "subprocess.Popen",
-                }:
+                if sink_category == "command-execution" and name in subprocess_sinks:
                     shell = next((kw.value for kw in item.keywords if kw.arg == "shell"), ast.Constant(False))
                     argv = item.args[0] if item.args else next(
                         (kw.value for kw in item.keywords if kw.arg == "args"), None)
                     if (isinstance(shell, ast.Constant) and shell.value is False
-                            and isinstance(argv, (ast.List, ast.Tuple)) and argv.elts
-                            and isinstance(argv.elts[0], ast.Constant)
-                            and isinstance(argv.elts[0].value, str)):
+                            and not any(kw.arg in {"executable", None} for kw in item.keywords)
+                            and ordinary_argv(argv)):
                         # User data passed as argv to a fixed program is not shell text.
                         relevant = False
                 sinks.append({

@@ -20,6 +20,8 @@
 
 ## 审查、修复与诊断
 
+- [修复—测试—完整矩阵闭环（2026-09-22）](records/EXPERIMENT_LOOP_2026-09-22.md)
+- [权限与命令 argv 语义诊断及修复（2026-09-22）](records/SEMANTIC_DIAGNOSTICS_2026-09-22.md)
 - [已发现缺陷的修复与本地验证](records/BUGFIX_VERIFICATION.md) — `BUGFIX_VERIFICATION.md`
 - [最近修复的代码审查（2026-09-20）](records/CODE_REVIEW_2026-09-20.md) — `CODE_REVIEW_2026-09-20.md`
 - [代码审查修复验收（2026-09-20）](records/CODE_REVIEW_FIX_2026-09-20.md) — `CODE_REVIEW_FIX_2026-09-20.md`
@@ -40,6 +42,9 @@
 
 ## 实验与验证记录
 
+- [VulnGym 独立评测与全量候选发现报告（2026-09-23）](records/VULNGYM_INDEPENDENT_EVALUATION_2026-09-23.md)
+- [第五轮完整矩阵通过：最终验收报告（2026-09-22）](records/EXPERIMENT_ACCEPTANCE_2026-09-22.md)
+- [修复与三轮完整实验报告（2026-09-22）](records/EXPERIMENT_REPORT_2026-09-22.md)
 - [Fixed development evaluation](records/DEVELOPMENT_BENCHMARK.md) — `DEVELOPMENT_BENCHMARK.md`
 - [Development pilot, 2026-09-19](records/DEVELOPMENT_PILOT_2026-09-19.md) — `DEVELOPMENT_PILOT_2026-09-19.md`
 - [Development experiment launch — 2026-09-19](records/EXPERIMENT_START_2026-09-19.md) — `EXPERIMENT_START_2026-09-19.md`
@@ -60,6 +65,8 @@
 
 ## 历史执行计划
 
+- [独立 VulnGym 评估计划](plans/2026-09-23-independent-vulngym-evaluation.md)
+- [权限与命令语义修复计划](plans/2026-09-22-semantic-repairs.md)
 - [脚本入口清理计划](plans/2026-09-21-script-entrypoints.md)
 
 - [2026-09-19-evidence-loop](plans/2026-09-19-evidence-loop.md)

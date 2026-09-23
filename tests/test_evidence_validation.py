@@ -120,6 +120,129 @@ def test_abstention_remains_possible_despite_a_concrete_witness():
     assert vote.label == 'ABSTAIN'
 
 
+@pytest.mark.parametrize("roles", [
+    ("supporting_observation_ids", "counter_observation_ids"),
+    ("supporting_observation_ids", "unresolved_observation_ids"),
+    ("counter_observation_ids", "unresolved_observation_ids"),
+])
+@pytest.mark.parametrize("label", ["VULNERABLE", "ABSTAIN"])
+@pytest.mark.parametrize("second_id", ["tool:1", "span:entry"])
+def test_conflicting_observation_roles_name_citation_and_fields(roles, label, second_id):
+    observation = ToolObservation(tool="read_span", status="ok", content="source",
+                                  citation_id="tool:1", evidence_ids=("span:entry",))
+    step = ReActStep(step=1, model_id="offline", observation=observation,
+                    tool_call=ModelToolCall(call_id="read", name="read_span", arguments={}))
+    output = AgentExpertConclusion(
+        expert="scan", label=label, confidence=0.5, validation_status="UNRESOLVED",
+        evidence_ids=("tool:1",), rationale="Observed source.",
+        **{roles[0]: ("tool:1",), roles[1]: (second_id,)},
+    )
+    with pytest.raises(ValueError, match="Conflicting observation roles") as error:
+        validate_conclusion(output, [step], frozenset())
+    assert "tool:1" in str(error.value)
+    assert all(role in str(error.value) for role in roles)
+    # Bibliography overlap is valid; only contradictory explicit roles conflict.
+    validate_conclusion(output.model_copy(update={roles[1]: ()}), [step], frozenset())
+
+
+def test_conflicting_roles_are_corrected_without_changing_prediction():
+    payload = json.loads(conclusion().content)
+    payload.update(supporting_observation_ids=["tool:1"], unresolved_observation_ids=["tool:1"])
+    bad = ModelReply(model_id="scripted-test", content=json.dumps(payload))
+    payload["unresolved_observation_ids"] = []
+    corrected = ModelReply(model_id="scripted-test", content=json.dumps(payload))
+    vote, model = run([call(), bad, corrected])
+    assert vote.label == "VULNERABLE"
+    assert vote.model_calls == 3
+    assert vote.supporting_observation_ids == ("tool:1",)
+    assert vote.unresolved_observation_ids == ()
+    assert "Conflicting observation roles" in model.requests[-1][0][-1].content
+
+
+@pytest.mark.parametrize("tool", ["validate_permission_mode", "run_static_check"])
+@pytest.mark.parametrize("label", ["VULNERABLE", "SAFE"])
+@pytest.mark.parametrize("cite_permission", [False, True])
+def test_permission_requirement_cannot_be_bypassed_by_citation_selection(tool, label, cite_permission):
+    permission = _cited_safe_observation(
+        tool, {"path": PATH, "status": "UNRESOLVED", "permission_mode_check": {"modes": []}},
+        citation_id="permission", evidence_ids=(f"permission_mode:{PATH}",),
+        validation_status="UNRESOLVED",
+    )
+    guard = _cited_safe_observation("get_guards", {"guards": ["authenticated"]}, citation_id="guard")
+    trace = [ReActStep(step=i, model_id="test", observation=obs,
+                      tool_call=ModelToolCall(call_id=str(i), name=obs.tool, arguments={}))
+             for i, obs in enumerate((permission, guard), 1)]
+    output = AgentExpertConclusion(
+        expert="scan", label=label, confidence=0.6, validation_status="UNRESOLVED",
+        evidence_ids=("guard", "permission") if cite_permission else ("guard",),
+        supporting_observation_ids=("guard",),
+        unresolved_observation_ids=("permission",) if cite_permission else (),
+        rationale="Permission assessment cannot be replaced by a generic guard.",
+    )
+    with pytest.raises(ValueError, match="validate_permission_mode"):
+        validate_conclusion(output, trace, frozenset(), subject=SUBJECT)
+    validate_conclusion(output.model_copy(update={"label": "ABSTAIN"}), trace, frozenset(), subject=SUBJECT)
+    # A complete, matching validator still permits the corresponding judgment.
+    witness = permission.model_copy(update={
+        "tool": "validate_permission_mode", "subject": SUBJECT,
+        "validation_status": ValidationStatus.CONFIRMED if label == "VULNERABLE" else ValidationStatus.REFUTED,
+    })
+    supported = output.model_copy(update={
+        "evidence_ids": ("permission",), "supporting_observation_ids": ("permission",),
+        "unresolved_observation_ids": (),
+    })
+    validate_conclusion(supported, [trace[0].model_copy(update={"observation": witness})],
+                        frozenset(), subject=SUBJECT)
+    # A permission result from another candidate must not taint this assessment.
+    foreign = permission.model_copy(update={"evidence_ids": ("permission_mode:other.py",),
+                                           "content": json.dumps({"path": "other.py", "permission_mode_check": {}})})
+    validate_conclusion(output.model_copy(update={"evidence_ids": ("guard",), "unresolved_observation_ids": ()}),
+                        [trace[0].model_copy(update={"observation": foreign}), trace[1]],
+                        frozenset(), subject=SUBJECT)
+
+
+def test_role_conflict_feedback_includes_independent_permission_failure():
+    observation = _cited_safe_observation(
+        "run_static_check", {"path": PATH, "permission_mode_check": {"modes": [{"mode": "0o777"}]}},
+    )
+    step = ReActStep(step=1, model_id="test", observation=observation,
+                    tool_call=ModelToolCall(call_id="static", name=observation.tool, arguments={}))
+    output = AgentExpertConclusion(
+        expert="scan", label="VULNERABLE", confidence=0.6, validation_status="UNRESOLVED",
+        evidence_ids=("tool:1",), supporting_observation_ids=("tool:1",),
+        unresolved_observation_ids=("tool:1",), rationale="Literal mode is not complete permission evidence.",
+    )
+    with pytest.raises(ValueError) as error:
+        validate_conclusion(output, [step], frozenset(), subject=SUBJECT)
+    assert "Conflicting observation roles" in str(error.value)
+    assert "validate_permission_mode" in str(error.value)
+
+
+def test_permission_and_role_correction_fit_one_remaining_model_step():
+    def static_check(arguments, scope):
+        return ToolObservation(tool="run_static_check", status="ok",
+                               content=json.dumps({"path": PATH, "permission_mode_check": {"modes": []}}))
+
+    payload = json.loads(conclusion().content)
+    payload.update(supporting_observation_ids=["tool:1"], unresolved_observation_ids=["tool:1"])
+    bad = ModelReply(model_id="scripted-test", content=json.dumps(payload))
+    payload.update(label="ABSTAIN", supporting_observation_ids=[])
+    corrected = ModelReply(model_id="scripted-test", content=json.dumps(payload))
+    model = ScriptedChatModel([call("run_static_check"), bad, corrected])
+    registry = ToolRegistry((AgentTool("run_static_check", "Static patterns", ReadSpanInput,
+                                       static_check, "json"),), max_output_bytes=10000)
+    engine = ReActEngine(model=model, tools=registry,
+                        scope=ToolExecutionScope(frozenset({PATH}), 8192, subject=SUBJECT),
+                        harness=FULL_SYSTEM_HARNESS.react_loop.model_copy(update={"max_steps": 3}))
+    vote = run_expert(engine, expert="scan", system_prompt="Inspect", task_prompt=PATH,
+                      allowed_tools=("run_static_check",))
+    assert vote.label == "ABSTAIN"
+    assert vote.model_calls == 3
+    feedback = " ".join(message.content or "" for message in model.requests[-1][0] if message.role == "user")
+    assert "Conflicting observation roles" in feedback
+    assert "validate_permission_mode evidence or abstain" in feedback
+
+
 @pytest.mark.parametrize('status,label', [('CONFIRMED', 'SAFE'), ('REFUTED', 'VULNERABLE')])
 def test_concrete_conflict_check_is_symmetric_and_candidate_bound(status, label):
     from cv_agent.domain.review import AgentExpertConclusion
@@ -412,4 +535,3 @@ def test_unknown_citation_feedback_identifies_invalid_and_available_ids():
         validate_conclusion(conclusion, trace, frozenset())
     assert "taint/tool:9" in str(error.value)
     assert "Available tool citations: taint/tool:1" in str(error.value)
-

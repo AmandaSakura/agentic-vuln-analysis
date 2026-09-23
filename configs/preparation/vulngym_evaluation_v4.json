@@ -1,0 +1,14 @@
+{
+  "source_inputs": "configs/datasets/vulngym_heldout_inputs_v3.json",
+  "source_labels": "artifacts/vulngym_heldout_preparation_v3/labels.json",
+  "detector_output": "configs/datasets/vulngym_heldout_inputs_v4.json",
+  "evaluator_output": "artifacts/vulngym_heldout_preparation_v4",
+  "split_version": 4,
+  "claim_eligible": false,
+  "previously_evaluated_repositories": [
+    {
+      "repository_url": "https://github.com/mlflow/mlflow",
+      "reason": "Repository appeared in the five prior live advisory-matrix runs. Exclude all its commits from this repository-level independent evaluation."
+    }
+  ]
+}
