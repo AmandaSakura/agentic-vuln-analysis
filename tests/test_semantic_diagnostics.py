@@ -99,6 +99,7 @@ def test_permission_complete_structured_control_flow(body, expected):
     ('["su", "root", "-c", value]', "MAY_REACH"),
     ('["sudo", "--user", "root", "bash", "-c", value]', "MAY_REACH"),
     ('["sudo", "-u", "root", "bash", "-c", value]', "MAY_REACH"),
+    ('["env", "--split-string=sh -c", "eval \\"$1\\"", "sh", value]', "MAY_REACH"),
     ('["echo", value]', "NOT_ESTABLISHED"),
     ('["git", "commit", "-m", value]', "NOT_ESTABLISHED"),
     ('["env", "git", "status", value]', "NOT_ESTABLISHED"),
@@ -107,7 +108,7 @@ def test_permission_complete_structured_control_flow(body, expected):
     ('["bash", "-c", "echo fixed"]', "NOT_ESTABLISHED"),
 ], ids=["bash-command", "sh-command", "python312-command", "python-exe-command",
         "env-bash", "env-i-python", "usr-bin-env-sh", "sudo-bash",
-        "su-root-c", "sudo-long-user-bash", "sudo-short-user-bash",
+        "su-root-c", "sudo-long-user-bash", "sudo-short-user-bash", "env-split-string",
         "ordinary-argv", "git-argv", "env-git", "env-echo", "sudo-user-git", "constant-command"])
 def test_command_flow_preserves_argv_semantics(api, assigned, argv, expected):
     setup = f"    command = {argv}\n" if assigned else ""

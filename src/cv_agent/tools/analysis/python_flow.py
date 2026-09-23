@@ -33,107 +33,84 @@ def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str
     if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
         return None, False
     exe = first.value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+    if exe not in LAUNCHER_COMMANDS:
+        return exe, True
+
     idx = 1
     while exe in LAUNCHER_COMMANDS:
-        found_cmd = False
-        while idx < len(elts):
-            elt = elts[idx]
-            idx += 1
-            if not (isinstance(elt, ast.Constant) and isinstance(elt.value, str)):
-                return None, False
-            val = elt.value
-            if val == "--":
-                if idx < len(elts):
-                    next_elt = elts[idx]
-                    idx += 1
-                    if isinstance(next_elt, ast.Constant) and isinstance(next_elt.value, str):
-                        exe = next_elt.value.replace("\\", "/").rsplit("/", 1)[-1].lower()
-                        found_cmd = True
+        if exe == "env":
+            found = False
+            while idx < len(elts):
+                elt = elts[idx]
+                idx += 1
+                if not (isinstance(elt, ast.Constant) and isinstance(elt.value, str)):
+                    return None, False
+                val = elt.value
+                if val == "--":
+                    if idx < len(elts) and isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str):
+                        exe = elts[idx].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        idx += 1
+                        found = True
                         break
                     return None, False
-                return None, False
-            if exe == "env":
                 if val in {"-u", "--unset", "-C", "--chdir"}:
                     if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
                         return None, False
                     idx += 1
                     continue
-                if val.startswith(("-u", "-C")):
+                if val.startswith(("-u", "-C")) and not val.startswith(("-u=", "-C=")):
                     continue
-                if val.startswith("-S") or val == "--split-string":
-                    return None, False
+                if val in {"-i", "-0", "-v", "--null", "--ignore-environment", "--debug"}:
+                    continue
                 if val.startswith("-") or "=" in val:
-                    continue
-            elif exe == "sudo":
+                    if "=" in val and not val.startswith("-"):
+                        continue
+                    return None, False
+                exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                found = True
+                break
+            if not found:
+                return None, False
+
+        elif exe == "sudo":
+            found = False
+            while idx < len(elts):
+                elt = elts[idx]
+                idx += 1
+                if not (isinstance(elt, ast.Constant) and isinstance(elt.value, str)):
+                    return None, False
+                val = elt.value
                 if val in {"-s", "--shell", "-i", "--login", "-e", "--edit"}:
                     return "sh", True
-                if val in {"-u", "--user", "-g", "--group", "-p", "--prompt", "-h", "--host",
-                           "-c", "-C", "--close-from", "-D", "--chdir", "-R", "--chroot",
-                           "-T", "--command-timeout", "-U", "--other-user", "-r", "--role", "-t", "--type"}:
+                if val == "--":
+                    if idx < len(elts) and isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str):
+                        exe = elts[idx].value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        idx += 1
+                        found = True
+                        break
+                    return None, False
+                if val in {"-u", "--user", "-g", "--group"}:
                     if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
                         return None, False
                     idx += 1
                     continue
-                if any(val.startswith(p) for p in ("--user=", "--group=", "--prompt=", "--host=",
-                                                   "--chdir=", "--chroot=", "--role=", "--type=")):
+                if val.startswith(("--user=", "--group=", "-u", "-g")):
                     continue
-                if val in {"-b", "--background", "-E", "-H", "-P", "-S", "-k", "-K", "-n",
-                           "--non-interactive", "-v", "-V"}:
+                if val in {"-E", "--preserve-env", "-b", "--background", "-n", "--non-interactive"}:
                     continue
                 if val.startswith(("-E=", "--preserve-env=")):
                     continue
                 if val.startswith("-"):
                     return None, False
-            elif exe in {"nice", "ionice"}:
-                if val in {"-n", "-c", "-p", "--adjustment"}:
-                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
-                        return None, False
-                    idx += 1
-                    continue
-                if val.startswith("-") and val[1:].isdigit():
-                    continue
-                if val.startswith("-"):
-                    return None, False
-            elif exe == "stdbuf":
-                if val in {"-i", "-o", "-e", "--input", "--output", "--error"}:
-                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
-                        return None, False
-                    idx += 1
-                    continue
-                if any(val.startswith(p) for p in ("-i", "-o", "-e", "--input=", "--output=", "--error=")):
-                    continue
-                if val.startswith("-"):
-                    return None, False
-            elif exe == "time":
-                if val in {"-o", "-f", "--output", "--format"}:
-                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
-                        return None, False
-                    idx += 1
-                    continue
-                if any(val.startswith(p) for p in ("--output=", "--format=")):
-                    continue
-                if val in {"-p", "--portability", "-v", "--verbose", "-a", "--append"}:
-                    continue
-                if val.startswith("-"):
-                    return None, False
-            elif exe == "doas":
-                if val == "-s":
-                    return "sh", True
-                if val in {"-u", "-a", "-C"}:
-                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
-                        return None, False
-                    idx += 1
-                    continue
-                if val.startswith("-"):
-                    return None, False
-            else:
-                if val.startswith("-"):
-                    return None, False
-            exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
-            found_cmd = True
-            break
-        if not found_cmd:
+                exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                found = True
+                break
+            if not found:
+                return None, False
+
+        else:
             return None, False
+
     return exe, True
 
 
@@ -210,14 +187,9 @@ def python_document_flow(
                 continue
             parent = parents[reference]
             call = parents.get(parent) if isinstance(parent, ast.keyword) and parent.arg == "args" else parent
-            has_kw_exe = any(kw.arg in {"executable", None} for kw in call.keywords) if isinstance(call, ast.Call) else False
-            has_pos_exe = isinstance(call, ast.Call) and len(call.args) >= 3 and not (
-                isinstance(call.args[2], ast.Constant) and call.args[2].value is None
-            )
             if not (
                 reference.lineno > statement.end_lineno
                 and isinstance(call, ast.Call) and qualified_call(call) in subprocess_sinks
-                and not has_kw_exe and not has_pos_exe
                 and ((call.args and call.args[0] is reference)
                      or (isinstance(parent, ast.keyword) and parent.arg == "args"))
             ):
