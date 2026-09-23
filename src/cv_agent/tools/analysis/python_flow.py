@@ -13,7 +13,7 @@ from cv_agent.domain.types import CodeDocument
 
 INTERPRETER_NAME_PATTERN = re.compile(
     r"^(?:"
-    r"sh|bash|dash|zsh|ksh|fish|csh|tcsh|busybox|"
+    r"sh|bash|dash|zsh|ksh|fish|csh|tcsh|busybox|su|runuser|"
     r"cmd|powershell|pwsh|"
     r"(?:python|pypy|perl|ruby|node|nodejs|php)(?:[0-9]+(?:\.[0-9]+)*)?"
     r")(?:\.exe)?$",
@@ -21,7 +21,7 @@ INTERPRETER_NAME_PATTERN = re.compile(
 )
 
 LAUNCHER_COMMANDS = {
-    "env", "sudo", "su", "doas", "nohup", "nice", "ionice", "stdbuf", "time", "runuser",
+    "env", "sudo", "doas", "nohup", "nice", "ionice", "stdbuf", "time",
 }
 
 
@@ -54,6 +54,8 @@ def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str
                 return None, False
             if exe == "env":
                 if val in {"-u", "--unset", "-C", "--chdir"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
                     idx += 1
                     continue
                 if val.startswith(("-u", "-C")):
@@ -63,26 +65,70 @@ def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str
                 if val.startswith("-") or "=" in val:
                     continue
             elif exe == "sudo":
-                if val in {"-u", "-g", "-p", "-h", "-c", "-C", "-D", "-R", "-T", "-U"}:
+                if val in {"-s", "--shell", "-i", "--login", "-e", "--edit"}:
+                    return "sh", True
+                if val in {"-u", "--user", "-g", "--group", "-p", "--prompt", "-h", "--host",
+                           "-c", "-C", "--close-from", "-D", "--chdir", "-R", "--chroot",
+                           "-T", "--command-timeout", "-U", "--other-user", "-r", "--role", "-t", "--type"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
                     idx += 1
                     continue
-                if val.startswith("-"):
+                if any(val.startswith(p) for p in ("--user=", "--group=", "--prompt=", "--host=",
+                                                   "--chdir=", "--chroot=", "--role=", "--type=")):
                     continue
+                if val in {"-b", "--background", "-E", "-H", "-P", "-S", "-k", "-K", "-n",
+                           "--non-interactive", "-v", "-V"}:
+                    continue
+                if val.startswith(("-E=", "--preserve-env=")):
+                    continue
+                if val.startswith("-"):
+                    return None, False
             elif exe in {"nice", "ionice"}:
-                if val in {"-n", "-c", "-p"}:
+                if val in {"-n", "-c", "-p", "--adjustment"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
+                    idx += 1
+                    continue
+                if val.startswith("-") and val[1:].isdigit():
+                    continue
+                if val.startswith("-"):
+                    return None, False
+            elif exe == "stdbuf":
+                if val in {"-i", "-o", "-e", "--input", "--output", "--error"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
+                    idx += 1
+                    continue
+                if any(val.startswith(p) for p in ("-i", "-o", "-e", "--input=", "--output=", "--error=")):
+                    continue
+                if val.startswith("-"):
+                    return None, False
+            elif exe == "time":
+                if val in {"-o", "-f", "--output", "--format"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
+                    idx += 1
+                    continue
+                if any(val.startswith(p) for p in ("--output=", "--format=")):
+                    continue
+                if val in {"-p", "--portability", "-v", "--verbose", "-a", "--append"}:
+                    continue
+                if val.startswith("-"):
+                    return None, False
+            elif exe == "doas":
+                if val == "-s":
+                    return "sh", True
+                if val in {"-u", "-a", "-C"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
                     idx += 1
                     continue
                 if val.startswith("-"):
-                    continue
-            elif exe in {"stdbuf"}:
-                if val in {"-i", "-o", "-e"}:
-                    idx += 1
-                    continue
-                if val.startswith("-"):
-                    continue
+                    return None, False
             else:
                 if val.startswith("-"):
-                    continue
+                    return None, False
             exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
             found_cmd = True
             break
@@ -164,9 +210,14 @@ def python_document_flow(
                 continue
             parent = parents[reference]
             call = parents.get(parent) if isinstance(parent, ast.keyword) and parent.arg == "args" else parent
+            has_kw_exe = any(kw.arg in {"executable", None} for kw in call.keywords) if isinstance(call, ast.Call) else False
+            has_pos_exe = isinstance(call, ast.Call) and len(call.args) >= 3 and not (
+                isinstance(call.args[2], ast.Constant) and call.args[2].value is None
+            )
             if not (
                 reference.lineno > statement.end_lineno
                 and isinstance(call, ast.Call) and qualified_call(call) in subprocess_sinks
+                and not has_kw_exe and not has_pos_exe
                 and ((call.args and call.args[0] is reference)
                      or (isinstance(parent, ast.keyword) and parent.arg == "args"))
             ):
@@ -253,11 +304,17 @@ def python_document_flow(
                     False,
                 )
                 if sink_category == "command-execution" and name in subprocess_sinks:
-                    shell = next((kw.value for kw in item.keywords if kw.arg == "shell"), ast.Constant(False))
+                    shell = next((kw.value for kw in item.keywords if kw.arg == "shell"),
+                                 item.args[8] if len(item.args) >= 9 else ast.Constant(False))
                     argv = item.args[0] if item.args else next(
                         (kw.value for kw in item.keywords if kw.arg == "args"), None)
+                    has_kw_executable = any(kw.arg in {"executable", None} for kw in item.keywords)
+                    has_pos_executable = len(item.args) >= 3 and not (
+                        isinstance(item.args[2], ast.Constant) and item.args[2].value is None
+                    )
                     if (isinstance(shell, ast.Constant) and shell.value is False
-                            and not any(kw.arg in {"executable", None} for kw in item.keywords)
+                            and not has_kw_executable
+                            and not has_pos_executable
                             and ordinary_argv(argv)):
                         # User data passed as argv to a fixed program is not shell text.
                         relevant = False

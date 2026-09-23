@@ -96,14 +96,19 @@ def test_permission_complete_structured_control_flow(body, expected):
     ('["env", "-i", "python3.12", "-c", value]', "MAY_REACH"),
     ('["/usr/bin/env", "sh", "-c", value]', "MAY_REACH"),
     ('["sudo", "bash", "-c", value]', "MAY_REACH"),
+    ('["su", "root", "-c", value]', "MAY_REACH"),
+    ('["sudo", "--user", "root", "bash", "-c", value]', "MAY_REACH"),
+    ('["sudo", "-u", "root", "bash", "-c", value]', "MAY_REACH"),
     ('["echo", value]', "NOT_ESTABLISHED"),
     ('["git", "commit", "-m", value]', "NOT_ESTABLISHED"),
     ('["env", "git", "status", value]', "NOT_ESTABLISHED"),
     ('["env", "FOO=bar", "echo", value]', "NOT_ESTABLISHED"),
+    ('["sudo", "--user", "root", "git", "status", value]', "NOT_ESTABLISHED"),
     ('["bash", "-c", "echo fixed"]', "NOT_ESTABLISHED"),
 ], ids=["bash-command", "sh-command", "python312-command", "python-exe-command",
         "env-bash", "env-i-python", "usr-bin-env-sh", "sudo-bash",
-        "ordinary-argv", "git-argv", "env-git", "env-echo", "constant-command"])
+        "su-root-c", "sudo-long-user-bash", "sudo-short-user-bash",
+        "ordinary-argv", "git-argv", "env-git", "env-echo", "sudo-user-git", "constant-command"])
 def test_command_flow_preserves_argv_semantics(api, assigned, argv, expected):
     setup = f"    command = {argv}\n" if assigned else ""
     argument = "command" if assigned else argv
@@ -126,9 +131,14 @@ def test_command_flow_preserves_argv_semantics(api, assigned, argv, expected):
     ('command = ["echo", value]\n    mutate(command)\n    return subprocess.run(command)', "MAY_REACH"),
     ('command = ["echo", value]\n    return subprocess.run(command, shell=True)', "MAY_REACH"),
     ('return subprocess.run(["echo", "-c", value], executable="bash")', "MAY_REACH"),
+    ('command = ["echo", "-c", value]\n    return subprocess.Popen(command, -1, "/bin/bash")', "MAY_REACH"),
+    ('return subprocess.Popen(["echo", "-c", value], -1, "/bin/bash")', "MAY_REACH"),
+    ('command = ["echo", value]\n    return subprocess.Popen(command, -1, None)', "NOT_ESTABLISHED"),
     ('command = ["echo", value]\n    return subprocess.run(command, shell=request.args["flag"])', "MAY_REACH"),
 ], ids=["absolute-shell-keyword", "tuple-keyword", "reassign", "branch-reassign",
-        "mutation", "alias-mutation", "escape", "shell-true", "executable-override", "unknown-shell"])
+        "mutation", "alias-mutation", "escape", "shell-true", "executable-override",
+        "positional-executable-var", "positional-executable-inline", "positional-executable-none",
+        "unknown-shell"])
 def test_command_argv_structure_boundaries(body, expected):
     result = trace({"entry.py": (
         "import subprocess\n\ndef entry(request):\n"
