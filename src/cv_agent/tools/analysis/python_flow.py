@@ -3,11 +3,116 @@
 from __future__ import annotations
 
 import ast
+import re
 import textwrap
 from dataclasses import dataclass
 from typing import Any, Iterable
 
 from cv_agent.domain.types import CodeDocument
+
+
+ESTABLISHED_ORDINARY_PROGRAMS = {
+    "echo",
+}
+
+LAUNCHER_COMMANDS = {
+    "env", "sudo",
+}
+
+
+def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str | None, bool]:
+    """Return (executable_basename, is_known) from an argv list, resolving launchers."""
+    if not elts:
+        return None, False
+    first = elts[0]
+    if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
+        return None, False
+    exe = first.value.replace("\\", "/").rsplit("/", 1)[-1].lower()
+    if exe not in LAUNCHER_COMMANDS:
+        return exe, True
+
+    idx = 1
+    while exe in LAUNCHER_COMMANDS:
+        if exe == "env":
+            found = False
+            while idx < len(elts):
+                elt = elts[idx]
+                idx += 1
+                if not (isinstance(elt, ast.Constant) and isinstance(elt.value, str)):
+                    return None, False
+                val = elt.value
+                if val == "--":
+                    if idx < len(elts) and isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str):
+                        next_val = elts[idx].value
+                        if "=" in next_val or next_val.startswith("-"):
+                            return None, False
+                        exe = next_val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        idx += 1
+                        found = True
+                        break
+                    return None, False
+                if val in {"-u", "--unset", "-C", "--chdir"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
+                    idx += 1
+                    continue
+                if val.startswith(("-u", "-C")) and not val.startswith(("-u=", "-C=")):
+                    continue
+                if val in {"-i", "-0", "-v", "--null", "--ignore-environment", "--debug"}:
+                    continue
+                if val.startswith("-") or "=" in val:
+                    if "=" in val and not val.startswith("-"):
+                        continue
+                    return None, False
+                exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                found = True
+                break
+            if not found:
+                return None, False
+
+        elif exe == "sudo":
+            found = False
+            while idx < len(elts):
+                elt = elts[idx]
+                idx += 1
+                if not (isinstance(elt, ast.Constant) and isinstance(elt.value, str)):
+                    return None, False
+                val = elt.value
+                if val in {"-s", "--shell", "-i", "--login", "-e", "--edit"}:
+                    return "sh", True
+                if val == "--":
+                    if idx < len(elts) and isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str):
+                        next_val = elts[idx].value
+                        if "=" in next_val or next_val.startswith("-"):
+                            return None, False
+                        exe = next_val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                        idx += 1
+                        found = True
+                        break
+                    return None, False
+                if val in {"-u", "--user", "-g", "--group"}:
+                    if idx >= len(elts) or not (isinstance(elts[idx], ast.Constant) and isinstance(elts[idx].value, str)):
+                        return None, False
+                    idx += 1
+                    continue
+                if val.startswith(("--user=", "--group=", "-u", "-g")):
+                    continue
+                if val in {"-E", "--preserve-env", "-b", "--background", "-n", "--non-interactive"}:
+                    continue
+                if val.startswith(("-E=", "--preserve-env=")):
+                    continue
+                if val.startswith("-") or "=" in val:
+                    return None, False
+                exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
+                found = True
+                break
+            if not found:
+                return None, False
+
+        else:
+            return None, False
+
+    return exe, True
 
 
 @dataclass(frozen=True)
@@ -47,6 +152,63 @@ def python_document_flow(
     sinks: list[dict[str, Any]] = []
     sanitizers: list[dict[str, Any]] = []
     bindings: list[CallBinding] = []
+
+    subprocess_sinks = {"subprocess.run", "subprocess.call", "subprocess.Popen"}
+
+    def qualified_call(call: ast.Call) -> str:
+        parts = ast.unparse(call.func).split(".")
+        return ".".join([document.import_aliases.get(parts[0], parts[0]), *parts[1:]])
+
+    # Only propagate argv structure for a dominating local assignment whose
+    # container never escapes or mutates. Taint itself remains flow-sensitive.
+    # A boolean taint environment cannot safely track arbitrary list aliases.
+    parents = {child: parent for parent in ast.walk(node) for child in ast.iter_child_nodes(parent)}
+    fixed_argv: dict[str, ast.List | ast.Tuple] = {}
+    for statement in node.body:
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+            target = statement.targets[0]
+        elif isinstance(statement, ast.AnnAssign):
+            target = statement.target
+        else:
+            continue
+        if not isinstance(target, ast.Name) or not isinstance(statement.value, (ast.List, ast.Tuple)):
+            continue
+        references = [item for item in ast.walk(node) if isinstance(item, ast.Name) and item.id == target.id]
+        if any(item is not target and not isinstance(item.ctx, ast.Load) for item in references):
+            continue
+        if any(
+            (isinstance(item, (ast.Global, ast.Nonlocal)) and target.id in item.names)
+            or (isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and item.name == target.id)
+            or (isinstance(item, ast.alias) and (item.asname or item.name.split(".")[0]) == target.id)
+            for item in ast.walk(node)
+        ):
+            continue
+        for reference in references:
+            if reference is target:
+                continue
+            parent = parents[reference]
+            call = parents.get(parent) if isinstance(parent, ast.keyword) and parent.arg == "args" else parent
+            if not (
+                reference.lineno > statement.end_lineno
+                and isinstance(call, ast.Call) and qualified_call(call) in subprocess_sinks
+                and ((call.args and call.args[0] is reference)
+                     or (isinstance(parent, ast.keyword) and parent.arg == "args"))
+            ):
+                break
+        else:
+            fixed_argv[target.id] = statement.value
+
+    def ordinary_argv(expression: ast.AST | None) -> bool:
+        if isinstance(expression, ast.Name):
+            expression = fixed_argv.get(expression.id)
+        if not (isinstance(expression, (ast.List, ast.Tuple)) and expression.elts):
+            return False
+        executable, known = resolve_executable(expression.elts)
+        if not known or executable is None:
+            return False
+        # Only clear taint when the command has established non-executing parameter semantics.
+        # Unknown programs, shells, and script engines (awk, sed, python, etc.) preserve possible flow.
+        return executable in ESTABLISHED_ORDINARY_PROGRAMS
 
     def source(expression: ast.AST) -> bool:
         if isinstance(expression, ast.Call):
@@ -93,9 +255,7 @@ def python_document_flow(
                     sources.append(value)
             if not isinstance(item, ast.Call):
                 continue
-            name = ast.unparse(item.func)
-            parts = name.split(".")
-            name = ".".join([document.import_aliases.get(parts[0], parts[0]), *parts[1:]])
+            name = qualified_call(item)
             call_text = name + "("
             arguments = tuple(tainted(arg, environment) for arg in item.args)
             keywords = tuple(
@@ -116,16 +276,19 @@ def python_document_flow(
                      "command-execution": "args", "outbound-request": "url"}.get(sink_category, ""),
                     False,
                 )
-                if sink_category == "command-execution" and name in {
-                    "subprocess.run", "subprocess.call", "subprocess.Popen",
-                }:
-                    shell = next((kw.value for kw in item.keywords if kw.arg == "shell"), ast.Constant(False))
+                if sink_category == "command-execution" and name in subprocess_sinks:
+                    shell = next((kw.value for kw in item.keywords if kw.arg == "shell"),
+                                 item.args[8] if len(item.args) >= 9 else ast.Constant(False))
                     argv = item.args[0] if item.args else next(
                         (kw.value for kw in item.keywords if kw.arg == "args"), None)
+                    has_kw_executable = any(kw.arg in {"executable", None} for kw in item.keywords)
+                    has_pos_executable = len(item.args) >= 3 and not (
+                        isinstance(item.args[2], ast.Constant) and item.args[2].value is None
+                    )
                     if (isinstance(shell, ast.Constant) and shell.value is False
-                            and isinstance(argv, (ast.List, ast.Tuple)) and argv.elts
-                            and isinstance(argv.elts[0], ast.Constant)
-                            and isinstance(argv.elts[0].value, str)):
+                            and not has_kw_executable
+                            and not has_pos_executable
+                            and ordinary_argv(argv)):
                         # User data passed as argv to a fixed program is not shell text.
                         relevant = False
                 sinks.append({

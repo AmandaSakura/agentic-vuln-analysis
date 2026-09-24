@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 from collections import deque
 from collections.abc import Callable
@@ -9,7 +10,7 @@ from typing import Any, cast
 
 from cv_agent.tools.registry import ToolExecutionScope
 from cv_agent.domain.evidence import ToolObservation, ValidationStatus
-from cv_agent.tools.analysis.python_flow import function_node
+from cv_agent.tools.analysis.python_flow import function_node, parameter_names
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.domain.types import CodeDocument, FrozenModel
 from cv_agent.tools.validation.dataflow import _symbol_matches_target
@@ -49,6 +50,65 @@ def routes(
     )
 
 
+def _local_resource_operations(document: CodeDocument) -> list[dict[str, Any]]:
+    """Expose direct lookup/delete arguments, without asserting authorization."""
+    function = function_node(document)
+    if function is None:
+        return []
+    parameters = set(parameter_names(function))
+    principals = sorted(name for name in parameters
+                        if PRINCIPAL_PATTERN.search(name) or name in {"user_id", "owner_id", "tenant_id"})
+    lookups: dict[str, tuple[ast.Call, int, list[ast.Compare]]] = {}
+    facts = []
+    for statement in function.body:
+        if isinstance(statement, (ast.Return, ast.Raise)):
+            break
+        # Invalidate a chain on any possible rebinding, including branch stores.
+        rebound = {node.id for node in ast.walk(statement)
+                   if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del))}
+        lookups = {name: binding for name, binding in lookups.items()
+                   if name not in rebound and not any(
+                       isinstance(node, ast.Name) and node.id in rebound
+                       for node in ast.walk(binding[0].func.value))}
+        for node in ast.walk(statement):
+            if isinstance(node, ast.Compare):
+                for name, binding in lookups.items():
+                    if any(isinstance(sub, ast.Attribute) and isinstance(sub.value, ast.Name)
+                           and sub.value.id == name and sub.attr in {"user_id", "owner_id", "tenant_id"}
+                           for sub in ast.walk(node)):
+                        binding[2].append(node)
+        expression = getattr(statement, "value", None)
+        call = expression.value if isinstance(expression, ast.Await) else expression
+        if not isinstance(call, ast.Call) or not isinstance(call.func, ast.Attribute):
+            continue
+        if (isinstance(statement, ast.Assign) and len(statement.targets) == 1
+                and isinstance(statement.targets[0], ast.Name)
+                and call.func.attr == "get" and len(call.args) == 2 and not call.keywords):
+            lookups[statement.targets[0].id] = (call, statement.lineno, [])
+        if not (isinstance(statement, ast.Expr) and call.func.attr == "delete"
+                and len(call.args) == 1 and isinstance(call.args[0], ast.Name)):
+            continue
+        resource = call.args[0].id
+        if resource not in lookups:
+            continue
+        lookup, line, comparisons = lookups[resource]
+        if ast.dump(lookup.func.value) != ast.dump(call.func.value):
+            continue
+        key_parameters = sorted({node.id for node in ast.walk(lookup.args[1])
+                                 if isinstance(node, ast.Name)} & parameters)
+        owner_comparisons = list(dict.fromkeys(ast.unparse(comparison) for comparison in comparisons))
+        facts.append({
+            "resource_variable": resource, "lookup": ast.unparse(lookup.func),
+            "lookup_line": line, "lookup_key_parameters": key_parameters,
+            "operation": ast.unparse(call.func), "operation_line": statement.lineno,
+            "principal_parameters": principals, "owner_comparisons": owner_comparisons,
+            "scope_note": "Candidate-local syntactic resource flow only; does not establish caller "
+                          "authorization, database policies, guard dominance, or endpoint exploitability. "
+                          "Principal parameter names are hints, not verified identities.",
+        })
+    return facts
+
+
 def guards(
     index: RepositoryIndex,
     arguments: FrozenModel,
@@ -65,10 +125,14 @@ def guards(
             *(match.group(0) for match in GUARD_PATTERN.finditer(item.text)),
         }
     )
+    payload: dict[str, Any] = {"guards": inferred, "path": value.path}
+    operations = _local_resource_operations(item)
+    if operations:
+        payload["local_resource_operations"] = operations
     return ToolObservation(
         tool="get_guards",
         status="ok",
-        content=_json_content({"guards": inferred, "path": value.path}),
+        content=_json_content(payload),
         evidence_ids=(f"guards:{value.path}",),
     )
 

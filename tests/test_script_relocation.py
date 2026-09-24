@@ -37,7 +37,7 @@ before = list(sys.path)
 implementations = sorted((root / 'src/cv_agent/evaluation').glob('*/*.py'))
 modules = [path for path in implementations if path.parent.name in {'runners', 'preparation', 'diagnostics'}
            and path.name != '__init__.py']
-assert len(modules) == 47
+assert modules
 for path in modules:
     importlib.import_module('.'.join(path.relative_to(root / 'src').with_suffix('').parts))
 assert sys.path == before

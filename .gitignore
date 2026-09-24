@@ -15,4 +15,6 @@ artifacts/
 .env.experiments
 data/heldout-pair-git/
 data/heldout-pair-subjects/
+data/vulngym-evaluation-git/
+data/vulngym-heldout-subjects/
 AGENTS.md

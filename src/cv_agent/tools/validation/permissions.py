@@ -180,6 +180,14 @@ def _collect_permission_mode_calls(document: CodeDocument) -> tuple[
                              ast.GeneratorExp, ast.NamedExpr)):
             issues.append("unsupported deferred or binding expression")
             return
+        if (isinstance(node, ast.Call) and _call_name(node.func) == "os.makedirs"
+                and not shadowed_os and len(node.args) == 1
+                and isinstance(node.args[0], (ast.Name, ast.Constant))
+                and all(keyword.arg == "exist_ok" and isinstance(keyword.value, ast.Constant)
+                        and type(keyword.value.value) is bool for keyword in node.keywords)):
+            # This supported call does not rebind os or change a chmod literal.
+            # Its success/reachability is not an exploit witness.
+            return
         if isinstance(node, ast.Call) and not _is_os_chmod_call(node):
             issues.append("unknown call may change permission bindings or terminate execution")
             return
@@ -236,9 +244,45 @@ def _collect_permission_mode_calls(document: CodeDocument) -> tuple[
                 continue
             if isinstance(statement, ast.If):
                 issues.append("permission mode check crosses a nonconstant branch")
-                collect_statements(statement.body, shadowed_os)
-                collect_statements(statement.orelse, shadowed_os)
-                return shadowed_os, True
+                collect_expression(statement.test, shadowed_os)
+                body_shadowed, body_terminated = collect_statements(statement.body, shadowed_os)
+                else_shadowed, else_terminated = collect_statements(statement.orelse, shadowed_os)
+                shadowed_os = body_shadowed or else_shadowed
+                if body_terminated != else_terminated:
+                    issues.append("permission branches have different termination paths")
+                    return shadowed_os, True
+                if body_terminated:
+                    return shadowed_os, True
+                continue
+            if isinstance(statement, ast.Try):
+                # Join all supported normal/handler paths, then inspect the
+                # continuation. A return/raise inside try requires separate
+                # unwinding semantics and remains explicitly unsupported.
+                if any(handler.type is not None and not (
+                    isinstance(handler.type, ast.Name)
+                    or (isinstance(handler.type, ast.Tuple)
+                        and all(isinstance(item, ast.Name) for item in handler.type.elts))
+                ) for handler in statement.handlers):
+                    issues.append("exception type evaluation has unsupported side effects")
+                    return shadowed_os, True
+                branches = [collect_statements(statement.body, shadowed_os)]
+                for handler in statement.handlers:
+                    before_handler = len(calls)
+                    branches.append(collect_statements(handler.body, shadowed_os or handler.name == "os"))
+                    if len(calls) != before_handler:
+                        issues.append("permission calls in exception handlers require exception reachability")
+                if any(terminated for _, terminated in branches):
+                    issues.append("permission try termination requires exception unwinding")
+                    return any(shadowed for shadowed, _ in branches), True
+                shadowed_os = any(shadowed for shadowed, _ in branches)
+                shadowed_os, terminated = collect_statements(statement.orelse, shadowed_os)
+                if terminated:
+                    issues.append("permission try termination requires exception unwinding")
+                    return shadowed_os, True
+                shadowed_os, terminated = collect_statements(statement.finalbody, shadowed_os)
+                if terminated:
+                    return shadowed_os, True
+                continue
             if isinstance(statement, ast.Assert):
                 if not isinstance(statement.test, ast.Constant) or not statement.test.value:
                     issues.append("assertion may terminate the permission path")
@@ -330,7 +374,6 @@ def _permission_mode_assessment(document: CodeDocument) -> dict[str, Any]:
     bounded_control_issues = issues and all(
         issue in {
             "permission mode check crosses a nonconstant branch",
-            "unsupported permission statement: Try",
             "unknown assigned call may affect permission values",
             "unknown call after chmod may affect cleanup or termination",
         }

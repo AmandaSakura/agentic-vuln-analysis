@@ -39,6 +39,50 @@ def validate_conclusion(
             "Blocked/error calls are not evidence. Remove an unsupported reference "
             "from every citation array; do not invent a replacement."
         )
+    roles = {
+        "supporting_observation_ids": set(output.supporting_observation_ids),
+        "counter_observation_ids": set(output.counter_observation_ids),
+        "unresolved_observation_ids": set(output.unresolved_observation_ids),
+    }
+    # A citation and the tool's evidence ID may identify the same observation.
+    # The general evidence_ids bibliography is intentionally not a fourth role.
+    identities = [{reference} for reference in referenced_ids]
+    identities.extend(
+        {*item.evidence_ids, *([item.citation_id] if item.citation_id else [])}
+        for item in observations
+    )
+    conflicts = set()
+    for identity in identities:
+        used_roles = [name for name, references in roles.items() if references & identity]
+        if len(used_roles) > 1:
+            references = identity & set().union(*(roles[name] for name in used_roles))
+            conflicts.add(f"{', '.join(sorted(references))}: {' / '.join(used_roles)}")
+    errors = []
+    if conflicts:
+        errors.append(
+            "Conflicting observation roles: " + "; ".join(sorted(conflicts)) + ". "
+            "Assign each observation to exactly one explicit role; remove its citation "
+            "and aliases from the other role arrays. evidence_ids may still list it. "
+            "UNRESOLVED validation_status does not require listing supporting evidence "
+            "again in unresolved_observation_ids. Keep the label only if the evidence "
+            "checks below also support it."
+        )
+    try:
+        _validate_prediction(output, observations, trace, required_validators, current_trace, subject)
+    except ValueError as error:
+        errors.append(str(error))
+    if errors:
+        raise ValueError(" ".join(errors))
+
+
+def _validate_prediction(
+    output: AgentExpertConclusion,
+    observations: list[ToolObservation],
+    trace: list[ReActStep],
+    required_validators: tuple[str, ...],
+    current_trace: list[ReActStep] | None,
+    subject: ValidationSubject | None,
+) -> None:
     if output.label != "ABSTAIN" and not output.evidence_ids:
         raise ValueError("A material prediction must cite observed evidence.")
     executed = Counter(
@@ -72,11 +116,13 @@ def validate_conclusion(
             "VULNERABLE prediction; inspect command construction evidence or abstain."
         )
     if output.label != "ABSTAIN" and _relies_on_static_permission_without_validator(
-        output, observations
+        output, observations, subject
     ):
         raise ValueError(
-            "Static chmod mode matching does not support a material permission prediction; "
-            "cite validate_permission_mode evidence or abstain."
+            "Static chmod mode matching or an inconclusive permission check does not "
+            "support a material permission prediction; cite complete candidate-bound "
+            "validate_permission_mode evidence or abstain. Changing citation roles or "
+            "omitting the check cannot bypass this requirement."
         )
     if output.label != "ABSTAIN" and _relies_on_static_command_without_inspection(
         output, observations
@@ -234,25 +280,37 @@ def _relies_on_unestablished_taint_without_command_support(
 def _relies_on_static_permission_without_validator(
     output: AgentExpertConclusion,
     observations: list[ToolObservation],
+    subject: ValidationSubject | None,
 ) -> bool:
     referenced = _supporting_observations(output, observations)
-    cites_permission_static = False
+    permission_observed = False
     cites_permission_validator = False
-    for observation in referenced:
+    for observation in observations:
         content = _json_object(observation.content)
         if content is None:
             continue
-        if observation.tool == "run_static_check" and "permission_mode_check" in content:
-            cites_permission_static = True
+        candidate_bound = subject is not None and (
+            observation.subject == subject
+            or f"permission_mode:{subject.entry_path}" in observation.evidence_ids
+            or content.get("path") == subject.entry_path
+        )
+        if observation.tool == "validate_permission_mode" and (candidate_bound or subject is None):
+            permission_observed = True
+        if (observation.tool == "run_static_check" and "permission_mode_check" in content
+                and (candidate_bound or observation in referenced)):
+            permission_observed = True
         if (
             observation.tool == "validate_permission_mode"
+            and observation in referenced
+            and subject is not None and observation.subject == subject
+            and not observation.metadata.get("observation_truncated")
             and observation.validation_status in {
                 ValidationStatus.CONFIRMED,
                 ValidationStatus.REFUTED,
             }
         ):
             cites_permission_validator = True
-    return cites_permission_static and not cites_permission_validator
+    return permission_observed and not cites_permission_validator
 
 
 def _relies_on_static_command_without_inspection(

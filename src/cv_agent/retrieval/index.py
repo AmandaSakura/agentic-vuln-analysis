@@ -15,10 +15,8 @@ from cv_agent.retrieval.tokens import limit_evidence_context, tokenize
 
 
 class RepositoryIndex:
-    def __init__(self, documents: Iterable[CodeDocument]) -> None:
+    def __init__(self, documents: Iterable[CodeDocument] = ()) -> None:
         docs = list(documents)
-        if not docs:
-            raise ValueError("repository index requires at least one document")
         self.documents = {doc.path: doc for doc in docs}
         if len(self.documents) != len(docs):
             raise ValueError("duplicate document path")
