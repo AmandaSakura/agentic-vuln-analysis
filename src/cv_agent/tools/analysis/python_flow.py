@@ -11,17 +11,12 @@ from typing import Any, Iterable
 from cv_agent.domain.types import CodeDocument
 
 
-INTERPRETER_NAME_PATTERN = re.compile(
-    r"^(?:"
-    r"sh|bash|dash|zsh|ksh|fish|csh|tcsh|busybox|su|runuser|"
-    r"cmd|powershell|pwsh|"
-    r"(?:python|pypy|perl|ruby|node|nodejs|php)(?:[0-9]+(?:\.[0-9]+)*)?"
-    r")(?:\.exe)?$",
-    re.IGNORECASE,
-)
+ESTABLISHED_ORDINARY_PROGRAMS = {
+    "echo", "git",
+}
 
 LAUNCHER_COMMANDS = {
-    "env", "sudo", "doas", "nohup", "nice", "ionice", "stdbuf", "time",
+    "env", "sudo",
 }
 
 
@@ -106,7 +101,7 @@ def resolve_executable(elts: list[ast.expr] | tuple[ast.expr, ...]) -> tuple[str
                     continue
                 if val.startswith(("-E=", "--preserve-env=")):
                     continue
-                if val.startswith("-"):
+                if val.startswith("-") or "=" in val:
                     return None, False
                 exe = val.replace("\\", "/").rsplit("/", 1)[-1].lower()
                 found = True
@@ -211,9 +206,9 @@ def python_document_flow(
         executable, known = resolve_executable(expression.elts)
         if not known or executable is None:
             return False
-        # shell=False does not prevent the explicitly launched interpreter from
-        # executing its command argument. Preserve possible flow in that case.
-        return not bool(INTERPRETER_NAME_PATTERN.match(executable))
+        # Only clear taint when the command has established non-executing parameter semantics.
+        # Unknown programs, shells, and script engines (awk, sed, python, etc.) preserve possible flow.
+        return executable in ESTABLISHED_ORDINARY_PROGRAMS
 
     def source(expression: ast.AST) -> bool:
         if isinstance(expression, ast.Call):
