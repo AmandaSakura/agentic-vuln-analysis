@@ -103,17 +103,20 @@ def test_permission_complete_structured_control_flow(body, expected):
     ('["env", "--split-string=sh -c", "eval \\"$1\\"", "sh", value]', "MAY_REACH"),
     ('["env", "--", "FOO=bar", "bash", "-c", value]', "MAY_REACH"),
     ('["awk", value]', "MAY_REACH"),
+    ('["git", "commit", "-m", value]', "MAY_REACH"),
+    ('["git", "-c", "alias.review=" + value, "review"]', "MAY_REACH"),
+    ('["env", "git", "status", value]', "MAY_REACH"),
     ('["echo", value]', "NOT_ESTABLISHED"),
-    ('["git", "commit", "-m", value]', "NOT_ESTABLISHED"),
-    ('["env", "git", "status", value]', "NOT_ESTABLISHED"),
-    ('["env", "--", "git", "status", value]', "NOT_ESTABLISHED"),
+    ('["env", "echo", value]', "NOT_ESTABLISHED"),
+    ('["env", "--", "echo", value]', "NOT_ESTABLISHED"),
     ('["env", "FOO=bar", "echo", value]', "NOT_ESTABLISHED"),
-    ('["sudo", "--user", "root", "git", "status", value]', "NOT_ESTABLISHED"),
+    ('["sudo", "--user", "root", "echo", value]', "NOT_ESTABLISHED"),
     ('["bash", "-c", "echo fixed"]', "NOT_ESTABLISHED"),
 ], ids=["bash-command", "sh-command", "python312-command", "python-exe-command",
         "env-bash", "env-i-python", "usr-bin-env-sh", "sudo-bash",
         "su-root-c", "sudo-long-user-bash", "sudo-short-user-bash", "sudo-envvar-bash", "env-split-string", "env-dashdash-envvar-bash",
-        "awk-unestablished", "ordinary-argv", "git-argv", "env-git", "env-dashdash-git", "env-echo", "sudo-user-git", "constant-command"])
+        "awk-unestablished", "git-commit-unestablished", "git-alias-unestablished", "env-git-unestablished",
+        "ordinary-echo", "env-echo", "env-dashdash-echo", "env-var-echo", "sudo-user-echo", "constant-command"])
 def test_command_flow_preserves_argv_semantics(api, assigned, argv, expected):
     setup = f"    command = {argv}\n" if assigned else ""
     argument = "command" if assigned else argv

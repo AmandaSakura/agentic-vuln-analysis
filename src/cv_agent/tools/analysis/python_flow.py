@@ -12,7 +12,7 @@ from cv_agent.domain.types import CodeDocument
 
 
 ESTABLISHED_ORDINARY_PROGRAMS = {
-    "echo", "git",
+    "echo",
 }
 
 LAUNCHER_COMMANDS = {
