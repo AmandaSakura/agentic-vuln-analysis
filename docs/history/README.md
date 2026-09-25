@@ -65,6 +65,7 @@
 
 ## 历史执行计划
 
+- [候选证据修复与循环审查（2026-09-25）](plans/2026-09-25-review-fix-loop.md)
 - [独立 VulnGym 评估计划](plans/2026-09-23-independent-vulngym-evaluation.md)
 - [权限与命令语义修复计划](plans/2026-09-22-semantic-repairs.md)
 - [脚本入口清理计划](plans/2026-09-21-script-entrypoints.md)

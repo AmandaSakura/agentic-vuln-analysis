@@ -257,9 +257,14 @@ def trace_dataflow(
     entry_node = function_node(cast(CodeDocument, source))
     if declared_inputs and (entry_node is None or set(declared_inputs) - set(parameter_names(entry_node))):
         return ToolObservation(tool="trace_dataflow", status="error", content="Declared input is not an entry parameter")
+    candidate_line = None
+    if scope.subject is not None and scope.subject.entry_line is not None:
+        span = re.search(r"::.+@(\d+)(?:-\d+)?(?:#\d+-\d+)?$", scope.subject.entry_path)
+        candidate_line = scope.subject.entry_line - (int(span.group(1)) - 1 if span else 0)
+    categories = (value.sink_category,) if value.sink_category is not None else dict.fromkeys(rule.category for rule in SINK_RULES)
     queue: deque[tuple[str, tuple[str, ...], tuple[dict[str, Any], ...], str]] = deque(
         (cast(CodeDocument, source).path, declared_inputs, (), category)
-        for category in dict.fromkeys(rule.category for rule in SINK_RULES)
+        for category in categories
     )
     visited: set[tuple[str, tuple[str, ...], str]] = set()
     unresolved_edges: list[dict[str, str]] = []
@@ -288,8 +293,18 @@ def trace_dataflow(
         if any(sink["tainted"] for sink in flow.sinks) and (
             value.sink_path is None or path == value.sink_path
         ):
-            confirmed_trace = next_trace
-            break
+            if confirmed_trace is None:
+                confirmed_trace = next_trace
+            # A different sink category must not hide a witness at the candidate.
+            # Keep the first may-flow if no candidate-line witness is available,
+            # including flows whose sink is in an admitted helper.
+            if candidate_line is None or (
+                path == scope.subject.entry_path
+                and any(sink["tainted"] and sink["line"] == candidate_line for sink in flow.sinks)
+            ):
+                confirmed_trace = next_trace
+                break
+            continue
         if len(next_trace) > value.max_hops:
             continue
         for neighbor in index.graph_neighbors(path, direction="forward"):

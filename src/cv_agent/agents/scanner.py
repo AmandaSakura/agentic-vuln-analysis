@@ -12,9 +12,10 @@ class StaticScanner:
     """Small deterministic V0 candidate generator used before agent reasoning."""
 
     rules = {
-        "command-execution": re.compile(r"subprocess\.|Runtime\.getRuntime\(\)\.exec|shell\s*=\s*True", re.IGNORECASE),
+        "command-execution": re.compile(r"subprocess\.|os\.(?:system|popen)|Runtime\.getRuntime\(\)\.exec|shell\s*=\s*True", re.IGNORECASE),
         "dynamic-evaluation": re.compile(r"(?<![\w.])(?:eval|exec)\s*\(", re.IGNORECASE),
         "database-operation": re.compile(r"\.(?:executeQuery|delete)\s*\(", re.IGNORECASE),
+        "permission-mode": re.compile(r"\bos\.chmod\s*\(", re.IGNORECASE),
     }
     rule_names = (*rules, 'template-operation', 'authorization-boundary',
                   'dynamic-attribute-access', 'process-control')
@@ -27,6 +28,7 @@ class StaticScanner:
         'authorization-boundary': 'Determine the intended principal, action and resource or tenant boundary for this route, and whether a caller can bypass required enforcement. A public endpoint or absence of a recognized guard alone does not establish an authorization flaw.',
         'dynamic-attribute-access': 'Determine whether an attacker controls attribute names reaching reflection and can access or modify objects outside the intended boundary; inspect name restrictions, object scope and reachability. Dynamic reflection alone is not a vulnerability.',
         'process-control': 'Determine whether an external caller can reach process termination or signaling without required authorization or isolation. Authorized local shutdown and maintenance operations alone are not vulnerabilities.',
+        'permission-mode': 'Determine whether literal file mode modifications via os.chmod expose permissions to unintended users; non-others-writable modes alone are not vulnerabilities.',
     }
 
     @staticmethod
@@ -79,6 +81,8 @@ class StaticScanner:
                 ('run', 'Popen', 'call', 'check_call', 'check_output', 'getoutput', 'getstatusoutput')
             }:
                 found[node.lineno].add('command-execution')
+            if symbol in {'os.chmod', 'posix.chmod'}:
+                found[node.lineno].add('permission-mode')
             if isinstance(node.func, ast.Attribute) and node.func.attr in {
                 'execute', 'executemany', 'executescript', 'executeQuery', 'delete'
             }:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import builtins
 import re
 import textwrap
 from dataclasses import dataclass
@@ -122,6 +123,15 @@ class CallBinding:
     keywords: tuple[tuple[str, bool], ...] = ()
 
 
+@dataclass(frozen=True)
+class BlockFlow:
+    normal: frozenset[str] | None
+    breaks: tuple[frozenset[str], ...]
+    continues: tuple[frozenset[str], ...]
+    returns: tuple[frozenset[str], ...]
+    exceptions: tuple[frozenset[str], ...]
+
+
 def function_node(document: CodeDocument) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
     try:
         tree = ast.parse(textwrap.dedent(document.text))
@@ -147,13 +157,28 @@ def python_document_flow(
     node = function_node(document)
     if node is None:
         return None
+    # `with a, b` enters b inside a's exception region. Normalize once so the
+    # block cache and ordinary with handling also cover later entry failures.
+    for statement in tuple(ast.walk(node)):
+        if isinstance(statement, (ast.With, ast.AsyncWith)) and len(statement.items) > 1:
+            body = statement.body
+            for item in reversed(statement.items[1:]):
+                nested = type(statement)(items=[item], body=body, type_comment=None)
+                body = [ast.copy_location(nested, statement)]
+            statement.items = statement.items[:1]
+            statement.body = body
     lines = textwrap.dedent(document.text).splitlines()
     sources: list[dict[str, Any]] = []
     sinks: list[dict[str, Any]] = []
     sanitizers: list[dict[str, Any]] = []
     bindings: list[CallBinding] = []
 
-    subprocess_sinks = {"subprocess.run", "subprocess.call", "subprocess.Popen"}
+    subprocess_sinks = {
+        "subprocess.run", "subprocess.call", "subprocess.Popen",
+        "subprocess.check_call", "subprocess.check_output",
+        "subprocess.getoutput", "subprocess.getstatusoutput",
+        "os.system", "os.popen",
+    }
 
     def qualified_call(call: ast.Call) -> str:
         parts = ast.unparse(call.func).split(".")
@@ -262,10 +287,14 @@ def python_document_flow(
                 (keyword.arg, tainted(keyword.value, environment))
                 for keyword in item.keywords if keyword.arg is not None
             )
-            bindings.append(CallBinding(name, arguments, keywords))
+            binding = CallBinding(name, arguments, keywords)
+            if binding not in bindings:
+                bindings.append(binding)
             hits = [rule.category for rule in sanitizer_rules if rule.pattern.search(call_text)]
             if hits:
-                sanitizers.append({"line": line, "categories": hits, "text": text})
+                sanitizer_entry = {"line": line, "categories": hits, "text": text}
+                if sanitizer_entry not in sanitizers:
+                    sanitizers.append(sanitizer_entry)
             for rule in sink_rules:
                 if rule.category != sink_category or not rule.pattern.search(call_text):
                     continue
@@ -291,10 +320,19 @@ def python_document_flow(
                             and ordinary_argv(argv)):
                         # User data passed as argv to a fixed program is not shell text.
                         relevant = False
-                sinks.append({
+                sink_entry = {
                     "category": rule.category, "line": line, "match": call_text,
                     "tainted": relevant, "text": text,
-                })
+                }
+                for existing in sinks:
+                    if (existing["category"], existing["line"], existing["match"], existing["text"]) == (
+                        sink_entry["category"], sink_entry["line"], sink_entry["match"], sink_entry["text"]
+                    ):
+                        if relevant:
+                            existing["tainted"] = True
+                        break
+                else:
+                    sinks.append(sink_entry)
 
     def assign(target: ast.AST, value: bool, environment: set[str]) -> None:
         if isinstance(target, ast.Name):
@@ -306,12 +344,195 @@ def python_document_flow(
             for child in target.elts:
                 assign(child, value, environment)
 
-    def visit(statements: list[ast.stmt], environment: set[str]) -> set[str] | None:
+    block_cache: dict[tuple[tuple[ast.stmt, ...], frozenset[str]], BlockFlow] = {}
+
+    rebound_names = set(document.module_bindings) | set(document.module_rebindings) | set(document.import_aliases)
+    for item in ast.walk(node):
+        if isinstance(item, ast.Name) and isinstance(item.ctx, (ast.Store, ast.Del)):
+            rebound_names.add(item.id)
+        elif isinstance(item, ast.arg):
+            rebound_names.add(item.arg)
+        elif isinstance(item, ast.ExceptHandler) and item.name is not None:
+            rebound_names.add(item.name)
+        elif isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            rebound_names.add(item.name)
+        elif isinstance(item, ast.alias):
+            rebound_names.add(item.asname or item.name.split(".")[0])
+
+    def valid_exception_type(expression: ast.expr | None) -> bool:
+        if expression is None:
+            return True
+        if isinstance(expression, ast.Tuple):
+            return all(isinstance(item, ast.Name) and valid_exception_type(item) for item in expression.elts)
+        if not isinstance(expression, ast.Name) or expression.id in rebound_names:
+            return False
+        value = vars(builtins).get(expression.id)
+        return isinstance(value, type) and issubclass(value, BaseException)
+
+    def catches_base_exception(expression: ast.expr | None) -> bool:
+        if not valid_exception_type(expression):
+            return False
+        if expression is None:
+            return True
+        if isinstance(expression, ast.Tuple):
+            return any(catches_base_exception(item) for item in expression.elts)
+        return isinstance(expression, ast.Name) and expression.id == "BaseException" and expression.id not in rebound_names
+
+    def unpack_may_raise(target: ast.AST, value: ast.AST) -> bool:
+        if isinstance(target, ast.Starred):
+            return unpack_may_raise(target.value, value)
+        if not isinstance(target, (ast.Tuple, ast.List)):
+            return False
+        if not isinstance(value, (ast.Tuple, ast.List)) or any(isinstance(item, ast.Starred) for item in value.elts):
+            return True
+        starred = next((i for i, item in enumerate(target.elts) if isinstance(item, ast.Starred)), None)
+        values = value.elts
+        if starred is None:
+            if len(target.elts) != len(values):
+                return True
+        else:
+            if len(values) < len(target.elts) - 1:
+                return True
+            end = len(values) - (len(target.elts) - starred - 1)
+            values = [*values[:starred], ast.List(elts=values[starred:end], ctx=ast.Load()), *values[end:]]
+        return any(unpack_may_raise(child, item) for child, item in zip(target.elts, values))
+
+    def may_raise(statement: ast.stmt) -> bool:
+        if isinstance(statement, (ast.Raise, ast.Import, ast.ImportFrom, ast.Delete, ast.AugAssign,
+                                  ast.With, ast.AsyncWith, ast.AsyncFor, ast.ClassDef)):
+            return True
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            evaluated = [*statement.decorator_list, *statement.args.defaults,
+                         *(value for value in statement.args.kw_defaults if value is not None),
+                         *(arg.annotation for arg in ast.walk(statement.args)
+                           if isinstance(arg, ast.arg) and arg.annotation is not None)]
+            if statement.returns is not None:
+                evaluated.append(statement.returns)
+            return bool(statement.decorator_list) or any(expression_may_raise(value) for value in evaluated)
+        if isinstance(statement, ast.Assert):
+            return not (isinstance(statement.test, ast.Constant) and statement.test.value)
+        if isinstance(statement, ast.Assign) and any(
+            unpack_may_raise(target, statement.value) for target in statement.targets
+        ):
+            return True
+        if isinstance(statement, ast.For):
+            if not isinstance(statement.iter, (ast.List, ast.Tuple)):
+                return True  # Obtaining the iterator or its next item can fail.
+            if any(unpack_may_raise(statement.target, item) for item in statement.iter.elts):
+                return True
+        # Only expressions evaluated by this statement, not nested bodies.
+        # In particular, entering try or assigning a literal cannot bypass finally.
+        expressions = [child for child in ast.iter_child_nodes(statement) if isinstance(child, ast.expr)]
+        return any(expression_may_raise(expression) for expression in expressions)
+
+    def expression_may_raise(expression: ast.expr) -> bool:
+        # Prune only expressions with established nonthrowing construction. Other
+        # expressions (formatting, comprehensions, lookups, calls, etc.) keep an edge.
+        if isinstance(expression, ast.Constant):
+            return False
+        if isinstance(expression, ast.Name) and isinstance(expression.ctx, ast.Store):
+            return False
+        if isinstance(expression, (ast.Tuple, ast.List, ast.Set)):
+            return container_may_raise(expression) or any(expression_may_raise(item) for item in expression.elts)
+        if isinstance(expression, ast.Dict):
+            return container_may_raise(expression) or any(
+                expression_may_raise(item) for item in (*expression.keys, *expression.values) if item is not None
+            )
+        if isinstance(expression, ast.Starred):
+            return container_may_raise(expression) or expression_may_raise(expression.value)
+        if isinstance(expression, ast.BoolOp):
+            return any(expression_may_raise(item) for item in expression.values)
+        if isinstance(expression, ast.IfExp):
+            return any(expression_may_raise(item) for item in (expression.test, expression.body, expression.orelse))
+        return True
+
+    def container_may_raise(expression: ast.AST) -> bool:
+        if isinstance(expression, ast.Starred):
+            try:
+                iter(ast.literal_eval(expression.value))
+            except (ValueError, TypeError, SyntaxError):
+                return True
+        elif isinstance(expression, (ast.Set, ast.Dict)):
+            keys = expression.elts if isinstance(expression, ast.Set) else expression.keys
+            for i, key in enumerate(keys):
+                try:
+                    if key is None:
+                        if not isinstance(ast.literal_eval(expression.values[i]), dict):
+                            return True
+                    else:
+                        hash(ast.literal_eval(key))
+                except (ValueError, TypeError, SyntaxError):
+                    return True
+        return False
+
+    def visit(
+        statements: list[ast.stmt],
+        environment: set[str],
+        *,
+        breaks: list[set[str]] | None = None,
+        continues: list[set[str]] | None = None,
+        returns: list[set[str]] | None = None,
+        exceptions: list[set[str]] | None = None,
+    ) -> set[str] | None:
+        key = (tuple(statements), frozenset(environment))
+        if key not in block_cache:
+            block_breaks: list[set[str]] = []
+            block_continues: list[set[str]] = []
+            block_returns: list[set[str]] = []
+            block_exceptions: list[set[str]] = []
+            normal = visit_block(
+                statements, set(environment), breaks=block_breaks, continues=block_continues,
+                returns=block_returns, exceptions=block_exceptions,
+            )
+            block_cache[key] = BlockFlow(
+                frozenset(normal) if normal is not None else None,
+                *(tuple(dict.fromkeys(map(frozenset, states))) for states in
+                  (block_breaks, block_continues, block_returns, block_exceptions)),
+            )
+        result = block_cache[key]
+        # Findings are accumulated globally and deduplicated by record(). Cached
+        # blocks must replay exits into the current enclosing control-flow scope.
+        for target, states in (
+            (breaks, result.breaks), (continues, result.continues),
+            (returns, result.returns), (exceptions, result.exceptions),
+        ):
+            if target is not None:
+                target.extend(set(state) for state in states)
+        return set(result.normal) if result.normal is not None else None
+
+    def visit_block(
+        statements: list[ast.stmt],
+        environment: set[str],
+        *,
+        breaks: list[set[str]] | None = None,
+        continues: list[set[str]] | None = None,
+        returns: list[set[str]] | None = None,
+        exceptions: list[set[str]] | None = None,
+    ) -> set[str] | None:
         for statement in statements:
+            # A may-analysis retains the pre-statement state for implicit errors:
+            # evaluating an RHS can fail before its assignment clears taint.
+            if exceptions is not None and may_raise(statement):
+                exceptions.append(set(environment))
             if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 continue
-            if isinstance(statement, (ast.Return, ast.Raise, ast.Break, ast.Continue)):
+            if isinstance(statement, ast.Raise):
                 record(statement, environment)
+                return None
+            if isinstance(statement, ast.Return):
+                record(statement, environment)
+                if returns is not None:
+                    returns.append(set(environment))
+                return None
+            if isinstance(statement, ast.Break):
+                record(statement, environment)
+                if breaks is not None:
+                    breaks.append(set(environment))
+                return None
+            if isinstance(statement, ast.Continue):
+                record(statement, environment)
+                if continues is not None:
+                    continues.append(set(environment))
                 return None
             if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
                 value = statement.value
@@ -325,9 +546,19 @@ def python_document_flow(
                 record(statement.test, environment)
                 # Join both feasible branches instead of letting one overwrite the other.
                 if isinstance(statement.test, ast.Constant):
-                    environment = visit(statement.body if statement.test.value else statement.orelse, environment)
+                    environment = visit(
+                        statement.body if statement.test.value else statement.orelse,
+                        environment,
+                        breaks=breaks,
+                        continues=continues,
+                        returns=returns,
+                        exceptions=exceptions,
+                    )
                 else:
-                    branches = [visit(statement.body, set(environment)), visit(statement.orelse, set(environment))]
+                    branches = [
+                        visit(statement.body, set(environment), breaks=breaks, continues=continues, returns=returns, exceptions=exceptions),
+                        visit(statement.orelse, set(environment), breaks=breaks, continues=continues, returns=returns, exceptions=exceptions),
+                    ]
                     remaining = [branch for branch in branches if branch is not None]
                     environment = set().union(*remaining) if remaining else None
                 if environment is None:
@@ -336,30 +567,161 @@ def python_document_flow(
                 expression = statement.test if isinstance(statement, ast.While) else statement.iter
                 record(expression, environment)
                 if isinstance(statement, ast.While) and isinstance(expression, ast.Constant) and not expression.value:
-                    environment = visit(statement.orelse, environment)
+                    environment = visit(statement.orelse, environment, breaks=breaks, continues=continues, returns=returns, exceptions=exceptions)
                     if environment is None:
                         return None
                     continue
                 branch = set(environment)
-                if not isinstance(statement, ast.While):
-                    assign(statement.target, tainted(expression, environment), branch)
-                environment |= visit(statement.body, branch) or set()
-                environment |= visit(statement.orelse, set(environment)) or set()
+                iterable_tainted = tainted(expression, environment)
+                literal_items = (
+                    tuple(tainted(item, environment) for item in expression.elts)
+                    if isinstance(statement, ast.For) and isinstance(expression, (ast.List, ast.Tuple))
+                    and not any(isinstance(item, ast.Starred) for item in expression.elts)
+                    else None
+                )
+                iteration = 0
+                loop_breaks: list[set[str]] = []
+                normal_exit: set[str] | None = set(environment)
+
+                while literal_items is None or iteration < len(literal_items):
+                    iteration_breaks: list[set[str]] = []
+                    loop_continues: list[set[str]] = []
+                    # Rechecking a while condition or obtaining/binding the next
+                    # item happens with the loop-carried state, before the body.
+                    if isinstance(statement, ast.While):
+                        record(expression, branch)
+                        header_may_raise = expression_may_raise(expression)
+                    else:
+                        header_may_raise = (
+                            literal_items is None
+                            or unpack_may_raise(statement.target, expression.elts[iteration])
+                            or expression_may_raise(statement.target)
+                        )
+                    if exceptions is not None and header_may_raise:
+                        exceptions.append(set(branch))
+                    # Keep the fixed-point entry independent of assignments in the body.
+                    body_entry = set(branch)
+                    if not isinstance(statement, ast.While):
+                        # Python binds the next item before every body execution.
+                        assign(statement.target, literal_items[iteration] if literal_items is not None else iterable_tainted, body_entry)
+                    body_exit = visit(statement.body, body_entry, breaks=iteration_breaks, continues=loop_continues, returns=returns, exceptions=exceptions)
+                    loop_breaks.extend(iteration_breaks)
+                    backedge = (body_exit or set()) | (set().union(*loop_continues) if loop_continues else set())
+                    if literal_items is not None:
+                        iteration += 1
+                        normal_exit = backedge if body_exit is not None or loop_continues else None
+                        if normal_exit is None:
+                            break
+                        branch = backedge
+                    elif backedge <= branch:
+                        normal_exit = set(environment) | backedge
+                        break
+                    else:
+                        branch |= backedge
+
+                is_infinite_loop = (
+                    isinstance(statement, ast.While)
+                    and isinstance(expression, ast.Constant)
+                    and bool(expression.value)
+                )
+                if is_infinite_loop:
+                    normal_exit = None
+                if statement.orelse:
+                    orelse_exit = (
+                        visit(statement.orelse, normal_exit, breaks=breaks, continues=continues, returns=returns, exceptions=exceptions)
+                        if normal_exit is not None
+                        else None
+                    )
+                else:
+                    orelse_exit = normal_exit
+                post_loop_exits: list[set[str]] = []
+                if orelse_exit is not None:
+                    post_loop_exits.append(orelse_exit)
+                post_loop_exits.extend(loop_breaks)
+                environment = set().union(*post_loop_exits) if post_loop_exits else None
+                if environment is None:
+                    return None
             elif isinstance(statement, (ast.With, ast.AsyncWith)):
                 for item in statement.items:
                     record(item.context_expr, environment)
                     if item.optional_vars is not None:
                         assign(item.optional_vars, tainted(item.context_expr, environment), environment)
-                environment = visit(statement.body, environment)
+                body_exceptions: list[set[str]] = []
+                body_breaks: list[set[str]] = []
+                body_continues: list[set[str]] = []
+                body_returns: list[set[str]] = []
+                body_exit = visit(statement.body, environment, breaks=body_breaks, continues=body_continues, returns=body_returns, exceptions=body_exceptions)
+                # __exit__/__aexit__ may suppress body exceptions, even without
+                # an outer try. Return/break/continue cannot be suppressed.
+                continuations = [body_exit] if body_exit is not None else []
+                continuations.extend(body_exceptions)
+                if exceptions is not None:
+                    # Exiting the context can itself raise on any body exit.
+                    # That new error escapes this manager; only body errors can
+                    # be suppressed by this manager's exit method.
+                    exceptions.extend(continuations)
+                    exceptions.extend([*body_breaks, *body_continues, *body_returns])
+                for states, target in ((body_breaks, breaks), (body_continues, continues), (body_returns, returns)):
+                    if target is not None:
+                        target.extend(states)
+                environment = set().union(*continuations) if continuations else None
                 if environment is None:
                     return None
             elif isinstance(statement, ast.Try):
-                branches = [visit(statement.body, set(environment))]
-                branches.extend(visit(handler.body, set(environment)) for handler in statement.handlers)
-                environment |= set().union(*(branch for branch in branches if branch is not None))
-                environment = visit(statement.orelse + statement.finalbody, environment)
-                if environment is None:
+                try_breaks: list[set[str]] = []
+                try_continues: list[set[str]] = []
+                try_returns: list[set[str]] = []
+                try_exceptions: list[set[str]] = []
+                body_exit = visit(statement.body, environment, breaks=try_breaks, continues=try_continues, returns=try_returns, exceptions=try_exceptions)
+                # Handler entry is the state at an exceptional edge, not the state
+                # before entering try. Exceptions from handlers/else escape this try.
+                # A bare or unshadowed BaseException handler consumes every exception.
+                # Errors raised by handlers or else are still collected below.
+                catches_all = False
+                for handler in statement.handlers:
+                    # Unknown type evaluation can raise before a later catch-all.
+                    if not valid_exception_type(handler.type):
+                        break
+                    if catches_base_exception(handler.type):
+                        catches_all = True
+                        break
+                escaping_exceptions = [] if catches_all else list(try_exceptions)
+                if body_exit is not None and statement.orelse:
+                    body_exit = visit(statement.orelse, body_exit, breaks=try_breaks, continues=try_continues, returns=try_returns, exceptions=escaping_exceptions)
+                branches = [body_exit]
+                if try_exceptions:
+                    handler_entry = set().union(*try_exceptions)
+                    for handler in statement.handlers:
+                        branches.append(visit(handler.body, handler_entry, breaks=try_breaks, continues=try_continues, returns=try_returns, exceptions=escaping_exceptions))
+                normal_branches = [branch for branch in branches if branch is not None]
+                normal_env = set().union(*normal_branches) if normal_branches else None
+
+                if statement.finalbody:
+                    def run_finally(env_set: set[str]) -> set[str] | None:
+                        return visit(
+                            statement.finalbody, env_set,
+                            breaks=breaks, continues=continues, returns=returns, exceptions=exceptions,
+                        )
+
+                    normal_env = run_finally(normal_env) if normal_env is not None else None
+                    for states, target in (
+                        (try_breaks, breaks), (try_continues, continues),
+                        (try_returns, returns), (escaping_exceptions, exceptions),
+                    ):
+                        for state in dict.fromkeys(map(frozenset, states)):
+                            updated = run_finally(set(state))
+                            if updated is not None and target is not None:
+                                target.append(updated)
+                else:
+                    for states, target in (
+                        (try_breaks, breaks), (try_continues, continues),
+                        (try_returns, returns), (escaping_exceptions, exceptions),
+                    ):
+                        if target is not None:
+                            target.extend(states)
+                if normal_env is None:
                     return None
+                environment = normal_env
             else:
                 record(statement, environment)
         return environment
