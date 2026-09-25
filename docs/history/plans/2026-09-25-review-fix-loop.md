@@ -159,3 +159,67 @@ Final offline suite: **1188 passed in 29.21s**. `git diff --check` passed.
 Final bounded review: **No findings.** No live model requests or commits were
 made. This does not establish absence of bugs outside the reviewed changes and
 supported semantics.
+
+## Clean-checkout portability and evidence publication
+
+**Goal:** Make the offline suite pass from tracked files and update the pushed
+review branch, without downloading benchmarks or using live model credentials.
+
+**Architecture:** Commit only the eight historical evidence files referenced by
+the archived reports. Run the existing Java boundary tests against an unmodified,
+pinned two-case OWASP fixture copied into pytest's temporary project. Resolve the
+two heldout launcher roots relative to their script locations.
+
+**Tech Stack:** Git ignore exceptions, pytest temporary fixtures, Python, Bash,
+the existing Java/C process-boundary harness.
+
+- [x] Strengthen `tests/test_documentation_layout.py` so linked artifact files
+  must belong to `git ls-files`, including files below a linked directory. Observe
+  failure while the evidence remains ignored, then add exact file exceptions in
+  `.gitignore` for the two `code_review_20260920_*` directories and
+  `python_heldout_pair_result_review_2026-09-20`.
+- [x] Update `tests/test_operational_entrypoints.py` to copy launchers unchanged
+  into a temporary project's `scripts/` folder, use fake credentials, and launch
+  from both that project and an unrelated directory. A test-only Bash `source`
+  guard must reject access outside that temporary project before reading a file.
+  Observe failure before replacing each launcher's absolute `cd` with
+  `cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."`.
+- [x] Vendor the two test Java classes, four Thing helpers, two resources, the
+  two selected expected-result rows, and the original LICENSE under
+  `tests/fixtures/java_command/BenchmarkJava/`. Record the upstream commit,
+  original paths and hashes in `tests/fixtures/java_command/README.md` and
+  `manifest.json`. Preserve upstream bytes and copyright headers.
+- [x] Change `tests/test_java_fixture.py` to use a module-scoped temporary project:
+  `shutil.copytree(FIXTURE_ROOT, project / "data/raw/BenchmarkJava")` plus the
+  existing `validation/java-command-harness/exec_recorder.c`. Keep all actual
+  compile/run, safe/unsafe and identity-mismatch assertions. The previous clean
+  checkout already demonstrated the three failing tests before this repair.
+- [x] Document tracked historical evidence and test prerequisites in
+  `docs/history/README.md`, `docs/TEST_CONTRACT.md`, and `scripts/README.md`.
+- [x] Run targeted tests, review the full change, and run the complete offline
+  suite from a snapshot containing only staged Git files and the existing Python
+  environment. Preserve optional Jinja/LangChain integration skips when checkouts are
+  absent; do not add skips for the repaired tests.
+- [x] Commit, rerun the clean-checkout suite if the tested code changed,
+  push `fix/candidate-evidence-review-loop`, and report the verified result.
+
+### Clean-checkout result
+
+Before repair, the clean checkout had **6 failed, 1178 passed, 4 skipped**:
+one documentation-link failure, three missing OWASP-data failures, and two
+launcher relocation failures. The strengthened documentation/launcher regressions
+then produced **5 failed, 7 passed** without sourcing real credentials.
+
+After repair, the targeted suite passed **17 tests**. A separate detached
+worktree containing exactly the staged Git snapshot had no `data/raw` directory
+and only the eight published historical evidence files under `artifacts`.
+`PYTHONPATH` selected that worktree's source; the existing uv environment provided
+dependencies only. The complete command
+`uv run --no-sync pytest -p no:cacheprovider --tb=short -rs` returned
+**1188 passed, 4 skipped in 13.57s**. The four skips are the existing optional
+Jinja/LangChain checkout integrations; no test was disabled or newly skipped.
+
+The final change review found no actionable findings. `git diff --cached --check`
+passed. The eight evidence files retain their original bytes; the vendored OWASP
+fixture adds 29,122 bytes plus provenance documentation, with upstream LICENSE
+and hashes. New runtime output remains ignored. No live model requests were made.

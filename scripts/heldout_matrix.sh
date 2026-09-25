@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /home/joker/AAA_NUS_SEM3/cv_agent
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 set -a
 source .env.experiments
 set +a

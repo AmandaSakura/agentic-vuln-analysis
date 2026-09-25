@@ -10,7 +10,22 @@ data/subjects/
 data/heldout-subjects/
 data/development_git_pointer_backups/
 data/diagnostics/
-artifacts/
+# Runtime artifacts stay local; retain only evidence linked by archived reports.
+/artifacts/*
+!/artifacts/code_review_20260920_h0m169a9/
+/artifacts/code_review_20260920_h0m169a9/*
+!/artifacts/code_review_20260920_h0m169a9/offline_reproductions.json
+!/artifacts/code_review_20260920_h0m169a9/reproduce.py
+!/artifacts/code_review_20260920_h0m169a9/review_manifest.json
+!/artifacts/code_review_20260920_g6p44cr_/
+/artifacts/code_review_20260920_g6p44cr_/*
+!/artifacts/code_review_20260920_g6p44cr_/offline_reproductions.json
+!/artifacts/code_review_20260920_g6p44cr_/reproduce.py
+!/artifacts/code_review_20260920_g6p44cr_/source_sha256.txt
+!/artifacts/python_heldout_pair_result_review_2026-09-20/
+/artifacts/python_heldout_pair_result_review_2026-09-20/*
+!/artifacts/python_heldout_pair_result_review_2026-09-20/ledger_audit.json
+!/artifacts/python_heldout_pair_result_review_2026-09-20/offline_reproductions.json
 .env.deepseek
 .env.experiments
 data/heldout-pair-git/

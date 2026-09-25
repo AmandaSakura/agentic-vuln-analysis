@@ -30,12 +30,27 @@ def test_all_forwarding_scripts_are_removed_and_original_guards_retained():
 
 
 @pytest.mark.parametrize('name', ['gate', 'matrix'])
-def test_heldout_shell_launches_module_with_the_original_environment(tmp_path, name):
-    # Only the copied launcher's working directory changes. Never source real credentials.
+@pytest.mark.parametrize('working_directory', ['project', 'elsewhere'])
+def test_heldout_shell_launches_module_with_the_original_environment(tmp_path, name, working_directory):
+    # Execute unchanged script bytes; relocation must not require source rewriting.
     source = (ROOT/f'scripts/heldout_{name}.sh').read_text()
-    script = tmp_path/f'heldout_{name}.sh'
-    script.write_text(source.replace(str(ROOT), str(tmp_path)))
-    (tmp_path/'.env.experiments').write_text('CV_AGENT_PROVIDER=offline\nDEEPSEEK_API_KEY=fake-offline\n')
+    project = tmp_path/'project with spaces'
+    (project/'scripts').mkdir(parents=True)
+    script = project/f'scripts/heldout_{name}.sh'
+    script.write_text(source)
+    (project/'.env.experiments').write_text('CV_AGENT_PROVIDER=offline\nDEEPSEEK_API_KEY=fake-offline\n')
+    elsewhere = tmp_path/'elsewhere'
+    elsewhere.mkdir()
+    # Even a broken launcher must not source this machine's real credentials.
+    bash_env = tmp_path/'offline-source-guard.sh'
+    bash_env.write_text('''source() {
+    if [[ "$PWD/$1" != "$TEST_PROJECT/.env.experiments" ]]; then
+        echo 'Refusing to source credentials outside the test project' >&2
+        return 1
+    fi
+    builtin source "$@"
+}
+''')
     binary = tmp_path/'bin'
     binary.mkdir()
     uv = binary/'uv'
@@ -49,12 +64,14 @@ pathlib.Path(os.environ['CAPTURE']).write_text(json.dumps({
 ''')
     uv.chmod(0o755)
     capture = tmp_path/'invocation.json'
-    subprocess.run(['/bin/bash', str(script)], check=True, cwd=tmp_path,
-                   env={'PATH': str(binary)+os.pathsep+'/usr/bin:/bin', 'CAPTURE': str(capture)})
+    subprocess.run(['/bin/bash', str(script)], check=True,
+                   cwd=project if working_directory == 'project' else elsewhere,
+                   env={'PATH': str(binary)+os.pathsep+'/usr/bin:/bin', 'CAPTURE': str(capture),
+                        'BASH_ENV': str(bash_env), 'TEST_PROJECT': str(project)})
     assert json.loads(capture.read_text()) == {
         'argv': ['run', '--no-sync', 'python', '-m',
                  f'cv_agent.evaluation.runners.run_python_heldout_pair_{name}'],
-        'cwd': str(tmp_path), 'provider': 'offline', 'unbuffered': '1', 'key_was_exported': True,
+        'cwd': str(project), 'provider': 'offline', 'unbuffered': '1', 'key_was_exported': True,
     }
 
 

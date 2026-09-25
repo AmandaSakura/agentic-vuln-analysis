@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/OWASP-Benchmark/BenchmarkJava",
+  "commit": "2734ae486356765ea4e45393a28e20bcb5047f8c",
+  "selection": "Two command fixtures and their runtime dependencies; Java, resources and LICENSE are unchanged upstream bytes. Expected results retain the original header and only these two rows.",
+  "original_expected_results_sha256": "ae8e9386b13ec0164500f1a6fa3d0fa981495911a0f29e88a611e9a9df1b4567",
+  "files": {
+    "LICENSE": "c03cea027b4b40e4402fabd08557736727ec3d5bc54ad64ab6472de432198cad",
+    "expectedresults-1.2beta.csv": "0c8e5067f649b90b088e2f4b54f1f61bdad163c6fbf66dfa6826e8192d83b883",
+    "src/main/java/org/owasp/benchmark/helpers/Thing1.java": "8c518f968bf134ef5b2ef9b43b4d5cd31ca91bc882b33553bbd0ae3a9a94b9e4",
+    "src/main/java/org/owasp/benchmark/helpers/Thing2.java": "369573ea02e377b318b999d6d781e77b1df897cbe3a9573e214ae97dc3a71dcc",
+    "src/main/java/org/owasp/benchmark/helpers/ThingFactory.java": "02f701f3e3f7cc66e0c7449394117654e2b9629d78959dafd5c81e4ceabb8ecd",
+    "src/main/java/org/owasp/benchmark/helpers/ThingInterface.java": "e7089d83cf83c368063955dbb1aa0413cfc0525aec082ab168a80335c18ab909",
+    "src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00827.java": "bbc2e8f48ed8e90ffc61e5faa7f74ef7d46c3d7233980463f944c1b7e2c02c42",
+    "src/main/java/org/owasp/benchmark/testcode/BenchmarkTest02244.java": "2c16774f9fc809771b6d5723d487af77e9e004c4cecff8836fd6f3a7d84b4346",
+    "src/main/resources/insecureCmd.sh": "4e7d07207d24c43793ec857599c626862dc5d0794bfabdd50bc31ea477b5df14",
+    "src/main/resources/thing.properties": "8365dec7725ecab833b8591e8ec9a6bc491730a5fb904d88cccbd008688b13dc"
+  }
+}

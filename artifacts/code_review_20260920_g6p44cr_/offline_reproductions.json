@@ -1,0 +1,450 @@
+[
+  {
+    "name": "permission_positive",
+    "source": "def check(path, replacement):\n    os.chmod(path, 0o777)\n",
+    "tool_status": "CONFIRMED",
+    "runtime_chmod_calls": [
+      [
+        "review-target",
+        511
+      ]
+    ],
+    "runtime_error": null,
+    "observation": {
+      "tool": "validate_permission_mode",
+      "status": "ok",
+      "content": "{\"calls\":[{\"line\":2,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"final_mode\":\"0o777\",\"final_others_write\":true,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"CONFIRMED\",\"summary\":\"the bounded permission check ends with an others-writable chmod mode\"}",
+      "evidence_ids": [
+        "permission_mode:permission.py::check@1-20"
+      ],
+      "metadata": {
+        "observation_token_count": 560,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "CONFIRMED",
+      "subject": {
+        "candidate_id": "review",
+        "repository_id": "review",
+        "entry_path": "permission.py::check@1-20",
+        "entry_line": null,
+        "source_digest": "a2cca8066e2eabd69bbb693e37d0330753706f6570943ffa1d918cfddf6cd656",
+        "analysis_scope": null
+      }
+    }
+  },
+  {
+    "name": "permission_negative",
+    "source": "def check(path, replacement):\n    os.chmod(path, 0o750)\n",
+    "tool_status": "REFUTED",
+    "runtime_chmod_calls": [
+      [
+        "review-target",
+        488
+      ]
+    ],
+    "runtime_error": null,
+    "observation": {
+      "tool": "validate_permission_mode",
+      "status": "ok",
+      "content": "{\"calls\":[{\"line\":2,\"mode\":488,\"mode_text\":\"0o750\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o750)\"}],\"final_mode\":\"0o750\",\"final_others_write\":false,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"REFUTED\",\"summary\":\"the bounded permission check uses a non-others-writable literal chmod mode\"}",
+      "evidence_ids": [
+        "permission_mode:permission.py::check@1-20"
+      ],
+      "metadata": {
+        "observation_token_count": 563,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "REFUTED",
+      "subject": {
+        "candidate_id": "review",
+        "repository_id": "review",
+        "entry_path": "permission.py::check@1-20",
+        "entry_line": null,
+        "source_digest": "c0fa397f939a09114531a141da72895ab899047a4e92a7d5f2e09246969b7f79",
+        "analysis_scope": null
+      }
+    }
+  },
+  {
+    "name": "permission_try_return",
+    "source": "def check(path, replacement):\n    try:\n        return path\n    finally:\n        pass\n    os.chmod(path, 0o777)\n",
+    "tool_status": "UNRESOLVED",
+    "runtime_chmod_calls": [],
+    "runtime_error": null,
+    "observation": {
+      "tool": "validate_permission_mode",
+      "status": "ok",
+      "content": "{\"calls\":[],\"issues\":[\"unsupported permission statement: Try\"],\"status\":\"UNRESOLVED\",\"summary\":\"no reachable literal os.chmod call was found in the candidate span\"}",
+      "evidence_ids": [
+        "permission_mode:permission.py::check@1-20"
+      ],
+      "metadata": {
+        "observation_token_count": 273,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "permission_short_circuit",
+    "source": "def check(path, replacement):\n    False and os.chmod(path, 0o777)\n",
+    "tool_status": "UNRESOLVED",
+    "runtime_chmod_calls": [],
+    "runtime_error": null,
+    "observation": {
+      "tool": "validate_permission_mode",
+      "status": "ok",
+      "content": "{\"calls\":[],\"issues\":[],\"status\":\"UNRESOLVED\",\"summary\":\"no reachable literal os.chmod call was found in the candidate span\"}",
+      "evidence_ids": [
+        "permission_mode:permission.py::check@1-20"
+      ],
+      "metadata": {
+        "observation_token_count": 232,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "permission_local_binding_after_call",
+    "source": "def check(path, replacement):\n    os.chmod(path, 0o777)\n    os = replacement\n",
+    "tool_status": "UNRESOLVED",
+    "runtime_chmod_calls": [],
+    "runtime_error": "UnboundLocalError",
+    "observation": {
+      "tool": "validate_permission_mode",
+      "status": "ok",
+      "content": "{\"calls\":[{\"line\":2,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"issues\":[\"os binding is shadowed before os.chmod\"],\"status\":\"UNRESOLVED\",\"summary\":\"permission execution or binding is outside the supported bounded semantics\"}",
+      "evidence_ids": [
+        "permission_mode:permission.py::check@1-20"
+      ],
+      "metadata": {
+        "observation_token_count": 386,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "permission_call_order",
+    "source": "def check(path, replacement):\n    os.chmod(path, 0o750) or os.chmod(path, 0o777)\n",
+    "tool_status": "UNRESOLVED",
+    "runtime_chmod_calls": [
+      [
+        "review-target",
+        488
+      ],
+      [
+        "review-target",
+        511
+      ]
+    ],
+    "runtime_error": null,
+    "observation": {
+      "tool": "validate_permission_mode",
+      "status": "ok",
+      "content": "{\"calls\":[{\"line\":2,\"mode\":488,\"mode_text\":\"0o750\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o750) or os.chmod(path, 0o777)\"}],\"issues\":[\"short-circuit condition is not a literal\"],\"status\":\"UNRESOLVED\",\"summary\":\"permission execution or binding is outside the supported bounded semantics\"}",
+      "evidence_ids": [
+        "permission_mode:permission.py::check@1-20"
+      ],
+      "metadata": {
+        "observation_token_count": 413,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "command_quoted_control",
+    "source": "def get_cmd(model_uri):\n    cmd = f\"worker {shlex.quote(model_uri)}\"\n    return cmd, {}\n",
+    "backend_source": "def serve(model_uri):\n    command, command_env = mlserver.get_cmd(model_uri)\n    command = \"exec \" + command\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "SANITIZED",
+    "returned_command": [
+      "worker clean",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "accepted",
+      "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":3,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"SANITIZED\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"SANITIZED\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"supported caller paths pass a command with protected argument interpolation to a POSIX shell\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 685,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "command_raw_control",
+    "source": "def get_cmd(model_uri):\n    cmd = f\"worker {model_uri}\"\n    return cmd, {}\n",
+    "backend_source": "def serve(model_uri):\n    command, command_env = mlserver.get_cmd(model_uri)\n    command = \"exec \" + command\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "UNSANITIZED",
+    "returned_command": [
+      "worker clean",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "SAFE/UNRESOLVED requires affirmative counter-evidence; empty searches, missing graph neighbors, static no-finding results, or source reads alone must be reported as ABSTAIN/UNRESOLVED.",
+      "VULNERABLE": "accepted"
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"UNSANITIZED\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":3,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"UNSANITIZED\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"UNSANITIZED\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"a supported caller path passes raw parameter interpolation to a POSIX shell\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 674,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "command_loop_append",
+    "source": "def get_cmd(model_uri, suffix):\n    cmd = f\"worker {shlex.quote(model_uri)}\"\n    for value in [suffix]:\n        cmd += value\n    return cmd, {}\n",
+    "backend_source": "def serve(model_uri, suffix):\n    command, command_env = mlserver.get_cmd(model_uri, suffix)\n    command = \"exec \" + command\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "UNSANITIZED",
+    "returned_command": [
+      "worker clean; printf REVIEW_MARKER",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "SAFE/UNRESOLVED requires affirmative counter-evidence; empty searches, missing graph neighbors, static no-finding results, or source reads alone must be reported as ABSTAIN/UNRESOLVED.",
+      "VULNERABLE": "accepted"
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"UNSANITIZED\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":5,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"UNSANITIZED\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"UNSANITIZED\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"a supported caller path passes raw parameter interpolation to a POSIX shell\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 674,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "command_dead_code",
+    "source": "def get_cmd(model_uri):\n    cmd = f\"worker {shlex.quote(model_uri)}\"\n    return cmd, {}\n    cmd = f\"worker {model_uri}\"\n",
+    "backend_source": "def serve(model_uri):\n    command, command_env = mlserver.get_cmd(model_uri)\n    command = \"exec \" + command\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "SANITIZED",
+    "returned_command": [
+      "worker clean",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "accepted",
+      "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":3,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"SANITIZED\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"SANITIZED\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"supported caller paths pass a command with protected argument interpolation to a POSIX shell\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 685,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "command_overwritten_raw_value",
+    "source": "def get_cmd(model_uri):\n    cmd = f\"worker {model_uri}\"\n    cmd = f\"worker {shlex.quote(model_uri)}\"\n    return cmd, {}\n",
+    "backend_source": "def serve(model_uri):\n    command, command_env = mlserver.get_cmd(model_uri)\n    command = \"exec \" + command\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "SANITIZED",
+    "returned_command": [
+      "worker clean",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "accepted",
+      "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":4,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"SANITIZED\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"SANITIZED\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"supported caller paths pass a command with protected argument interpolation to a POSIX shell\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 685,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    }
+  },
+  {
+    "name": "command_caller_append",
+    "source": "def get_cmd(model_uri):\n    cmd = f\"worker {shlex.quote(model_uri)}\"\n    return cmd, {}\n",
+    "backend_source": "def serve(model_uri, suffix):\n    command, command_env = mlserver.get_cmd(model_uri)\n    command += suffix\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "UNSANITIZED",
+    "returned_command": [
+      "worker clean",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "SAFE/UNRESOLVED requires affirmative counter-evidence; empty searches, missing graph neighbors, static no-finding results, or source reads alone must be reported as ABSTAIN/UNRESOLVED.",
+      "VULNERABLE": "accepted"
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"UNSANITIZED\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":3,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"SANITIZED\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"UNSANITIZED\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"a supported caller path passes raw parameter interpolation to a POSIX shell\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 672,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    },
+    "captured_sink_argv": [
+      [
+        "bash",
+        "-c",
+        "worker clean; printf REVIEW_MARKER"
+      ]
+    ]
+  },
+  {
+    "name": "command_double_quote_context",
+    "source": "def get_cmd(model_uri):\n    cmd = f'printf \"%s\" \"{shlex.quote(model_uri)}\"'\n    return cmd, {}\n",
+    "backend_source": "def serve(model_uri):\n    command, command_env = mlserver.get_cmd(model_uri)\n    command = \"exec \" + command\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+    "command_status": "AMBIGUOUS",
+    "returned_command": [
+      "printf \"%s\" \"'$(printf REVIEW_MARKER)'\"",
+      {}
+    ],
+    "predictions": {
+      "SAFE": "SAFE/UNRESOLVED requires affirmative counter-evidence; empty searches, missing graph neighbors, static no-finding results, or source reads alone must be reported as ABSTAIN/UNRESOLVED.",
+      "VULNERABLE": "accepted"
+    },
+    "observation": {
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "content": "{\"command_construction_status\":\"AMBIGUOUS\",\"helpers\":[{\"issues\":[],\"path\":\"mlflow/pyfunc/mlserver.py::get_cmd@1-8\",\"return_line\":3,\"scope\":\"helper return value only; caller transformations must still be checked\",\"status\":\"AMBIGUOUS\"}],\"issues\":[],\"sink_facts\":[{\"call\":\"subprocess.Popen\",\"line\":4,\"status\":\"AMBIGUOUS\"}],\"source_path\":\"mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20\",\"status\":\"UNRESOLVED\",\"summary\":\"command binding, execution path or shell context is outside supported semantics\",\"unresolved_edges\":[]}",
+      "evidence_ids": [
+        "command_construction:mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20",
+        "command_helper:mlflow/pyfunc/mlserver.py::get_cmd@1-8"
+      ],
+      "metadata": {
+        "observation_token_count": 672,
+        "observation_truncated": false,
+        "model_payload_suppressed": false
+      },
+      "citation_id": null,
+      "validation_status": "UNRESOLVED",
+      "subject": null
+    },
+    "controlled_bash_stdout": "'REVIEW_MARKER'",
+    "literal_input": "$(printf REVIEW_MARKER)"
+  },
+  {
+    "name": "counter_citation_absent",
+    "output": {
+      "expert": "scan",
+      "label": "VULNERABLE",
+      "confidence": 0.8,
+      "validation_status": "UNRESOLVED",
+      "evidence_ids": [
+        "tool:source"
+      ],
+      "supporting_observation_ids": [
+        "tool:source"
+      ],
+      "counter_observation_ids": [],
+      "unresolved_observation_ids": [],
+      "rationale": "The helper quotes one input; the caller appends a raw suffix afterward."
+    },
+    "error": null
+  },
+  {
+    "name": "counter_citation_present",
+    "output": {
+      "expert": "scan",
+      "label": "VULNERABLE",
+      "confidence": 0.8,
+      "validation_status": "UNRESOLVED",
+      "evidence_ids": [
+        "tool:source"
+      ],
+      "supporting_observation_ids": [
+        "tool:source"
+      ],
+      "counter_observation_ids": [
+        "tool:counter"
+      ],
+      "unresolved_observation_ids": [],
+      "rationale": "The helper quotes one input; the caller appends a raw suffix afterward."
+    },
+    "error": null
+  },
+  {
+    "name": "unexpected_row_disappears_from_results",
+    "raw_count": 31,
+    "enriched_count": 31,
+    "issues_raw": [
+      "Unexpected held-out result cells: [('unexpected', 'E1')]"
+    ],
+    "issues_enriched": [
+      "Unexpected held-out result cells: [('unexpected', 'E1')]"
+    ]
+  }
+]

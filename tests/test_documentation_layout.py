@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,3 +57,18 @@ def test_archived_document_content_is_preserved_except_relocated_local_links():
             content = path.read_bytes()
         assert hashlib.sha256(content).hexdigest() == entry['content_sha256'], path
         assert not (ROOT/entry['original_path']).exists()
+
+
+def test_documented_artifacts_are_in_the_git_snapshot():
+    tracked = set(subprocess.check_output(
+        ['git', 'ls-files', '-z'], cwd=ROOT, text=True,
+    ).split('\0'))
+    referenced = {target for path in [ROOT/'README.md', *DOCS.rglob('*.md')]
+                  for target in local_links(path) if target.is_relative_to(ROOT/'artifacts')}
+    assert referenced, 'Archived reports must retain their evidence links'
+    for target in referenced:
+        relative = target.relative_to(ROOT).as_posix()
+        if target.is_dir():
+            assert any(path.startswith(relative + '/') for path in tracked), target
+        else:
+            assert relative in tracked, f'Untracked review evidence: {target}'

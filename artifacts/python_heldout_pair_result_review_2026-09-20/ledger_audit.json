@@ -1,0 +1,189 @@
+{
+  "run": "artifacts/python_heldout_pair_matrix/17fadccd191d4d71bdb74483cbe5a28b",
+  "offline_audit_api_requests": 0,
+  "pytest": "547 passed in 26.96s",
+  "harness": "PASS",
+  "planned_cells": 30,
+  "observed_unique_cells": 30,
+  "duplicate_cells": [],
+  "status_counts": {
+    "completed": 28,
+    "abstained": 2
+  },
+  "matches_configured_labels": 28,
+  "requests": 269,
+  "raw_responses": 269,
+  "parsed_replies": 269,
+  "request_id_sets_match": true,
+  "raw_response_token_sum": 1218464,
+  "saved_usage_token_sum": 1218464,
+  "ledger_disagreements": [],
+  "source_snapshot_files": 201,
+  "source_snapshot_changes": [],
+  "metadata_source_hash_mismatches": [],
+  "gate_source_differences": [],
+  "gate_labels_correct": 10,
+  "gate_cells": 10,
+  "gate_started_at": "2026-09-20T08:54:47.128466+00:00",
+  "matrix_started_at": "2026-09-20T08:59:59.310304+00:00",
+  "matrix_seconds": 568.938234,
+  "system_counts": {
+    "E1": {
+      "statuses": {
+        "completed": 4,
+        "abstained": 2
+      },
+      "matches_configured_labels": 4,
+      "requests": 29,
+      "reported_tokens": 90668,
+      "votes": {
+        "CONFIRMED": 1,
+        "REFUTED": 1,
+        "UNRESOLVED": 4
+      }
+    },
+    "E2": {
+      "statuses": {
+        "completed": 6
+      },
+      "matches_configured_labels": 6,
+      "requests": 26,
+      "reported_tokens": 186833,
+      "votes": {
+        "CONFIRMED": 1,
+        "REFUTED": 1,
+        "UNRESOLVED": 4
+      }
+    },
+    "E3": {
+      "statuses": {
+        "completed": 6
+      },
+      "matches_configured_labels": 6,
+      "requests": 25,
+      "reported_tokens": 127595,
+      "votes": {
+        "CONFIRMED": 1,
+        "REFUTED": 1,
+        "UNRESOLVED": 4
+      }
+    },
+    "E4": {
+      "statuses": {
+        "completed": 6
+      },
+      "matches_configured_labels": 6,
+      "requests": 107,
+      "reported_tokens": 470955,
+      "votes": {
+        "CONFIRMED": 2,
+        "UNRESOLVED": 14,
+        "REFUTED": 2
+      }
+    },
+    "E5": {
+      "statuses": {
+        "completed": 6
+      },
+      "matches_configured_labels": 6,
+      "requests": 82,
+      "reported_tokens": 342413,
+      "votes": {
+        "CONFIRMED": 2,
+        "UNRESOLVED": 12,
+        "REFUTED": 2
+      }
+    }
+  },
+  "first_prompt_commit_or_advisory_marker_hits": [],
+  "paired": {
+    "E2_vs_E3": {
+      "left_wins": 0,
+      "right_wins": 0,
+      "ties": 6,
+      "unavailable": 0,
+      "completed_label_disagreements": 0
+    },
+    "E3_vs_E4": {
+      "left_wins": 0,
+      "right_wins": 0,
+      "ties": 6,
+      "unavailable": 0,
+      "completed_label_disagreements": 0
+    },
+    "E4_vs_E5": {
+      "left_wins": 0,
+      "right_wins": 0,
+      "ties": 6,
+      "unavailable": 0,
+      "completed_label_disagreements": 0
+    }
+  },
+  "full_review_prefix_replays": {
+    "hp001_a": {
+      "eligible": false,
+      "full_label": "VULNERABLE",
+      "replayed_label": "VULNERABLE",
+      "label_equivalent": true,
+      "counterfactual_saved_model_calls": 0,
+      "counterfactual_saved_tool_calls": 0,
+      "note": "No eligible early exit in the observed full-review execution."
+    },
+    "hp001_b": {
+      "eligible": false,
+      "full_label": "SAFE",
+      "replayed_label": "SAFE",
+      "label_equivalent": true,
+      "counterfactual_saved_model_calls": 0,
+      "counterfactual_saved_tool_calls": 0,
+      "note": "No eligible early exit in the observed full-review execution."
+    },
+    "hp002_a": {
+      "eligible": false,
+      "full_label": "VULNERABLE",
+      "replayed_label": "VULNERABLE",
+      "label_equivalent": true,
+      "counterfactual_saved_model_calls": 0,
+      "counterfactual_saved_tool_calls": 0,
+      "note": "No eligible early exit in the observed full-review execution."
+    },
+    "hp002_b": {
+      "eligible": false,
+      "full_label": "SAFE",
+      "replayed_label": "SAFE",
+      "label_equivalent": true,
+      "counterfactual_saved_model_calls": 0,
+      "counterfactual_saved_tool_calls": 0,
+      "note": "No eligible early exit in the observed full-review execution."
+    },
+    "hp003_a": {
+      "eligible": true,
+      "full_label": "VULNERABLE",
+      "replayed_label": "VULNERABLE",
+      "label_equivalent": true,
+      "counterfactual_saved_model_calls": 7,
+      "counterfactual_saved_tool_calls": 6,
+      "note": "Offline E4-prefix counterfactual; not measured independent E5 latency or cost."
+    },
+    "hp003_b": {
+      "eligible": true,
+      "full_label": "SAFE",
+      "replayed_label": "SAFE",
+      "label_equivalent": true,
+      "counterfactual_saved_model_calls": 7,
+      "counterfactual_saved_tool_calls": 6,
+      "note": "Offline E4-prefix counterfactual; not measured independent E5 latency or cost."
+    }
+  },
+  "expected_abstentions": [
+    {
+      "case_id": "hp003_a",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp003_b",
+      "system": "E1"
+    }
+  ],
+  "claim_eligible": false
+}
