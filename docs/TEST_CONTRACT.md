@@ -20,6 +20,15 @@ Before a repair, add an observable failing behavioral test. Then change implemen
 
 The live gate runs the full suite itself before the first model request in a process. Subsequent requests require identical source/config/test contents. An edit after admission stops the process's model calls; restart after completing the edit. No trusted pass-file or environment skip exists. Gate logs are local artifacts, not reusable admission credentials.
 
-The current LangChain checkouts/environment are optional for ordinary offline development, so real-checkout integration tests can skip when absent. Its orchestration correctness is also tested with deterministic mocks without those dependencies. A future LangChain-specific live runner must additionally require the actual pair prerequisites and passing integration checks; generic pytest success with skipped external fixtures is not evidence of pair readiness.
+The current Jinja/LangChain checkouts and environments are optional for ordinary offline development, so real-checkout integration tests can skip when absent. Their orchestration correctness is also tested with deterministic mocks without those dependencies. A future LangChain-specific live runner must additionally require the actual pair prerequisites and passing integration checks; generic pytest success with skipped external fixtures is not evidence of pair readiness.
+
+For a clean checkout, install the locked Python environment with `uv sync --locked`,
+then run `uv run --no-sync pytest`. The Java boundary tests require Linux, a JDK
+with `jdk.compiler`, and `cc`; they compile and execute the pinned two-case
+[OWASP fixture](../tests/fixtures/java_command/README.md) in pytest temporary
+directories. They do not require downloading `data/raw/BenchmarkJava`. Historical
+review files linked by the documentation are tracked individually; bulk experiment
+artifacts and real model credentials are not test prerequisites. Launcher tests
+copy the scripts unchanged and load fake credentials only from a temporary project.
 
 No automatic retry, provider fallback, broad benchmark run, or claimed safety proof is authorized merely by passing tests. Experiment configuration still defines the request budget and dataset role. HTTP errors/empty model choices are failures, not SAFE votes.

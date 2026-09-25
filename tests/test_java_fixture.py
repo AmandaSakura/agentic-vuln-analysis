@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import shutil
 from dataclasses import replace
 from pathlib import Path
+
+import pytest
 
 from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
 from cv_agent.tools.identity import candidate_subject
@@ -18,11 +22,22 @@ from cv_agent.tools.validation import full_agent_tools
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_ROOT = PROJECT_ROOT / "tests/fixtures/java_command"
 
 
-def _owasp_pair():
+@pytest.fixture(scope="module")
+def java_project_root(tmp_path_factory):
+    root = tmp_path_factory.mktemp("java-command-project")
+    shutil.copytree(FIXTURE_ROOT / "BenchmarkJava", root / "data/raw/BenchmarkJava")
+    harness = root / "validation/java-command-harness"
+    harness.mkdir(parents=True)
+    shutil.copy2(PROJECT_ROOT / "validation/java-command-harness/exec_recorder.c", harness)
+    return root
+
+
+def _owasp_pair(project_root):
     inputs = load_owasp_agentic_inputs(
-        PROJECT_ROOT / "data/raw",
+        project_root / "data/raw",
         case_ids=("BenchmarkTest00827", "BenchmarkTest02244"),
     )
     return inputs, select_owasp_entry(inputs, "doPost")
@@ -49,9 +64,17 @@ def test_java_validator_has_a_concrete_build_entrypoint():
     assert callable(JavaCommandValidator.build)
 
 
-def test_java_command_fixture_confirms_and_refutes_real_owasp_pair():
-    inputs, candidates = _owasp_pair()
-    fixtures = java_command_fixture_cases(PROJECT_ROOT, inputs.index, candidates)
+def test_java_fixture_matches_the_pinned_source_manifest():
+    manifest = json.loads((FIXTURE_ROOT / "manifest.json").read_text())
+    files = {path.relative_to(FIXTURE_ROOT / "BenchmarkJava").as_posix():
+             hashlib.sha256(path.read_bytes()).hexdigest()
+             for path in (FIXTURE_ROOT / "BenchmarkJava").rglob('*') if path.is_file()}
+    assert files == manifest["files"]
+
+
+def test_java_command_fixture_confirms_and_refutes_real_owasp_pair(java_project_root):
+    inputs, candidates = _owasp_pair(java_project_root)
+    fixtures = java_command_fixture_cases(java_project_root, inputs.index, candidates)
     registry = ToolRegistry(
         full_agent_tools(inputs.index, fixture_cases=fixtures),
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
@@ -80,10 +103,10 @@ def test_java_command_fixture_confirms_and_refutes_real_owasp_pair():
         )
 
 
-def test_java_fixture_subject_mismatch_is_blocked_before_execution():
-    inputs, candidates = _owasp_pair()
+def test_java_fixture_subject_mismatch_is_blocked_before_execution(java_project_root):
+    inputs, candidates = _owasp_pair(java_project_root)
     safe, vulnerable = candidates
-    fixtures = java_command_fixture_cases(PROJECT_ROOT, inputs.index, candidates)
+    fixtures = java_command_fixture_cases(java_project_root, inputs.index, candidates)
     registry = ToolRegistry(
         full_agent_tools(inputs.index, fixture_cases=fixtures),
         max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
@@ -100,9 +123,9 @@ def test_java_fixture_subject_mismatch_is_blocked_before_execution():
     assert observation.validation_status is None
 
 
-def test_java_fixture_source_snapshot_mismatch_is_unresolved():
-    inputs, candidates = _owasp_pair()
-    validator = JavaCommandValidator.build(PROJECT_ROOT, inputs.index, candidates[0])
+def test_java_fixture_source_snapshot_mismatch_is_unresolved(java_project_root):
+    inputs, candidates = _owasp_pair(java_project_root)
+    validator = JavaCommandValidator.build(java_project_root, inputs.index, candidates[0])
     first = replace(validator.files[0], sha256="0" * 64)
     stale = replace(validator, files=(first, *validator.files[1:]))
 

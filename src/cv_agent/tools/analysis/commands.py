@@ -39,6 +39,8 @@ class Choice:
 
 
 UNKNOWN = object()
+NUMERIC_VALUE = object()
+NUMERIC_TEXT = object()
 
 
 def choice(*values: Any) -> Any:
@@ -94,14 +96,36 @@ def literal_text(value: Any) -> str | None:
     return None
 
 
+def _literal_or_numeric_text(value: Any) -> bool:
+    if isinstance(value, Choice):
+        return all(_literal_or_numeric_text(item) for item in value.values)
+    return value is NUMERIC_TEXT or literal_text(value) is not None
+
+
+def _protected_argv(value: Any) -> bool:
+    if isinstance(value, Choice):
+        return all(_protected_argv(item) for item in value.values)
+    return (isinstance(value, tuple) and bool(value)
+            and literal_text(value[0]) not in {None, ""}
+            and all(_literal_or_numeric_text(item) for item in value[1:]))
+
+
+def _contains_numeric_text(value: Any) -> bool:
+    if isinstance(value, Choice):
+        return any(_contains_numeric_text(item) for item in value.values)
+    if isinstance(value, tuple):
+        return any(_contains_numeric_text(item) for item in value)
+    return value is NUMERIC_TEXT
+
+
 def _status_join(statuses: set[str]) -> str:
-    if "AMBIGUOUS" in statuses:
-        return "AMBIGUOUS"
     if "UNSANITIZED" in statuses:
         return "UNSANITIZED"
-    if "SANITIZED" in statuses:
-        return "SANITIZED"
-    return "NOT_ESTABLISHED"
+    if "AMBIGUOUS" in statuses:
+        return "AMBIGUOUS"
+    if "NOT_ESTABLISHED" in statuses or not statuses:
+        return "NOT_ESTABLISHED"
+    return "SANITIZED"
 
 
 def shell_status(value: Any) -> str:
@@ -187,6 +211,9 @@ class Interpreter:
                         self.env.setdefault(pieces[-2], Binding(".".join(pieces[:-1])))
                     if len(pieces) == 1:
                         self.env.setdefault(definition, Binding(definition))
+            for name in ("int", "str"):
+                if name not in self.document.module_bindings:
+                    self.env.setdefault(name, Binding(f"builtins.{name}"))
             for name, binding in self.document.import_aliases.items():
                 self.env[name] = Binding(binding)
             for name in self.document.module_rebindings:
@@ -332,11 +359,19 @@ class Interpreter:
             raise UnsupportedSemantics("expanded call arguments")
         args = tuple(self.expression(arg) for arg in node.args)
         kwargs = {item.arg: self.expression(item.value) for item in node.keywords}
+        if binding.name == "builtins.int" and len(args) == 1 and not kwargs:
+            return NUMERIC_VALUE
+        if binding.name == "builtins.str" and len(args) == 1 and not kwargs and args[0] is NUMERIC_VALUE:
+            return NUMERIC_TEXT
         if binding.name == "shlex.quote":
             if len(args) != 1 or kwargs or not isinstance(args[0], CommandString):
                 return UNKNOWN
             return CommandString((Fragment("quoted"),))
-        if binding.name in {"subprocess.Popen", "subprocess.run", "subprocess.call", "os.system"}:
+        if binding.name in {
+            "subprocess.Popen", "subprocess.run", "subprocess.call",
+            "subprocess.check_call", "subprocess.check_output",
+            "subprocess.getoutput", "subprocess.getstatusoutput", "os.system", "os.popen",
+        }:
             self.record_sink(node, binding.name, args, kwargs)
             return UNKNOWN
         matches = [helper for helper in self.helpers if binding.name in helper.defines]
@@ -363,22 +398,27 @@ class Interpreter:
                 raise UnsupportedSemantics("missing or nonliteral default helper argument")
             values[name] = literal(default.value) if isinstance(default.value, str) else default.value
         result = helper.run(values)
+        if result.sinks:
+            self.result.sinks.extend(result.sinks)
         if result.issues:
             raise UnsupportedSemantics("helper: " + "; ".join(result.issues))
         return result.returned
 
     def record_sink(self, node: ast.Call, name: str, args: tuple, kwargs: dict) -> None:
-        command = args[0] if args else kwargs.get("args", UNKNOWN)
-        shell = kwargs.get("shell", False)
+        command_keyword = {
+            "os.system": "command", "os.popen": "cmd",
+            "subprocess.getoutput": "cmd", "subprocess.getstatusoutput": "cmd",
+        }.get(name, "args")
+        command = args[0] if args else kwargs.get(command_keyword, UNKNOWN)
+        shell = kwargs.get("shell", args[8] if len(args) > 8 else False)
+        status = "NOT_ESTABLISHED"
         if isinstance(command, Choice):
             statuses: set[str] = set()
             for item in command.values:
-                self.record_sink(node, name, (item,), kwargs)
+                self.record_sink(node, name, (item, *args[1:]), kwargs)
                 statuses.add(self.result.sinks.pop()["status"])
-            self.result.sinks.append({"line": node.lineno, "call": name, "status": _status_join(statuses)})
-            return
-        status = "NOT_ESTABLISHED"
-        if name == "os.system" or shell is True:
+            status = _status_join(statuses)
+        elif name in {"os.system", "os.popen", "subprocess.getoutput", "subprocess.getstatusoutput"} or shell is True:
             status = shell_status(command) if not isinstance(command, tuple) else "AMBIGUOUS"
         elif shell is not False:
             status = "AMBIGUOUS"
@@ -393,7 +433,15 @@ class Interpreter:
                 )
         elif command is UNKNOWN:
             status = "AMBIGUOUS"
-        self.result.sinks.append({"line": node.lineno, "call": name, "status": status})
+        fact = {"path": self.document.path, "line": node.lineno, "call": name, "status": status}
+        if (status == "NOT_ESTABLISHED" and _protected_argv(command) and _contains_numeric_text(command)
+                and kwargs.get("input") is None
+                and all(kwargs.get(key, args[position] if len(args) > position else None) is None
+                        for key, position in (("executable", 2), ("stdin", 3), ("preexec_fn", 7), ("cwd", 9), ("env", 10)))):
+            # This is an affirmative argument-construction fact, not a claim
+            # that merely failing to establish a shell makes execution safe.
+            fact["numeric_argv"] = True
+        self.result.sinks.append(fact)
 
     def _run_branch(self, statements: list[ast.stmt], env: dict[str, Any]):
         saved_env = self.env

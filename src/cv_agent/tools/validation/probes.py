@@ -10,12 +10,12 @@ from cv_agent.domain.evidence import ToolObservation, ValidationStatus
 from cv_agent.tools.analysis.python_probe import probe_python_eval
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.domain.types import FrozenModel
-from cv_agent.tools.validation.models import TraceDataflowInput
+from cv_agent.tools.validation.models import SourceFlowInput
 from cv_agent.tools.validation.scope import _admitted_document, _json_content
 
 
 def concrete_eval_probe(index: RepositoryIndex, arguments: FrozenModel, scope: ToolExecutionScope) -> ToolObservation:
-    value = cast(TraceDataflowInput, arguments)
+    value = cast(SourceFlowInput, arguments)
     if scope.subject is not None and scope.subject.source_digest != repository_source_digest(index):
         return ToolObservation(tool='probe_python_eval', status='blocked',
                                content='Probe index source does not match the candidate subject')

@@ -55,9 +55,10 @@ def _uses_get_cmd_shell_construction(document: CodeDocument | None) -> bool:
     if document is None:
         return False
     return (
-        "get_cmd" in document.text
+        any(k in document.text for k in ("get_cmd", "build_cmd", "make_cmd", "format_cmd"))
         and (
             "subprocess.Popen" in document.text
+            or "subprocess" in document.text
             or "bash" in document.text
             or ".execute(" in document.text
         )
@@ -68,8 +69,8 @@ def _is_textual_get_cmd_helper(document: CodeDocument | None) -> bool:
     if document is None:
         return False
     return (
-        "::get_cmd@" in document.path
-        or bool(re.search(r"^\s*def\s+get_cmd\s*\(", document.text, re.MULTILINE))
+        any(k in document.path for k in ("::get_cmd@", "::build_cmd@", "::make_cmd@"))
+        or bool(re.search(r"^\s*def\s+(?:get|build|make|format)_cmd\s*\(", document.text, re.MULTILINE))
     )
 
 

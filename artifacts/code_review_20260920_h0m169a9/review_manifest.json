@@ -1,0 +1,15 @@
+{
+  "scope": "post-fix offline code review",
+  "pytest": "560 passed in 25.26s",
+  "harness_check": "PASS",
+  "model_api_requests": 0,
+  "source_sha256": {
+    "src/cv_agent/validation_tools.py": "e7b9f91291a2d80f9d7eca0da01d2772bebbb6399a5f91cbd1ef61e27e5f478a",
+    "src/cv_agent/react_engine.py": "498fb63c9681751af8b175f162297401a22730a7ae02f2ecfeb27e11f77b53e3",
+    "src/cv_agent/python_heldout_pair_acceptance.py": "f2519f5d3438ff6f68a5aca2fdd7bf4be416be8c96a50cef85ca7a157e514b9a",
+    "scripts/run_python_heldout_pair_matrix.py": "7e8b9d2198e676dfefec330c75f2362a58c4df636e56eb1bd9f0b2aea1fd0e77",
+    "tests/test_validation_tools.py": "58e727220efb5cda98d66a8409c2dfe1d4c5140717dbf7ee9c9de190bf2281c5",
+    "tests/test_evidence_validation.py": "4487b5935865fe763d306e6eede0699d93d6b9c842ce070744de395064c2bb7c",
+    "tests/test_python_heldout_pair_runner.py": "39d5feea7fcbeb040b394ecfab42de3998db67601699e93420282db13666e8d8"
+  }
+}

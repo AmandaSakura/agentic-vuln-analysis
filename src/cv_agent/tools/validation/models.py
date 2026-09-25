@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -21,10 +21,16 @@ class FindReferencesInput(FrozenModel):
     symbol: str
 
 
-class TraceDataflowInput(FrozenModel):
+class SourceFlowInput(FrozenModel):
     source_path: str
     sink_path: str | None = None
     max_hops: int = Field(default=4, ge=0, le=8)
+
+
+class TraceDataflowInput(SourceFlowInput):
+    sink_category: Literal[
+        "code-execution", "command-execution", "sql", "ldap", "path-access", "outbound-request",
+    ] | None = Field(default=None, description="Restrict the trace to this sink category; omit to search all categories.")
 
 
 class CommandConstructionInput(FrozenModel):

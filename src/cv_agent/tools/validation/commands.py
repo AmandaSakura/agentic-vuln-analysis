@@ -34,11 +34,16 @@ def command_construction(
     if error is not None:
         return error
     source_document = cast(CodeDocument, source)
+    called_symbols = {c.rsplit(".", 1)[-1] for c in source_document.calls}
     helper_paths = [
         path for path in index.graph_neighbors(value.source_path, direction="forward")
         if path in scope.admitted_paths
         and (document := index.document(path)) is not None
-        and any(definition.rsplit(".", 1)[-1] == "get_cmd" for definition in document.defines)
+        and (
+            not called_symbols
+            or any(definition.rsplit(".", 1)[-1] in called_symbols for definition in document.defines)
+            or any(definition.rsplit(".", 1)[-1] == "get_cmd" for definition in document.defines)
+        )
     ]
     unresolved_edges: list[dict[str, str]] = []
     helper_facts: list[dict[str, Any]] = []
@@ -65,12 +70,12 @@ def command_construction(
     entry_arguments = scope.subject.entry_boolean_arguments if scope.subject is not None else {}
     source_analysis = analyze_command(source_document, admitted_helpers, entry_boolean_arguments=entry_arguments)
     construction_status = command_status(source_analysis)
-    if not admitted_helpers and "get_cmd" in source_document.text and source_analysis.issues:
+    if not admitted_helpers and (source_analysis.unresolved_calls or "get_cmd" in source_document.text) and source_analysis.issues:
         construction_status = "UNAVAILABLE"
     summary = {
         "SANITIZED": "supported caller paths pass a command with protected argument interpolation to a POSIX shell",
         "UNSANITIZED": "a supported caller path passes raw parameter interpolation to a POSIX shell",
-        "UNAVAILABLE": "the candidate calls get_cmd but no admitted callee was available within the hop budget",
+        "UNAVAILABLE": "the candidate calls a command-construction helper but no admitted callee was available within the hop budget",
         "NOT_ESTABLISHED": "no supported shell execution was established on the inspected path",
         "AMBIGUOUS": "command binding, execution path or shell context is outside supported semantics",
     }[construction_status]

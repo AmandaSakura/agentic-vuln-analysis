@@ -1,0 +1,2 @@
+# Frozen third-party fixtures retain upstream line endings and whitespace.
+tests/fixtures/java_command/BenchmarkJava/** -text -whitespace

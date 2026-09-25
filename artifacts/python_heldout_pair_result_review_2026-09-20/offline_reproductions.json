@@ -1,0 +1,410 @@
+{
+  "run": "artifacts/python_heldout_pair_matrix/17fadccd191d4d71bdb74483cbe5a28b",
+  "api_requests": 0,
+  "permission": [
+    {
+      "name": "return_before_chmod",
+      "source": "def check(path, enabled, replacement):\n    return\n    os.chmod(path, 0o777)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":3,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"final_mode\":\"0o777\",\"final_others_write\":true,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"CONFIRMED\",\"summary\":\"the bounded permission check ends with an others-writable chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 560,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "CONFIRMED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "e90870a745626eb4509170f733c5a011fecc92eb51449298f08da693bdcc5b94",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [],
+        "error": null,
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    },
+    {
+      "name": "empty_loop",
+      "source": "def check(path, enabled, replacement):\n    for unused in []:\n        os.chmod(path, 0o777)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":3,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"final_mode\":\"0o777\",\"final_others_write\":true,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"CONFIRMED\",\"summary\":\"the bounded permission check ends with an others-writable chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 560,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "CONFIRMED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "4c1714aba730d6b9a47add2d29ab6dd19a4adffcacf1e4b7e086d180e017cd6f",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [],
+        "error": null,
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    },
+    {
+      "name": "unknown_branch",
+      "source": "def check(path, enabled, replacement):\n    if enabled:\n        os.chmod(path, 0o777)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":3,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"final_mode\":\"0o777\",\"final_others_write\":true,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"CONFIRMED\",\"summary\":\"the bounded permission check ends with an others-writable chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 560,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "CONFIRMED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "29c1f2239addb52973b5a9c3f990da5faa8e7832e926c7fca06afbeab7c49e0e",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [],
+        "error": null,
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    },
+    {
+      "name": "module_shadow",
+      "source": "def check(path, enabled, replacement):\n    import pathlib as os\n    os.chmod(path, 0o777)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":3,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"final_mode\":\"0o777\",\"final_others_write\":true,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"CONFIRMED\",\"summary\":\"the bounded permission check ends with an others-writable chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 560,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "CONFIRMED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "a3b03825620eafe67c9dbf6e272b2e4f1e1877b973dc8864a89fae73eeb9b83f",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [],
+        "error": "AttributeError: module 'pathlib' has no attribute 'chmod'",
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    },
+    {
+      "name": "branch_shadow",
+      "source": "def check(path, enabled, replacement):\n    if True:\n        os = replacement\n    os.chmod(path, 0o750)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":4,\"mode\":488,\"mode_text\":\"0o750\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o750)\"}],\"final_mode\":\"0o750\",\"final_others_write\":false,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"REFUTED\",\"summary\":\"the bounded permission check uses a non-others-writable literal chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 563,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "REFUTED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "e12d64d9d7398ac5a0dac4e7eeadf8fa1bf8d0f25da90cd42680748bf0ac1f1b",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [],
+        "error": null,
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    },
+    {
+      "name": "safe_literal_control",
+      "source": "def check(path, enabled, replacement):\n    os.chmod(path, 0o750)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":2,\"mode\":488,\"mode_text\":\"0o750\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o750)\"}],\"final_mode\":\"0o750\",\"final_others_write\":false,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"REFUTED\",\"summary\":\"the bounded permission check uses a non-others-writable literal chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 563,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "REFUTED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "d73e0b516c8e605dccba6fb552cc0753d885080fe6b717d29578fbd2abcc0bdb",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [
+          [
+            "virtual-only-path",
+            "0o750"
+          ]
+        ],
+        "error": null,
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    },
+    {
+      "name": "unsafe_literal_control",
+      "source": "def check(path, enabled, replacement):\n    os.chmod(path, 0o777)\n",
+      "observation": {
+        "tool": "validate_permission_mode",
+        "status": "ok",
+        "content": "{\"calls\":[{\"line\":2,\"mode\":511,\"mode_text\":\"0o777\",\"target\":\"path\",\"text\":\"os.chmod(path, 0o777)\"}],\"final_mode\":\"0o777\",\"final_others_write\":true,\"issues\":[],\"scope_note\":\"This validates the literal chmod mode sequence in the candidate span only; it does not prove cross-process race exploitability or every runtime branch.\",\"status\":\"CONFIRMED\",\"summary\":\"the bounded permission check ends with an others-writable chmod mode\"}",
+        "evidence_ids": [
+          "permission_mode:perm.py::check@1-10"
+        ],
+        "metadata": {
+          "observation_token_count": 560,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": null,
+        "validation_status": "CONFIRMED",
+        "subject": {
+          "candidate_id": "audit",
+          "repository_id": "audit",
+          "entry_path": "perm.py::check@1-10",
+          "entry_line": 1,
+          "source_digest": "d325cd49171a80c8e6af6d0a7b56c317f9c42a9423baed92aa91b879371367ae",
+          "analysis_scope": null
+        }
+      },
+      "synthetic_execution": {
+        "enabled": false,
+        "calls_to_os_stub": [
+          [
+            "virtual-only-path",
+            "0o777"
+          ]
+        ],
+        "error": null,
+        "filesystem_operations": 0,
+        "note": "Only the audit-created function was executed; os is a recorder stub and replacement.chmod is a no-op."
+      }
+    }
+  ],
+  "command": [
+    {
+      "name": "safe_quote_control",
+      "backend": "def serve(value, suffix, replacement):\n    command, env = helper.get_cmd(value, suffix, replacement)\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+      "helper": "def get_cmd(value, suffix, replacement):\n    cmd = f\"worker {shlex.quote(value)}\"\n    return cmd, {}\n",
+      "observation": {
+        "tool": "inspect_command_construction",
+        "status": "ok",
+        "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"facts\":[{\"line\":2,\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\",\"target\":\"cmd\",\"text\":\"cmd = f\\\"worker {shlex.quote(value)}\\\"\"}],\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\"}],\"source_path\":\"backend.py::serve@1-4\",\"status\":\"UNRESOLVED\",\"summary\":\"all admitted command-construction helpers quote their parameter interpolation\",\"unresolved_edges\":[]}",
+        "evidence_ids": [
+          "command_construction:backend.py::serve@1-4",
+          "command_helper:helper.py::get_cmd@1-8"
+        ],
+        "metadata": {
+          "observation_token_count": 570,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": "scan/tool:1",
+        "validation_status": "UNRESOLVED",
+        "subject": null
+      },
+      "conclusion_outcomes": {
+        "SAFE": "accepted",
+        "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+      },
+      "synthetic_execution": {
+        "returned_command": "worker 'sample; MARKER'",
+        "note": "Only string construction executed; no shell or subprocess was run."
+      }
+    },
+    {
+      "name": "unsafe_control",
+      "backend": "def serve(value, suffix, replacement):\n    command, env = helper.get_cmd(value, suffix, replacement)\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+      "helper": "def get_cmd(value, suffix, replacement):\n    cmd = f\"worker {value}\"\n    return cmd, {}\n",
+      "observation": {
+        "tool": "inspect_command_construction",
+        "status": "ok",
+        "content": "{\"command_construction_status\":\"UNSANITIZED\",\"helpers\":[{\"facts\":[{\"line\":2,\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"UNSANITIZED\",\"target\":\"cmd\",\"text\":\"cmd = f\\\"worker {value}\\\"\"}],\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"UNSANITIZED\"}],\"source_path\":\"backend.py::serve@1-4\",\"status\":\"UNRESOLVED\",\"summary\":\"an admitted command-construction helper interpolates a parameter without shell quoting\",\"unresolved_edges\":[]}",
+        "evidence_ids": [
+          "command_construction:backend.py::serve@1-4",
+          "command_helper:helper.py::get_cmd@1-8"
+        ],
+        "metadata": {
+          "observation_token_count": 572,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": "scan/tool:1",
+        "validation_status": "UNRESOLVED",
+        "subject": null
+      },
+      "conclusion_outcomes": {
+        "SAFE": "SAFE/UNRESOLVED requires affirmative counter-evidence; empty searches, missing graph neighbors, static no-finding results, or source reads alone must be reported as ABSTAIN/UNRESOLVED.",
+        "VULNERABLE": "accepted"
+      },
+      "synthetic_execution": {
+        "returned_command": "worker sample; MARKER",
+        "note": "Only string construction executed; no shell or subprocess was run."
+      }
+    },
+    {
+      "name": "augmented_unsanitized_suffix",
+      "backend": "def serve(value, suffix, replacement):\n    command, env = helper.get_cmd(value, suffix, replacement)\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+      "helper": "def get_cmd(value, suffix, replacement):\n    cmd = f\"worker {shlex.quote(value)}\"\n    cmd += suffix\n    return cmd, {}\n",
+      "observation": {
+        "tool": "inspect_command_construction",
+        "status": "ok",
+        "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"facts\":[{\"line\":2,\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\",\"target\":\"cmd\",\"text\":\"cmd = f\\\"worker {shlex.quote(value)}\\\"\"}],\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\"}],\"source_path\":\"backend.py::serve@1-4\",\"status\":\"UNRESOLVED\",\"summary\":\"all admitted command-construction helpers quote their parameter interpolation\",\"unresolved_edges\":[]}",
+        "evidence_ids": [
+          "command_construction:backend.py::serve@1-4",
+          "command_helper:helper.py::get_cmd@1-8"
+        ],
+        "metadata": {
+          "observation_token_count": 570,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": "scan/tool:1",
+        "validation_status": "UNRESOLVED",
+        "subject": null
+      },
+      "conclusion_outcomes": {
+        "SAFE": "accepted",
+        "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+      },
+      "synthetic_execution": {
+        "returned_command": "worker 'sample; MARKER'; SUFFIX",
+        "note": "Only string construction executed; no shell or subprocess was run."
+      }
+    },
+    {
+      "name": "shadowed_quote",
+      "backend": "def serve(value, suffix, replacement):\n    command, env = helper.get_cmd(value, suffix, replacement)\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+      "helper": "def get_cmd(value, suffix, replacement):\n    shlex = replacement\n    cmd = f\"worker {shlex.quote(value)}\"\n    return cmd, {}\n",
+      "observation": {
+        "tool": "inspect_command_construction",
+        "status": "ok",
+        "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"facts\":[{\"line\":3,\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\",\"target\":\"cmd\",\"text\":\"cmd = f\\\"worker {shlex.quote(value)}\\\"\"}],\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\"}],\"source_path\":\"backend.py::serve@1-4\",\"status\":\"UNRESOLVED\",\"summary\":\"all admitted command-construction helpers quote their parameter interpolation\",\"unresolved_edges\":[]}",
+        "evidence_ids": [
+          "command_construction:backend.py::serve@1-4",
+          "command_helper:helper.py::get_cmd@1-8"
+        ],
+        "metadata": {
+          "observation_token_count": 570,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": "scan/tool:1",
+        "validation_status": "UNRESOLVED",
+        "subject": null
+      },
+      "conclusion_outcomes": {
+        "SAFE": "accepted",
+        "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+      },
+      "synthetic_execution": {
+        "returned_command": "worker sample; MARKER",
+        "note": "Only string construction executed; no shell or subprocess was run."
+      }
+    },
+    {
+      "name": "unused_sanitized_variable",
+      "backend": "def serve(value, suffix, replacement):\n    command, env = helper.get_cmd(value, suffix, replacement)\n    return subprocess.Popen([\"bash\", \"-c\", command])\n",
+      "helper": "def get_cmd(value, suffix, replacement):\n    cmd = f\"worker {shlex.quote(value)}\"\n    return f\"worker {value}\", {}\n",
+      "observation": {
+        "tool": "inspect_command_construction",
+        "status": "ok",
+        "content": "{\"command_construction_status\":\"SANITIZED\",\"helpers\":[{\"facts\":[{\"line\":2,\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\",\"target\":\"cmd\",\"text\":\"cmd = f\\\"worker {shlex.quote(value)}\\\"\"}],\"path\":\"helper.py::get_cmd@1-8\",\"status\":\"SANITIZED\"}],\"source_path\":\"backend.py::serve@1-4\",\"status\":\"UNRESOLVED\",\"summary\":\"all admitted command-construction helpers quote their parameter interpolation\",\"unresolved_edges\":[]}",
+        "evidence_ids": [
+          "command_construction:backend.py::serve@1-4",
+          "command_helper:helper.py::get_cmd@1-8"
+        ],
+        "metadata": {
+          "observation_token_count": 570,
+          "observation_truncated": false,
+          "model_payload_suppressed": false
+        },
+        "citation_id": "scan/tool:1",
+        "validation_status": "UNRESOLVED",
+        "subject": null
+      },
+      "conclusion_outcomes": {
+        "SAFE": "accepted",
+        "VULNERABLE": "Prediction contradicts observed command-construction counter-evidence; cite supporting command construction evidence, resolve the conflict, or abstain."
+      },
+      "synthetic_execution": {
+        "returned_command": "worker sample; MARKER",
+        "note": "Only string construction executed; no shell or subprocess was run."
+      }
+    }
+  ],
+  "acceptance": {
+    "original": [],
+    "with_duplicate_failed_row": []
+  }
+}

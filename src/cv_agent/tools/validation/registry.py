@@ -16,7 +16,7 @@ from cv_agent.tools.validation.commands import command_construction
 from cv_agent.tools.validation.comparison import compare_versions
 from cv_agent.tools.validation.dataflow import trace_dataflow
 from cv_agent.tools.validation.fixtures import fixture, loopback
-from cv_agent.tools.validation.models import CaseInput, CommandConstructionInput, CompareGuardInput, FindReferencesInput, FixtureCase, LoopbackCase, PathInput, TraceDataflowInput
+from cv_agent.tools.validation.models import CaseInput, CommandConstructionInput, CompareGuardInput, FindReferencesInput, FixtureCase, LoopbackCase, PathInput, SourceFlowInput, TraceDataflowInput
 from cv_agent.tools.validation.patterns import PRINCIPAL_PATTERN, RESOURCE_PATTERN, SANITIZER_RULES, SINK_RULES, SOURCE_RULES, pattern_tool, references, static_check
 from cv_agent.tools.validation.permissions import permission_mode
 from cv_agent.tools.validation.probes import concrete_eval_probe
@@ -96,7 +96,8 @@ def validation_tools(
             'trace_dataflow',
             (
                 'Trace possible tainted values from the candidate entry through admitted call-graph '
-                'paths. MAY_REACH is static evidence, always UNRESOLVED validation, not exploit '
+                'paths. Set sink_category to select the relevant flow when multiple sink types '
+                'share the candidate line. MAY_REACH is static evidence, always UNRESOLVED validation, not exploit '
                 'confirmation.'
             ),
             TraceDataflowInput,
@@ -110,7 +111,7 @@ def validation_tools(
                 'Does not execute repository code or prove application exploitability. Unsupported '
                 'syntax and no witness mean UNRESOLVED, not SAFE.'
             ),
-            TraceDataflowInput,
+            SourceFlowInput,
             partial(concrete_eval_probe, index),
             available=any((doc.language == 'python' and doc.adapter_tier == 'ast' for doc in index.documents.values())),
             validation_statuses=(ValidationStatus.CONFIRMED,),
@@ -137,7 +138,11 @@ def validation_tools(
             ),
             CommandConstructionInput,
             partial(command_construction, index),
-            available=any(('get_cmd' in doc.text for doc in index.documents.values())),
+            available=any((
+                'get_cmd' in doc.text
+                or any(keyword in doc.text for keyword in ('subprocess', 'os.system', 'os.popen'))
+                for doc in index.documents.values()
+            )),
         ),
         _json_tool(
             'find_sanitizers',

@@ -185,15 +185,20 @@ def test_planner_delegates_with_the_patched_workflow_harness(monkeypatch):
         assert arguments["evidence"] is state["evidence"]
 
 
-def test_planner_tool_definitions_and_subject_match_the_original_bytes():
+def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     pipeline, candidate, state = _pipeline()
+    # The reviewed interface adds category selection to may-flow tracing only.
+    definitions = {item["function"]["name"]: item["function"]
+                   for item in pipeline.tools.definitions(pipeline.tools.names)}
+    assert "sink_category" in definitions["trace_dataflow"]["parameters"]["properties"]
+    assert "sink_category" not in definitions["probe_python_eval"]["parameters"]["properties"]
     payloads = {
         "planner": pipeline._planner_prompt(state),
         "definitions": json.dumps(pipeline.tools.definitions(pipeline.tools.names), sort_keys=True, separators=(",", ":")),
         "subject": json.dumps(identity.candidate_subject(pipeline.index, candidate).model_dump(mode="json"), sort_keys=True, separators=(",", ":")),
     }
     assert {name: hashlib.sha256(value.encode()).hexdigest() for name, value in payloads.items()} == {
-        "planner": "8827da39c40da3ea5e6f71eecee5f3ec81f3df77136900908acd2da6a633d8fb",
-        "definitions": "0231a28281e3addfba98a5ca92758c8ce5607ae3ee59b8aa117154cd021870bc",
+        "planner": "5660244c3f8e6d8dbcd816bb114b2e26cf3c3884b48b0430a9cf9daf634b42f5",
+        "definitions": "73d68ee4fa1e0480b65f4954c9a4294f6a09183390185c9266fec5000827e487",
         "subject": "013deb2bd166c2fdbd050f2fcc56df31d3e17966a527243e702bec5625ad437f",
     }

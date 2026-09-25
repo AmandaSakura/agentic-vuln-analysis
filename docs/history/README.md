@@ -4,6 +4,13 @@
 
 这里保存历史记录，不作为现行运行指令。文中的旧代码路径、绝对文件链接和命令反映当时的仓库；迁移仅重定位 Markdown 相对链接，未改写实验结论或原始数据。实验产物仍在仓库原来的 `artifacts/` 路径。
 
+历史报告通过 Markdown 链接引用的 8 个证据文件已纳入 Git：
+`code_review_20260920_h0m169a9/`、`code_review_20260920_g6p44cr_/` 和
+`python_heldout_pair_result_review_2026-09-20/` 下的指定文件保持原始字节。
+其中的复现脚本保留当时的模块名和路径，属于历史快照；当前回归验证使用
+`tests/`。其他完整模型日志、实验结果及重复源码快照仍被忽略，需要另行归档，
+不会随 clone 下载，也不是普通离线 pytest 的前置数据。
+
 ## 重构记录
 
 - [Behavior-preserving project restructure](records/REFACTOR_2026-09-21.md) — `REFACTOR_2026-09-21.md`
@@ -65,6 +72,7 @@
 
 ## 历史执行计划
 
+- [候选证据修复与循环审查（2026-09-25）](plans/2026-09-25-review-fix-loop.md)
 - [独立 VulnGym 评估计划](plans/2026-09-23-independent-vulngym-evaluation.md)
 - [权限与命令语义修复计划](plans/2026-09-22-semantic-repairs.md)
 - [脚本入口清理计划](plans/2026-09-21-script-entrypoints.md)
