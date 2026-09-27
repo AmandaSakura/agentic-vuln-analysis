@@ -8,13 +8,21 @@ from cv_agent.domain.evidence import ValidationSubject
 def evidence_rows():
     expected = {(case, f'E{system}'): label for case, label in [('one', 'SAFE'), ('two', 'VULNERABLE')]
                 for system in range(1, 6)}
-    subjects = {case: ValidationSubject(candidate_id=case, repository_id='repo',
+    subjects = {case: ValidationSubject(candidate_id=case, repository_id='repo', property_id='test-property',
                 entry_path=case, entry_line=1, source_digest='digest') for case in ('one', 'two')}
     rows = []
     for (case, system), label in expected.items():
         status = 'REFUTED' if label == 'SAFE' else 'CONFIRMED'
+        fixture_proof = dict(
+            contract_id=f'contract_{case}',
+            property_id='test-property',
+            coverage='candidate',
+            method='bounded_execution',
+            supported_statuses=['CONFIRMED', 'REFUTED'],
+        )
         observation = dict(tool='run_fixture_test', status='ok', content='executed bounded fixture',
                            citation_id='tool:1', validation_status=status,
+                           fixture_proof=fixture_proof,
                            subject=subjects[case].model_dump(mode='json'))
         vote = dict(expert='scan', label=label, confidence=.9, validation_status=status,
                     evidence_ids=[f'local:{case}', 'tool:1'], rationale='bounded witness', runtime_mode='live',

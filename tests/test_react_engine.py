@@ -317,7 +317,7 @@ def test_unresolved_safe_cannot_rely_only_on_empty_repository_search():
     assert vote.trace[0].observation.metadata["result_count"] == 0
 
 
-def test_command_sanitized_observation_only_contradicts_when_referenced():
+def test_command_read_alone_cannot_bypass_observed_inspection():
     read_observation = ToolObservation(
         tool="read_span",
         status="ok",
@@ -362,7 +362,9 @@ def test_command_sanitized_observation_only_contradicts_when_referenced():
         rationale="The cited source evidence supports the command risk.",
     )
 
-    validate_conclusion(output, trace, frozenset())
+    # C4/C5: source text cannot replace a sufficient command proof.
+    with pytest.raises(ValueError, match="inspect_command_construction"):
+        validate_conclusion(output, trace, frozenset())
 
     with pytest.raises(ValueError, match="command-construction counter-evidence"):
         validate_conclusion(
@@ -471,6 +473,127 @@ def test_react_partial_usage_fields_remain_unknown_instead_of_zero():
     assert vote.usage.total_tokens is None
 
 
+def _abstain_reply() -> ModelReply:
+    return ModelReply(model_id="scripted-security-model", content=json.dumps({
+        "expert": "scan",
+        "label": "ABSTAIN",
+        "confidence": 0.0,
+        "validation_status": "UNRESOLVED",
+        "evidence_ids": [],
+        "rationale": "No material conclusion was established.",
+    }))
+
+
+def _abstaining_model(replies) -> ScriptedChatModel:
+    return ScriptedChatModel([*replies, _abstain_reply()])
+
+
+def _tool_calls(call_id: str, name: str, arguments: dict) -> ModelReply:
+    return ModelReply(
+        model_id="scripted-security-model",
+        tool_calls=(ModelToolCall(call_id=call_id, name=name, arguments=arguments),),
+    )
+
+
+def test_identical_tool_call_is_not_reexecuted_within_one_expert_run():
+    model = _abstaining_model([
+        _tool_calls("call-1", "read_span", {"path": ENTRY_PATH}),
+        _tool_calls("call-2", "read_span", {"path": ENTRY_PATH}),
+    ])
+    engine = ReActEngine(
+        model=model, tools=_registry(), scope=_scope(),
+        harness=FULL_SYSTEM_HARNESS.react_loop,
+    )
+
+    vote = run_expert(
+        engine, expert="scan", system_prompt="scan", task_prompt="inspect",
+        allowed_tools=("read_span",),
+    )
+
+    first, repeated = vote.trace[0].observation, vote.trace[1].observation
+    assert first.status == "ok"
+    assert repeated.status == "blocked"
+    # A refused repeat is not evidence, so it can never enter the citation record.
+    assert repeated.validation_status is None
+    assert first.citation_id in repeated.content
+    assert "does not repeat" in repeated.content
+    assert vote.label == "ABSTAIN"
+
+
+def test_a_spent_budget_is_explained_instead_of_returning_an_empty_observation():
+    # The planner in the held-out matrix spent its whole observation budget on one
+    # large span, then received empty payloads for every later call, re-asked the same
+    # path, and exhausted its step budget. A call that cannot be served must say so.
+    text = "def entry(value):\n" + "".join(f"    step_{index} = value\n" for index in range(4000))
+    index = RepositoryIndex([CodeDocument(
+        repository_id="repo", path=ENTRY_PATH, text=text, defines=("entry",),
+    )])
+    tools = ToolRegistry(
+        repository_tools(index),
+        max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes,
+    )
+    model = _abstaining_model([
+        _tool_calls("call-1", "read_span", {"path": ENTRY_PATH}),
+        _tool_calls("call-2", "search_symbols", {"query": "step_1"}),
+    ])
+    engine = ReActEngine(
+        model=model, tools=tools, scope=_scope(),
+        harness=FULL_SYSTEM_HARNESS.react_loop,
+    )
+
+    vote = run_expert(
+        engine, expert="scan", system_prompt="scan", task_prompt="inspect",
+        allowed_tools=("read_span", "search_symbols"),
+    )
+
+    spent = vote.trace[0].observation
+    refused = vote.trace[1].observation
+    assert spent.status == "ok" and spent.metadata["observation_truncated"]
+    assert refused.status == "blocked"
+    assert "budget is spent" in refused.content
+    assert tools.prompt_payload(refused)
+    assert vote.label == "ABSTAIN"
+
+
+def test_a_different_call_is_still_executed_in_the_same_task():
+    model = _abstaining_model([
+        _tool_calls("call-1", "read_span", {"path": ENTRY_PATH}),
+        _tool_calls("call-2", "search_symbols", {"query": "eval"}),
+    ])
+    engine = ReActEngine(
+        model=model, tools=_registry(), scope=_scope(),
+        harness=FULL_SYSTEM_HARNESS.react_loop,
+    )
+
+    vote = run_expert(
+        engine, expert="scan", system_prompt="scan", task_prompt="inspect",
+        allowed_tools=("read_span", "search_symbols"),
+    )
+
+    assert [step.observation.status for step in vote.trace] == ["ok", "ok"]
+
+
+def test_each_expert_task_executes_its_own_required_validator():
+    model = ScriptedChatModel([
+        _tool_calls("call-1", "read_span", {"path": ENTRY_PATH}), _abstain_reply(),
+        _tool_calls("call-2", "read_span", {"path": ENTRY_PATH}), _abstain_reply(),
+    ])
+    tools = _registry()
+    # The pipeline builds one scope per expert task, so a later task observes for
+    # itself instead of inheriting the earlier task's observation.
+    runs = [
+        run_expert(
+            ReActEngine(model=model, tools=tools, scope=_scope(),
+                        harness=FULL_SYSTEM_HARNESS.react_loop),
+            expert="scan", system_prompt="scan", task_prompt=task,
+            allowed_tools=("read_span",),
+        )
+        for task in ("one", "two")
+    ]
+
+    assert [run.trace[0].observation.status for run in runs] == ["ok", "ok"]
+
+
 def test_react_planner_emits_candidate_specific_dependency_order():
     plan = {
         "candidate_id": "candidate-1",
@@ -577,3 +700,35 @@ def test_overlong_rationale_feedback_gives_exact_length_and_short_target():
     assert vote.rationale == good['rationale']
     assert vote.label == 'VULNERABLE'
     assert vote.model_calls == 3
+
+
+@pytest.mark.parametrize('max_steps', [2, 4])
+@pytest.mark.parametrize('blocked', [False, True])
+@pytest.mark.parametrize('label', ['SAFE', 'VULNERABLE', 'ABSTAIN'])
+def test_evidence_floor_survives_finalization_and_accounts_every_request(max_steps, blocked, label):
+    from cv_agent.domain.evidence import ValidationSubject
+    subject = ValidationSubject(candidate_id='c', repository_id='repo', entry_path=ENTRY_PATH,
+                                source_digest='context-only', property_id='dynamic-evaluation')
+    scope = ToolExecutionScope(candidate_path=ENTRY_PATH,
+        admitted_paths=frozenset() if blocked else frozenset({ENTRY_PATH}),
+        subject=subject, initial_evidence_ids=frozenset({'context'}), max_observation_tokens=10000)
+    usage = ModelUsage(input_tokens=10, output_tokens=2, total_tokens=12)
+    proposal = dict(expert='scan', label=label, confidence=.9, validation_status='UNRESOLVED',
+                    evidence_ids=['context'], rationale='The initial source snippet is only context.')
+    reply = ModelReply(model_id='offline', content=json.dumps(proposal), usage=usage)
+    model = ScriptedChatModel([_tool_reply().model_copy(update={'usage': usage})] + [reply] * (max_steps - 1))
+    engine = ReActEngine(model=model, tools=_registry(), scope=scope,
+                        harness=FULL_SYSTEM_HARNESS.react_loop.model_copy(update={'max_steps': max_steps}))
+    result = run_expert(engine, expert='scan', system_prompt='Inspect', task_prompt='Review', allowed_tools=('read_span',))
+    assert result.label == 'ABSTAIN'
+    expected_calls = 2 if label == 'ABSTAIN' else max_steps
+    assert result.model_calls == len(model.requests) == expected_calls
+    assert result.usage.total_tokens == 12 * expected_calls
+    assert result.tool_calls == 1
+    assert result.trace[0].observation.status == ('blocked' if blocked else 'ok')
+    assert ('Runtime rejected proposed' in result.rationale) == (label != 'ABSTAIN')
+    if label != 'ABSTAIN':
+        assert not model.requests[-1][1]
+        if max_steps > 2:
+            assert any(message.role == 'assistant' and f'"{label}"' in (message.content or '')
+                       for message in model.requests[-1][0])

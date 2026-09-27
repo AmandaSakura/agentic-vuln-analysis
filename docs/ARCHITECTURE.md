@@ -2,6 +2,8 @@
 
 当前主线是 E1–E5 候选审查。先读 `domain` 的数据模型，再顺着检索、规划、工具、专家、投票读下去；实验组织和历史基线有独立目录。
 
+完整数据流、各系统差异、Jev active 路径和逐环节问题见 [当前项目流程与诊断](reference/PROJECT_FLOW_AND_DIAGNOSIS.md)。最近 30-cell 使用预先指定的候选和注册 fixture，不经过自动漏洞发现；fixture 的声明性质与实际证明范围需要单独审查。
+
 ```mermaid
 flowchart TD
     A[源码快照与 Candidate] --> B[code_adapters / retrieval]
@@ -63,6 +65,6 @@ flowchart TD
 
 这些检查保留已观察行为，不能证明静态分析覆盖了 Python 的全部语义。已经发现的权限和 shell 分析问题仍需单独添加修复测试；详见 [当前状态](CURRENT_STATUS.md)。
 
-操作入口见 [scripts 使用说明](../scripts/README.md)。四个 shell 命令保留原用途，47 个 Python 转发文件已删除；实验、准备和诊断直接调用所属包模块。两份目标解释器探针位于 `scripts/probes/`，由对应 reproduction runner 按文件路径启动，不依赖安装 cv_agent。
+操作入口见 [scripts 使用说明](../scripts/README.md)。47 个 Python 转发文件已删除；实验、准备和诊断直接调用所属包模块。两份目标解释器探针位于 `scripts/probes/`，由对应 reproduction runner 按文件路径启动，不依赖安装 cv_agent。
 
 配置入口见 [配置导航](../configs/README.md)。`evaluation/datasets/composition.py` 为当前门禁、矩阵与 v4 审计加载共用数据集及明确指定的 profile，随后进入原有类型校验和生命周期；其他专项协议保持独立。

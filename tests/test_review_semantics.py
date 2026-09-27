@@ -16,6 +16,7 @@ from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperi
 from cv_agent.agents.react import validate_conclusion
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.domain.types import CodeDocument
+from cv_agent.tools.analysis.commands import analyze_command, command_status
 from test_python_heldout_pair_config import config_dict
 from test_validation_tools import _command_documents, _invoke, _registry
 
@@ -52,8 +53,8 @@ def inspect_command(helper_text=SAFE_HELPER, caller_text=None):
     ("while True:\n        pass\n    os.chmod(path, 0o777)", "UNRESOLVED"),
     ("True and os.chmod(path, 0o777)", "CONFIRMED"),
     ("import os\n    os.chmod(path, 0o750)", "REFUTED"),
-    ("if replacement:\n        os.chmod(path, 0o750)", "REFUTED"),
-    ("if replacement:\n        os.chmod(path, 0o777)", "CONFIRMED"),
+    ("if replacement:\n        os.chmod(path, 0o750)", "UNRESOLVED"),
+    ("if replacement:\n        os.chmod(path, 0o777)", "UNRESOLVED"),
     ("os.chmod = replacement\n    os.chmod(path, 0o750)", "UNRESOLVED"),
     ("import os\n    if path:\n        if replacement:\n            os = replacement\n    os.chmod(path, 0o750)", "UNRESOLVED"),
     ("replacement()\n    os.chmod(path, 0o777)", "UNRESOLVED"),
@@ -66,6 +67,7 @@ def test_review_permission_execution_and_binding(body, expected):
     document = CodeDocument(repository_id="review", path="permission.py::check@1-20", text=source)
     index = RepositoryIndex([document])
     subject = ValidationSubject(candidate_id="review", repository_id="review",
+                                property_id="chmod-mode-others-write",
                                 entry_path=document.path, source_digest=repository_source_digest(index))
     result = _invoke(_registry(index), "validate_permission_mode", {"path": document.path},
                      ToolExecutionScope(admitted_paths=frozenset({document.path}),
@@ -75,19 +77,21 @@ def test_review_permission_execution_and_binding(body, expected):
     assert (result.subject is not None) == (expected != "UNRESOLVED")
 
 
-@pytest.mark.parametrize("mode, expected", [("0o777", "CONFIRMED"), ("0o750", "REFUTED")])
-def test_review_permission_validator_handles_known_cache_decorator(mode, expected):
+# C3/T04: the old cache-name whitelist was not an identity/effects proof.
+@pytest.mark.parametrize("mode", ["0o777", "0o750"])
+def test_review_permission_validator_rejects_unverified_cache_decorator(mode):
     source = f"@cache_return_value_per_process\ndef check(path):\n    os.chmod(path, {mode})\n"
     document = CodeDocument(repository_id="review", path="permission.py::check@1-3", text=source)
     index = RepositoryIndex([document])
     subject = ValidationSubject(candidate_id="review", repository_id="review",
+                                property_id="chmod-mode-others-write",
                                 entry_path=document.path, source_digest=repository_source_digest(index))
     result = _invoke(_registry(index), "validate_permission_mode", {"path": document.path},
                      ToolExecutionScope(admitted_paths=frozenset({document.path}),
                                         candidate_path=document.path, subject=subject,
                                         max_observation_tokens=20000))
-    assert result.validation_status.value == expected
-    assert result.subject is not None
+    assert result.validation_status.value == "UNRESOLVED"
+    assert result.subject is None
 
 
 def test_review_permission_validator_keeps_unknown_decorator_unresolved():
@@ -151,7 +155,7 @@ def test_review_command_binds_to_actual_sink_argument(body, expected):
 
 
 @pytest.mark.parametrize("role", ["counter_observation_ids", "unresolved_observation_ids"])
-def test_review_disclosed_static_counter_evidence_does_not_veto_supported_prediction(role):
+def test_review_disclosed_command_evidence_requires_sufficient_support(role):
     observations = [
         ToolObservation(tool="read_span", status="ok", content="command += suffix", citation_id="source"),
         ToolObservation(tool="inspect_command_construction", status="ok", citation_id="counter",
@@ -166,7 +170,19 @@ def test_review_disclosed_static_counter_evidence_does_not_veto_supported_predic
         rationale="The quoted helper output is subsequently extended with raw suffix.",
         **{role: ("counter",)},
     )
-    validate_conclusion(output, trace, frozenset())
+    # C4/C5: a rationale about a raw suffix is not a caller-bound proof.
+    with pytest.raises(ValueError, match="inspect_command_construction"):
+        validate_conclusion(output, trace, frozenset())
+
+    # A cited complete construction proof remains sufficient in this local fixture.
+    dangerous = observations[1].model_copy(update={
+        "content": json.dumps({"command_construction_status": "UNSANITIZED"}),
+    })
+    supported = output.model_copy(update={
+        role: (), "supporting_observation_ids": ("counter",),
+        "evidence_ids": ("counter",),
+    })
+    validate_conclusion(supported, [trace[1].model_copy(update={"observation": dangerous})], frozenset())
 
     # Merely listing that observation as counter-evidence cannot provide
     # affirmative support for a SAFE prediction either.
@@ -213,7 +229,7 @@ def test_review_command_helper_uses_actual_argument_binding(argument, expected):
     assert inspect_command(helper, caller)["command_construction_status"] == expected
 
 
-def test_review_command_ignores_unknown_non_command_assignments():
+def test_review_command_retains_unknown_assignment_effects():
     helper = (
         'def get_cmd(model_uri):\n'
         '    cmd = f"worker {shlex.quote(model_uri)}"\n'
@@ -226,7 +242,144 @@ def test_review_command_ignores_unknown_non_command_assignments():
         '    command, env = mlserver.get_cmd(model_uri)\n'
         '    return subprocess.Popen(["bash", "-c", command])\n'
     )
+    # C3: unused results do not prove calls side-effect-free.
+    assert inspect_command(helper, caller)["command_construction_status"] == "AMBIGUOUS"
+    pure_helper = helper.replace("os.environ.copy()", "{}")
+    pure_caller = caller.replace("download(model_uri)", "model_uri")
+    assert inspect_command(pure_helper, pure_caller)["command_construction_status"] == "SANITIZED"
+
+
+def test_review_command_env_dictionary_does_not_hide_command_return():
+    helper = (
+        'def get_cmd(model_uri, port=None, model_name=None):\n'
+        '    cmd = f"worker {shlex.quote(model_uri)}"\n'
+        '    cmd_env = os.environ.copy()\n'
+        '    if port:\n'
+        '        cmd_env["PORT"] = str(port)\n'
+        '    cmd_env["NAME"] = cmd_env.get("NAME") or model_name or "default"\n'
+        '    return cmd, cmd_env\n'
+    )
+    caller = (
+        'def serve(model_uri):\n'
+        '    command, env = mlserver.get_cmd(model_uri, port=None, model_name=None)\n'
+        '    return subprocess.Popen(["bash", "-c", command])\n'
+    )
     assert inspect_command(helper, caller)["command_construction_status"] == "SANITIZED"
+
+
+def test_review_command_declared_condition_assumptions_are_explicit_scope():
+    document = CodeDocument(
+        repository_id="repo",
+        path="entry.py::serve@1-7",
+        text=(
+            "def serve(value):\n"
+            "    if is_windows():\n"
+            "        command = value\n"
+            "    else:\n"
+            "        command = 'echo ' + shlex.quote(value)\n"
+            "    if not is_windows():\n"
+            "        return subprocess.Popen(['bash', '-c', command])\n"
+        ),
+        defines=("serve",),
+        calls=("is_windows", "subprocess.Popen"),
+    )
+    unresolved = analyze_command(document, input_parameters=("value",))
+    assert command_status(unresolved) == "AMBIGUOUS"
+    scoped = analyze_command(
+        document,
+        input_parameters=("value",),
+        entry_condition_assumptions={"is_windows()": False},
+    )
+    assert scoped.issues == []
+    assert command_status(scoped) == "SANITIZED"
+
+
+def test_review_command_declared_value_assumptions_are_explicit_scope():
+    document = CodeDocument(
+        repository_id="repo",
+        path="entry.py::serve@1-5",
+        text=(
+            "def serve(value, port):\n"
+            "    command = 'echo ' + shlex.quote(value)\n"
+            "    if port:\n"
+            "        command = value\n"
+            "    return subprocess.Popen(['bash', '-c', command])\n"
+        ),
+        defines=("serve",),
+        calls=("subprocess.Popen",),
+    )
+    unresolved = analyze_command(document, input_parameters=("value",))
+    assert command_status(unresolved) == "AMBIGUOUS"
+    scoped = analyze_command(
+        document,
+        input_parameters=("value",),
+        entry_value_assumptions={"port": None},
+    )
+    assert scoped.issues == []
+    assert command_status(scoped) == "SANITIZED"
+
+
+def test_review_command_logging_summary_requires_logging_identity():
+    logger_doc = CodeDocument(
+        repository_id="repo",
+        path="entry.py::serve@1-4",
+        text=(
+            "def serve(value):\n"
+            "    command = 'echo ' + shlex.quote(value)\n"
+            "    _logger.info('running %s', command)\n"
+            "    return subprocess.Popen(['bash', '-c', command])\n"
+        ),
+        defines=("serve",),
+        calls=("subprocess.Popen",),
+        import_aliases={"logging": "logging"},
+    )
+    assert command_status(analyze_command(logger_doc, input_parameters=("value",))) == "SANITIZED"
+    unknown_logger = logger_doc.model_copy(update={"import_aliases": {}})
+    assert command_status(analyze_command(unknown_logger, input_parameters=("value",))) == "AMBIGUOUS"
+
+
+@pytest.mark.parametrize("quoted", [False, True])
+def test_review_command_mlflow_repository_dispatch_requires_source(quoted):
+    argument = "shlex.quote(local_path)" if quoted else "local_path"
+    caller = CodeDocument(
+        repository_id="repo",
+        path="mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-5",
+        text=(
+            "def serve(model_uri):\n"
+            "    local_path = _download_artifact_from_uri(model_uri)\n"
+            f"    command = 'mlserver start ' + {argument}\n"
+            "    return subprocess.Popen(['bash', '-c', command])\n"
+        ),
+        defines=("PyFuncBackend.serve",),
+        calls=("_download_artifact_from_uri", "subprocess.Popen"),
+    )
+    download = CodeDocument(
+        repository_id="repo",
+        path="mlflow/tracking/artifact_utils.py::_download_artifact_from_uri@100-135",
+        text=(
+            "def _download_artifact_from_uri(artifact_uri):\n"
+            "    repo = get_artifact_repository(artifact_uri=artifact_uri)\n"
+            "    return repo.download_artifacts(artifact_path=artifact_uri)\n"
+        ),
+        defines=("_download_artifact_from_uri",),
+        calls=("get_artifact_repository", "download_artifacts"),
+    )
+    unresolved = analyze_command(caller, (download,), input_parameters=("model_uri",))
+    assert command_status(unresolved) == "AMBIGUOUS"
+    scoped = analyze_command(
+        caller,
+        (download,),
+        input_parameters=("model_uri",),
+        entry_condition_assumptions={
+            "is_windows()": False,
+            "os.path.exists(artifact_uri)": True,
+        },
+    )
+    # C3/A3: exists/POSIX assumptions do not identify the dispatched
+    # repository or prove its return relation and side effects. The separate
+    # transparent-helper controls cover genuinely closed positive paths.
+    assert command_status(scoped) == "AMBIGUOUS"
+    assert any(call["call"] == "get_artifact_repository" for call in scoped.unresolved_calls)
 
 
 def test_review_command_unknown_assignment_flowing_to_shell_stays_ambiguous():
@@ -245,7 +398,8 @@ def test_review_command_dynamic_get_cmd_requires_all_possible_helpers(admit_othe
         path="backend.py::serve@1-8",
         text=(
             "def serve(model_uri, enabled):\n"
-            "    local_path = download(model_uri)\n"
+            # Isolate helper dispatch from unknown download effects (C3).
+            "    local_path = model_uri\n"
             "    server_implementation = mlserver if enabled else scoring_server\n"
             "    command, env = server_implementation.get_cmd(local_path)\n"
             "    command = \"exec \" + command\n"
@@ -287,7 +441,8 @@ def test_command_diagnostic_names_unknown_transformation_before_sink():
         '    return subprocess.Popen(["bash", "-c", command])\n',
     )
     assert payload["command_construction_status"] == "AMBIGUOUS"
-    assert {"call": "download", "line": 2} in payload["unresolved_calls"]
+    assert {"call": "download", "line": 2,
+            "source_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@1-20"} in payload["unresolved_calls"]
 
 
 def test_review_explicit_counter_role_cannot_supply_typed_validation():
@@ -316,7 +471,12 @@ def test_review_counter_citations_do_not_create_support_requirements(tool, paylo
     output = AgentExpertConclusion(expert="scan", label="VULNERABLE", confidence=0.8,
                                    validation_status="UNRESOLVED", evidence_ids=("source",),
                                    counter_observation_ids=("counter",), rationale="Supported by source; static counter-signal is inconclusive.")
-    validate_conclusion(output, [step], frozenset({"source"}))
+    # C5: command proof requirements do not depend on citation role.
+    if payload.get("findings"):
+        with pytest.raises(ValueError, match="inspect_command_construction"):
+            validate_conclusion(output, [step], frozenset({"source"}))
+    else:
+        validate_conclusion(output, [step], frozenset({"source"}))
 
 
 def test_review_async_helper_call_is_not_a_synchronous_command_return():
@@ -332,3 +492,44 @@ def test_review_duplicate_rows_do_not_inflate_summary_denominator(tmp_path):
     assert summary["systems"]["E1"]["total"] == 2
     assert summary["systems"]["E1"]["failed"] == 1
     assert summary["duplicate_cells"] == [{"case_id": "hp001_a", "system": "E1", "rows": 2}]
+
+
+@pytest.mark.parametrize('decorator', [
+    'cache_return_value_per_process', 'cache_return_value_per_process()',
+    'functools.cache', 'functools.cache()', 'functools.lru_cache',
+    'functools.lru_cache()', 'lru_cache', 'lru_cache()',
+])
+@pytest.mark.parametrize('mode', ['0o750', '0o777'])
+def test_permission_decorator_spelling_is_not_a_verified_summary(decorator, mode):
+    source = f'@{decorator}\ndef check(path):\n    os.chmod(path, {mode})\n'
+    document = CodeDocument(repository_id='review', path='permission.py', text=source)
+    index = RepositoryIndex([document])
+    subject = ValidationSubject(candidate_id='review', repository_id='review',
+        property_id='chmod-mode-others-write', entry_path=document.path,
+        source_digest=repository_source_digest(index))
+    result = _invoke(_registry(index), 'validate_permission_mode', {'path': document.path},
+        ToolExecutionScope(admitted_paths=frozenset({document.path}), candidate_path=document.path,
+                           subject=subject, max_observation_tokens=20000))
+    assert result.validation_status.value == 'UNRESOLVED'
+    assert result.subject is None
+    step = ReActStep(step=1, model_id='offline', observation=result,
+        tool_call=ModelToolCall(call_id='check', name=result.tool, arguments={'path': document.path}))
+    for label in ('SAFE', 'VULNERABLE'):
+        proposal = AgentExpertConclusion(expert='scan', label=label, confidence=.9,
+            validation_status='UNRESOLVED', evidence_ids=result.evidence_ids, rationale='Unverified decorator.')
+        with pytest.raises(ValueError, match='validate_permission_mode'):
+            validate_conclusion(proposal, [step], frozenset(), subject=subject)
+
+
+def test_real_cache_decorator_can_execute_argument_hash_effects_outside_body():
+    import functools
+    effects = []
+    class Path:
+        def __hash__(self):
+            effects.append('path hash side effect')
+            return 1
+    @functools.cache
+    def operation(path):
+        effects.append('function body')
+    operation(Path())
+    assert effects == ['path hash side effect', 'function body']

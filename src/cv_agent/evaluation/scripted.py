@@ -127,6 +127,9 @@ def _case_models(
                     ["scan/tool:1"],
                     f"scan scripted diagnostic: {case.rationale}",
                 ),
+                # Retain the weak proposal above; cooperate only after rejection.
+                _conclusion("scan", "ABSTAIN", "UNRESOLVED", ["scan/tool:1"],
+                            "The static observation does not prove the declared property."),
             ]
         )
     }
@@ -156,6 +159,9 @@ def _case_models(
                             ["taint/tool:1"],
                             f"taint scripted diagnostic: {case.rationale}",
                         ),
+                        # Retain the weak proposal above; cooperate only after rejection.
+                        _conclusion("taint", "ABSTAIN", "UNRESOLVED", ["taint/tool:1"],
+                                    "The static observation does not prove the declared property."),
                     ]
                 ),
                 "authz": ScriptedChatModel(
@@ -201,7 +207,7 @@ def _fixtures() -> tuple[ScriptedAgenticCase, ...]:
             case_id=positive_candidate.case_id,
             label=True,
             index=positive_index,
-            candidate=positive_candidate,
+            candidate=positive_candidate.model_copy(update={"property_id": "command-execution"}),
             scan_label="VULNERABLE",
             taint_label="VULNERABLE",
             authz_label="ABSTAIN",
@@ -214,7 +220,7 @@ def _fixtures() -> tuple[ScriptedAgenticCase, ...]:
             case_id=negative_candidate.case_id,
             label=False,
             index=negative_index,
-            candidate=negative_candidate,
+            candidate=negative_candidate.model_copy(update={"property_id": "authorization-boundary"}),
             scan_label="VULNERABLE",
             taint_label="ABSTAIN",
             authz_label="ABSTAIN",
@@ -310,8 +316,8 @@ def run_agentic_scripted_eval() -> dict[str, object]:
         "claim_eligible": False,
         "dataset": "controlled-agentic-two-case-diagnostic",
         "purpose": (
-            "Validate LangGraph/ReAct/quorum wiring and directional false-positive "
-            "behavior only; not a reported benchmark result."
+            "Validate that weak static proposals remain unproved across single and multi-expert "
+            "workflows; not a reported benchmark result."
         ),
         "cases": [
             {

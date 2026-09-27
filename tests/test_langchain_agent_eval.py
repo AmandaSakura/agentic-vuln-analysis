@@ -75,3 +75,14 @@ def test_real_pair_entry_is_located():
             pytest.skip('Optional real checkout missing')
         index, candidate = mod.build_input(checkout, case)
         assert 'PromptTemplate.from_template' in index.documents[candidate.path].defines
+
+
+@pytest.mark.parametrize('property_id', [None, 'command-execution'])
+def test_template_preflight_evidence_cannot_prove_other_properties(tmp_path, property_id):
+    mod = importlib.import_module('cv_agent.evaluation.runners.run_langchain_pair_eval')
+    (tmp_path / 'entry.py').write_text('def entry(value):\n    return value\n')
+    case = {'case_id': 'neutral', 'file_path': 'entry.py', 'entry_symbol': 'entry'}
+    index, candidate = mod.build_input(tmp_path, case)
+    with pytest.raises(ValueError, match='property'):
+        mod.evidence_tool(tmp_path, case, index, candidate.model_copy(update={'property_id': property_id}),
+                          {'benign': {'status': 'BENIGN_OK'}}, 'CONFIRMED')

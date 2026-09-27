@@ -82,7 +82,7 @@ def build_heldout_summary(
         })
     systems = [system.value for system in config.systems]
     summary = {
-        "claim_eligible": False,
+        "claim_eligible": config.claim_eligible,
         "dataset_role": config.dataset_role,
         "unexpected_rows": [row for row in all_rows if not row["planned_cell"]],
         "duplicate_cells": duplicates,

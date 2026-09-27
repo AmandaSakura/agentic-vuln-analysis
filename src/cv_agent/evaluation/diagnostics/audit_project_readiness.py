@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, select_owasp_entry
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties, select_owasp_entry
 from cv_agent.evaluation.metrics import provider_usage
 from cv_agent.evaluation.protocols.development import require_verification_capability
 from cv_agent.runtime.admission import source_fingerprint
@@ -16,7 +16,7 @@ def main():
     root = PROJECT_ROOT
     config = json.loads((root / 'configs/diagnostics/project_readiness_review.json').read_text())
     pilot = json.loads((root / config['pilot_config']).read_text())
-    inputs = load_owasp_agentic_inputs(root / 'data/raw', case_ids=pilot['case_ids'])
+    inputs = load_owasp_agentic_inputs(root / 'data/raw', case_ids=pilot['case_ids'], property_ids=development_owasp_properties(root, pilot['case_ids']))
     candidates = select_owasp_entry(inputs, pilot['entry_method'])
     tools = full_agent_tools(inputs.index)
     readiness_error = None

@@ -76,8 +76,8 @@ def test_canonical_quorum_module_preserves_full_and_fast_behavior(tmp_path):
     assert payload['dataset_role'] == 'development'
     assert {(row['case'], row['system']): (row['verdict']['label'], row['verdict']['path'])
             for row in payload['results']} == {
-        ('C01', 'E4'): ('VULNERABLE', 'slow'),
-        ('C01', 'E5'): ('VULNERABLE', 'fast'),
+        ('C01', 'E4'): ('ABSTAIN', 'slow'),
+        ('C01', 'E5'): ('ABSTAIN', 'slow'),
         ('C02', 'E4'): ('ABSTAIN', 'slow'),
         ('C02', 'E5'): ('ABSTAIN', 'slow'),
     }

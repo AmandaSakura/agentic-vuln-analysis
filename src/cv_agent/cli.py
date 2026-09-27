@@ -7,6 +7,7 @@ from pathlib import Path
 from cv_agent.evaluation.datasets.owasp_live import run_agentic_owasp_live
 from cv_agent.evaluation.smoke import run_agentic_smoke
 from cv_agent.evaluation.scripted import run_agentic_scripted_eval
+from cv_agent.evaluation.protocols.readiness import assess_run_readiness
 from cv_agent.baselines.synthetic_experiment import run_synthetic_experiment
 from cv_agent.harness import AgentSystemVersion, command_policy, describe_project_harness
 from cv_agent.code_adapters.java import profile_owasp_java_ast
@@ -21,6 +22,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cv-agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("harness-check", help="validate and print the project experiment contract")
+    readiness = subparsers.add_parser("readiness", help="audit a completed run artifact for operational and claim readiness")
+    readiness.add_argument("run_dir", type=Path, help="completed experiment run directory")
+    readiness.add_argument("--require-operational", action="store_true", help="exit nonzero unless the run is operationally ready")
+    readiness.add_argument("--require-claim", action="store_true", help="exit nonzero unless the run is ready to support a final claim")
     subparsers.add_parser("synthetic", help="run the deterministic two-case wiring experiment")
     subparsers.add_parser(
         "agentic-smoke",
@@ -48,6 +53,8 @@ def build_parser() -> argparse.ArgumentParser:
         choices=[system.value for system in AgentSystemVersion],
         help="explicit agentic system id to run; repeat for multiple systems",
     )
+    agentic_live.add_argument("--property-id", required=True,
+                              help="explicit proof obligation shared by the selected cases")
     profile = subparsers.add_parser("profile", help="report aggregate public-dataset metadata without row labels")
     profile.add_argument("--raw", type=Path, default=Path("data/raw"))
     baseline = subparsers.add_parser("owasp-baseline", help="run the source-only OWASP static sink baseline")
@@ -80,6 +87,14 @@ def main() -> int:
     command_policy(arguments.command)
     if arguments.command == "harness-check":
         return _emit(arguments.command, describe_project_harness())
+    if arguments.command == "readiness":
+        assessment = assess_run_readiness(arguments.run_dir)
+        _emit(arguments.command, assessment)
+        if arguments.require_claim and not assessment["claim_ready"]:
+            return 2
+        if arguments.require_operational and not assessment["operational_ready"]:
+            return 2
+        return 0
     if arguments.command == "synthetic":
         return _emit(arguments.command, run_synthetic_experiment())
     if arguments.command == "agentic-smoke":
@@ -93,6 +108,7 @@ def main() -> int:
                 arguments.raw,
                 case_ids=arguments.case_id,
                 system_ids=arguments.system,
+                property_id=arguments.property_id,
             ),
         )
     if arguments.command == "profile":

@@ -24,7 +24,7 @@ def test_loop_command_evidence_requires_complete_interpretation(supported, taint
     for _ in [1, 2]:
         os.system(cmd)
 {tail}
-''', "command-execution")
+''', "command-execution", inputs=('value',))
     inspection = json.loads(trace[-1].observation.content)
     if not supported:
         assert inspection["command_construction_status"] == "AMBIGUOUS"
@@ -53,12 +53,25 @@ def test_non_shell_candidate_gets_its_own_flow(path, command_first, tainted):
     trace, subject = observations("def entry(request):\n" + "\n".join(statements) + "\n", "command-execution", path)
     data = json.loads(trace[1].observation.content)
     assert data["flow_status"] == "MAY_REACH"
-    assert json.loads(trace[-1].observation.content)["command_construction_status"] == "NOT_ESTABLISHED"
+    # C3: eval executes arbitrary code, so this is no longer a pure neighboring
+    # expression. Retain the taint facts, but do not infer a complete command path.
+    assert json.loads(trace[-1].observation.content)["command_construction_status"] == "AMBIGUOUS"
     if tainted:
         line = 2 if command_first else 3
         assert any(sink["category"] == "command-execution" and sink["line"] == line and sink["tainted"]
                    for step in data["trace"] if step["path"] == path for sink in step["sinks"])
-        vote(trace, subject, "VULNERABLE")
+        # C3: request.args is an unmodeled getter even before the neighboring
+        # eval. Its static flow does not prove a complete command path.
+        with pytest.raises(ValueError, match="inspect_command_construction"):
+            vote(trace, subject, "VULNERABLE")
+        # Explicit primitive input keeps the independent-flow positive control
+        # for both path representations and ordering relative to opaque eval.
+        direct, direct_subject = observations(
+            "def entry(value):\n    subprocess.run(['python', '-c', value])\n"
+            + ("    eval(value)\n" if command_first else ""),
+            "command-execution", path, inputs=("value",),
+        )
+        vote(direct, direct_subject, "VULNERABLE")
     else:
         with pytest.raises(ValueError, match="inspect_command_construction"):
             vote(trace, subject, "VULNERABLE")
@@ -91,7 +104,9 @@ def test_explicit_flow_category_distinguishes_candidates_on_one_line(category, t
     if category == "command-execution" and tainted:
         assert data["flow_status"] == "MAY_REACH"
         assert all(sink["category"] == category for entry in data["trace"] for sink in entry["sinks"])
-        vote(trace, subject, "VULNERABLE")
+        # C3: the preceding eval is an execution-effect gap even on one line.
+        with pytest.raises(ValueError):
+            vote(trace, subject, "VULNERABLE")
     else:
         assert data["flow_status"] == ("MAY_REACH" if category == "code-execution" else "NOT_ESTABLISHED")
         with pytest.raises(ValueError):

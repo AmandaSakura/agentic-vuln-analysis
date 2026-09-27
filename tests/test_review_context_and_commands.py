@@ -49,15 +49,22 @@ def test_non_shell_code_execution_keeps_matching_taint_evidence():
     trace, subject = observations('''def entry(request):
     subprocess.run(['python', '-c', request.args['x']])
 ''', 'command-execution')
-    assert json.loads(trace[-1].observation.content)['command_construction_status'] == 'NOT_ESTABLISHED'
-    vote(trace, subject, 'VULNERABLE')
+    assert json.loads(trace[-1].observation.content)['command_construction_status'] == 'AMBIGUOUS'
+    with pytest.raises(ValueError):
+        vote(trace, subject, 'VULNERABLE')
+    # C1/C3: candidate-bound flow remains usable for a pure input source;
+    # a request getter without a summary cannot supply the same premise.
+    pure, pure_subject = observations("def entry(value):\n    subprocess.run(['python', '-c', value])\n",
+                                      'command-execution', inputs=('value',))
+    assert json.loads(pure[-1].observation.content)['command_construction_status'] == 'NOT_ESTABLISHED'
+    vote(pure, pure_subject, 'VULNERABLE')
 
 
 def test_command_safety_uses_candidate_sink_not_aggregate():
     trace, subject = observations('''def entry(value):
     os.system('echo ' + shlex.quote(value))
     os.system(value)
-''', 'command-execution')
+''', 'command-execution', inputs=('value',))
     assert json.loads(trace[-1].observation.content)['command_construction_status'] == 'UNSANITIZED'
     vote(trace, subject, 'SAFE')
     with pytest.raises(ValueError, match='counter-evidence'):
@@ -122,7 +129,7 @@ def test_sanitized_candidate_needs_no_unrelated_sanitizer_finding():
     trace, subject = observations('''def entry(value):
     os.system('echo ' + shlex.quote(value))
     os.system(value)
-''', 'command-execution', path='entry.py::entry@40-43')
+''', 'command-execution', path='entry.py::entry@40-43', inputs=('value',))
     trace = [step for step in trace if step.observation.tool == 'inspect_command_construction']
     vote(trace, subject, 'SAFE')
     with pytest.raises(ValueError, match='affirmative counter-evidence'):

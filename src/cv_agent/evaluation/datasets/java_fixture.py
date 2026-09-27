@@ -11,8 +11,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from cv_agent.code_adapters.java import parse_java_source
+from cv_agent.code_adapters.source_files import read_source_bytes
 from cv_agent.tools.identity import candidate_subject
-from cv_agent.domain.evidence import ValidationSubject, ValidationStatus
+from cv_agent.domain.evidence import FixtureProofScope, ValidationSubject, ValidationStatus
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.domain.types import Candidate
 from cv_agent.tools.validation import FixtureCase, FixtureOutcome
@@ -31,6 +33,12 @@ _RESOURCE_FILES = (
     "thing.properties",
     "insecureCmd.sh",
 )
+# Runtime inputs outside the Java method index. This bounded harness supports
+# the registered upstream resource version, not arbitrary repository dispatch.
+_RESOURCE_SHA256 = {
+    "thing.properties": "8365dec7725ecab833b8591e8ec9a6bc491730a5fb904d88cccbd008688b13dc",
+    "insecureCmd.sh": "4e7d07207d24c43793ec857599c626862dc5d0794bfabdd50bc31ea477b5df14",
+}
 _SUPPORTED_CASES = frozenset({"BenchmarkTest00827", "BenchmarkTest02244"})
 
 
@@ -60,9 +68,14 @@ class JavaCommandValidator:
         if class_name not in _SUPPORTED_CASES:
             raise ValueError(f"unsupported Java command fixture case: {class_name}")
         source_path = _source_path(candidate)
-        if not source_path.endswith(f"{class_name}.java"):
-            raise ValueError("candidate path does not match its Java case id")
+        if source_path != _source_path_from_case(class_name):
+            raise ValueError("candidate source path does not match its registered Java case")
         root = project_root.resolve()
+        _validate_execution_scope(root, index, candidate, source_path)
+        for name in _RESOURCE_FILES:
+            path = root / "data/raw/BenchmarkJava/src/main/resources" / name
+            if _sha256(path) != _RESOURCE_SHA256[name]:
+                raise ValueError(f"Java fixture resource differs from its registered snapshot: {name}")
         validator = cls(
             project_root=root,
             case_id=candidate.case_id,
@@ -73,11 +86,19 @@ class JavaCommandValidator:
         return validator
 
     def fixture_case(self) -> FixtureCase:
+        proof_scope = FixtureProofScope(
+            contract_id=f"owasp_java_command_{self.class_name}",
+            property_id=self.subject.property_id or "command-execution",
+            coverage="candidate",
+            method="bounded_execution",
+            supported_statuses=(ValidationStatus.CONFIRMED, ValidationStatus.REFUTED),
+        )
         return FixtureCase(
             self.case_id,
             self.run,
             timeout_seconds=JAVA_TIMEOUT_SECONDS,
             subject=self.subject,
+            proof_scope=proof_scope,
             isolated=False,
             resource_limited=False,
         )
@@ -206,10 +227,20 @@ class JavaCommandValidator:
             if observed
             else "controlled request token did not reach the Java process boundary"
         )
+        # This concrete probe observes one token under the recorded helper
+        # stubs. It does not establish shell interpretation, arbitrary command
+        # control, or safety for every possible request.
+        local_status = status
+        property_id = "java-fixture-token-reachability"
+        if self.subject.property_id != property_id:
+            status = ValidationStatus.UNRESOLVED
+            summary += "; this local token fact does not prove the declared candidate property"
         return FixtureOutcome(
             status=status,
             summary=summary,
             details={
+                "property_id": property_id,
+                "local_validation_status": local_status.value,
                 **_run_details(run_result, entries, self.files),
                 "case_id": self.case_id,
                 "controlled_token_observed": observed,
@@ -266,6 +297,30 @@ def _source_path(candidate: Candidate) -> str:
 
 def _source_path_from_case(case_id: str) -> str:
     return f"org/owasp/benchmark/testcode/{case_id}.java"
+
+
+
+def _validate_execution_scope(
+    root: Path, index: RepositoryIndex, candidate: Candidate, source_path: str,
+) -> None:
+    document = index.document(candidate.path)
+    if document is None or document.repository_id != candidate.repository_id:
+        raise ValueError("Java fixture entry is absent from the candidate repository index")
+    # HarnessMain invokes this exact public signature. Its whole-method token
+    # result provides no per-statement witness and cannot be lent to doGet.
+    signature = f"{candidate.case_id}.doPost(HttpServletRequest,HttpServletResponse)"
+    if (signature not in document.defines
+            or candidate.path.rsplit("::", 1)[-1].rsplit("@", 1)[0] != f"{candidate.case_id}.doPost"
+            or candidate.line != int(candidate.path.rsplit("@", 1)[-1])):
+        raise ValueError("Java fixture scope requires the actual doPost entry header")
+    source_root = root / "data/raw/BenchmarkJava/src/main/java"
+    for path in (source_path, *_HELPER_SOURCES):
+        parsed = parse_java_source(candidate.repository_id, path,
+                                   read_source_bytes(source_root, path).decode("utf-8"))
+        indexed = {doc.path: doc for doc in index.documents.values()
+                   if doc.path.split("::", 1)[0] == path}
+        if parsed.has_error or indexed != {doc.path: doc for doc in parsed.documents}:
+            raise ValueError(f"Java fixture executable source does not match the repository index: {path}")
 
 
 def _file_digests(root: Path, source_path: str) -> tuple[FileDigest, ...]:

@@ -3,15 +3,41 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from pydantic import ValidationError
 
 from cv_agent.domain.chat import ModelToolCall
-from cv_agent.domain.evidence import ToolObservation, ValidationSubject, ValidationStatus
+from cv_agent.domain.evidence import (
+    FixtureCapability,
+    ToolObservation,
+    ValidationStatus,
+    ValidationSubject,
+)
 from cv_agent.retrieval import prompt_token_upper_bound as context_text_token_count, fit_text_to_serialized_context
 from cv_agent.domain.types import FrozenModel
+
+
+EXHAUSTED_OBSERVATION = (
+    "no observation can be delivered: this task's tool-observation budget is spent. "
+    "Finalize from the observations already visible; further calls cannot return content."
+)
+
+
+def _exhausted_content(content_type: str) -> str:
+    """Answer an undeliverable call; JSON tools keep a parseable payload."""
+    if content_type != "json":
+        return EXHAUSTED_OBSERVATION
+    return json.dumps(
+        {
+            "observation_truncated": True,
+            "reason": "token_budget",
+            "diagnostic": EXHAUSTED_OBSERVATION,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 @dataclass
@@ -22,6 +48,14 @@ class ToolExecutionScope:
     initial_evidence_ids: frozenset[str] = frozenset()
     candidate_path: str | None = None
     subject: ValidationSubject | None = None
+    # When a planned fixture substitutes mandatory checks, only its
+    # qualified registered case may execute in that task.
+    fixture_case_id: str | None = None
+    # One scope is one expert task over one frozen index, so a request it already answered
+    # cannot answer differently. Maps (tool name, canonical validated arguments) to the
+    # citation of the first successful observation.
+    answered_calls: dict[tuple[str, str], str] = field(default_factory=dict)
+    budget_exhausted: bool = False
 
     def __post_init__(self) -> None:
         if self.max_observation_tokens < 1:
@@ -44,6 +78,7 @@ class AgentTool:
     content_type: Literal["text", "json"] = "text"
     available: bool = True
     validation_statuses: tuple[ValidationStatus, ...] = ()
+    fixture_capabilities: tuple[FixtureCapability, ...] = ()
 
     def definition(self) -> dict[str, Any]:
         return {
@@ -82,6 +117,27 @@ class ToolRegistry:
     @property
     def available_names(self) -> tuple[str, ...]:
         return tuple(sorted(name for name, tool in self._tools.items() if tool.available))
+
+    @property
+    def fixture_capabilities(self) -> tuple[FixtureCapability, ...]:
+        caps: list[FixtureCapability] = []
+        for tool in self._tools.values():
+            caps.extend(tool.fixture_capabilities)
+        return tuple(caps)
+
+    def candidate_fixture_capabilities(
+        self, subject: ValidationSubject | None
+    ) -> tuple[FixtureCapability, ...]:
+        if subject is None:
+            return ()
+        return tuple(
+            cap
+            for cap in self.fixture_capabilities
+            if cap.subject == subject
+            and cap.coverage == "candidate"
+            and cap.method != "source_pattern"
+            and (cap.property_id is None or cap.property_id == subject.property_id)
+        )
 
     def definitions(self, allowed: Iterable[str]) -> tuple[dict[str, Any], ...]:
         allowed_names = tuple(allowed)
@@ -176,7 +232,7 @@ class ToolRegistry:
             or bounded.status != observation.status
         )
         if structural_truncation or bounded.status != "ok":
-            bounded = bounded.model_copy(update={"validation_status": None})
+            bounded = bounded.model_copy(update={"validation_status": None, "fixture_proof": None})
         if effective_content_type == "json":
             try:
                 json.loads(bounded.content)
@@ -209,7 +265,7 @@ class ToolRegistry:
                     byte_budget=self.max_output_bytes,
                 )
                 truncated = bounded.model_copy(
-                    update={"content": marker, "status": "error", "validation_status": None}
+                    update={"content": marker, "status": "error", "validation_status": None, "fixture_proof": None}
                 )
                 marker_payload = self._render_prompt_payload(
                     truncated,
@@ -234,32 +290,30 @@ class ToolRegistry:
                 count_tokens=context_text_token_count,
             )
         if fitted is None:
-            if effective_content_type == "json":
-                return bounded.model_copy(
-                    update={
-                        "status": "error",
-                        "metadata": {
-                            **bounded.metadata,
-                            "observation_token_count": 0,
-                            "observation_truncated": True,
-                            "model_payload_suppressed": True,
-                        },
-                    }
-                )
+            # An empty tool message reads as "the tool returned nothing" and provokes
+            # blind retries until the step budget ends. The diagnostic that explains the
+            # limit must therefore survive the limit it reports: it is delivered and not
+            # charged, because charging it is what suppressed it.
+            scope.budget_exhausted = True
             return bounded.model_copy(
                 update={
-                    "status": "blocked" if bounded.status == "ok" else bounded.status,
-                    "content": "",
+                    "status": (
+                        "error" if effective_content_type == "json"
+                        else "blocked" if bounded.status == "ok" else bounded.status
+                    ),
+                    "content": _exhausted_content(effective_content_type),
                     "metadata": {
                         **bounded.metadata,
                         "observation_token_count": 0,
-                        "observation_truncated": bool(bounded.content),
-                        "model_payload_suppressed": True,
+                        "observation_truncated": True,
+                        "model_payload_suppressed": False,
+                        "budget_exhausted": True,
                     },
                 }
             )
         content, _, token_count = fitted
         if bounded.status == "ok" and bounded.content and not content:
+            scope.budget_exhausted = True
             return bounded.model_copy(
                 update={
                     "status": "blocked",
@@ -269,18 +323,20 @@ class ToolRegistry:
                         "observation_token_count": 0,
                         "observation_truncated": True,
                         "model_payload_suppressed": True,
+                        "budget_exhausted": True,
                     },
                 }
             )
         truncated = structural_truncation or content != bounded.content
         if truncated:
-            bounded = bounded.model_copy(update={"validation_status": None})
+            bounded = bounded.model_copy(update={"validation_status": None, "fixture_proof": None})
         token_count = context_text_token_count(self._render_prompt_payload(bounded, content=content))
         scope.observed_tokens += token_count
         return bounded.model_copy(
             update={
                 "content": content,
                 "validation_status": None if truncated else bounded.validation_status,
+                "fixture_proof": None if truncated else bounded.fixture_proof,
                 "metadata": {
                     **bounded.metadata,
                     "observation_token_count": token_count,
@@ -306,6 +362,10 @@ class ToolRegistry:
                     {"validation_status": observation.validation_status.value}
                     if observation.validation_status is not None else {}
                 ),
+                **(
+                    {"fixture_proof": observation.fixture_proof.model_dump(mode="json")}
+                    if observation.fixture_proof is not None else {}
+                ),
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -319,6 +379,21 @@ class ToolRegistry:
             content=observation.content,
         )
 
+    def refuse(
+        self,
+        call: ModelToolCall,
+        scope: ToolExecutionScope,
+        *,
+        content: str,
+        citation_id: str | None = None,
+    ) -> ToolObservation:
+        """Record a refusal so it is budgeted and rendered like any other observation."""
+        return self._finalize(
+            ToolObservation(tool=call.name, status="blocked", content=content),
+            scope,
+            citation_id=citation_id,
+        )
+
     def invoke(
         self,
         call: ModelToolCall,
@@ -329,40 +404,26 @@ class ToolRegistry:
     ) -> ToolObservation:
         allowed_names = set(allowed)
         if scope.remaining_tokens == 0:
-            return self._finalize(
-                ToolObservation(tool=call.name, status="blocked", content="observation budget exhausted"),
-                scope, citation_id=citation_id,
+            scope.budget_exhausted = True
+            refusal = self.refuse(
+                call, scope, content="observation budget exhausted", citation_id=citation_id
+            )
+            return refusal.model_copy(
+                update={"metadata": {**refusal.metadata, "budget_exhausted": True}}
             )
         if call.name not in allowed_names:
-            return self._finalize(
-                ToolObservation(
-                    tool=call.name,
-                    status="blocked",
-                    content="tool is outside this agent's Harness allowlist",
-                ),
-                scope,
+            return self.refuse(
+                call, scope, content="tool is outside this agent's Harness allowlist",
                 citation_id=citation_id,
             )
         tool = self._tools.get(call.name)
         if tool is None:
-            return self._finalize(
-                ToolObservation(
-                    tool=call.name,
-                    status="blocked",
-                    content="tool is not registered",
-                ),
-                scope,
-                citation_id=citation_id,
+            return self.refuse(
+                call, scope, content="tool is not registered", citation_id=citation_id
             )
         if not tool.available:
-            return self._finalize(
-                ToolObservation(
-                    tool=call.name,
-                    status="blocked",
-                    content="tool is unavailable for this run",
-                ),
-                scope,
-                citation_id=citation_id,
+            return self.refuse(
+                call, scope, content="tool is unavailable for this run", citation_id=citation_id
             )
         try:
             arguments = tool.input_model.model_validate(call.arguments)
@@ -375,6 +436,31 @@ class ToolRegistry:
                 ),
                 scope,
                 citation_id=citation_id,
+            )
+        if (
+            call.name == "run_fixture_test"
+            and scope.fixture_case_id is not None
+            and arguments.model_dump(mode="json").get("case_id") != scope.fixture_case_id
+        ):
+            return self.refuse(
+                call, scope,
+                content="fixture case is outside this task's qualified case binding",
+                citation_id=citation_id,
+            )
+        requested = (
+            call.name,
+            json.dumps(arguments.model_dump(mode="json"), sort_keys=True, separators=(",", ":")),
+        )
+        previous = scope.answered_calls.get(requested)
+        if previous is not None:
+            return self.refuse(
+                call, scope, citation_id=citation_id,
+                content=(
+                    f"identical call already executed as {previous} in this task; the Harness "
+                    "does not repeat it. Reuse that observation or change the arguments. A "
+                    "result that does not settle the question is this tool's limit for this "
+                    "input, not a missing call."
+                ),
             )
         try:
             observation = tool.handler(arguments, scope)
@@ -392,9 +478,13 @@ class ToolRegistry:
             raise ValueError(
                 f"tool handler returned observation for {observation.tool}, expected {call.name}"
             )
-        return self._finalize(
+        finalized = self._finalize(
             observation,
             scope,
             content_type=tool.content_type,
             citation_id=citation_id,
         )
+        if finalized.status == "ok" and citation_id is not None:
+            # Only a citable observation gives a refused repeat something to point back to.
+            scope.answered_calls[requested] = citation_id
+        return finalized

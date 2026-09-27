@@ -101,16 +101,28 @@ def test_while_condition_sink_is_revisited_after_the_body():
     assert result["sinks"][0]["tainted"]
 
 
+# C1/C3: argv controls declare primitive text inputs explicitly. Framework
+# property access has no purity summary; the original shape stays a negative
+# control below rather than silently serving as a numeric-proof premise.
+@pytest.mark.parametrize("expression", ["request.args['x']", "str(int(request.args['x']))", "shlex.quote(request.args['x'])"])
+def test_unknown_request_access_cannot_supply_command_proof(expression):
+    trace, subject = command_trace(f"def entry(request):\n    subprocess.run(['python', '-c', {expression}])\n")
+    assert json.loads(trace[-1].observation.content)["issues"]
+    for label in ("SAFE", "VULNERABLE"):
+        with pytest.raises(ValueError):
+            assess(trace, subject, label)
+
+
 @pytest.mark.parametrize("argument,safe", [
-    ("str(int(request.args['x']))", True),
-    ("request.args['x']", False),
-    ("shlex.quote(request.args['x'])", False),
+    ("str(int(input_x))", True),
+    ("input_x", False),
+    ("shlex.quote(input_x)", False),
 ])
 def test_numeric_non_shell_argv_can_support_safety(argument, safe):
-    trace, subject = command_trace(f'''def entry(request):
+    trace, subject = command_trace(f'''def entry(input_x, request):
     int(1)
     subprocess.run(['python', '-c', {argument}])
-''')
+''', inputs=('input_x',))
     if safe:
         assess(trace, subject, "SAFE")
     else:
@@ -121,42 +133,42 @@ def test_numeric_non_shell_argv_can_support_safety(argument, safe):
 @pytest.mark.parametrize("parameters,extra", [
     ("request, int", ""),
     ("request, str", ""),
-    ("request", ", executable=request.args['program']"),
-    ("request", ", env=request.args['environment']"),
-    ("request", ", shell=request.args['shell']"),
+    ("request", ", executable=input_program"),
+    ("request", ", env=input_environment"),
+    ("request", ", shell=input_shell"),
 ])
 def test_numeric_argv_does_not_ignore_shadowing_or_execution_overrides(parameters, extra):
-    trace, subject = command_trace(f'''def entry({parameters}):
-    subprocess.run(['python', '-c', str(int(request.args['x']))]{extra})
-''')
+    trace, subject = command_trace(f'''def entry(input_environment, input_program, input_shell, input_x, {parameters}):
+    subprocess.run(['python', '-c', str(int(input_x))]{extra})
+''', inputs=('input_environment', 'input_program', 'input_shell', 'input_x'))
     with pytest.raises(ValueError):
         assess(trace, subject, "SAFE")
 
 
 def test_numeric_argv_fact_requires_all_dynamic_arguments_to_be_numeric():
-    trace, subject = command_trace('''def entry(request):
-    subprocess.run(['python', '-c', request.args['code'], str(int(request.args['x']))])
-''')
+    trace, subject = command_trace('''def entry(input_code, input_x, request):
+    subprocess.run(['python', '-c', input_code, str(int(input_x))])
+''', inputs=('input_code', 'input_x'))
     with pytest.raises(ValueError):
         assess(trace, subject, "SAFE")
 
 
 def test_numeric_argv_tracks_assigned_result_at_the_candidate():
-    trace, subject = command_trace('''def entry(request):
-    count = int(request.args['x'])
+    trace, subject = command_trace('''def entry(input_x, request):
+    count = int(input_x)
     code = str(count)
     subprocess.run(['python', '-c', code])
-''')
+''', inputs=('input_x',))
     assess(trace, subject, "SAFE")
 
 
 @pytest.mark.parametrize("raw_first", [False, True])
 def test_one_numeric_sink_does_not_protect_another_sink_on_the_same_line(raw_first):
-    calls = ["subprocess.run(['python', '-c', str(int(request.args['n']))])",
-             "subprocess.run(['python', '-c', request.args['code']])"]
+    calls = ["subprocess.run(['python', '-c', str(int(input_n))])",
+             "subprocess.run(['python', '-c', input_code])"]
     if raw_first:
         calls.reverse()
-    trace, subject = command_trace("def entry(request):\n    " + "; ".join(calls) + "\n")
+    trace, subject = command_trace("def entry(input_code, input_n, request):\n    " + "; ".join(calls) + "\n", inputs=('input_code', 'input_n'))
     with pytest.raises(ValueError):
         assess(trace, subject, "SAFE")
     assess(trace, subject, "VULNERABLE")
@@ -164,9 +176,9 @@ def test_one_numeric_sink_does_not_protect_another_sink_on_the_same_line(raw_fir
 
 @pytest.mark.parametrize("tail,safe", [(",-1,None", True), (",-1,None,None,None,None,None,None,True", False)])
 def test_numeric_argv_respects_positional_popen_options(tail, safe):
-    trace, subject = command_trace(f'''def entry(request):
-    subprocess.Popen(['python', '-c', str(int(request.args['n']))]{tail})
-''')
+    trace, subject = command_trace(f'''def entry(input_n, request):
+    subprocess.Popen(['python', '-c', str(int(input_n))]{tail})
+''', inputs=('input_n',))
     if safe:
         assess(trace, subject, "SAFE")
     else:
@@ -177,15 +189,15 @@ def test_numeric_argv_respects_positional_popen_options(tail, safe):
 @pytest.mark.parametrize("whole_argv", [False, True])
 @pytest.mark.parametrize("safe", [False, True])
 def test_numeric_argv_joins_literal_alternatives_without_ignoring_raw_ones(whole_argv, safe):
-    alternative = "'0'" if safe else "request.args['code']"
+    alternative = "'0'" if safe else "input_code"
     if whole_argv:
-        assignment = ("args = ['python', '-c', str(int(request.args['n']))] if flag "
+        assignment = ("args = ['python', '-c', str(int(input_n))] if flag "
                       f"else ['python', '-c', {alternative}]")
         argument = "args"
     else:
-        assignment = f"code = str(int(request.args['n'])) if flag else {alternative}"
+        assignment = f"code = str(int(input_n)) if flag else {alternative}"
         argument = "['python', '-c', code]"
-    trace, subject = command_trace(f"def entry(request, flag):\n    {assignment}\n    subprocess.run({argument})\n")
+    trace, subject = command_trace(f"def entry(input_code, input_n, request, flag):\n    {assignment}\n    subprocess.run({argument})\n", inputs=('input_code', 'input_n', 'flag'))
     if safe:
         assess(trace, subject, "SAFE")
     else:
@@ -225,8 +237,7 @@ def test_numeric_helper_docstring_preserves_return_flow(docstring, sanitized):
                                admitted_paths=frozenset([caller.path, helper.path]), max_observation_tokens=10000)
     observation = pattern_tool(index, "find_sanitizers", SANITIZER_RULES)(PathInput(path=helper.path), scope)
     assert json.loads(observation.content)["findings"]
-    if sanitized:
+    # C1/C5: pattern return-flow facts are retained, not upgraded to eval safety.
+    assert bool(json.loads(observation.content)["candidate_sanitizer_flows"]) is sanitized
+    with pytest.raises(ValueError, match="matching cited proof"):
         assess([step(observation, 1)], subject, "SAFE")
-    else:
-        with pytest.raises(ValueError):
-            assess([step(observation, 1)], subject, "SAFE")

@@ -10,6 +10,13 @@ from cv_agent.evaluation.datasets.heldout_manifest import repository_key
 from cv_agent.domain.types import FrozenModel
 
 
+
+DEVELOPMENT_ADVISORY_PAIR_IDS = frozenset({
+    "hp001_entry_00101_ghsa_4x5p_f36r_mxxr",
+    "hp002_entry_00317_ghsa_rf6x_r45m_xv3w",
+    "hp003_entry_00389_ghsa_rvhj_8chj_8v3c",
+})
+
 SUPPORTED_HELDOUT_SOURCE_SUFFIXES = (
     ".py",
     ".ini",
@@ -48,8 +55,12 @@ class PythonHeldoutPairCase(FrozenModel):
 
 
 class PythonHeldoutPair(FrozenModel):
+    # Machine-readable proof obligation; never inferred from identifiers.
+    property_id: str | None = None
     input_parameters: tuple[str, ...] = ()
     entry_boolean_arguments: dict[str, StrictBool] = Field(default_factory=dict)
+    entry_condition_assumptions: dict[str, StrictBool] = Field(default_factory=dict)
+    entry_value_assumptions: dict[str, object] = Field(default_factory=dict)
     pair_id: Annotated[str, Field(pattern=r"^hp[0-9]{3}_[a-z0-9_]+$")]
     entry_id: Annotated[str, Field(pattern=r"^entry-[0-9]+$")]
     repository_url: str
@@ -101,8 +112,8 @@ class PythonHeldoutPairLimits(FrozenModel):
 
 class PythonHeldoutPairExperimentConfig(FrozenModel):
     dataset_name: str
-    dataset_role: Literal["paired_heldout_advisory"]
-    claim_eligible: Literal[False]
+    dataset_role: Literal["paired_heldout_advisory", "final-test"]
+    claim_eligible: bool
     model_config_path: str = Field(alias="model_config")
     systems: tuple[AgentSystemVersion, ...]
     concurrency: Literal[1, 2]
@@ -147,6 +158,19 @@ class PythonHeldoutPairExperimentConfig(FrozenModel):
             raise ValueError("Duplicate expected held-out abstention")
         if any(cell not in declared for cell in expected_abstentions):
             raise ValueError("Expected held-out abstentions must be declared cases and systems")
+        if self.claim_eligible and self.dataset_role != "final-test":
+            raise ValueError("Claim-eligible held-out runs must use dataset_role final-test")
+        if self.claim_eligible and expected_abstentions:
+            raise ValueError("Claim-eligible final-test runs cannot predeclare expected abstentions")
+        development_pairs = sorted(
+            pair.pair_id for pair in self.pairs
+            if pair.pair_id in DEVELOPMENT_ADVISORY_PAIR_IDS
+        )
+        if self.claim_eligible and development_pairs:
+            raise ValueError(
+                "Claim-eligible final-test runs cannot reuse development advisory pairs: "
+                + ", ".join(development_pairs)
+            )
         if selected and len(selected) > 10:
             raise ValueError("Selected held-out gate cells must contain at most ten cells")
         cells = len(selected) if selected else len(declared)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -47,9 +48,15 @@ def load_owasp_agentic_inputs(
     raw_root: Path,
     *,
     case_ids: Sequence[str],
+    property_ids: Mapping[str, str] | None = None,
 ) -> OwaspAgenticInput:
     validate_project_harness()
     requested = _dedupe_requested(case_ids, "OWASP case id")
+    if property_ids is not None and (
+        set(property_ids) != set(requested)
+        or any(not isinstance(value, str) or not value.strip() for value in property_ids.values())
+    ):
+        raise ValueError("OWASP property declarations must exactly cover the requested cases")
     benchmark_root = raw_root / "BenchmarkJava"
     source_root = benchmark_root / "src" / "main" / "java"
     if not source_root.is_dir():
@@ -83,6 +90,7 @@ def load_owasp_agentic_inputs(
                 path=entry.path,
                 line=_line_from_document_path(entry.path),
                 query=entry.text,
+                property_id=property_ids[case_id] if property_ids is not None else None,
             )
         )
     if missing_entries:
@@ -93,6 +101,18 @@ def load_owasp_agentic_inputs(
         labels=labels,
         parse_error_paths=tuple(parse_error_paths),
     )
+
+
+
+def development_owasp_properties(project_root: Path, case_ids: Sequence[str]) -> dict[str, str]:
+    """Read reviewed task declarations, never infer them from evaluator labels."""
+    declared = json.loads((project_root / "configs/datasets/owasp_properties.json").read_text())
+    if any(case not in declared for case in case_ids):
+        raise ValueError("Missing OWASP property declaration for a requested development case")
+    result = {case: declared[case] for case in case_ids}
+    if any(not isinstance(value, str) or not value.strip() for value in result.values()):
+        raise ValueError("Invalid OWASP property declaration")
+    return result
 
 
 def select_owasp_entry(inputs: OwaspAgenticInput, method: str) -> tuple[Candidate, ...]:
@@ -148,8 +168,10 @@ def run_agentic_owasp_live(
     *,
     case_ids: Sequence[str],
     system_ids: Sequence[str],
+    property_id: str,
 ) -> dict[str, object]:
-    inputs = load_owasp_agentic_inputs(raw_root, case_ids=case_ids)
+    inputs = load_owasp_agentic_inputs(raw_root, case_ids=case_ids,
+                                     property_ids={case: property_id for case in case_ids})
     systems = _systems(system_ids)
     tools = ToolRegistry(
         full_agent_tools(inputs.index),
@@ -192,6 +214,7 @@ def run_agentic_owasp_live(
             "development-only and not a reported benchmark result."
         ),
         "case_count": len(inputs.candidates),
+        "property_id": property_id,
         "cases": [
             {
                 "case_id": candidate.case_id,

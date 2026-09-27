@@ -5,7 +5,7 @@ import pytest
 
 from cv_agent.agents.react import validate_conclusion
 from cv_agent.domain.chat import ModelToolCall
-from cv_agent.domain.evidence import ReActStep, ToolObservation, ValidationStatus
+from cv_agent.domain.evidence import FixtureProofScope, ReActStep, ToolObservation, ValidationStatus
 from cv_agent.domain.review import AgentExpertConclusion
 from cv_agent.domain.types import CodeDocument
 from cv_agent.retrieval import RepositoryIndex
@@ -34,7 +34,16 @@ def test_deterministic_proof_overrides_incomplete_command_analysis(label, status
         proof_subject = subject.model_copy(update={"candidate_id": "other"})
     if proof == "wrong-source":
         proof_subject = subject.model_copy(update={"source_digest": "stale"})
-    fixture = step(ToolObservation(tool="run_fixture", status="ok", content=json.dumps({"status": status}), validation_status=status, subject=proof_subject, metadata={"observation_truncated": proof == "truncated"}), 5)
+    fixture = step(ToolObservation(
+        tool="run_fixture_test", status="ok", content=json.dumps({"status": status}),
+        validation_status=status, subject=proof_subject,
+        fixture_proof=FixtureProofScope(
+            contract_id="bounded-command-case", property_id="command-execution",
+            coverage="candidate", method="bounded_execution",
+            supported_statuses=(ValidationStatus.CONFIRMED, ValidationStatus.REFUTED),
+        ),
+        metadata={"observation_truncated": proof == "truncated"},
+    ), 5)
     trace.append(fixture)
     ids = tuple(s.observation.citation_id for s in trace if proof != "uncited" or s is not fixture)
     conclusion = AgentExpertConclusion(expert="scan", label=label, confidence=0.9, rationale="Candidate-bound fixture result.", validation_status=status, evidence_ids=ids, supporting_observation_ids=ids)
@@ -48,7 +57,7 @@ def test_deterministic_proof_overrides_incomplete_command_analysis(label, status
 def test_sanitized_command_remains_counterevidence_without_static_check():
     trace, subject = observations('''def entry(value):
     os.system('echo ' + shlex.quote(value))
-''', "command-execution")
+''', "command-execution", inputs=('value',))
     trace = [s for s in trace if s.observation.tool == "inspect_command_construction"]
     assert subject.entry_line == 2
     assert json.loads(trace[0].observation.content)["command_construction_status"] == "SANITIZED"

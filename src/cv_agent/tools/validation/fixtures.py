@@ -70,6 +70,7 @@ def _fixture_worker(
     runner: Callable[[], FixtureOutcome],
     result_fd: int,
     read_roots: tuple[Path, ...],
+    executable_paths: tuple[Path, ...],
     retained_fds: tuple[int, ...],
     accept_only: bool,
     isolated: bool,
@@ -80,7 +81,7 @@ def _fixture_worker(
             _apply_fixture_limits()
         if isolated:
             _install_fixture_isolation(result_fd, retained_fds=retained_fds, accept_only=accept_only)
-            restrict_fixture_filesystem(read_roots)
+            restrict_fixture_filesystem(read_roots, executable_paths=executable_paths)
         outcome = runner()
         _write_fixture_message(
             result_fd,
@@ -218,6 +219,7 @@ def _run_fixture_case(
             case.runner,
             write_fd,
             case.read_roots,
+            case.executable_paths,
             retained_fds,
             accept_only,
             case.isolated,
@@ -420,13 +422,13 @@ def _run_loopback_case(case: LoopbackCase, timeout_seconds: int) -> FixtureOutco
     if 200 <= unauthorized < 300 and 200 <= authorized < 300:
         return FixtureOutcome(
             status=ValidationStatus.CONFIRMED,
-            summary="unauthorized and authorized requests both reached the protected action",
+            summary="unauthorized and authorized requests both returned success responses",
             details=details,
         )
     if unauthorized in {401, 403} and 200 <= authorized < 300:
         return FixtureOutcome(
             status=ValidationStatus.REFUTED,
-            summary="the loopback case denied the unauthorized request",
+            summary="the unauthorized request returned a denial response",
             details=details,
         )
     return FixtureOutcome(
@@ -461,13 +463,49 @@ def fixture(
             else FULL_SYSTEM_HARNESS.validation.timeout_seconds,
         ),
     )
+    proof = case.proof_scope
+    raw_status = outcome.status
+    candidate_qualified = (
+        proof is not None
+        and scope.subject is not None
+        and case.subject == scope.subject
+        and proof.coverage == "candidate"
+        and proof.method != "source_pattern"
+        and proof.property_id == scope.subject.property_id
+        and raw_status in proof.supported_statuses
+        and raw_status in {ValidationStatus.CONFIRMED, ValidationStatus.REFUTED}
+    )
+
+    payload = outcome.model_dump(mode="json")
+    if not candidate_qualified:
+        payload["raw_status"] = raw_status.value
+        payload["status"] = ValidationStatus.UNRESOLVED.value
+        if proof is None:
+            payload["proof_scope_error"] = "missing_proof_scope"
+        elif scope.subject is None:
+            payload["proof_scope_error"] = "missing_validation_subject"
+        elif case.subject != scope.subject:
+            payload["proof_scope_error"] = "subject_mismatch"
+        elif proof.coverage != "candidate":
+            payload["proof_scope_error"] = f"local_coverage:{proof.coverage}"
+        elif proof.method == "source_pattern":
+            payload["proof_scope_error"] = "source_pattern_method"
+        elif proof.property_id != scope.subject.property_id:
+            payload["proof_scope_error"] = f"property_mismatch:{proof.property_id}!={scope.subject.property_id}"
+        elif raw_status not in proof.supported_statuses:
+            payload["proof_scope_error"] = f"unsupported_status:{raw_status.value}"
+        effective_status = ValidationStatus.UNRESOLVED
+    else:
+        effective_status = raw_status
+
     return ToolObservation(
         tool="run_fixture_test",
         status="ok",
-        validation_status=outcome.status,
-        content=_json_content(outcome.model_dump(mode="json")),
+        validation_status=effective_status,
+        content=_json_content(payload),
         evidence_ids=(f"fixture:{value.case_id}",),
         subject=case.subject,
+        fixture_proof=proof,
     )
 
 
@@ -491,11 +529,48 @@ def loopback(
         case,
         FULL_SYSTEM_HARNESS.validation.timeout_seconds,
     )
+    proof = case.proof_scope
+    raw_status = outcome.status
+    candidate_qualified = (
+        proof is not None
+        and scope.subject is not None
+        and case.subject == scope.subject
+        and scope.subject.property_id == "authorization-boundary"
+        and proof.property_id == scope.subject.property_id
+        and proof.coverage == "candidate"
+        and proof.method == "bounded_execution"
+        and raw_status in proof.supported_statuses
+        and raw_status in {ValidationStatus.CONFIRMED, ValidationStatus.REFUTED}
+    )
+    payload = outcome.model_dump(mode="json")
+    if not candidate_qualified:
+        payload["raw_status"] = raw_status.value
+        payload["status"] = ValidationStatus.UNRESOLVED.value
+        if proof is None:
+            payload["proof_scope_error"] = "missing_proof_scope"
+        elif scope.subject is None:
+            payload["proof_scope_error"] = "missing_validation_subject"
+        elif case.subject != scope.subject:
+            payload["proof_scope_error"] = "subject_mismatch"
+        elif scope.subject.property_id != "authorization-boundary":
+            payload["proof_scope_error"] = f"unsupported_property:{scope.subject.property_id}"
+        elif proof.property_id != scope.subject.property_id:
+            payload["proof_scope_error"] = f"property_mismatch:{proof.property_id}!={scope.subject.property_id}"
+        elif proof.coverage != "candidate":
+            payload["proof_scope_error"] = f"local_coverage:{proof.coverage}"
+        elif proof.method != "bounded_execution":
+            payload["proof_scope_error"] = f"unsupported_method:{proof.method}"
+        elif raw_status not in proof.supported_statuses:
+            payload["proof_scope_error"] = f"unsupported_status:{raw_status.value}"
+        effective_status = ValidationStatus.UNRESOLVED
+    else:
+        effective_status = raw_status
     return ToolObservation(
         tool="run_loopback_http_case",
         status="ok",
-        validation_status=outcome.status,
-        content=_json_content(outcome.model_dump(mode="json")),
+        validation_status=effective_status,
+        content=_json_content(payload),
         evidence_ids=(f"loopback:{value.case_id}",),
         subject=case.subject,
+        fixture_proof=proof,
     )

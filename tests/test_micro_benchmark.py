@@ -161,3 +161,34 @@ def test_all_failure_report_has_no_predetermined_success(journal, monkeypatch):
     assert "| baseline | 0/1 | 0 | 0 | 0 | 1 | 0 | 1.00" in report
     for unsupported in ["成功避免", "显著节省", "展现了图检索", "均独立给出了"]:
         assert unsupported not in report
+
+
+@pytest.mark.parametrize('case_index,expected', [(0, 'CONFIRMED'), (1, 'UNRESOLVED'), (2, 'UNRESOLVED'), (3, 'CONFIRMED')])
+def test_micro_entry_declares_eval_sources_and_preserves_probe_controls(case_index, expected):
+    from cv_agent.tools.identity import candidate_subject
+    from cv_agent.tools.validation.models import SourceFlowInput
+    from cv_agent.tools.validation.probes import concrete_eval_probe
+    index, candidate = bench.build_case_harness(bench.BENCHMARK_CASES[case_index])
+    assert candidate.property_id == 'dynamic-evaluation'
+    assert candidate.input_parameters == ('request',)
+    subject = candidate_subject(index, candidate)
+    scope = ToolExecutionScope(frozenset(index.documents), 8192, candidate_path=candidate.path, subject=subject)
+    result = concrete_eval_probe(index, SourceFlowInput(source_path=candidate.path), scope)
+    assert result.validation_status.value == expected
+    assert result.subject == subject
+
+
+@pytest.mark.parametrize('case_id,expected', [('C01', 'CONFIRMED'), ('C02', 'UNRESOLVED')])
+def test_luna_fixture_declares_its_actual_eval_obligation(case_id, expected):
+    from cv_agent.evaluation.diagnostics.luna_flow_simulation import fixture
+    from cv_agent.tools.identity import candidate_subject
+    from cv_agent.tools.validation.models import SourceFlowInput
+    from cv_agent.tools.validation.probes import concrete_eval_probe
+    index, candidate = fixture(case_id)
+    assert candidate.property_id == 'dynamic-evaluation'
+    assert candidate.input_parameters == ('request',)
+    subject = candidate_subject(index, candidate)
+    result = concrete_eval_probe(index, SourceFlowInput(source_path=candidate.path),
+        ToolExecutionScope(frozenset(index.documents), 8192, candidate_path=candidate.path, subject=subject))
+    assert result.validation_status.value == expected
+    assert result.subject == subject

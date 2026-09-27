@@ -222,14 +222,21 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "Validate candidates with a concrete Python eval probe or a registered fixture "
                 "when applicable; sink presence alone is not confirmation. Distinguish an "
                 "evidence-backed prediction (UNRESOLVED validation status) from successful "
-                "typed validation. Static checks remain UNRESOLVED. "
+                "typed validation. An exact-scope run_fixture_test CONFIRMED or REFUTED "
+                "observation is typed validation for the declared candidate property; keep "
+                "that label and validation_status in later same-expert tasks unless another "
+                "exact-scope typed validator contradicts it. Static checks remain UNRESOLVED. "
                 "For filesystem permission candidates, prefer validate_permission_mode over "
                 "static chmod matching. "
                 "For command injection candidates, inspect_command_construction status "
                 "SANITIZED is affirmative counter-evidence for SAFE/UNRESOLVED and "
                 "UNSANITIZED supports VULNERABLE/UNRESOLVED; do not require a typed "
                 "REFUTED status from that static command inspector. "
-                "Inspect your own evidence rather than adopting another vote. "
+                "These command facts must establish the declared candidate property "
+                "under its source, location and input assumptions; a local helper "
+                "status is not a caller proof. Other declared properties also require "
+                "matching supporting proof. Inspect your own evidence rather than "
+                "adopting another vote. "
                 "When making a SAFE prediction based on an authorization or ownership check, "
                 "first collect guard evidence with get_guards."
             ),
@@ -260,13 +267,22 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "concrete exploit witness. A validator returning UNRESOLVED does not by "
                 "itself require ABSTAIN. Evaluate static MAY_REACH traces together with "
                 "the actual caller, selected branch, helper interpolation and sanitizers. "
-                "An unquoted interpolation on that path may support a vulnerability "
-                "hypothesis even when an upstream transformation leaves the command "
-                "inspector AMBIGUOUS; explicitly state that uncertainty and retain "
-                "UNRESOLVED. MAY_REACH alone, a disconnected helper, or sink presence "
-                "alone is insufficient. Abstain when the combined evidence does not "
-                "support a prediction, rather than solely because no tool returned "
-                "CONFIRMED or REFUTED."
+                "A material vote requires supporting proof bound to the candidate's "
+                "declared property, source snapshot, location and input assumptions. "
+                "Do not bridge an unresolved upstream transformation with source-reading "
+                "inference or repeated expert votes. MAY_REACH, sink presence and local "
+                "helper return values alone do not establish a complete dangerous path. "
+                "An independent complete dangerous path may remain usable despite an "
+                "unrelated unresolved path; SAFE requires coverage of all relevant paths. "
+                "Conflicting proofs for the same scope require ABSTAIN. For dynamic "
+                "evaluation, cite a matching candidate-bound proof; static flow alone "
+                "does not support either material label. For command-execution tasks, "
+                "a dependency's candidate-bound run_fixture_test CONFIRMED or REFUTED "
+                "observation is concrete command evidence for your dataflow judgment; "
+                "your trace_dataflow MAY_REACH/UNRESOLVED result supplies path context "
+                "and does not erase that matching fixture proof. Abstain when the required "
+                "proof is missing. A complete static command proof can still support "
+                "a prediction with UNRESOLVED validation status."
             ),
             tools=(
                 "read_span",
@@ -287,7 +303,14 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "Model principal, action, resource or tenant scope, and enforcement "
                 "guards. Treat filesystem permission bits as resource access-control "
                 "semantics when validate_permission_mode applies; abstain when the "
-                "candidate is outside authorization semantics."
+                "candidate is outside authorization semantics. A literal chmod mode "
+                "proof covers only chmod-mode-others-write, not a directory race or "
+                "a broader authorization boundary. Require proof of the declared "
+                "candidate property before submitting a material vote. An exact-scope "
+                "run_fixture_test observation for authorization-boundary, temporary-directory-race, "
+                "or permission resource-access candidates is concrete access-control evidence; "
+                "a narrower UNRESOLVED guard or chmod helper check does not erase that matching "
+                "fixture proof."
             ),
             tools=(
                 "read_span",
@@ -403,6 +426,7 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
 
 COMMAND_POLICIES = (
     CommandPolicy(command="harness-check", kind="harness", claim_eligible=False),
+    CommandPolicy(command="readiness", kind="harness", claim_eligible=False),
     CommandPolicy(command="synthetic", kind="diagnostic", claim_eligible=False),
     CommandPolicy(
         command="agentic-smoke",

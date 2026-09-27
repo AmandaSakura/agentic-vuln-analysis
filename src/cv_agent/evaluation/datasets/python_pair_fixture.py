@@ -93,6 +93,8 @@ def build_pair_input(
     pair: PythonPair,
     case: PythonPairCase,
 ) -> tuple[RepositoryIndex, Candidate, dict[str, str]]:
+    if not pair.property_id or not pair.property_id.strip():
+        raise ValueError("Python pair candidate requires an explicit property_id")
     index, source_sha256 = build_package_index(root, pair, case)
     entries = [
         document
@@ -115,6 +117,7 @@ def build_pair_input(
         line=_start_line(entry.path),
         query=f"{pair.entry_symbol} {pair.source_scope}",
         analysis_scope=pair.analysis_scope,
+        property_id=pair.property_id,
     )
     return index, candidate, source_sha256
 
@@ -186,6 +189,13 @@ def pair_fixture_tool(
     candidate: Candidate,
     observations: dict[str, Any],
 ) -> AgentTool:
+    expected_property = {
+        ("langchain_template_traversal", "template_traversal"): "template-traversal",
+        ("jinja_attr_format_escape", "jinja_attr_format"): "sandbox-attr-format-escape",
+    }.get((pair.pair_id, pair.fixture_id))
+    if (expected_property is None or pair.property_id != expected_property
+            or candidate.property_id != expected_property):
+        raise ValueError("Fixture property does not match the declared pair and candidate property")
     checkout = root / case.checkout
     source = checkout / case.file_path
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -213,6 +223,7 @@ def pair_fixture_tool(
             content=json.dumps({
                 "execution": "current-run offline preflight; checkout revalidated",
                 "fixture_id": pair.fixture_id,
+                "property_id": expected_property,
                 "scope": pair.source_scope,
                 "observations": sanitized,
             }, sort_keys=True),

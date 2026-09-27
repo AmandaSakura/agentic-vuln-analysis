@@ -228,7 +228,7 @@ def test_real_pipeline_probe_and_collector_keep_matching_counts(tmp_path,monkeyp
     monkeypatch.setattr(OpenAICompatibleChatModel,'_complete',complete)
     journal=Journal(tmp_path/'events.jsonl')
     result=run_candidate(RepositoryIndex(documents),Candidate(candidate_id='one',case_id='one',
-        repository_id='test',path=path,line=1,query='eval request'),
+        repository_id='test',path=path,line=1,query='eval request',property_id='dynamic-evaluation',input_parameters=('request',)),
         AgentSystemVersion.E3_GRAPH_SINGLE,journal,Budget(8,60))
     assert result['status']=='completed'
     assert result['model_calls']==result['verdict']['model_calls']==2

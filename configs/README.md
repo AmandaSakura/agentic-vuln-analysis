@@ -21,6 +21,14 @@
 
 ## 其他配置的位置
 
+[datasets/owasp_properties.json](datasets/owasp_properties.json) 独立声明原有 66 个 OWASP 开发案例的判定性质，不包含真假标签。运行与诊断入口显式读取这些声明；结果表的 category/CWE/vulnerable 不参与候选性质生成。通用 OWASP CLI 必须提供 `--property-id`。性质声明不是证明；Java token 边界实验只验证 `java-fixture-token-reachability`，不能替代 `command-execution` 的证据，也不改变原命令注入标签。
+
+后续 C1 修复为活动 advisory、PythonPair 配置补充了 `property_id`；配置迁移测试移除这些明确列出的新增字段后，仍逐字节核对原内容。历史配置和产物未被重写。
+
+[experiments/jev_routing_v2_pilot.json](experiments/jev_routing_v2_pilot.json) 声明当前 6 项 Jev 决策点对照，默认 shadow、固定 `jev-1.13.0`，逐项概率门槛为 0.85。[V1 配置](experiments/jev_routing_pilot.json) 保留作历史记录，当前 runner 不再读取。原 E1–E5 配置不变；凭据 `JEV_API_KEY` 只放在 `.env.experiments`。
+
+[experiments/hp003_jev_active.json](experiments/hp003_jev_active.json) 是单独的 4 项 active 对照：hp003_a/b 各运行 E4_JEV 和 E4，Jev 优先选择验证工具，无法组成符合现有策略的计划时才使用 LLM 规划。`scripts/hp003_jev_active.sh` 固定调用对应模块，预算为 120 请求、1800 秒。两组共享源码、场景和 fixture；正确标签不单独证明 Jev 已被采用，须检查 `routing.decisions.*.applied` 和 planner 请求。
+
 | 目录 | 职责与使用者 |
 | --- | --- |
 | `models/` | micro 与 native 两份模型默认参数，由 runner／诊断显式引用 |

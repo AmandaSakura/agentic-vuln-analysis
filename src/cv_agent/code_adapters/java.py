@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -320,7 +321,11 @@ def parse_java_source(repository_id: str, relative_path: str, text: str) -> Java
             )
 
     visit(root)
-    return JavaParseResult(documents=tuple(documents), has_error=root.has_error)
+    digest = hashlib.sha256(source).hexdigest()
+    return JavaParseResult(
+        documents=tuple(document.model_copy(update={"source_sha256": digest}) for document in documents),
+        has_error=root.has_error,
+    )
 
 
 def load_java_repository(repository_id: str, source_root: Path) -> tuple[list[CodeDocument], list[str]]:

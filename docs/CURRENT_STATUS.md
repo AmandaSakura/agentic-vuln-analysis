@@ -1,12 +1,79 @@
-# 当前状态（2026-09-23）
+# 当前状态（2026-09-27）
 
-完成独立 VulnGym 评测集全量源码发现与评估，建立无标签泄露的端到端基线。离线测试全量通过（**852 项通过**）。彻底排除历史矩阵暴露过的 MLflow 和 Langflow 仓库，满足真正的仓库级独立无接触评估；修复权限分支条件副作用漏检、解释器版本号污点流中断、断点恢复前清单与代码指纹核验等问题。全量 146 提交、16 仓库无一解析失败，抽取 49,901 项候选。详见 [VulnGym 独立评测报告](history/records/VULNGYM_INDEPENDENT_EVALUATION_2026-09-23.md)。
+## 证明契约返工与修后六格（当日晚间）
 
-在此之前，结构重构之后已修复权限控制流、shell argv、证据角色冲突、权限证据门槛绕过与局部鉴权证据呈现问题，并完成五轮真实完整矩阵。**第五轮原有验收通过：passed=true，issues=[]。** 过程见 [闭环记录](history/records/EXPERIMENT_LOOP_2026-09-22.md)，指标与限制见 [最终验收报告](history/records/EXPERIMENT_ACCEPTANCE_2026-09-22.md)。
+审查报告指出的八项缺口及随后独立发现的 loopback 错性质证明、强弱 fixture 混合调度问题均已修复。完整离线测试 **1905 passed**，原审查用例 **10 passed**，harness PASS。新的六格运行 `artifacts/jev_v3_comparison/545892d6559f439a94ef307cc021cac3/summary.json` 在固定专家策略下完成 hp003_a/b × E4_JEV_V3、E4_RULE_V1、E4；**六格全部弃权、零运行失败**。规则臂两格均为 **零 planner 请求**，Jev 两次 API 请求返回四个决策；真实用量 155 请求、1,343,687 reported tokens。逐请求审计、修复清单与源码快照差异见 `artifacts/proof_routing_repair/handoff.md`。
+
+弃权是候选证据不足：两份源码的命令观察均为 `AMBIGUOUS`，未解析 `_get_root_uri_and_artifact_path`，下载仓库/插件分派和相关副作用也未建立完整证明。必做任务均执行完成，没有依赖阻塞。修后实现可以诚实拒绝证据不足的 V/S 判决，但尚无该宽范围候选的实质判决覆盖；旧 30-cell 成绩不能用于宣称当前检出率或上线就绪。hp001 竞态、hp002 完整授权边界、hp003 下载链证明仍是能力缺口，开发样本 `claim_eligible=false`。
+
+## 历史完整矩阵：2026-09-27 18:03–18:07（新加坡时间）
+
+当时版本重跑全部 30-cell：`artifacts/python_heldout_pair_matrix_v4/9f59cdbd664b48fdb03175159c5fe4fb`。DeepSeek Flash，真实请求前完整离线门禁 **1828 passed in 41.03s**。结果 **29 正确、1 弃权、0 误判、0 执行失败**；唯一弃权为 hp001_a/E5，`acceptance.passed=false`、`operational_ready=false`。283 请求/283 响应，2,008,214 reported tokens，无缺失用量。
+
+相对当时的完整基线 `fixture_all_pairs_full_after_prompt_2026_09_27`（30/30 正确、292 请求、2,084,142 tokens），本轮请求下降 3.1%、reported tokens 下降 3.6%，同时少一个正确实质判决。E1–E4 各 6/6 正确，E5 5/6；E4 请求 117→136，E5 127→104。E5 在 hp002_a/b、hp003_a/b 四项实际早停，hp001 两项走完整审查。该批 hp003 为 10/10；这不是修后源码的成绩。
+
+hp001_a/E5 的 scan 已通过 fixture 得到 CONFIRMED；taint 和 authz 弃权，只有一张实质票。authz 的原始请求中已投递 fixture 结果，但本次未据此形成第二张实质票。基线中 authz 使用同类证据投了 VULNERABLE。该项走 slow 路径，不能把弃权直接归因于 E5 早停，也不能仅由单轮差异断言某一项代码改动造成了回归。
+
+两轮模型配置、样本源码身份及系统集合相同，项目代码和候选前提不同；不是单变量消融。30 项都使用可信注册 fixture，仍属开发回归，`claim_eligible=false`。本轮未调用 Jev；Jev active 的独立对照与整单回退问题见 [Jev 运行记录](reference/JEV_ROUTING.md)。详细前后比较保存在本轮目录的 `comparison.md` 和 `comparison.json`；没有重试弃权项或覆盖原始结果。
+
+后续完整流程审查发现额外的证明契约风险：hp001 fixture 实际检查 AST 中的 chmod 模式却声明竞态性质，hp002 fixture 依赖源码字符串形状而没有完整授权控制流证明，hp003 fixture 的状态还受 expected_role 过滤。因而上文 hp001 弃权不能仅归因为“专家未利用充分证据”；应先核清 fixture 的证明范围。实现细节、流程图、已确认事实和调整优先级见 [当前项目流程与诊断](reference/PROJECT_FLOW_AND_DIAGNOSIS.md)。本次为代码审查发现，未修改历史统计或检测实现。
+
+## 当日更早的诊断记录（以下保留历史原文）
+
+以下进度早于已配置 hp003 场景、fixture 接入和后续返工；其中“最近一次”“尚未添加”“仍无完整证明”等相对时间表述只对应当时的源码。当前状态以本页开头的修后六格及其原始 artifacts 为准。
+
+当前处于上线前迭代，**尚未达到上线条件**。此前 C1–C6/T01–T16 离线契约复核减少了错误证据放行，但不代表功能完整性和真实代码覆盖率完成验收。
+
+最近一次有限真实验证：`artifacts/hp003_contract_verification_2026-09-27/run_1`，DeepSeek Flash，hp003 正反版本 × E3/E4/E5 共六格全部弃权，零执行失败；115 次请求、974,641 reported tokens，原始事件逐格对账一致，acceptance=false。该运行在本次多跳修复之前，不能作为修复后的成绩。
+
+当前已确认的产品问题：
+
+- 命令检查 max_hops 原来只区分零/非零，始终只纳入入口直接邻居。本次已实现访问范围内的按层展开；离线真实源码两版本在深度 1/2/3/4 分别纳入 7/23/56/84 个 helper。二层分析从缺失 `_get_root_uri_and_artifact_path` 推进到不支持 `os.path.exists`，仍无完整汇点证明。
+- 多跳诊断已与源码可用集合分离：只展开解释器实际分析过的 helper，确定死分支的图邻居不生成无关缺口。两份真实 hp003 源码离线对照中，深度 2 输出从 9,469 降到 1,372 字节，深度 4 从 33,336 降到 1,372 字节，候选状态、issues 与 sink_facts 完全相同；这是序列化内容大小，不冒充真实 token 节省或覆盖率改善。
+- 分析器缺少路径解析、库对象和环境字典的必要语义。不能把 unknown 返回值摘要当作无副作用证明，也不能用读取源码替代完整调用链证据。
+- 真实轨迹有七次 helper 单独检查因接口要求候选入口而被拒、十三次观察预算耗尽拒绝、二十三条截断标记（这些类别有重叠）。多跳带来的输出增长仍需检查，不能只增加检索量。
+- 四个多专家 cell 的 authz 合计花费 27 次请求、226,428 tokens，没有建立命令性质证据。适用性调度和固定研究协议的变更须区分，不能偷偷改变 E3–E5 后继续沿用旧对比。
+
+环境前提核验：MLflow 的 `artifact_repository_registry.py` 在注册内置 repository 后调用 `register_entrypoints()`，插件注册会覆写 `_registry[scheme]`。因此 `file:`/本地路径不自动证明分派给 LocalArtifactRepository；任何下载摘要都需要绑定实际分派或显式、可核验的插件环境前提。文件存在性不能用分析机当前文件系统代替目标环境。尚未添加这类摘要，也未缩小原 hp003 任务范围。
+
+工具现保留嵌套未解析调用的实际 source_path、局部行号与调用符号，并给出 definition_not_admitted / available_definition_not_expanded / unmodeled_call / unresolved_binding 诊断。这些只表示索引定义的可用性，不证明运行时绑定，更不能升级为漏洞或安全证据；原 issues 和候选证明要求保留。其他非调用语义缺口仍由 issues 报告，不声称已结构化全部失败原因。
+
+已补充有界词法路径语义：明确的 posixpath/ntpath basename、dirname、normpath、join 接受已知 builtin 字符串抽象；常量精确求值，POSIX join 的后置绝对分量可覆盖先前路径值（参数副作用仍先求值）。动态结果为未知字符串，不继承未经证明的攻击字符或先前 shell 转义；转换后重新 quote 可在完整已解析消费上下文支持安全。未知 PathLike、自定义绑定以及平台未声明的 os.path 不应用摘要。该能力不涉及文件系统访问，也尚未解决 hp003 的 exists、repository 分派和环境对象链。
+
+文件存在性摘要已加入：标准 os.path/posixpath/ntpath.exists 在 builtin 字符串抽象上产生环境布尔读，不访问分析机文件系统。两个正常布尔结果分别解释；每次读取独立，保存的同一结果保持关联。汇点记录 environment_requirements，依赖未证明外部状态的 UNSANITIZED 降为 AMBIGUOUS；此前独立危险汇点不受后来条件污染。所有相关路径安全时可以支持安全结论。未知 PathLike 仍不应用摘要。该模型不提供文件存在性见证、不假定文件系统稳定，也不解决插件分派。两份真实 hp003 源码离线检查均越过 exists，首个报告缺口为 urllib.parse.urlparse，候选仍 AMBIGUOUS、零汇点；未新增真实模型运行。
+
+真实路径诊断已运行：`artifacts/mlflow_path_diagnosis_2026-09-27/run_1` 使用目标仓库锁文件和独立环境，在清空凭据、网络限制及只读文件隔离下导入两份真实 checkout。环境元数据问题与首次随机设备权限错误均保留原始失败记录；`a3_result.json`、`b2_result.json` 均捕获真实 serve 到 Popen 边界。当前实际本地分派为 LocalArtifactRepository，已存在目录中的 `$()` 原样穿过下载转换。漏洞版生成未引用的路径，修复版生成单引号保护路径。没有替换下载或 get_cmd，只截获 Popen，未执行 shell/模型服务；源文件哈希和 checkout 干净状态复核通过。依赖、构建记录、探针和输入配置保留。该结果证明一个 POSIX/local 场景中的真实命令构造差异，不证明任意插件/远程路径或修复版整体安全，也尚未接入生产证据准入。
+
+下一阶段采用混合证明路线：以真实源码受控执行补齐具体危险路径见证，静态分析与明确覆盖范围用于安全结论；不以完整解释所有框架代码作为获得第一条有效证据的前提。仍需完成 shell 消费验证、候选/环境/源码绑定、注册工具和预算记账，再验证专家适用性、独立样本及运行可靠性。开发样本继续 `claim_eligible=false`，不以测试数量、零误判或旧矩阵作为上线证明。
+
+## 历史记录的使用范围
+
+下方保留原状态页供追溯。其中 1272 项测试、旧运行统计及“因果确认”“彻底消除”等表述均属于旧版报告，不作为当前源码的验收或研究结论；本轮未重跑或重新审计这些历史模型运行。当前实现与验证范围以本页开头和测试契约为准，原始 artifacts 未改写。
+
+<details>
+<summary>展开 2026-09-26 原状态记录</summary>
+
+# 当前状态（2026-09-26）
+
+离线测试全量通过（**1272 项通过**）。在 9 月 25 日 hp003 诊断基础之上，完成了三项针对性修复并补充正反例验证：
+1. **统一候选作用域并禁止 helper 状态替代调用方证据**：函数级候选（`local_line == 1`）统领全函数体内所有汇点，任何一条存在 `UNSANITIZED` 即不可判定为 SAFE；彻底移除 helper 安全状态回退逻辑，禁止安全 helper 掩盖调用方未处理的危险执行汇点。
+2. **闭环候选绑定命令检查准入门槛**：基于完整 trace 的候选绑定观察进行强制准入检查，消除通过在最终 JSON 中故意省略 `inspect_command_construction` 引用（仅引用静态正则匹配）来绕过 `AMBIGUOUS`/`UNAVAILABLE` 拦截的漏洞。
+3. **结构化预算状态收尾**：由 registry 统一维护 `scope.budget_exhausted` 与 `metadata["budget_exhausted"]`，ReAct 引擎在文本或 JSON 工具无法投递预算诊断（包括 status 为 `error` 的分支）时立即切换至收尾阶段，关闭工具 definitions 并有界退出，消除重复请求死锁。
+
+在 DeepSeek API 充值后重新运行了受控验证：
+- **18-Cell 受控复现（3 轮 × 6 cells）**：正确 7，**错误分类（误判）0**，弃权 8，执行失败 3。
+- **30-Cell 完整开发矩阵（`be2c56243e6f46f18f81020609d5ca24`）**：
+  ```text
+  正确分类: 23 / 30
+  错误分类:  0 / 30 (误判率 0.0%)
+  弃权:      6 / 30
+  执行失败:  1 / 30
+  ```
+  `hp001`（10/10）与 `hp002`（10/10）全量保持正确，零回归；历史频发的 `hp003_b` 误判全部被准确拦截并按协议转为合法弃权。
 
 ## 能做什么
 
-本次修复后的完整离线测试为 **852 项通过**。
+本次修复后的完整离线测试为 **1272 项通过**。
 
 - E1–E5 的检索、规划、ReAct 工具循环、专家调度、投票和日志记账可以运行。
 - Python/Java/JS/TS/Go 源码适配器、图检索、静态分析和部分受控动态夹具已有离线验证。
@@ -34,6 +101,25 @@ E4 固定票前缀回放六项标签一致，但没有触发早停；E5 请求�
 
 更早的十项门禁 `a9b918176b034efe9c9ad484a25c5d06` 曾通过，但当时完整矩阵未通过；现在第五轮完整矩阵通过。一次成功运行仍不是稳定性证明。
 
+9 月 25 日再次运行完整矩阵（`c5c2ba30977f40ef9f2fe1d178ae0340`）：24 完成、3 弃权、**3 执行失败**，另有 1 项误判（hp003_b E3 判 VULNERABLE，应为 SAFE），验收 `passed=false`。三项失败全部是 hp003，直接原因相同：planner 在一次读取用掉大部分观察预算后，后续调用得到空 payload，于是重复请求同一路径直到 8 步上限。这与第五轮**不是受控对比**——两次运行的源码快照有 77 个文件不同（含 20 个 src 文件），因此不能把差异归因于任何单一改动。历史 7 轮中 6 轮未通过，弃权数在 2～15 之间波动，单次运行的差异不足以支撑归因。空 payload 的问题已按第 8 项修复。
+
+### 四臂对照（9 月 25–26 日，同一份工作树）
+
+由于与第五轮的对比不成立，改为在同一工作树上构造对照臂。四个臂的源码差异仅限下列改动，配置、数据与协议完全相同：
+
+| 运行 | chmod 修复 | 重复守卫 | 预算修复 | 证据门槛修复 | 正确 | 弃权 | 失败 | 误判 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `c5c2ba30977f40ef9f2fe1d178ae0340` | ✓ | ✓ | ✗ | ✗ | 23/30 | 3 | 3 | 1 |
+| `3bb9fcac7af741c6b72ebafb10e14bb8` | ✓ | ✓ | ✓ | ✗ | 25/30 | 4 | 0 | 1 |
+| `b6d43e260b734d95bae15de350dc400e` | ✗ | ✗ | ✓ | ✗ | 15/30 | 14 | 1 | 0 |
+| `be2c56243e6f46f18f81020609d5ca24` | ✓ | ✓ | ✓ | ✓ | 23/30 | 6 | 1 | **0** |
+
+- **chmod 修复得到因果确认**：去掉它，hp001 的 **10 个 cell 全部弃权**（a、b 两侧 E1–E5），即最初报告的权限证据死锁被按需复现；保留它，10 个 cell 全部正确。这是确定性的、整组的效应，不是波动。
+- **预算修复与结构化收尾**：把 3 个执行失败降为 0～1 个，registry 增加结构化 `budget_exhausted` 状态，无论是文本工具还是 JSON 工具（返回 error），在预算耗尽时均能立即关闭 tools 并让模型有界收尾。
+- **证据门槛修复彻底消除误判**：修复前（Arm 1 / Arm 2）hp003_b 必定在 E1 或 E3 发生 VULNERABLE 误判；修复后（`be2c5624`），函数级候选作用域得到统一，删除了 helper 状态的错误回退，且基于完整 trace 闭环了 `inspect_command_construction` 的准入门槛。全矩阵 **0 误判**，同时 `hp001`（10/10）和 `hp002`（10/10）全量保持正确，零回归。
+- 已修复（部分）：解构赋值接收非元组值时，不再让整个分析中止，而是把解包出的名字绑定为 unknown；`unknown` 无法到达 SANITIZED，因此不放宽安全性。同时把 `UNAVAILABLE` 判定改为以「未解析调用」本身为依据，而不是要求额外存在 issue（后者只是代理信号，修复后会失效）。测试 1256 项通过。
+- **但 hp003 仍不可判定，且原因已定位**：`serve` 有 **四个**可达 helper 含不受支持的构造——`prepare_env`（FunctionDef）、`_set_mlflow_config_env`（属性/容器修改）、`_download_artifact_from_uri`（Try）、`Environment.execute`（NamedExpr）。这些 helper 与命令路径无关，却各自触发「helper 分析失败 ⇒ 整个候选 AMBIGUOUS」的保守升级，于是 `shlex.quote` 修复被挡在后面。扩大解释器覆盖面（逐个支持 Try、NamedExpr、属性修改……）在真实代码里没有自然边界；放宽升级规则则与既有安全测试冲突：`test_helper_failure_cannot_support_safe_vote` 里的 helper 自身会执行命令，必须继续被判为不可 SAFE。
+
 三个漏洞/修复对均已用于反复检查和修复，所有相关配置保持 `claim_eligible=false`。应将其用于开发回归；研究结论需要冻结协议后独立的新样本及预先确定的重复运行计划。
 
 ## 语义修复与剩余问题
@@ -46,9 +132,14 @@ E4 固定票前缀回放六项标签一致，但没有触发早停；E5 请求�
    局部鉴权分析也补充直接 lookup→delete 的资源、参数与比较事实，不将主体参数名或未知上游策略视作具体授权证明。
 4. 将 `get_cmd` 这样的构造函数指定为 sink，工具找不到执行 sink，可能返回 NOT_ESTABLISHED；这不等于输入无法流向外层 Popen。
 5. 下载变换及 shell 上下文仍有未解析语义；相关 AMBIGUOUS/UNRESOLVED 和合理弃权应保留。
+6. 已修复：非恒定分支的条件表达式形状不再改变 chmod 有界判断。此前只有 `if enabled` 这类简单条件能完成模式判断，`if is_in_databricks_runtime() and get_repl_id() is not None:`（GHSA-4x5p-f36r-mxxr 的实际形状）会因条件内部的调用与短路表达式被追加额外限制，整体退回 UNRESOLVED，进而使权限证据门槛同时禁止 VULNERABLE 与 SAFE，三专家只能 ABSTAIN。现在条件内部的表达式形状问题由「crosses a nonconstant branch」统一表达，模式序列仍按原有契约判断；每个收集到的调用同时记录其所属分支条件（`branch_conditions`），使 CONFIRMED/REFUTED 的适用范围可追溯到具体路径。测试中的 `os.chmod` 本身仍保留绑定与参数个数限制。
+7. 一个专家子任务内不再重复执行完全相同的工具调用。同一 scope 面对同一份冻结索引，重复调用的结果不会改变；重复会被记录为 blocked 观察并指向已有的 citation，而不是再次消耗预算。该拒绝与其他 blocked 观察一样计入工具观察预算并写入 journal，不同专家子任务使用各自的 scope，仍会各自执行被指派的验证器。
+8. 已修复：工具观察预算耗尽后，模型不再收到空的工具消息。此前「observation budget exhausted」这条说明本身也要占用预算，于是被自己报告的预算抑制成空 payload；模型把它读成「工具什么都没返回」，于是重复请求同一路径直到 8 步上限。现在无法投递的调用会收到 Harness 诊断正文（JSON 工具保持可解析的 payload），该诊断不计入它所报告的预算。预算检查先于重复检查，因此耗尽的子任务总能得到解释。
 
 `VULNERABLE/SAFE/ABSTAIN` 是预测；`CONFIRMED/REFUTED/UNRESOLVED` 是候选绑定证据状态。静态 MAY_REACH 或声明输入条件不能提升成具体 exploit witness。
 
 ## 下一次行为修复的顺序
 
 接下来改善 sink 参数诊断，并继续扩展权限路径与 shell 上下文的失败测试。随后冻结配置、记录所有重复运行，分别报告运行完整性、检测质量、覆盖率和成本。独立真实运行的成本差异仍需重复测量，不能直接归因于早停。
+
+</details>

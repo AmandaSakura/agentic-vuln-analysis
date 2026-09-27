@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 ROOT = PROJECT_ROOT
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties
 from cv_agent.evaluation.metrics import select_cases
 from cv_agent.evaluation.datasets.loaders import load_owasp_expected_results
 from cv_agent.runtime.provenance import build_run_identity
@@ -16,7 +16,7 @@ def main():
     benchmark = ROOT / 'data/raw/BenchmarkJava'
     labels = load_owasp_expected_results(benchmark / 'expectedresults-1.2beta.csv')
     selected = select_cases(labels, config['per_category_per_label'])
-    inputs = load_owasp_agentic_inputs(ROOT / 'data/raw', case_ids=selected)
+    inputs = load_owasp_agentic_inputs(ROOT / 'data/raw', case_ids=selected, property_ids=development_owasp_properties(ROOT, selected))
     pilot = [next(case for case in selected if labels[case].category == config['pilot_category']
                   and labels[case].vulnerable == vulnerable) for vulnerable in (False, True)]
     output = ROOT / 'configs/datasets/development_manifest.json'

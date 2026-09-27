@@ -8,10 +8,10 @@ from typing import Generic, TypeVar
 from pydantic import BaseModel, ValidationError
 
 from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
-from cv_agent.agents.evidence_policy import validate_conclusion
+from cv_agent.agents.evidence_policy import IncompleteValidationTaskError, InsufficientEvidenceError, validate_conclusion
 from cv_agent.domain.review import AgentExpertConclusion, AgentExpertVote, PlannerResult, ValidationPlan
 from cv_agent.domain.chat import ChatMessage, ModelUsage
-from cv_agent.domain.evidence import ReActStep
+from cv_agent.domain.evidence import ReActStep, ValidationStatus
 from cv_agent.harness import ExpertName, ReActLoopHarness
 from cv_agent.runtime.model import ChatModel, trusted_runtime_mode
 
@@ -83,6 +83,7 @@ class ReActEngine:
         output_model: type[OutputT],
         required_validators: tuple[str, ...] = (),
         output_validator: Callable[[OutputT], None] | None = None,
+        require_tool_attempt: bool = True,
     ) -> ReActRun[OutputT]:
         schema = json.dumps(
             output_model.model_json_schema(),
@@ -162,10 +163,11 @@ class ReActEngine:
         model_calls = 0
         successful_observations = 0
         starting_observed_tokens = self.scope.observed_tokens
+        budget_exhausted = False
 
         for step_index in range(self.harness.max_steps):
             final_step = step_index == self.harness.max_steps - 1
-            finalization_step = final_step or (
+            finalization_step = final_step or budget_exhausted or (
                 self.harness.max_steps >= 3
                 and step_index >= self.harness.max_steps - 2
             )
@@ -208,6 +210,8 @@ class ReActEngine:
                     )
                     if observation.status == "ok":
                         successful_observations += 1
+                    if self.scope.budget_exhausted or observation.metadata.get("budget_exhausted"):
+                        budget_exhausted = True
                     trace.append(
                         ReActStep(
                             step=self.citation_offset + len(trace) + 1,
@@ -226,7 +230,18 @@ class ReActEngine:
                     )
                 continue
 
-            if self.harness.require_tool_observation and successful_observations == 0:
+            if require_tool_attempt and self.harness.require_tool_observation and not trace:
+                # No tool attempt at all yet: bounce every final attempt (even
+                # ABSTAIN). AgentExpertVote structurally requires tool_calls >=
+                # 1, so a zero-attempt final cannot become a vote; this also
+                # preserves the historical behavior pinned by
+                # test_react_expert_rejects_final_answer_until_successful_tool_call.
+                # Once an attempt exists, unified validation below decides: a
+                # voluntary ABSTAIN may finalize, while a material prediction
+                # without a successful typed observation is rejected with the
+                # structured reason no_successful_observation (C5/C6) and, on
+                # the final step, demoted to an explicitly marked runtime
+                # ABSTAIN instead of failing the budget.
                 messages.extend(
                     (
                         ChatMessage(role="assistant", content=reply.content),
@@ -243,15 +258,66 @@ class ReActEngine:
             try:
                 raw_output = parse_final_json(reply.content)
                 output = output_model.model_validate(raw_output)
+                if output_validator is not None:
+                    output_validator(output)
                 if isinstance(output, AgentExpertConclusion):
                     validate_conclusion(
                         output, [*self.prior_trace, *trace], self.scope.initial_evidence_ids,
                         required_validators, current_trace=trace,
                         subject=self.scope.subject,
                     )
-                if output_validator is not None:
-                    output_validator(output)
             except (ValueError, ValidationError) as error:
+                if final_step and isinstance(output_model, type) and issubclass(output_model, AgentExpertConclusion):
+                    if isinstance(error, InsufficientEvidenceError):
+                        rejected_output = output_model(
+                            expert=output.expert,
+                            label="ABSTAIN",
+                            confidence=0.0,
+                            validation_status=ValidationStatus.UNRESOLVED,
+                            evidence_ids=output.evidence_ids,
+                            supporting_observation_ids=(),
+                            counter_observation_ids=(),
+                            unresolved_observation_ids=(),
+                            rationale=(
+                                f"Runtime rejected proposed {output.label}: "
+                                f"insufficient evidence ({error.reason_code}). "
+                                "Finalization budget exhausted without compliant verdict."
+                            )[:360],
+                        )
+                        return ReActRun(
+                            output=rejected_output,
+                            trace=tuple(trace),
+                            model_ids=tuple(dict.fromkeys(model_ids)),
+                            model_calls=model_calls,
+                            tool_calls=len(trace),
+                            tool_observation_token_count=self.scope.observed_tokens - starting_observed_tokens,
+                            usage=usage if usage is not None else ModelUsage(),
+                        )
+                    if isinstance(error, IncompleteValidationTaskError):
+                        missing_str = ", ".join(error.missing_validators)
+                        rejected_output = output_model(
+                            expert=output.expert,
+                            label="ABSTAIN",
+                            confidence=0.0,
+                            validation_status=ValidationStatus.UNRESOLVED,
+                            evidence_ids=output.evidence_ids,
+                            supporting_observation_ids=(),
+                            counter_observation_ids=(),
+                            unresolved_observation_ids=(),
+                            rationale=(
+                                f"Assigned validator ({missing_str}) did not complete "
+                                "before finalization budget exhaustion. Terminated as ABSTAIN."
+                            )[:360],
+                        )
+                        return ReActRun(
+                            output=rejected_output,
+                            trace=tuple(trace),
+                            model_ids=tuple(dict.fromkeys(model_ids)),
+                            model_calls=model_calls,
+                            tool_calls=len(trace),
+                            tool_observation_token_count=self.scope.observed_tokens - starting_observed_tokens,
+                            usage=usage if usage is not None else ModelUsage(),
+                        )
                 feedback = str(error)
                 if isinstance(error, ValidationError) and output_model is AgentExpertConclusion:
                     for detail in error.errors():

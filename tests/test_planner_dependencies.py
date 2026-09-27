@@ -12,6 +12,8 @@ from cv_agent.retrieval import RepositoryIndex
 from cv_agent.domain.types import Candidate, CodeDocument, Evidence
 from cv_agent.tools.validation import FixtureCase, FixtureOutcome, full_agent_tools
 from cv_agent.domain.review import ValidationPlan
+from cv_agent.domain.evidence import FixtureProofScope, ValidationStatus
+from cv_agent.tools.identity import candidate_subject
 
 
 PATH = "entry.py"
@@ -41,6 +43,12 @@ def test_earlier_subtask_reserves_observation_budget_for_same_expert(monkeypatch
 
 
 def run_plan(tasks, *, system="E5", labels=None):
+    # C1/C5: scheduling-only tasks abstain; explicit material-vote scenarios
+    # use actual command construction proofs with declared text input.
+    validators = dict(VALIDATORS)
+    if labels is not None:
+        validators.update(scan=("inspect_command_construction", "source_path"),
+                          taint=("inspect_command_construction", "source_path"))
     has_safe_prediction = any("SAFE" in votes for votes in (labels or {}).values())
     document = CodeDocument(
         repository_id="r", path=PATH,
@@ -52,20 +60,25 @@ def run_plan(tasks, *, system="E5", labels=None):
             "    return eval(str(value))\n"
         ) if has_safe_prediction else "def entry(request):\n    return eval(request.args['value'])\n",
     )
+    if labels is not None:
+        command = "'echo ' + shlex.quote(value)" if has_safe_prediction else "'echo ' + value"
+        document = document.model_copy(update={"text": f"import os, shlex\ndef entry(value):\n    os.system({command})\n"})
     index = RepositoryIndex([document])
-    candidate = Candidate(candidate_id="c", case_id="c", repository_id="r", path=PATH, line=1, query=document.text)
+    candidate = Candidate(candidate_id="c", case_id="c", repository_id="r", path=PATH, line=1, query=document.text, property_id="dynamic-evaluation")
+    if labels is not None:
+        candidate = candidate.model_copy(update={"line": 2, "property_id": "command-execution", "input_parameters": ("value",)})
     plan = {
         "candidate_id": "c", "vulnerability_hypotheses": ["test candidate"],
         "subtasks": [{
             "task_id": task_id, "expert": role, "objective": f"inspect {task_id}",
-            "dependencies": dependencies, "allowed_validator": VALIDATORS[role][0],
+            "dependencies": dependencies, "allowed_validator": validators[role][0],
             "success_condition": f"evidence for {task_id} is assessed",
         } for task_id, role, dependencies in tasks],
         "rationale": "A test plan with explicit data dependencies.",
     }
 
     def tool_reply(role, ordinal=1):
-        name, key = VALIDATORS.get(role, ("read_span", "path"))
+        name, key = validators.get(role, ("read_span", "path"))
         return ModelReply(model_id="scripted-test", tool_calls=(
             ModelToolCall(call_id=f"{role}-{ordinal}", name=name, arguments={key: PATH}),
         ))
@@ -77,16 +90,16 @@ def run_plan(tasks, *, system="E5", labels=None):
     for role in ("scan", "taint", "authz"):
         replies = []
         for ordinal in range(1, max(1, counts[role]) + 1):
-            label = (labels or {}).get(role, ["VULNERABLE"] * max(1, counts[role]))[ordinal - 1]
+            label = (labels or {}).get(role, ["ABSTAIN"] * max(1, counts[role]))[ordinal - 1]
             reply = tool_reply(role, ordinal)
             evidence_ids = [f"{role}/tool:{ordinal}"]
             if role == "taint" and label == "SAFE":
                 reply = reply.model_copy(update={"tool_calls": (
                     *reply.tool_calls,
-                    ModelToolCall(call_id="taint-sanitizers", name="find_sanitizers",
+                    ModelToolCall(call_id="taint-source", name="read_span",
                                   arguments={"path": PATH}),
                 )})
-                evidence_ids = ["taint/tool:2"]
+                evidence_ids = ["taint/tool:1"]
             if role == "scan" and label == "SAFE":
                 # The resumed scan can refine its hypothesis using the actual
                 # sanitizer observed by its completed taint dependency.
@@ -127,7 +140,7 @@ def test_expert_can_resume_after_another_expert_and_fast_waits_for_its_final_vot
         ("S1", "scan", []), ("T", "taint", ["S1"]),
         ("S2", "scan", ["T"]), ("A", "authz", ["S2"]),
     ]
-    labels = {"scan": ["VULNERABLE", "SAFE"], "taint": ["SAFE"], "authz": ["ABSTAIN"]}
+    labels = {"scan": ["ABSTAIN", "SAFE"], "taint": ["SAFE"], "authz": ["ABSTAIN"]}
     full, _ = run_plan(tasks, system="E4", labels=labels)
     fast, models = run_plan(tasks, labels=labels)
     assert fast.label == full.label == "SAFE"
@@ -145,7 +158,7 @@ def test_expert_can_resume_after_another_expert_and_fast_waits_for_its_final_vot
     assert fast.model_calls == 8
     assert fast.tool_calls == 5
     assert fast.votes[0].evidence_ids == ("scan/tool:2", "taint/tool:2")
-    assert fast.votes[1].trace[-1].observation.tool == "find_sanitizers"
+    assert fast.votes[1].trace[-1].observation.tool == "read_span"
     for vote in fast.votes:
         assert vote.tool_observation_token_count <= FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens
 
@@ -154,7 +167,7 @@ def test_repeated_tasks_do_not_give_one_expert_multiple_quorum_votes():
     verdict, _ = run_plan([
         ("S1", "scan", []), ("S2", "scan", ["S1"]),
         ("T", "taint", ["S2"]), ("A", "authz", ["T"]),
-    ], labels={"scan": ["VULNERABLE", "VULNERABLE"], "taint": ["ABSTAIN"], "authz": ["SAFE"]})
+    ], labels={"scan": ["VULNERABLE", "VULNERABLE"], "taint": ["ABSTAIN"], "authz": ["ABSTAIN"]})
     assert verdict.label == "ABSTAIN"
     assert verdict.path == "slow"
     assert len(verdict.votes) == 3
@@ -401,6 +414,87 @@ def test_get_cmd_command_plan_requires_scan_and_taint_construction_checks():
     })
     with pytest.raises(ValueError, match="redundant scan validators"):
         pipeline._validate_plan(redundant_static_scan, candidate, evidence)
+
+
+def test_qualified_fixture_satisfies_get_cmd_command_plan_policy():
+    backend = CodeDocument(
+        repository_id="r",
+        path=PATH,
+        text=(
+            "def entry(model_uri):\n"
+            "    command, env = mlserver.get_cmd(model_uri)\n"
+            "    return subprocess.Popen([\"bash\", \"-c\", command])\n"
+        ),
+        defines=("entry",),
+        calls=("mlserver.get_cmd", "subprocess.Popen"),
+    )
+    helper = CodeDocument(
+        repository_id="r",
+        path="helper.py::get_cmd@1-3",
+        text=(
+            "def get_cmd(model_uri):\n"
+            "    cmd = f\"run {model_uri}\"\n"
+            "    return cmd, {}\n"
+        ),
+        defines=("mlserver.get_cmd", "get_cmd"),
+    )
+    index = RepositoryIndex([backend, helper])
+    candidate = Candidate(
+        candidate_id="c",
+        case_id="c",
+        repository_id="r",
+        path=PATH,
+        line=1,
+        query="entry",
+        property_id="command-execution",
+    )
+    # C1/B3: a registered case alone cannot replace the command obligations.
+    fixture = FixtureCase(
+        "fixture", lambda: FixtureOutcome(status="CONFIRMED", summary="ok"),
+        subject=candidate_subject(index, candidate),
+        proof_scope=FixtureProofScope(
+            contract_id="bounded-command-witness",
+            property_id="command-execution",
+            coverage="candidate",
+            method="bounded_execution",
+            supported_statuses=(ValidationStatus.CONFIRMED,),
+        ),
+    )
+    pipeline = AgenticPipeline(
+        index=index,
+        system=AgentSystemVersion.E4_GRAPH_MULTI,
+        models={
+            "planner": ScriptedChatModel([]),
+            "scan": ScriptedChatModel([]),
+            "taint": ScriptedChatModel([]),
+            "authz": ScriptedChatModel([]),
+        },
+        tools=ToolRegistry(full_agent_tools(index, fixture_cases=(fixture,)), max_output_bytes=1_000_000),
+    )
+    evidence = [Evidence(
+        evidence_id=f"local:{backend.path}",
+        path=backend.path,
+        text=backend.text + "\n" + helper.text,
+        retrieval="local",
+        score=1.0,
+    )]
+    fixture_only = ValidationPlan.model_validate({
+        "candidate_id": "c",
+        "vulnerability_hypotheses": ["command construction"],
+        "subtasks": [
+            {
+                "task_id": "t1",
+                "expert": "scan",
+                "objective": "run registered command fixture",
+                "dependencies": [],
+                "allowed_validator": "run_fixture_test",
+                "fixture_case_id": "fixture",
+                "success_condition": "fixture evidence is observed",
+            },
+        ],
+        "rationale": "fixture is candidate-bound proof",
+    })
+    pipeline._validate_plan(fixture_only, candidate, evidence)
 
 
 def test_assigned_validator_keeps_repository_inspection_available():

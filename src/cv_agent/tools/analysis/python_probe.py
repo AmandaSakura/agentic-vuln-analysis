@@ -207,17 +207,32 @@ class _Interpreter:
 
 
 def probe_python_eval(index: RepositoryIndex, admitted: frozenset[str], source_path: str,
-                      sink_path: str | None = None, max_hops: int = 4) -> dict:
+                      sink_path: str | None = None, max_hops: int = 4,
+                      entry_boolean_arguments: dict[str, bool] | None = None,
+                      input_parameters: tuple[str, ...] | None = None) -> dict:
     attempts = []
     witnesses = []
+    function_header_lines = []
     for payload in ("(481516 + 2342)", "(271828 - 31415)"):
         interpreter = _Interpreter(index, admitted, payload, sink_path, max_hops)
         try:
             _, entry = interpreter.function(source_path)
+            function_header_lines = [entry.lineno]
             positional = [*entry.args.posonlyargs, *entry.args.args]
             if not positional or positional[0].arg not in {"request", "req"}:
                 raise UnsupportedProbe("entry must accept request/req as its first parameter")
-            interpreter.invoke(source_path, [_Request()], {})
+            parameter_names = {arg.arg for arg in (*positional, *entry.args.kwonlyargs)}
+            if input_parameters is not None:
+                if set(input_parameters) - parameter_names:
+                    raise UnsupportedProbe("invalid declared entry input parameters")
+                if positional[0].arg not in input_parameters:
+                    raise UnsupportedProbe("request injection requires a declared entry input source")
+            scenario = entry_boolean_arguments or {}
+            if set(scenario) - parameter_names or any(type(value) is not bool for value in scenario.values()):
+                raise UnsupportedProbe("invalid declared entry boolean arguments")
+            # None is the standalone diagnostic recipe. Candidate callers pass
+            # their explicit source tuple, including an empty declaration.
+            interpreter.invoke(source_path, [_Request()], scenario)
             attempts.append({"input": payload, "outcome": "no witness"})
         except _Witness as witness:
             witnesses.append((witness.path, witness.line))
@@ -230,6 +245,9 @@ def probe_python_eval(index: RepositoryIndex, admitted: frozenset[str], source_p
     return {
         "status": "CONFIRMED" if confirmed else "UNRESOLVED",
         "method": "bounded-concrete-input-probe",
+        "function_header_lines": function_header_lines,
+        "input_parameters": list(input_parameters) if input_parameters is not None else None,
+        "entry_boolean_arguments": dict(entry_boolean_arguments or {}),
         "scope": "admitted Python function slices; not a full application exploit",
         "assumptions": ["request fields model attacker-controlled strings", "unshadowed eval models the Python builtin"],
         "attempts": attempts,

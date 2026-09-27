@@ -8,7 +8,7 @@ from cv_agent.evaluation.runners.run_development_benchmark import run_candidate,
 from cv_agent.runtime.snapshots import snapshot_sources
 from cv_agent.runtime.journal import utc_now, LockedJournal
 from cv_agent.runtime.budget import LockedBudget, execute_trials
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, select_owasp_entry
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties, select_owasp_entry
 from cv_agent.tools.identity import candidate_subject
 from cv_agent.evaluation.protocols.development import acceptance_issues, transport_issues, require_verification_capability
 from cv_agent.evaluation.datasets.java_fixture import java_command_fixture_cases
@@ -38,7 +38,7 @@ def run():
     identity = build_run_identity(project_root, {'BenchmarkJava': project_root / 'data/raw/BenchmarkJava'})
     if identity['datasets'] != manifest['identity']['datasets']:
         raise ValueError('Dataset differs from frozen manifest')
-    inputs = load_owasp_agentic_inputs(project_root / 'data/raw', case_ids=config['case_ids'])
+    inputs = load_owasp_agentic_inputs(project_root / 'data/raw', case_ids=config['case_ids'], property_ids=development_owasp_properties(project_root, config['case_ids']))
     candidates = select_owasp_entry(inputs, config['entry_method'])
     fixture_cases = java_command_fixture_cases(project_root, inputs.index, candidates)
     tools = full_agent_tools(inputs.index, fixture_cases=fixture_cases)

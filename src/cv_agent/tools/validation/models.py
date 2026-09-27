@@ -9,7 +9,12 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from cv_agent.domain.evidence import ValidationStatus, ValidationSubject
+from cv_agent.domain.evidence import (
+    FixtureCapability,
+    FixtureProofScope,
+    ValidationStatus,
+    ValidationSubject,
+)
 from cv_agent.domain.types import FrozenModel
 
 
@@ -59,7 +64,9 @@ class FixtureCase:
     runner: Callable[[], FixtureOutcome]
     timeout_seconds: float | None = None
     read_roots: tuple[Path, ...] = ()
+    executable_paths: tuple[Path, ...] = ()
     subject: ValidationSubject | None = None
+    proof_scope: FixtureProofScope | None = None
     isolated: bool = True
     resource_limited: bool = True
 
@@ -96,3 +103,4 @@ class LoopbackCase:
     body: bytes = b""
     read_roots: tuple[Path, ...] = ()
     subject: ValidationSubject | None = None
+    proof_scope: FixtureProofScope | None = None

@@ -50,6 +50,7 @@ def fixture(case_id: str):
     candidate = Candidate(
         candidate_id=case_id, case_id=case_id, repository_id="luna-flow-fixture",
         path=entry.path, line=3, query=entry.text,
+        property_id="dynamic-evaluation", input_parameters=("request",),
     )
     return RepositoryIndex(documents), candidate
 

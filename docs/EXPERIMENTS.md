@@ -4,7 +4,7 @@
 
 从仓库根目录执行 `uv run --no-sync pytest`。测试仅使用 scripted/mock 模型、临时源码和项目拥有的本地夹具，不加载真实模型凭据。
 
-`uv run --no-sync cv-agent harness-check` 检查系统声明；`synthetic`、`agentic-smoke`、`agentic-eval` 子命令检查确定性或 scripted 链路。受控 quorum 检查使用 `uv run --no-sync python -m cv_agent.evaluation.quorum_probe`。只执行完整测试准入、不发送模型请求的命令是 `uv run --no-sync python -m cv_agent.runtime.admission`。旧的 `cv_agent.quorum_probe_smoke` 和 `cv_agent.live_gate` 模块地址已删除。
+`uv run --no-sync cv-agent harness-check` 检查系统声明；`uv run --no-sync cv-agent readiness RUN_DIR` 审计已完成实验的运行/claim readiness；`synthetic`、`agentic-smoke`、`agentic-eval` 子命令检查确定性或 scripted 链路。受控 quorum 检查使用 `uv run --no-sync python -m cv_agent.evaluation.quorum_probe`。只执行完整测试准入、不发送模型请求的命令是 `uv run --no-sync python -m cv_agent.runtime.admission`。旧的 `cv_agent.quorum_probe_smoke` 和 `cv_agent.live_gate` 模块地址已删除。
 
 完整 pytest 通过只表示离线契约检查通过，不是实验检测效果的验收。
 
@@ -14,8 +14,15 @@
 | --- | --- | --- | --- |
 | 10 项开发回归门禁 | `bash scripts/heldout_gate.sh` | `configs/profiles/advisory_gate_v4.json` | `artifacts/python_heldout_pair_gate_v4/<run-id>/` |
 | 30 项矩阵 | `bash scripts/heldout_matrix.sh` | `configs/profiles/advisory_matrix_v4.json` | `artifacts/python_heldout_pair_matrix_v4/<run-id>/` |
+| Jev V2 决策点开发对照（6 项，默认 shadow） | `bash scripts/jev_pilot.sh` | `configs/experiments/jev_routing_v2_pilot.json` | `artifacts/jev_routing_pilot/<run-id>/` |
+| hp003 Jev active 与 E4 对照（4 项） | `bash scripts/hp003_jev_active.sh` | `configs/experiments/hp003_jev_active.json` | `artifacts/jev_routing_pilot/<run-id>/` |
+| proof routing V3：hp003 两样本 × Jev/规则/E4（6 项） | `bash scripts/jev_v3_comparison.sh`（已完成命令须显式取消注释） | `configs/experiments/jev_v3_hp003_comparison.json` | `artifacts/jev_v3_comparison/<run-id>/` |
 
-这些命令会调用真实模型。`.env.experiments` 是本地 Git 忽略文件；公开字段见 `.env.experiments.example`。配置明确选择提供商和模型，凭据单独传递，元数据不记录密钥。本轮重构没有执行这两个命令。
+hp003 active 批次已完成，启动脚本中对应命令已注释并保留运行 ID。两次运行及实际路由采用情况见 [Jev 结果](reference/JEV_ROUTING.md)；脚本不会自动重复这一批次。
+
+proof routing V3 的首次六格 `f9eadcf1…` 因规则臂实际调用 7 次 planner 且下载摘要可给出错误证明而失效，原始目录保留。返工后的 `545892d6…` 在原六格配置下运行，规则臂零 planner 请求、六格均诚实弃权、155 请求/1,343,687 reported tokens。完整代码审查、能力缺口和新旧逐请求审计见 `artifacts/proof_routing_repair/handoff.md`；已完成的 launcher 命令有注释和运行 ID，默认不会重复发请求。
+
+取消注释后的实验命令会调用真实模型。`.env.experiments` 是本地 Git 忽略文件；公开字段见 `.env.experiments.example`。配置明确选择提供商和模型，凭据单独传递，元数据不记录密钥。
 
 门禁 pointer 仍是 `artifacts/python_heldout_pair_gate_v4.json`。旧配对 v1–v4 配置迁至 `configs/history/`，源码快照及实验产物保持原路径。当前样本已用于调试，目录中的 heldout 命名不代表它们仍满足未观察测试集条件。
 
@@ -40,6 +47,7 @@ advisory pair 与 development fixture 的验收要求不同。复用运行基础
 | `usage.json` | 请求/响应完整性和 provider 报告的 token 消耗 |
 | `summary.json` | 完整分母上的系统指标与配对比较 |
 | `acceptance.json` | 原协议验收问题，保留历史 JSON 兼容性 |
+| `readiness.json` | 上线前运行完整性与 claim readiness 审计结果 |
 
 记录的模型 usage 是实际消耗依据；上下文预算使用的 UTF-8 字节上界是另一种计数单位。unknown usage 和 unknown price 都不是零。
 
@@ -65,7 +73,7 @@ E1–E5 比较必须保留同一组计划单元、相同来源和场景、声明
 import root 与预声明弃权完全相同。不要同时手工修改冻结文件与复用声明来
 追逐一次成功运行；新协议应另存名称并明确其开发用途。
 
-## 分开检查运行与检测
+## 分开检查运行、检测与上线 claim
 
 `evaluation/protocols/advisory.py` 提供 `review_heldout_pair_rows(rows, usage, config)`，
 返回原顺序的 `legacy_issues` 及分开的 `run_integrity_issues`、
@@ -74,6 +82,22 @@ import root 与预声明弃权完全相同。不要同时手工修改冻结文�
 quality issues 声称全部样本检出。这个分类接口不包含生命周期额外追加的
 transport 和 interruption 问题，其 `legacy_passed` 不能替代完整
 `acceptance.json.passed`。
+
+`evaluation/protocols/readiness.py` 的 `assess_run_readiness(run_dir)` 以及
+`cv-agent readiness RUN_DIR` 用于上线前读取现有产物并区分两个问题：
+`operational_ready` 表示运行完整、账本干净，`claim_ready` 还要求明确的
+final 数据角色、`claim_eligible=true`，且没有 trusted fixture 作为证据。
+带 `run_fixture_test` 或 `fixture:` 证据的历史产物即使没有新 metadata，也会被
+判定为 fixture-backed development regression，不能作为独立泛化或上线 claim。
+需要在 CI 中强制检查时使用 `--require-operational` 或 `--require-claim`。
+
+advisory 配置现在可以表达 `dataset_role=final-test` 且 `claim_eligible=true`，
+但这条路径必须保持 fixture-free：任务构建不会注册 hp001/hp002/hp003 的
+trusted development fixtures，且 claim-eligible 配置不能预声明 expected abstentions。
+当前 `advisory_pairs_v4` 仍是已参与开发的 `paired_heldout_advisory`，保持
+`claim_eligible=false`；要做上线 claim 应创建新的 final-test 数据声明，而不是
+改名复用这三个开发样本。配置验证会拒绝把 hp001/hp002/hp003 的已知
+development pair IDs 放进 claim-eligible final-test。
 
 分析历史日志时保留原 `acceptance.json`；`results.json` 可能包含为完整分母补入的
 `not_run` 行，与当时验收实际收到的已观察行不同。不要把重新计算的 expanded-row

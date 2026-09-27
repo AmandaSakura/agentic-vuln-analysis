@@ -60,7 +60,7 @@ class SystemHarness(FrozenModel):
     expert_order: tuple[OwaspExpertName, ...]
     full_review_policy: Literal["single", "majority"]
     quorum: int = Field(default=2, ge=2, le=3)
-    fast_score: float = Field(default=0.80, ge=0.0, le=1.0)
+    fast_score: float = Field(default=0.0, ge=0.0, le=1.0)
     early_quorum_after: int | None = Field(default=None, ge=2, le=3)
 
 
@@ -146,7 +146,7 @@ class AgentSystemHarness(FrozenModel):
     expert_order: tuple[ExpertName, ...]
     full_review_policy: Literal["single", "majority"]
     quorum: int = Field(default=2, ge=2, le=3)
-    fast_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
+    fast_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     early_quorum_after: int | None = Field(default=None, ge=2, le=3)
 
 

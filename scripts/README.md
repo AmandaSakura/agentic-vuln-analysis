@@ -1,11 +1,14 @@
 # 操作入口
 
-从仓库根目录运行。这里只保留四个 shell 命令；实验实现位于 `src/cv_agent/evaluation/`。
+从仓库根目录运行。实验实现位于 `src/cv_agent/evaluation/`。
 
 | 命令 | 用途 |
 | --- | --- |
 | `bash scripts/heldout_gate.sh` | 10 项开发门禁，会调用真实模型 |
 | `bash scripts/heldout_matrix.sh` | 30 项矩阵，会调用真实模型 |
+| `bash scripts/jev_pilot.sh` | 6 项 E3/E4/E4_JEV 开发对照，会调用真实模型；需填写 `JEV_API_KEY` |
+| `bash scripts/hp003_jev_active.sh` | 已完成的 hp003 四项 active 对照批次；调用命令已注释保留，重新执行前明确取消一条命令的注释 |
+| `bash scripts/jev_v3_comparison.sh` | 6 项 hp003 E4_JEV_V3 / E4_RULE_V1 / E4 有界三臂对照，会调用真实模型；需填写 `JEV_API_KEY` |
 | `bash scripts/deepseek.sh <CLI 参数>` | 加载 DeepSeek 环境并调用 `cv-agent` CLI |
 | `bash scripts/fetch_benchmarks.sh` | 下载固定版本的公开基准仓库，需要网络 |
 
@@ -16,6 +19,8 @@
 直接启动各自固定的 Python 模块。离线测试使用临时项目和假环境文件。
 
 ## 其他实验、准备与诊断
+
+Jev 的环境变量、模型配置、预算和分流行为见 [Jev 运行说明](../docs/reference/JEV_ROUTING.md)。
 
 47 个 Python 转发脚本已删除。同名实现模块直接启动，例如：
 

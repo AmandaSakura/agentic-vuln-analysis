@@ -22,7 +22,7 @@ class QuorumPolicy:
         *,
         fast_enabled: bool = True,
         quorum: int = 2,
-        fast_confidence: float = 0.80,
+        fast_confidence: float = 0.0,
     ) -> None:
         self.fast_enabled = fast_enabled
         self.quorum = quorum
@@ -37,20 +37,20 @@ class QuorumPolicy:
     def try_fast(self, votes: Sequence[ExpertVote]) -> Verdict | None:
         self._validate_ballots(votes)
         material = [vote for vote in votes if vote.label != "ABSTAIN"]
-        confident = [vote for vote in material if vote.confidence >= self.fast_confidence]
-        labels = Counter(vote.label for vote in confident)
+        eligible = [vote for vote in material if vote.confidence >= self.fast_confidence]
+        labels = Counter(vote.label for vote in eligible)
         if not labels:
             return None
         label, count = labels.most_common(1)[0]
         if count < self.quorum:
             return None
-        selected = [vote for vote in confident if vote.label == label]
+        selected = [vote for vote in eligible if vote.label == label]
         return Verdict(
             label=label,
             confidence=sum(vote.confidence for vote in selected) / len(selected),
             path="fast",
             votes=tuple(votes),
-            rationale=f"{count} high-confidence experts formed an early quorum.",
+            rationale=f"{count} experts formed an irreversible early quorum.",
         )
 
     def decide(self, votes: Sequence[ExpertVote]) -> Verdict:

@@ -1,4 +1,9 @@
-"""Frozen observable behavior of the pre-refactor scripted systems and contracts."""
+"""Reviewed behavior snapshots; C1/C5 replace the former weak-vote diagnostics.
+
+The fixture case binding adds an optional plan field. Scoped planner patches may
+use zero extra tool calls. Retrieval admission adds a source-bound audit field
+to verdicts; these reviewed schema and smoke changes are in the baseline.
+"""
 import json
 from pathlib import Path
 

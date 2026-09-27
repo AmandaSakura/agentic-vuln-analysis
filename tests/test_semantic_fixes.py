@@ -171,10 +171,12 @@ def test_deeply_nested_ast_iterative_traversal_avoids_recursion_error():
 
 
 @pytest.mark.parametrize("helper_name", ["build_cmd", "make_cmd", "get_cmd"])
-def test_command_construction_helper_name_independence(helper_name):
+@pytest.mark.parametrize("opaque_argument", [False, True])
+def test_command_construction_helper_name_independence(helper_name, opaque_argument):
+    argument = 'request.args["arg"]' if opaque_argument else 'request'
     caller_code = f"""
 def entry(request):
-    cmd = {helper_name}(request.args["arg"])
+    cmd = {helper_name}({argument})
     import os
     os.system(cmd)
 """
@@ -217,8 +219,19 @@ def {helper_name}(val):
     res = registry.invoke(call, allowed=["inspect_command_construction"], scope=scope)
     assert res.status == "ok"
     content = json.loads(res.content)
-    assert len(content["helpers"]) == 1
-    assert content["helpers"][0]["status"] == "UNSANITIZED"
+    # C2/C3: argument evaluation precedes the helper body. A descriptor gap
+    # must not be presented as if that body had been interpreted. Retain a
+    # direct-input control to exercise helper-name independence end to end.
+    if opaque_argument:
+        assert content["helpers"] == []
+        assert content["sink_facts"] == []
+        assert content["command_construction_status"] == "AMBIGUOUS"
+        assert content["issues"] == ["unresolved attribute access effects"]
+    else:
+        assert len(content["helpers"]) == 1
+        assert content["helpers"][0]["status"] == "UNSANITIZED"
+        assert content["command_construction_status"] == "UNSANITIZED"
+        assert len(content["sink_facts"]) == 1
 
 
 @pytest.mark.parametrize("loop_code", [
@@ -509,7 +522,7 @@ def test_js_template_interpolation_detects_sink():
 
 
 def test_safe_vote_with_not_established_command_inspection_rejected():
-    subject = ValidationSubject(
+    subject = ValidationSubject(property_id="command-execution",
         candidate_id="c1",
         repository_id="r1",
         entry_path="test.py",
@@ -612,7 +625,7 @@ def test_implicit_exception_in_try_preserves_taint_into_finally():
     ("UNSANITIZED", True),
 ])
 def test_command_inspection_for_vulnerable_requires_conclusive_unsanitized(status, should_accept):
-    subject = ValidationSubject(
+    subject = ValidationSubject(property_id="command-execution",
         candidate_id="c1",
         repository_id="r1",
         entry_path="test.py",
@@ -626,6 +639,7 @@ def test_command_inspection_for_vulnerable_requires_conclusive_unsanitized(statu
         evidence_ids=("tool:static:1",),
     )
     obs_cmd = ToolObservation(
+        subject=subject,  # C1: bind this synthetic proof to its declared candidate.
         tool="inspect_command_construction",
         status="ok",
         validation_status=ValidationStatus.UNRESOLVED,

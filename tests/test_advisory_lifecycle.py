@@ -244,3 +244,90 @@ def test_budget_exhaustion_is_recorded_and_finalized(tmp_path, monkeypatch):
     assert events[1]["error"] == "offline budget exhausted"
     assert events[2]["interrupted"] is True
     assert json.loads((output / "acceptance.json").read_text())["passed"] is False
+
+
+def test_shared_lifecycle_records_registered_fixture_manifest(tmp_path, monkeypatch):
+    config = selected_config()
+    lifecycle, _ = configure_lifecycle(tmp_path, monkeypatch, config)
+    pair, case, system = planned_heldout_cells(config)[0]
+    candidate = SimpleNamespace(case_id=case.case_id)
+    tasks = [(pair.pair_id, case.revision_role, None, candidate, (), system)]
+    fixture_registry = {
+        case.case_id: [
+            {
+                "tool": "run_fixture_test",
+                "case_id": case.case_id,
+                "subject": {"repository_id": case.case_id, "entry_path": "example.py::risky@1-3"},
+                "validation_statuses": ["CONFIRMED", "REFUTED"],
+                "proof_boundary": "trusted project fixture for this exact candidate/source/property",
+            }
+        ]
+    }
+
+    def prepare(root, resolved_config):
+        assert resolved_config is config
+        return tasks, {}, {}, fixture_registry
+
+    def execute(index, prepared_candidate, prepared_system, journal, budget, **kwargs):
+        return {
+            "case_id": prepared_candidate.case_id,
+            "system": prepared_system.value,
+            "status": "completed",
+            "predicted_label": "VULNERABLE",
+            "model_calls": 0,
+            "tool_calls": 1,
+            "latency_sec": 0.1,
+            "verdict": None,
+        }
+
+    output = lifecycle.run_advisory_experiment(
+        tmp_path,
+        tmp_path / "run",
+        config,
+        run_root="artifacts/unused",
+        prepare=prepare,
+        execute=execute,
+    )
+
+    metadata = json.loads((output / "metadata.json").read_text())
+    assert metadata["uses_trusted_fixtures"] is True
+    assert metadata["validation_fixture_registry"] == fixture_registry
+    assert "fixture-backed" in metadata["trusted_fixture_note"]
+    readiness = json.loads((output / "readiness.json").read_text())
+    assert readiness["uses_trusted_fixtures"] is True
+    assert readiness["trusted_fixture_case_count"] == 1
+    assert readiness["claim_ready"] is False
+    assert any("trusted fixtures" in item for item in readiness["blockers"])
+    assert "offline-key" not in (output / "metadata.json").read_text()
+
+
+def test_claim_eligible_final_lifecycle_writes_claim_ready_without_fixtures(tmp_path, monkeypatch):
+    config = selected_config().model_copy(update={"dataset_role": "final-test", "claim_eligible": True})
+    lifecycle, prepare = configure_lifecycle(tmp_path, monkeypatch, config)
+    planned = planned_rows(config)
+    calls = []
+
+    def execute(index, candidate, system, journal, budget, **kwargs):
+        calls.append(candidate.case_id)
+        request_id = str(len(calls))
+        journal.write({"event": "model_start", "request_id": request_id})
+        journal.write({"event": "model_response_received", "request_id": request_id,
+                       "summary": {"usage": {"total_tokens": 10}}})
+        journal.write({"event": "model_reply", "request_id": request_id,
+                       "reply": {"model_id": "offline", "usage": {"total_tokens": 10}}})
+        return dict(planned[len(calls) - 1])
+
+    output = lifecycle.run_advisory_experiment(
+        tmp_path, tmp_path / "run", config, run_root="artifacts/unused",
+        prepare=prepare, execute=execute,
+    )
+
+    metadata = json.loads((output / "metadata.json").read_text())
+    summary = json.loads((output / "summary.json").read_text())
+    readiness = json.loads((output / "readiness.json").read_text())
+    assert metadata["claim_eligible"] is True
+    assert summary["claim_eligible"] is True
+    assert readiness["operational_ready"] is True
+    assert readiness["claim_ready"] is True
+    assert readiness["uses_trusted_fixtures"] is False
+    assert readiness["blockers"] == []

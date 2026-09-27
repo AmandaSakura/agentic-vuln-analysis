@@ -169,3 +169,120 @@ def test_local_shadowing_aliases_and_recursive_eval_do_not_fake_builtin_witness(
         "service.py": "def safe(value):\n    return 0\n\ndef eval(value):\n    return eval(value)\n",
     })
     assert result["status"] == "UNRESOLVED"
+
+
+def _bound_probe(source, *, property_id='dynamic-evaluation', line=1, booleans=None, inputs=('request',)):
+    from cv_agent.domain.evidence import ValidationSubject
+    from cv_agent.domain.types import CodeDocument
+    from cv_agent.tools.identity import repository_source_digest
+    from cv_agent.tools.validation.probes import concrete_eval_probe
+    from cv_agent.tools.validation.models import SourceFlowInput
+
+    docs = [span.document for span in parse_python_source('r', 'entry.py', source)]
+    doc = next(doc for doc in docs if 'entry' in doc.defines and '::entry@' in doc.path)
+    index = RepositoryIndex(docs)
+    subject = ValidationSubject(candidate_id='c', repository_id='r', entry_path=doc.path,
+                                entry_line=line, source_digest=repository_source_digest(index),
+                                property_id=property_id, input_parameters=inputs, entry_boolean_arguments=booleans or {})
+    scope = ToolExecutionScope(frozenset(item.path for item in docs), 8192, candidate_path=doc.path, subject=subject)
+    return concrete_eval_probe(index, SourceFlowInput(source_path=doc.path), scope), subject
+
+
+@pytest.mark.parametrize('property_id,line', [(None, 1), ('command-execution', 1), ('dynamic-evaluation', 4)])
+def test_eval_witness_cannot_prove_another_property_or_call(property_id, line):
+    observation, subject = _bound_probe(
+        "def entry(request):\n    eval(request.args['x'])\n    if False:\n        os.system('echo ok')\n",
+        property_id=property_id, line=line,
+    )
+    assert observation.validation_status.value == 'CONFIRMED'  # preserve the actual local witness
+    assert observation.subject is None
+    from cv_agent.agents.evidence_policy import validate_conclusion
+    from cv_agent.domain.evidence import ReActStep
+    from cv_agent.domain.review import AgentExpertConclusion
+    observation = observation.model_copy(update={'citation_id': 'probe'})
+    step = ReActStep(step=1, model_id='offline', observation=observation,
+                    tool_call=ModelToolCall(call_id='probe', name=observation.tool, arguments={}))
+    for status in ('CONFIRMED', 'UNRESOLVED'):
+        with pytest.raises(ValueError):
+            validate_conclusion(AgentExpertConclusion(
+                expert='scan', label='VULNERABLE', validation_status=status, confidence=.9,
+                evidence_ids=('probe',), supporting_observation_ids=('probe',), rationale='Local witness only.',
+            ), [step], frozenset(), subject=subject)
+
+
+@pytest.mark.parametrize('enabled,expected', [(False, 'UNRESOLVED'), (True, 'CONFIRMED')])
+def test_eval_witness_honors_candidate_boolean_scenario(enabled, expected):
+    observation, subject = _bound_probe(
+        "def entry(request, enabled=True):\n    if enabled:\n        eval(request.args['x'])\n",
+        booleans={'enabled': enabled},
+    )
+    assert observation.validation_status.value == expected
+    assert observation.subject == subject
+
+
+@pytest.mark.parametrize('offset', [0, 39])
+@pytest.mark.parametrize('line', [1, 2])
+def test_eval_witness_remains_candidate_bound_for_its_actual_scope(line, offset):
+    observation, subject = _bound_probe('# padding\n' * offset + "def entry(request):\n    eval(request.args['x'])\n", line=line + offset)
+    assert observation.validation_status.value == 'CONFIRMED'
+    assert observation.subject == subject
+
+
+@pytest.mark.parametrize('line', [0, 200])
+def test_eval_probe_rejects_candidate_outside_indexed_slice(line):
+    # A global line preceding a slice and a line beyond its end both reject.
+    observation, _ = _bound_probe('# prefix\n' + "def entry(request):\n    eval(request.args['x'])\n",
+                                  line=line + 1)
+    assert observation.status == 'blocked'
+
+
+@pytest.mark.parametrize('inputs,expected', [
+    (('request',), 'CONFIRMED'),
+    (('other',), 'UNRESOLVED'),
+    ((), 'UNRESOLVED'),
+    (('missing',), 'UNRESOLVED'),
+    (('request', 'missing'), 'UNRESOLVED'),
+])
+@pytest.mark.parametrize('via_helper', [False, True])
+def test_eval_candidate_witness_requires_its_declared_input_source(inputs, expected, via_helper):
+    helper = "def identity(value):\n    return value\n\n" if via_helper else ''
+    argument = "identity(request.args['x'])" if via_helper else "request.args['x']"
+    observation, subject = _bound_probe(
+        helper + f"def entry(request, other=False):\n    return eval({argument})\n",
+        line=4 if via_helper else 1, inputs=inputs,
+    )
+    assert observation.validation_status.value == expected, observation.content
+    from cv_agent.agents.evidence_policy import validate_conclusion
+    from cv_agent.domain.evidence import ReActStep
+    from cv_agent.domain.review import AgentExpertConclusion
+    observation = observation.model_copy(update={'citation_id': 'probe'})
+    step = ReActStep(step=1, model_id='offline', observation=observation,
+                    tool_call=ModelToolCall(call_id='probe', name=observation.tool, arguments={}))
+    conclusion = AgentExpertConclusion(
+        expert='scan', label='VULNERABLE', validation_status='CONFIRMED', confidence=.9,
+        evidence_ids=('probe',), supporting_observation_ids=('probe',), rationale='Input witness.',
+    )
+    if expected == 'CONFIRMED':
+        validate_conclusion(conclusion, [step], frozenset(), subject=subject)
+    else:
+        with pytest.raises(ValueError):
+            validate_conclusion(conclusion, [step], frozenset(), subject=subject)
+
+
+@pytest.mark.parametrize('name', ['request', 'req'])
+@pytest.mark.parametrize('body,booleans,expected', [
+    ("return eval(INPUT.args['x'])", {}, 'CONFIRMED'),
+    ("value = INPUT.args['x']\n    value = '1 + 1'\n    return eval(value)", {}, 'UNRESOLVED'),
+    ("if enabled:\n        return eval(INPUT.args['x'])", {'enabled': False}, 'UNRESOLVED'),
+    ("if enabled:\n        return eval(INPUT.args['x'])", {'enabled': True}, 'CONFIRMED'),
+])
+def test_eval_declared_source_still_requires_actual_flow_and_scenario(name, body, booleans, expected):
+    observation, subject = _bound_probe(
+        f'def entry({name}, enabled=True):\n    ' + body.replace('INPUT', name) + '\n',
+        inputs=(name,), booleans=booleans,
+    )
+    assert observation.validation_status.value == expected, observation.content
+    result = json.loads(observation.content)
+    assert result['input_parameters'] == [name]
+    assert result['entry_boolean_arguments'] == booleans
+    assert observation.subject == subject

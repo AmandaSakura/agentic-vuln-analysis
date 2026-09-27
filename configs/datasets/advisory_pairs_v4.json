@@ -54,7 +54,8 @@
           "file_path": "mlflow/utils/file_utils.py",
           "line_hint": 761
         }
-      ]
+      ],
+      "property_id": "temporary-directory-race"
     },
     {
       "pair_id": "hp002_entry_00317_ghsa_rf6x_r45m_xv3w",
@@ -108,7 +109,8 @@
           "line_hint": 45
         }
       ],
-      "python_import_root": "src/backend/base"
+      "python_import_root": "src/backend/base",
+      "property_id": "authorization-boundary"
     },
     {
       "pair_id": "hp003_entry_00389_ghsa_rvhj_8chj_8v3c",
@@ -167,6 +169,23 @@
       ],
       "entry_boolean_arguments": {
         "enable_mlserver": true
+      },
+      "property_id": "command-execution",
+      "entry_condition_assumptions": {
+        "sys.platform.startswith('linux')": true,
+        "is_windows()": false,
+        "self._env_manager != em.LOCAL": false,
+        "os.path.exists(artifact_uri)": true
+      },
+      "entry_value_assumptions": {
+        "port": 5000,
+        "host": "127.0.0.1",
+        "timeout": null,
+        "self._nworkers": null,
+        "model_config": null,
+        "synchronous": false,
+        "MLServerDefaultModelName": "mlflow-model",
+        "MLServerMLflowRuntime": "mlserver_mlflow.MLflowRuntime"
       }
     }
   ]

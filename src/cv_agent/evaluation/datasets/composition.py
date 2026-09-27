@@ -7,7 +7,7 @@ inheritance, environment handling or override precedence.
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from cv_agent.domain.types import FrozenModel
 from cv_agent.harness import AgentSystemVersion
@@ -18,10 +18,16 @@ from cv_agent.evaluation.datasets.advisory_config import (
 
 
 class AdvisoryDataset(FrozenModel):
-    dataset_role: Literal['paired_heldout_advisory']
-    claim_eligible: Literal[False]
+    dataset_role: Literal['paired_heldout_advisory', 'final-test']
+    claim_eligible: bool
     source_manifest: str
     pairs: tuple[PythonHeldoutPair, ...]
+
+    @model_validator(mode='after')
+    def validate_claim_role(self):
+        if self.claim_eligible and self.dataset_role != 'final-test':
+            raise ValueError('Claim-eligible advisory datasets must use dataset_role final-test')
+        return self
 
 
 class AdvisoryRunProfile(FrozenModel):

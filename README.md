@@ -94,7 +94,7 @@ uv run --no-sync python -m cv_agent.evaluation.runners.run_python_repository_pil
 当从 CI/CD 流程、传统 SAST 报警（如 Semgrep / CodeQL）获取到明确可疑位置，或在基准测试集中进行单点复测时：
 ```bash
 # 针对具体的测试 Case ID 启动真实模型多专家审查
-bash scripts/deepseek.sh agentic-live-owasp --case-id BenchmarkTest0001 --system E5_GRAPH_FAST_SLOW
+bash scripts/deepseek.sh agentic-live-owasp --case-id BenchmarkTest00001 --system E5 --property-id command-execution
 ```
 
 ### 模式 3：离线本地无凭据验证（开发与回归自测）

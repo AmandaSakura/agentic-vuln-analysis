@@ -187,7 +187,10 @@ def test_planner_delegates_with_the_patched_workflow_harness(monkeypatch):
 
 def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     pipeline, candidate, state = _pipeline()
-    # The reviewed interface adds category selection to may-flow tracing only.
+    # C1/C4/C5: reviewed expert mandates require candidate-bound proofs;
+    # reversing only these mandate edits reproduces the previous planner hash.
+    # The tool description requires declared probe inputs.
+    # Category selection still belongs to may-flow tracing only.
     definitions = {item["function"]["name"]: item["function"]
                    for item in pipeline.tools.definitions(pipeline.tools.names)}
     assert "sink_category" in definitions["trace_dataflow"]["parameters"]["properties"]
@@ -198,7 +201,7 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
         "subject": json.dumps(identity.candidate_subject(pipeline.index, candidate).model_dump(mode="json"), sort_keys=True, separators=(",", ":")),
     }
     assert {name: hashlib.sha256(value.encode()).hexdigest() for name, value in payloads.items()} == {
-        "planner": "5660244c3f8e6d8dbcd816bb114b2e26cf3c3884b48b0430a9cf9daf634b42f5",
-        "definitions": "73d68ee4fa1e0480b65f4954c9a4294f6a09183390185c9266fec5000827e487",
-        "subject": "013deb2bd166c2fdbd050f2fcc56df31d3e17966a527243e702bec5625ad437f",
+        "planner": "65401316670c5bfda164536d926607a504d4c4891568c64952c23ed4a7d438d2",
+        "definitions": "f55cdb0476b3138325ad046becb976322eff83c750af213cbcaa012520167874",
+        "subject": "9f0896a13965421790d5b8ac82a555a8974618d2bcc36491937bb824532ca5ff",
     }

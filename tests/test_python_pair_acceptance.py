@@ -27,6 +27,7 @@ def evidence_rows():
         case.case_id: ValidationSubject(
             candidate_id=case.case_id,
             repository_id=case.case_id,
+            property_id=pair.property_id,
             entry_path=f"{case.file_path}::entry@1-2",
             entry_line=1,
             source_digest=f"digest-{case.case_id}",
@@ -41,12 +42,20 @@ def evidence_rows():
             label = "VULNERABLE" if case.revision_role == "vulnerable" else "SAFE"
             status = labels.labels[case.case_id].required_validation_status
             subject = subjects[case.case_id]
+            fixture_proof = {
+                "contract_id": f"contract_{case.case_id}",
+                "property_id": pair.property_id,
+                "coverage": "candidate",
+                "method": "bounded_execution",
+                "supported_statuses": ["CONFIRMED", "REFUTED"],
+            }
             observation = {
                 "tool": "run_fixture_test",
                 "status": "ok",
                 "content": "{}",
                 "citation_id": "tool:1",
                 "validation_status": status,
+                "fixture_proof": fixture_proof,
                 "subject": subject.model_dump(mode="json"),
             }
             vote = {

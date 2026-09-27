@@ -8,7 +8,7 @@ from pydantic import Field, model_validator
 from cv_agent.harness import AgentRuntimeMode, ExpertName
 from cv_agent.domain.types import FrozenModel, VerdictLabel
 from cv_agent.domain.chat import ModelUsage
-from cv_agent.domain.evidence import ReActStep, ValidationStatus
+from cv_agent.domain.evidence import ReActStep, ToolObservation, ValidationStatus
 
 
 class AgentExpertConclusion(FrozenModel):
@@ -36,8 +36,20 @@ class ValidationSubtask(FrozenModel):
     objective: Annotated[str, Field(max_length=280)]
     expert: ExpertName
     allowed_validator: Annotated[str, Field(max_length=80)]
+    # A fixture that replaces mandatory checks must name the qualified case.
+    # Unbound fixture tasks remain available for diagnostic observations.
+    fixture_case_id: str | None = None
     dependencies: tuple[str, ...] = ()
     success_condition: Annotated[str, Field(max_length=220)]
+
+    @model_validator(mode="after")
+    def validate_fixture_binding(self) -> ValidationSubtask:
+        if self.fixture_case_id is not None:
+            if not self.fixture_case_id.strip():
+                raise ValueError("fixture_case_id must be nonempty")
+            if self.allowed_validator != "run_fixture_test":
+                raise ValueError("fixture_case_id requires run_fixture_test")
+        return self
 
 class ValidationPlan(FrozenModel):
     candidate_id: str
@@ -79,13 +91,84 @@ class PlannerResult(FrozenModel):
     trace: tuple[ReActStep, ...]
     model_ids: tuple[str, ...]
     model_calls: int = Field(ge=1)
-    tool_calls: int = Field(ge=1)
+    # A scoped patch can reuse the routing source observation without another read.
+    tool_calls: int = Field(ge=0)
     tool_observation_token_count: int = Field(ge=0)
     usage: ModelUsage
 
 class ValidationTaskExecution(FrozenModel):
     task_id: str | None
     vote: AgentExpertVote
+    # None denotes a legacy record without completion evidence; never infer
+    # success from a terminal vote or from its prose rationale.
+    validator_completed: bool | None = None
+
+
+class BlockedValidationTask(FrozenModel):
+    task_id: str
+    expert: ExpertName
+    dependencies: tuple[str, ...]
+
+
+class TaskOrigin(FrozenModel):
+    task_id: str
+    origin: Literal['policy', 'jev', 'llm']
+    decision_id: str | None = None
+
+
+class RoutingDecision(FrozenModel):
+    decision_id: str
+    choice: str
+    selected_probability: float = Field(ge=0, le=1)
+    provider_confidence: float = Field(ge=0, le=1)
+    threshold: float = Field(ge=0, le=1)
+    accepted: bool
+    applied: bool = False
+    applied_reason: str | None = None
+    action: Literal['validator', 'expert_react', 'llm_planner']
+    reason: str
+
+
+class RoutingResult(FrozenModel):
+    """Scheduling decisions are not expert ballots or vulnerability evidence."""
+    runtime_mode: AgentRuntimeMode
+    spec_version: int = 2
+    mode: Literal['off', 'shadow', 'active']
+    observation: ToolObservation | None = None
+    decisions: dict[str, RoutingDecision] = Field(default_factory=dict)
+    state_digest: str | None = None
+    latency_sec: float = Field(default=0, ge=0)
+    answers: dict[str, dict] = Field(default_factory=dict)
+    model_id: str | None = None
+    model_calls: int = Field(ge=0, le=2)
+    tool_calls: int = Field(ge=0, le=1)
+    usage: ModelUsage = Field(default_factory=lambda: ModelUsage(input_tokens=0, output_tokens=0, total_tokens=0))
+    tool_observation_token_count: int = Field(default=0, ge=0)
+    plan: ValidationPlan | None = None
+    proposed_plan: ValidationPlan | None = None
+    escalation_reason: str | None = None
+    locked_tasks: tuple[ValidationSubtask, ...] = ()
+    task_origins: tuple[TaskOrigin, ...] = ()
+    fallback_scope: str | None = None
+    rejection_reasons: dict[str, str] = Field(default_factory=dict)
+
+
+class SourceAdmissionRecord(FrozenModel):
+    path: str
+    bound_call_source: str
+    call_symbol: str
+    graph_distance: int = Field(ge=1)
+    document_sha256: str
+    source_sha256: str | None = None
+    serialized_token_cost: int = Field(default=0, ge=0)
+    status: Literal["admitted", "skipped"]
+    reason: str
+
+
+class RetrievalAdmissionAudit(FrozenModel):
+    subject_digest: str
+    records: tuple[SourceAdmissionRecord, ...] = ()
+
 
 class AgenticVerdict(FrozenModel):
     runtime_mode: AgentRuntimeMode
@@ -96,6 +179,7 @@ class AgenticVerdict(FrozenModel):
     planner: PlannerResult | None = None
     votes: tuple[AgentExpertVote, ...]
     task_executions: tuple[ValidationTaskExecution, ...] = ()
+    blocked_tasks: tuple[BlockedValidationTask, ...] = ()
     model_calls: int = Field(ge=1)
     tool_calls: int = Field(ge=1)
     usage: ModelUsage
@@ -103,6 +187,7 @@ class AgenticVerdict(FrozenModel):
     tool_observation_token_count: int = Field(ge=0)
     context_token_count: int = Field(ge=0)
     context_accounting: Literal["utf8-byte-upper-bound"] = "utf8-byte-upper-bound"
+    retrieval_admission: RetrievalAdmissionAudit | None = None
 
     @model_validator(mode="after")
     def context_components_match_total(self) -> AgenticVerdict:
@@ -112,3 +197,20 @@ class AgenticVerdict(FrozenModel):
         if self.context_token_count != expected:
             raise ValueError("agentic context total does not match its measured components")
         return self
+
+
+class RoutedAgenticVerdict(AgenticVerdict):
+    """The Jev experiment adds routing without changing historical E1–E5 JSON."""
+    routing: RoutingResult
+
+
+class ApplicableAgenticVerdict(AgenticVerdict):
+    """An opted-in expert policy records roles excluded from its ballot."""
+
+    expert_policy: Literal["applicable_v1"] = "applicable_v1"
+    skipped_experts: dict[ExpertName, str] = Field(default_factory=dict)
+
+
+class RoutedApplicableAgenticVerdict(RoutedAgenticVerdict):
+    expert_policy: Literal["applicable_v1"] = "applicable_v1"
+    skipped_experts: dict[ExpertName, str] = Field(default_factory=dict)

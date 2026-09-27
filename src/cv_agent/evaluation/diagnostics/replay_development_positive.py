@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 ROOT = PROJECT_ROOT
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties
 from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.domain.chat import ModelReply
 from cv_agent.tools.registry import ToolRegistry
@@ -28,7 +28,7 @@ def main():
                 raise ValueError('Replay tool definitions differ from the original live request')
             return ModelReply.model_validate(reply['reply'])
         responders.append(respond)
-    inputs = load_owasp_agentic_inputs(ROOT/'data/raw', case_ids=['BenchmarkTest02244'])
+    inputs = load_owasp_agentic_inputs(ROOT/'data/raw', case_ids=['BenchmarkTest02244'], property_ids=development_owasp_properties(ROOT, ['BenchmarkTest02244']))
     model = ScriptedChatModel(responders)
     verdict = AgenticPipeline(index=inputs.index, system=AgentSystemVersion.E1_LOCAL_SINGLE,
         models={'scan':model}, tools=ToolRegistry(full_agent_tools(inputs.index),max_output_bytes=8192)

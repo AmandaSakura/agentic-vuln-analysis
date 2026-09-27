@@ -176,10 +176,17 @@ def model_visible_analysis_scope(pair: PythonHeldoutPair) -> str:
     entry = pair.entry_point
     critical = pair.critical_operation
     conditions = ""
-    if pair.input_parameters or pair.entry_boolean_arguments:
+    if (
+        pair.input_parameters
+        or pair.entry_boolean_arguments
+        or pair.entry_condition_assumptions
+        or pair.entry_value_assumptions
+    ):
         conditions = (
             f" Declared externally supplied entry parameters: {json.dumps(pair.input_parameters)}."
             f" Scenario entry boolean arguments: {json.dumps(pair.entry_boolean_arguments, sort_keys=True)}."
+            f" Scenario condition assumptions: {json.dumps(pair.entry_condition_assumptions, sort_keys=True)}."
+            f" Scenario value assumptions: {json.dumps(pair.entry_value_assumptions, sort_keys=True)}."
             " Conclusions apply only to this scenario; these declarations are assumptions, not validation witnesses."
         )
     return (
@@ -200,6 +207,8 @@ def build_pair_input(
     *,
     preferred_symbol: str | None = None,
 ) -> tuple[RepositoryIndex, Candidate, dict[str, str]]:
+    if not pair.property_id or not pair.property_id.strip():
+        raise ValueError("Advisory candidate requires an explicit property_id before source indexing")
     index, source_sha256 = build_package_index(root, pair, case)
     if case.file_path not in source_sha256:
         raise ValueError(f"Held-out candidate source was not hashed: {case.file_path}")
@@ -218,8 +227,11 @@ def build_pair_input(
         line=start,
         query=f"{pair.vulnerability_title} {pair.source_scope} {pair.analysis_scope}",
         analysis_scope=model_visible_analysis_scope(pair),
+        property_id=pair.property_id,
         input_parameters=pair.input_parameters,
         entry_boolean_arguments=pair.entry_boolean_arguments,
+        entry_condition_assumptions=pair.entry_condition_assumptions,
+        entry_value_assumptions=pair.entry_value_assumptions,
     )
     return index, candidate, source_sha256
 

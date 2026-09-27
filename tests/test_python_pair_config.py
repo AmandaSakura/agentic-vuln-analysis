@@ -47,3 +47,13 @@ def test_config_rejects_expansion_duplicate_systems_and_path_escape():
     value["pairs"][0]["cases"][0]["checkout"] = "../outside"
     with pytest.raises(ValueError, match="relative"):
         PythonPairExperimentConfig.model_validate(value)
+
+
+@pytest.mark.parametrize('name,expected', [
+    ('gate', ['template-traversal']),
+    ('matrix', ['template-traversal', 'sandbox-attr-format-escape']),
+])
+def test_pair_configs_declare_scoped_fixture_properties(name, expected):
+    config = PythonPairExperimentConfig.model_validate_json(
+        (ROOT / f'configs/experiments/python_pair_{name}.json').read_text())
+    assert [getattr(pair, 'property_id', None) for pair in config.pairs] == expected

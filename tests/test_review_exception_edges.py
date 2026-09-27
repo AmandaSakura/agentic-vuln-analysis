@@ -55,7 +55,8 @@ def test_missing_candidate_line_never_uses_other_sink_lines(path, command):
     # This is an unresolved hypothesis about the scanned builtins.eval candidate;
     # shell evidence from another operation neither proves nor refutes it.
     trace = [step for step in trace if step.observation.tool != "trace_dataflow"]
-    vote(trace, subject, "VULNERABLE")
+    with pytest.raises(ValueError, match="matching cited proof"):
+        vote(trace, subject, "VULNERABLE", supporting_tools=("run_static_check",))
 
 
 @pytest.mark.parametrize("handler, expected", [("value = '0'", False), ("pass", True)])

@@ -1,38 +1,25 @@
 from cv_agent.evaluation.scripted import run_agentic_scripted_eval
 
 
-def test_scripted_agentic_eval_reduces_false_positives_vs_graph_single():
+def test_scripted_weak_evidence_does_not_claim_false_positive_improvement():
+    # C1/C5/T16: scripted predictions are not sufficient validation evidence.
     result = run_agentic_scripted_eval()
-
     assert result["claim_eligible"] is False
     assert result["runtime_mode"] == "scripted"
-    systems = result["systems"]
-    graph_single = systems["E3"]["confusion"]
-    graph_multi = systems["E4"]["confusion"]
-    graph_fast = systems["E5"]["confusion"]
-
-    assert graph_single["population_false_positive_rate"] == 1.0
-    assert graph_multi["population_false_positive_rate"] == 0.0
-    assert graph_fast["population_false_positive_rate"] == 0.0
-    assert systems["E4"]["relative_false_positive_reduction_vs_graph_single"] == 1.0
-    assert systems["E5"]["relative_false_positive_reduction_vs_graph_single"] == 1.0
+    for system in result["systems"].values():
+        assert set(system["predictions"].values()) == {"ABSTAIN"}
+        assert system["confusion"]["coverage"] == 0.0
+        assert system["confusion"]["population_false_positive_rate"] == 0.0
+        assert system["relative_false_positive_reduction_vs_graph_single"] is None
 
 
-def test_scripted_agentic_eval_exercises_fast_and_slow_quorum_paths():
+def test_scripted_weak_votes_cannot_trigger_fast_quorum():
     result = run_agentic_scripted_eval()
-    e5_traces = result["systems"]["E5"]["traces"]
-
-    assert e5_traces["cross-file-1"]["label"] == "VULNERABLE"
-    assert e5_traces["cross-file-1"]["path"] == "fast"
-    assert [vote["expert"] for vote in e5_traces["cross-file-1"]["votes"]] == [
-        "scan",
-        "taint",
-    ]
-
-    assert e5_traces["guarded-delete-1"]["label"] == "ABSTAIN"
-    assert e5_traces["guarded-delete-1"]["path"] == "slow"
-    assert [vote["expert"] for vote in e5_traces["guarded-delete-1"]["votes"]] == [
-        "scan",
-        "taint",
-        "authz",
-    ]
+    for case in result["systems"]["E5"]["traces"].values():
+        assert case["label"] == "ABSTAIN"
+        assert case["path"] == "slow"
+        assert [vote["expert"] for vote in case["votes"]] == ["scan", "taint", "authz"]
+        assert all(vote["label"] == "ABSTAIN" for vote in case["votes"])
+    # The attempted material vote consumed a correction request; it was not
+    # silently rewritten into a pre-scripted abstention before admission.
+    assert result["systems"]["E3"]["traces"]["cross-file-1"]["model_calls"] == 3

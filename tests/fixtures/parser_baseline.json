@@ -5,6 +5,7 @@
       "start_line": 4,
       "end_line": 6,
       "document": {
+        "source_sha256": null,
         "repository_id": "repo",
         "path": "src/backend/base/api.py::entry@4-6",
         "text": "def entry(request):\n    external.client.run(request)\n    return run(request)\n",
@@ -41,6 +42,7 @@
       "start_line": 8,
       "end_line": 9,
       "document": {
+        "source_sha256": null,
         "repository_id": "repo",
         "path": "src/backend/base/api.py::run@8-9",
         "text": "def run(value):\n    return value\n",
@@ -73,6 +75,7 @@
   "java": {
     "documents": [
       {
+        "source_sha256": "f357ca2d29c191598ac7b255680044e421aea4e4c86ac4eea09e6168b11ec6e7",
         "repository_id": "repo",
         "path": "demo/Handler.java::Handler.handle@4",
         "text": "public void handle(Statement stmt, String input) throws Exception {\n    stmt.executeQuery(input);\n  }",

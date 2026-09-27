@@ -205,3 +205,55 @@ def test_source_builder_skips_large_fallback_text_assets(tmp_path):
     assert "settings.ini" in source_sha256
     assert "component_index.json" not in source_sha256
     assert not any(item.path.startswith("component_index.json::") for item in hits)
+
+
+def test_source_builder_rejects_missing_proof_obligation_before_indexing(tmp_path):
+    import pytest
+    data = config_dict()
+    data['pairs'][0].pop('property_id', None)
+    config = PythonHeldoutPairExperimentConfig.model_validate(data)
+    # Historical configurations remain readable, but cannot start a fresh
+    # candidate run without defining what its labels mean.
+    with pytest.raises(ValueError, match='property_id'):
+        build_pair_input(tmp_path, config.pairs[0], config.pairs[0].cases[0])
+
+
+def test_configured_race_property_cannot_borrow_literal_permission_proof(tmp_path):
+    import json
+    import pytest
+    from cv_agent.agents.evidence_policy import validate_conclusion
+    from cv_agent.domain.chat import ModelToolCall
+    from cv_agent.domain.evidence import ReActStep
+    from cv_agent.domain.review import AgentExpertConclusion
+    from cv_agent.tools.identity import candidate_subject
+    from cv_agent.tools.registry import ToolExecutionScope
+    from cv_agent.tools.validation.models import PathInput
+    from cv_agent.tools.validation.permissions import permission_mode
+
+    checkout = tmp_path / 'data/a'
+    checkout.mkdir(parents=True)
+    for mode, label, status in [('0o777', 'VULNERABLE', 'CONFIRMED'), ('0o750', 'SAFE', 'REFUTED')]:
+        (checkout / 'example.py').write_text(f'def entry(path):\n    os.chmod(path, {mode})\n')
+        for property_id in ('temporary-directory-race', 'chmod-mode-others-write'):
+            data = config_dict()
+            data['pairs'][0]['property_id'] = property_id
+            data['pairs'][0]['cases'][0]['line_hint'] = 2
+            config = PythonHeldoutPairExperimentConfig.model_validate(data)
+            index, candidate, _ = build_pair_input(tmp_path, config.pairs[0], config.pairs[0].cases[0])
+            subject = candidate_subject(index, candidate)
+            assert subject.property_id == property_id
+            scope = ToolExecutionScope(frozenset(index.documents), 8192, candidate_path=candidate.path, subject=subject)
+            observation = permission_mode(index, PathInput(path=candidate.path), scope).model_copy(update={'citation_id': 'mode'})
+            assert observation.validation_status.value == status
+            assert json.loads(observation.content)['property_id'] == 'chmod-mode-others-write'
+            step = ReActStep(step=1, model_id='offline', observation=observation,
+                            tool_call=ModelToolCall(call_id='mode', name=observation.tool, arguments={'path': candidate.path}))
+            vote = AgentExpertConclusion(expert='scan', label=label, validation_status=status,
+                confidence=.9, evidence_ids=('mode',), supporting_observation_ids=('mode',), rationale='Bounded mode fact.')
+            if property_id == 'chmod-mode-others-write':
+                assert observation.subject == subject
+                validate_conclusion(vote, [step], frozenset(), subject=subject)
+            else:
+                assert observation.subject is None
+                with pytest.raises(ValueError, match='local validator fact'):
+                    validate_conclusion(vote, [step], frozenset(), subject=subject)

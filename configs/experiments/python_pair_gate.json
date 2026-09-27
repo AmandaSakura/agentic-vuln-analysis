@@ -14,6 +14,7 @@
     {
       "pair_id": "langchain_template_traversal",
       "fixture_id": "template_traversal",
+      "property_id": "template-traversal",
       "repository_url": "https://github.com/langchain-ai/langchain",
       "advisory": "GHSA-6qv9-48xg-fc7f",
       "cve": "CVE-2025-65106",

@@ -27,6 +27,7 @@ class PythonPairCase(FrozenModel):
 
 
 class PythonPair(FrozenModel):
+    property_id: str | None = None
     pair_id: Annotated[str, Field(pattern=r"^[a-z0-9_]+$")]
     fixture_id: Annotated[str, Field(pattern=r"^[a-z0-9_]+$")]
     repository_url: str

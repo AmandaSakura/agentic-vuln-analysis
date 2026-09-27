@@ -11,6 +11,11 @@
 
 ## 参考设计
 
+- [完整流程与当前问题定位](reference/PROJECT_FLOW_AND_DIAGNOSIS.md)：当前入口、E1–E5、Jev、证据链和最新全矩阵的逐环节分析。
+- [Jev 接入计划](reference/JEV_IMPLEMENTATION_PLAN.md)：类型化规划分流与离线验证。
+- [Jev 配置与运行](reference/JEV_ROUTING.md)：填写密钥、执行 6 项开发对照、理解分流与成本记录。
+- [hp003 Jev active 对照计划](reference/HP003_JEV_ACTIVE_PLAN.md)：四项实验的接线、验证和采用情况审计。
+
 - [Harness 说明](reference/HARNESS.md)：主要解释早期确定性 V 系列约束；当前 E 系列的实际预算、策略和协议以 `src/cv_agent/harness/` 与运行配置为准。
 - [完整系统目标规格](reference/FULL_SYSTEM_SPEC.md)：记录设计目标，不能据此认为所有要求已实现或验证。当前完成程度以本目录的状态说明为准。
 

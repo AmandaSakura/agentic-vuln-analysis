@@ -14,7 +14,7 @@ from cv_agent.runtime.journal import Journal
 from cv_agent.runtime.paths import PROJECT_ROOT as project_root
 from cv_agent.tools.registry import AgentTool, ToolExecutionScope
 from cv_agent.tools.identity import candidate_subject
-from cv_agent.domain.evidence import ToolObservation
+from cv_agent.domain.evidence import FixtureProofScope, ToolObservation, ValidationStatus
 from cv_agent.evaluation.metrics import provider_usage
 from cv_agent.harness import AgentSystemVersion
 from cv_agent.runtime.admission import require_passing_tests
@@ -39,6 +39,7 @@ def build_input(checkout, case):
     if (checkout / 'libs/core').is_dir():
         pair = SimpleNamespace(
             source_root='libs/core',
+            property_id='template-traversal',
             exclude_path_parts=('tests', '__pycache__'),
             entry_symbol=case['entry_symbol'],
             source_scope='PromptTemplate.from_template f-string attribute and dunder traversal only',
@@ -64,7 +65,7 @@ def build_input(checkout, case):
     index = RepositoryIndex(span.document for span in spans)
     candidate = Candidate(candidate_id=case['case_id'], case_id=case['case_id'],
                           repository_id=case['case_id'], path=entry.document.path,
-                          line=entry.start_line,
+                          line=entry.start_line, property_id='template-traversal',
                           query='PromptTemplate.from_template f-string attribute dunder traversal',
                           analysis_scope='Assess only f-string attribute and dunder traversal through '
                           'PromptTemplate.from_template. Use registered template_traversal '
@@ -75,6 +76,8 @@ def build_input(checkout, case):
 
 def evidence_tool(checkout, case, index, candidate, observations, validation_status):
     """Expose current-run preflight witnesses, never evaluator labels or raw paths."""
+    if candidate.property_id != 'template-traversal':
+        raise ValueError('Template fixture property does not match the candidate property')
     subject = candidate_subject(index, candidate)
     source = checkout / case['file_path']
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -86,8 +89,16 @@ def evidence_tool(checkout, case, index, candidate, observations, validation_sta
         check_checkout(checkout, case)
         if hashlib.sha256(source.read_bytes()).hexdigest() != digest:
             raise ValueError('Source changed since pair validation')
+        proof_scope = FixtureProofScope(
+            contract_id=f"langchain_{case.get('case_id', 'template_traversal')}",
+            property_id="template-traversal",
+            coverage="candidate",
+            method="bounded_execution",
+            supported_statuses=(ValidationStatus.CONFIRMED, ValidationStatus.REFUTED),
+        )
         return ToolObservation(tool='run_fixture_test', status='ok', subject=subject,
                                validation_status=validation_status,
+                               fixture_proof=proof_scope,
                                content=json.dumps(dict(
                                    execution='current-run offline preflight; checkout revalidated',
                                    scope='f-string attribute and dunder traversal only',

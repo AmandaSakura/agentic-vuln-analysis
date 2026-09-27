@@ -67,6 +67,7 @@ class OpenAICompatibleChatModel:
         thinking_mode: Literal["enabled", "disabled"] | None = None,
         proxy_log_dir: str | None = None,
         observer: Callable[[dict[str, Any]], None] | None = None,
+        protocol: Literal['openai-chat', 'jev-systemone'] = 'openai-chat',
     ) -> None:
         if not base_url.strip() or not model.strip():
             raise ValueError("live model base URL and model name are required")
@@ -83,6 +84,11 @@ class OpenAICompatibleChatModel:
         self.thinking_mode = thinking_mode
         self.observer = observer
         self.proxy_log_dir = proxy_log_dir
+        if protocol not in {'openai-chat', 'jev-systemone'}:
+            raise ValueError('unsupported model protocol')
+        if protocol == 'jev-systemone' and (max_tokens is not None or thinking_mode is not None or proxy_log_dir):
+            raise ValueError('Jev does not accept chat generation or proxy controls')
+        self.protocol = protocol
 
     @staticmethod
     def _optional_positive_integer_environment(name: str | None) -> int | None:
@@ -147,6 +153,8 @@ class OpenAICompatibleChatModel:
         )
 
     def _endpoint(self) -> str:
+        if self.protocol == 'jev-systemone':
+            return f'{self.base_url}/systemone'
         if self.base_url.endswith("/chat/completions"):
             return self.base_url
         return f"{self.base_url}/chat/completions"
@@ -210,6 +218,9 @@ class OpenAICompatibleChatModel:
         messages: Sequence[ChatMessage],
         tools: Sequence[dict[str, Any]],
     ) -> dict[str, Any]:
+        if self.protocol == 'jev-systemone':
+            from cv_agent.runtime.jev import request_body
+            return request_body(self.model, messages, tools)
         body: dict[str, Any] = {
             "model": self.model,
             "messages": [self._message_payload(message) for message in messages],
@@ -258,6 +269,11 @@ class OpenAICompatibleChatModel:
         redacted = json.loads(safe)
         summary = ({key: redacted[key] for key in ("id", "model", "usage", "error") if key in redacted}
                    if isinstance(redacted, dict) else {"response_type": type(redacted).__name__})
+        if self.protocol == 'jev-systemone' and isinstance(summary.get('usage'), dict):
+            usage = summary['usage']
+            counts = [usage.get('input_tokens'), usage.get('output_tokens')]
+            if all(type(value) is int and value >= 0 for value in counts):
+                summary = {**summary, 'usage': {**usage, 'total_tokens': sum(counts)}}
         self._observe({"event": "model_response_received", "summary": summary, "raw_response": redacted})
         return summary, redacted
 
@@ -328,6 +344,9 @@ class OpenAICompatibleChatModel:
         try:
             if diagnostic and diagnostic['diagnosis'] == 'upstream_blocked':
                 raise ValueError('upstream_blocked: ' + diagnostic['block_reason'])
+            if self.protocol == 'jev-systemone':
+                from cv_agent.runtime.jev import parse_response
+                return parse_response(raw, body['questions'])
             return self._parse_response(raw)
         except (ValueError, TypeError, KeyError, AttributeError):
             self._observe({"event": "model_invalid_response", "summary": summary,

@@ -128,6 +128,7 @@ def test_shell_commands_have_valid_syntax():
     paths = sorted((ROOT/'scripts').glob('*.sh'))
     assert {path.name for path in paths} == {
         'heldout_gate.sh', 'heldout_matrix.sh', 'deepseek.sh', 'fetch_benchmarks.sh',
+        'jev_pilot.sh', 'hp003_jev_active.sh', 'jev_v3_comparison.sh',
     }
     for path in paths:
         shell = '/bin/sh' if path.read_text().startswith('#!/bin/sh') else '/bin/bash'

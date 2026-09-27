@@ -28,6 +28,7 @@ def config_dict():
                 "source_root": ".",
                 "exclude_path_parts": ["tests"],
                 "vulnerability_title": "Example issue",
+                "property_id": "dynamic-evaluation",
                 "source_scope": "example.py:3",
                 "analysis_scope": "Assess only this example issue.",
                 "entry_point": {"file": "example.py", "line": 1, "code": "def entry():", "desc": "entry"},
@@ -232,4 +233,50 @@ def test_heldout_pair_config_rejects_unsafe_expansion(path, value, error):
         cursor = cursor[key]
     cursor[path[-1]] = value
     with pytest.raises(ValueError, match=error):
+        PythonHeldoutPairExperimentConfig.model_validate(data)
+
+
+def test_current_advisory_dataset_declares_original_proof_obligations():
+    root = Path(__file__).resolve().parents[1]
+    data = json.loads((root / 'configs/datasets/advisory_pairs_v4.json').read_text())
+    assert [pair.get('property_id') for pair in data['pairs']] == [
+        'temporary-directory-race', 'authorization-boundary', 'command-execution',
+    ]
+    assert data['claim_eligible'] is False
+    assert data['pairs'][2]['input_parameters'] == ['model_uri']
+    assert data['pairs'][2]['entry_boolean_arguments'] == {'enable_mlserver': True}
+
+
+def test_claim_eligible_runs_require_final_role_and_no_expected_abstentions():
+    data = config_dict()
+    data["claim_eligible"] = True
+    with pytest.raises(ValueError, match="final-test"):
+        PythonHeldoutPairExperimentConfig.model_validate(data)
+
+    data["dataset_role"] = "final-test"
+    data["expected_abstentions"] = [{"case_id": "hp001_a", "system": "E1"}]
+    with pytest.raises(ValueError, match="cannot predeclare expected abstentions"):
+        PythonHeldoutPairExperimentConfig.model_validate(data)
+
+    data["expected_abstentions"] = []
+    config = PythonHeldoutPairExperimentConfig.model_validate(data)
+    assert config.dataset_role == "final-test"
+    assert config.claim_eligible is True
+
+
+def test_claim_eligible_rejects_known_development_advisory_pairs():
+    root = Path(__file__).resolve().parents[1]
+    data = json.loads((root / 'configs/datasets/advisory_pairs_v4.json').read_text())
+    data.update({
+        "dataset_name": "bad final reuse",
+        "dataset_role": "final-test",
+        "claim_eligible": True,
+        "model_config": "configs/model.json",
+        "systems": ["E1", "E2", "E3", "E4", "E5"],
+        "concurrency": 1,
+        "limits": {"max_requests": 30, "max_seconds": 60},
+        "selected_cells": [],
+        "expected_abstentions": [],
+    })
+    with pytest.raises(ValueError, match="development advisory pairs"):
         PythonHeldoutPairExperimentConfig.model_validate(data)

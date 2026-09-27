@@ -27,6 +27,13 @@ class _ObservedToolReply:
             "taint": ("trace_dataflow", "source_path"),
             "authz": ("compare_route_and_service_guard", "route_path"),
         }[self.role]
+        if messages[-1].role == "user" and any(message.role == "tool" for message in messages):
+            # Preserve the original weak proposal and its correction request.
+            return ModelReply(model_id="scripted-tool-driven", content=json.dumps({
+                "expert": self.role, "label": "ABSTAIN", "confidence": 0.9,
+                "validation_status": "UNRESOLVED", "evidence_ids": [],
+                "rationale": "The proposed material vote was rejected for insufficient evidence.",
+            }))
         if messages[-1].role != "tool":
             return ModelReply(model_id="scripted-tool-driven", tool_calls=(
                 ModelToolCall(call_id=self.role + "-1", name=name, arguments={key: self.path}),
@@ -54,7 +61,8 @@ def run_probe_case(case: str, system: AgentSystemVersion):
             for span in parse_python_source("probe-smoke", path, source)]
     entry = next(doc for doc in docs if doc.path.startswith("api.py::endpoint@"))
     candidate = Candidate(candidate_id=case, case_id=case, repository_id="probe-smoke",
-                          path=entry.path, line=3, query=entry.text)
+                          path=entry.path, line=3, query=entry.text, property_id="dynamic-evaluation",
+                          input_parameters=("request",))
     plan = {
         "candidate_id": case, "vulnerability_hypotheses": ["Python eval injection"],
         "subtasks": [
@@ -71,7 +79,7 @@ def run_probe_case(case: str, system: AgentSystemVersion):
     models = {}
     for role in ("scan", "taint", "authz"):
         responder = _ObservedToolReply(role, entry.path)
-        models[role] = ScriptedChatModel([responder, responder])
+        models[role] = ScriptedChatModel([responder, responder, responder])
     models["planner"] = ScriptedChatModel([
         ModelReply(model_id="scripted-plan", tool_calls=(
             ModelToolCall(call_id="planner-1", name="read_span", arguments={"path": entry.path}),

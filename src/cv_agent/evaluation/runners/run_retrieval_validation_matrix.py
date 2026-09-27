@@ -8,7 +8,7 @@ from cv_agent.runtime.journal import utc_now, Journal
 from cv_agent.runtime.budget import Budget, BudgetExceeded
 from cv_agent.evaluation.runners.run_development_benchmark import run_candidate, summarize
 from cv_agent.runtime.snapshots import snapshot_sources
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties
 from cv_agent.harness import AgentSystemVersion
 from cv_agent.retrieval.bm25 import MetadataBM25Index
 from cv_agent.runtime.provenance import build_run_identity
@@ -32,7 +32,7 @@ def main():
               'systems':[item[0] for item in config['variants']],
               'comparisons':[[item[0] for item in config['variants']]],
               'sampling_note':'固定清单中的四类正负用例；两组共享源码元信息、BM25评分器和上下文预算，仅改变检索邻域。属于探索性开发评测。'}
-    inputs=load_owasp_agentic_inputs(project_root/'data/raw',case_ids=ids)
+    inputs=load_owasp_agentic_inputs(project_root/'data/raw',case_ids=ids, property_ids=development_owasp_properties(project_root, ids))
     index=MetadataBM25Index(inputs.index.documents.values())
     directory=project_root/'artifacts/retrieval_validation_matrix'/uuid4().hex
     directory.mkdir(parents=True)

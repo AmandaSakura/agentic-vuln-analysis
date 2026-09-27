@@ -2,6 +2,73 @@ from cv_agent.tools.validation import FixtureCase, FixtureOutcome, ValidationSta
 from cv_agent.tools.validation.fixtures import _run_fixture_case, _run_loopback_case
 
 
+def test_explicit_executable_grant_does_not_grant_writes_or_other_execution(tmp_path):
+    import subprocess
+    from pathlib import Path
+    import pytest
+    from cv_agent.runtime.fixture_isolation import restrict_fixture_filesystem
+
+    roots = (Path('/usr/lib'), Path('/lib'), Path('/etc/ld.so.cache'), tmp_path)
+    shell = Path('/bin/bash').resolve()
+    with pytest.raises(PermissionError):
+        subprocess.run([str(shell), '-c', 'exit 0'], check=True,
+                       preexec_fn=lambda: restrict_fixture_filesystem(roots))
+
+    def isolate():
+        import platform
+        loader = {'x86_64': '/lib64/ld-linux-x86-64.so.2',
+                  'aarch64': '/lib/ld-linux-aarch64.so.1'}[platform.machine()]
+        restrict_fixture_filesystem(roots, executable_paths=(shell, Path(loader)))
+
+    result = subprocess.run([str(shell), '--noprofile', '--norc', '-c',
+                             'printf allowed; printf blocked > marker; /bin/true'],
+                            cwd=tmp_path, env={'PATH': '/nonexistent'},
+                            preexec_fn=isolate, capture_output=True, timeout=5)
+    assert result.stdout == b'allowed'
+    assert result.returncode == 126
+    assert not (tmp_path / 'marker').exists()
+
+
+def test_fixture_case_executable_grant_reaches_restricted_runner(tmp_path):
+    import platform
+    import subprocess
+    from pathlib import Path
+
+    shell = Path('/bin/bash').resolve()
+    loader = Path({'x86_64': '/lib64/ld-linux-x86-64.so.2',
+                   'aarch64': '/lib/ld-linux-aarch64.so.1'}[platform.machine()])
+    marker = tmp_path / 'marker'
+
+    def runner():
+        result = subprocess.run(
+            [str(shell), '--noprofile', '--norc', '-c',
+             'printf allowed; printf blocked > marker; /bin/true'],
+            cwd=tmp_path,
+            env={'PATH': '/nonexistent'},
+            capture_output=True,
+            timeout=5,
+        )
+        return FixtureOutcome(
+            status=ValidationStatus.REFUTED
+            if result.stdout == b'allowed' and result.returncode == 126 and not marker.exists()
+            else ValidationStatus.UNRESOLVED,
+            summary='fixture executable grant was enforced',
+            details={'returncode': result.returncode, 'stdout': result.stdout.decode()},
+        )
+
+    result = _run_fixture_case(
+        FixtureCase(
+            'exec-grant',
+            runner,
+            read_roots=(Path('/usr/lib'), Path('/lib'), Path('/etc/ld.so.cache'), tmp_path),
+            executable_paths=(shell, loader),
+        ),
+        5,
+    )
+    assert result.status == ValidationStatus.REFUTED, result
+    assert not marker.exists()
+
+
 def test_registered_read_root_is_readable_but_cannot_be_written(tmp_path):
     subject = tmp_path / "subject"
     subject.mkdir()

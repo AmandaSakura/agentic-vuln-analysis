@@ -9,11 +9,15 @@ import stat
 from pathlib import Path
 
 
-def restrict_fixture_filesystem(read_roots: tuple[Path, ...]) -> None:
+def restrict_fixture_filesystem(
+    read_roots: tuple[Path, ...], *, executable_paths: tuple[Path, ...] = (),
+) -> None:
     """Deny file reads outside registered roots and deny all filesystem writes.
 
     Landlock ABI 3 is required because earlier ABIs do not restrict truncation.
     Called only in the disposable child after inherited descriptors are closed.
+    Execution is denied by default. A trusted harness may name individual
+    executable files; a directory can never grant recursive execution rights.
     """
     if platform.machine() not in {"x86_64", "aarch64"}:
         raise RuntimeError("fixture filesystem isolation requires supported Linux syscalls")
@@ -49,6 +53,15 @@ def restrict_fixture_filesystem(read_roots: tuple[Path, ...]) -> None:
                     access |= 1 << 3  # READ_DIR
                 rule = PathRule(access, descriptor)
                 checked(libc.syscall(445, ruleset, 1, ctypes.byref(rule), 0), "add read root")
+            finally:
+                os.close(descriptor)
+        for executable in executable_paths:
+            descriptor = os.open(Path(executable).resolve(strict=True), os.O_PATH | os.O_CLOEXEC)
+            try:
+                if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise ValueError("fixture executable grant requires an individual regular file")
+                rule = PathRule((1 << 0) | (1 << 2), descriptor)  # EXECUTE | READ_FILE
+                checked(libc.syscall(445, ruleset, 1, ctypes.byref(rule), 0), "add executable")
             finally:
                 os.close(descriptor)
         checked(libc.prctl(38, 1, 0, 0, 0), "set no_new_privs")

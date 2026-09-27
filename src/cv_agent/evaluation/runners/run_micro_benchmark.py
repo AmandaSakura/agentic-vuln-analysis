@@ -201,6 +201,8 @@ def build_case_harness(case: TestCase) -> tuple[RepositoryIndex, Candidate]:
         path=entry.path,
         line=case.entry_line,
         query=case.query,
+        property_id="dynamic-evaluation",
+        input_parameters=("request",),
     )
     return RepositoryIndex(documents), candidate
 

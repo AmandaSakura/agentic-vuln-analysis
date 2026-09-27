@@ -15,6 +15,7 @@
     {
       "pair_id": "langchain_template_traversal",
       "fixture_id": "template_traversal",
+      "property_id": "template-traversal",
       "repository_url": "https://github.com/langchain-ai/langchain",
       "advisory": "GHSA-6qv9-48xg-fc7f",
       "cve": "CVE-2025-65106",
@@ -45,6 +46,7 @@
     {
       "pair_id": "jinja_attr_format_escape",
       "fixture_id": "jinja_attr_format",
+      "property_id": "sandbox-attr-format-escape",
       "repository_url": "https://github.com/pallets/jinja",
       "advisory": "GHSA-cpwx-vrp4-4pq7",
       "cve": "CVE-2025-27516",

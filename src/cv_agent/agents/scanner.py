@@ -28,7 +28,7 @@ class StaticScanner:
         'authorization-boundary': 'Determine the intended principal, action and resource or tenant boundary for this route, and whether a caller can bypass required enforcement. A public endpoint or absence of a recognized guard alone does not establish an authorization flaw.',
         'dynamic-attribute-access': 'Determine whether an attacker controls attribute names reaching reflection and can access or modify objects outside the intended boundary; inspect name restrictions, object scope and reachability. Dynamic reflection alone is not a vulnerability.',
         'process-control': 'Determine whether an external caller can reach process termination or signaling without required authorization or isolation. Authorized local shutdown and maintenance operations alone are not vulnerabilities.',
-        'permission-mode': 'Determine whether literal file mode modifications via os.chmod expose permissions to unintended users; non-others-writable modes alone are not vulnerabilities.',
+        'permission-mode': 'Assess only whether the bounded literal os.chmod mode at this location grants others-write permission; this does not establish exploitability or a race.',
     }
 
     @staticmethod
@@ -144,6 +144,10 @@ class StaticScanner:
                             line=source_line,
                             query=f"{rule_name} {line.strip()}",
                             analysis_scope=self.scopes[rule_name],
+                            # Every rule declares its proof obligation. Detection
+                            # of a syntax pattern does not itself prove it.
+                            property_id=("chmod-mode-others-write"
+                                         if rule_name == "permission-mode" else rule_name),
                             metadata={"rule": rule_name, "span_relative_line": line_number,
                                       "evidence_kind": "static_candidate"},
                         )

@@ -19,11 +19,12 @@ from cv_agent.tools.validation.patterns import SANITIZER_RULES, SINK_RULES, SOUR
 from test_review_followup import vote
 
 
-def observations(source, rule, path="entry.py", inspect=True):
+def observations(source, rule, path="entry.py", inspect=True, *, inputs=()):
     doc = CodeDocument(repository_id="r", path=path, text=source, language="python", adapter_tier="ast", defines=("entry",), calls=("get_cmd", "build_cmd"))
     helper = CodeDocument(repository_id="r", path="helper.py", text="def get_cmd(value):\n    return value\n", language="python", defines=("get_cmd", "build_cmd"))
     index = RepositoryIndex([doc, helper])
     candidate = next(c for c in StaticScanner().scan("r", [doc]) if c.metadata["rule"] == rule)
+    candidate = candidate.model_copy(update={"input_parameters": tuple(inputs)})
     subject = candidate_subject(index, candidate)
     scope = ToolExecutionScope(candidate_path=doc.path, admitted_paths=frozenset([doc.path, helper.path]), subject=subject, max_observation_tokens=12000)
     results = [
@@ -61,9 +62,12 @@ def test_command_gate_applies_only_to_corresponding_candidate(path, inspect, rul
 ''', rule, path, inspect)
     assert json.loads(trace[1].observation.content)["flow_status"] == "MAY_REACH"
     if inspect:
-        assert json.loads(trace[-1].observation.content)["command_construction_status"] == "NOT_ESTABLISHED"
+        # C3: eval before the command is an opaque execution effect.
+        assert json.loads(trace[-1].observation.content)["command_construction_status"] == "AMBIGUOUS"
     if rule == "dynamic-evaluation":
-        vote(trace, subject, "VULNERABLE")
+        # C1: keep unrelated command facts in the trace, not as proof of eval.
+        with pytest.raises(ValueError, match="matching cited proof"):
+            vote(trace, subject, "VULNERABLE", supporting_tools=("run_static_check", "trace_dataflow"))
     else:
         with pytest.raises(ValueError, match="inspect_command_construction"):
             vote(trace, subject, "VULNERABLE")
@@ -163,8 +167,12 @@ def test_finally_clears_exception_state_before_outer_handler():
 
 def test_sanitized_command_does_not_refute_separate_eval_candidate():
     trace, subject = observations('''def entry(request):
+    subprocess.run('echo ' + shlex.quote('ok'), shell=True)
     eval(request.args['x'])
-    subprocess.run('echo ' + shlex.quote(build_cmd('ok')), shell=True)
 ''', "dynamic-evaluation")
-    assert json.loads(trace[-1].observation.content)["command_construction_status"] == "SANITIZED"
-    vote(trace, subject, "VULNERABLE")
+    # C3: the prior command fact is safe, but the whole span includes eval.
+    inspection = json.loads(trace[-1].observation.content)
+    assert inspection["command_construction_status"] == "AMBIGUOUS"
+    assert inspection["sink_facts"][0]["status"] == "SANITIZED"
+    with pytest.raises(ValueError, match="matching cited proof"):
+        vote(trace, subject, "VULNERABLE", supporting_tools=("run_static_check", "trace_dataflow"))

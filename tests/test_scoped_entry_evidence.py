@@ -45,9 +45,14 @@ def test_boolean_entry_condition_selects_branch_but_does_not_invent_download_sem
         "    command = 'worker ' + shlex.quote(data) if enabled else data\n"
         "    return subprocess.Popen(command, shell=True)\n"
     ))
-    assert command_status(analyze_command(document, entry_boolean_arguments={"enabled": True})) == "SANITIZED"
+    # C3: quoting a return value does not prove the unknown download has no
+    # execution effects. A declared boolean cannot remove that gap.
+    assert command_status(analyze_command(document, entry_boolean_arguments={"enabled": True})) == "AMBIGUOUS"
     assert command_status(analyze_command(document, entry_boolean_arguments={"enabled": False})) == "AMBIGUOUS"
     assert command_status(analyze_command(document)) == "AMBIGUOUS"
+    pure = document.model_copy(update={"text": document.text.replace("download(value)", "value")})
+    assert command_status(analyze_command(pure, entry_boolean_arguments={"enabled": True})) == "SANITIZED"
+    assert command_status(analyze_command(pure, entry_boolean_arguments={"enabled": False})) == "UNSANITIZED"
 
 
 def test_scope_conditions_are_bound_to_validation_identity():

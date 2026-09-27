@@ -22,8 +22,12 @@ class SystemVersion(StrEnum):
 
 
 class Candidate(FrozenModel):
+    # Machine-readable proof obligation; never inferred from identifiers.
+    property_id: str | None = None
     input_parameters: tuple[str, ...] = ()
     entry_boolean_arguments: dict[str, StrictBool] = Field(default_factory=dict)
+    entry_condition_assumptions: dict[str, StrictBool] = Field(default_factory=dict)
+    entry_value_assumptions: dict[str, Any] = Field(default_factory=dict)
     candidate_id: str
     case_id: str
     repository_id: str
@@ -36,6 +40,9 @@ class Candidate(FrozenModel):
 
 
 class CodeDocument(FrozenModel):
+    # Full original file identity, when supplied by the adapter. A method slice
+    # alone does not bind imports, fields or static initializers in that file.
+    source_sha256: str | None = None
     repository_id: str
     path: str
     text: str

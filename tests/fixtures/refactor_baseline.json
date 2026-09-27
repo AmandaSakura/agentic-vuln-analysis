@@ -1,10 +1,5 @@
 {
   "agentic_eval": {
-    "harness_id": "agentic-vulnerability-system-v1",
-    "runtime_mode": "scripted",
-    "claim_eligible": false,
-    "dataset": "controlled-agentic-two-case-diagnostic",
-    "purpose": "Validate LangGraph/ReAct/quorum wiring and directional false-positive behavior only; not a reported benchmark result.",
     "cases": [
       {
         "case_id": "cross-file-1",
@@ -17,1237 +12,809 @@
         "rationale": "delete operation is protected by require_permission"
       }
     ],
+    "claim_eligible": false,
+    "dataset": "controlled-agentic-two-case-diagnostic",
+    "harness_id": "agentic-vulnerability-system-v1",
+    "purpose": "Validate that weak static proposals remain unproved across single and multi-expert workflows; not a reported benchmark result.",
+    "runtime_mode": "scripted",
     "systems": {
       "E1": {
+        "confusion": {
+          "abstain_negative": 1,
+          "abstain_positive": 1,
+          "abstain_rate": 1.0,
+          "coverage": 0.0,
+          "covered_false_positive_rate": null,
+          "covered_recall": null,
+          "fn": 0,
+          "fp": 0,
+          "population_false_positive_rate": 0.0,
+          "precision": null,
+          "strict_recall": 0.0,
+          "tn": 0,
+          "tp": 0
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": 0.0,
         "predictions": {
           "cross-file-1": "ABSTAIN",
-          "guarded-delete-1": "VULNERABLE"
+          "guarded-delete-1": "ABSTAIN"
         },
-        "confusion": {
-          "tp": 0,
-          "fp": 1,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 1,
-          "abstain_negative": 0,
-          "strict_recall": 0.0,
-          "covered_recall": null,
-          "population_false_positive_rate": 1.0,
-          "covered_false_positive_rate": 1.0,
-          "precision": 0.0,
-          "coverage": 0.5,
-          "abstain_rate": 0.5
-        },
+        "relative_false_positive_reduction_vs_graph_single": null,
         "traces": {
           "cross-file-1": {
-            "label": "ABSTAIN",
             "confidence": 0.9,
+            "context_token_count": 541,
+            "label": "ABSTAIN",
+            "model_calls": 2,
             "path": "single",
+            "planner_subtask_count": 0,
+            "tool_calls": 1,
             "votes": [
               {
                 "expert": "scan",
                 "label": "ABSTAIN",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               }
-            ],
-            "planner_subtask_count": 0,
-            "model_calls": 2,
-            "tool_calls": 1,
-            "context_token_count": 507
+            ]
           },
           "guarded-delete-1": {
-            "label": "VULNERABLE",
             "confidence": 0.9,
+            "context_token_count": 561,
+            "label": "ABSTAIN",
+            "model_calls": 3,
             "path": "single",
+            "planner_subtask_count": 0,
+            "tool_calls": 1,
             "votes": [
               {
                 "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               }
-            ],
-            "planner_subtask_count": 0,
-            "model_calls": 2,
-            "tool_calls": 1,
-            "context_token_count": 522
+            ]
           }
-        },
-        "false_positive_delta_vs_graph_single_percentage_points": 0.0,
-        "relative_false_positive_reduction_vs_graph_single": 0.0
+        }
       },
       "E3": {
-        "predictions": {
-          "cross-file-1": "VULNERABLE",
-          "guarded-delete-1": "VULNERABLE"
-        },
         "confusion": {
-          "tp": 1,
-          "fp": 1,
-          "tn": 0,
+          "abstain_negative": 1,
+          "abstain_positive": 1,
+          "abstain_rate": 1.0,
+          "coverage": 0.0,
+          "covered_false_positive_rate": null,
+          "covered_recall": null,
           "fn": 0,
-          "abstain_positive": 0,
-          "abstain_negative": 0,
-          "strict_recall": 1.0,
-          "covered_recall": 1.0,
-          "population_false_positive_rate": 1.0,
-          "covered_false_positive_rate": 1.0,
-          "precision": 0.5,
-          "coverage": 1.0,
-          "abstain_rate": 0.0
-        },
-        "traces": {
-          "cross-file-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.9,
-            "path": "single",
-            "votes": [
-              {
-                "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
-              }
-            ],
-            "planner_subtask_count": 0,
-            "model_calls": 2,
-            "tool_calls": 1,
-            "context_token_count": 835
-          },
-          "guarded-delete-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.9,
-            "path": "single",
-            "votes": [
-              {
-                "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
-              }
-            ],
-            "planner_subtask_count": 0,
-            "model_calls": 2,
-            "tool_calls": 1,
-            "context_token_count": 522
-          }
+          "fp": 0,
+          "population_false_positive_rate": 0.0,
+          "precision": null,
+          "strict_recall": 0.0,
+          "tn": 0,
+          "tp": 0
         },
         "false_positive_delta_vs_graph_single_percentage_points": 0.0,
-        "relative_false_positive_reduction_vs_graph_single": 0.0
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "relative_false_positive_reduction_vs_graph_single": null,
+        "traces": {
+          "cross-file-1": {
+            "confidence": 0.9,
+            "context_token_count": 869,
+            "label": "ABSTAIN",
+            "model_calls": 3,
+            "path": "single",
+            "planner_subtask_count": 0,
+            "tool_calls": 1,
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
+              }
+            ]
+          },
+          "guarded-delete-1": {
+            "confidence": 0.9,
+            "context_token_count": 561,
+            "label": "ABSTAIN",
+            "model_calls": 3,
+            "path": "single",
+            "planner_subtask_count": 0,
+            "tool_calls": 1,
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
+              }
+            ]
+          }
+        }
       },
       "E4": {
+        "confusion": {
+          "abstain_negative": 1,
+          "abstain_positive": 1,
+          "abstain_rate": 1.0,
+          "coverage": 0.0,
+          "covered_false_positive_rate": null,
+          "covered_recall": null,
+          "fn": 0,
+          "fp": 0,
+          "population_false_positive_rate": 0.0,
+          "precision": null,
+          "strict_recall": 0.0,
+          "tn": 0,
+          "tp": 0
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": 0.0,
         "predictions": {
-          "cross-file-1": "VULNERABLE",
+          "cross-file-1": "ABSTAIN",
           "guarded-delete-1": "ABSTAIN"
         },
-        "confusion": {
-          "tp": 1,
-          "fp": 0,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 0,
-          "abstain_negative": 1,
-          "strict_recall": 1.0,
-          "covered_recall": 1.0,
-          "population_false_positive_rate": 0.0,
-          "covered_false_positive_rate": null,
-          "precision": 1.0,
-          "coverage": 0.5,
-          "abstain_rate": 0.5
-        },
+        "relative_false_positive_reduction_vs_graph_single": null,
         "traces": {
           "cross-file-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.9,
+            "confidence": 0.0,
+            "context_token_count": 2461,
+            "label": "ABSTAIN",
+            "model_calls": 10,
             "path": "slow",
+            "planner_subtask_count": 3,
+            "tool_calls": 4,
             "votes": [
               {
                 "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               },
               {
                 "expert": "taint",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               },
               {
                 "expert": "authz",
                 "label": "ABSTAIN",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               }
-            ],
-            "planner_subtask_count": 3,
-            "model_calls": 8,
-            "tool_calls": 4,
-            "context_token_count": 2427
+            ]
           },
           "guarded-delete-1": {
+            "confidence": 0.0,
+            "context_token_count": 1549,
             "label": "ABSTAIN",
-            "confidence": 0.9,
+            "model_calls": 9,
             "path": "slow",
+            "planner_subtask_count": 3,
+            "tool_calls": 4,
             "votes": [
               {
                 "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               },
               {
                 "expert": "taint",
                 "label": "ABSTAIN",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               },
               {
                 "expert": "authz",
                 "label": "ABSTAIN",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               }
-            ],
-            "planner_subtask_count": 3,
-            "model_calls": 8,
-            "tool_calls": 4,
-            "context_token_count": 1510
+            ]
           }
-        },
-        "false_positive_delta_vs_graph_single_percentage_points": -100.0,
-        "relative_false_positive_reduction_vs_graph_single": 1.0
+        }
       },
       "E5": {
+        "confusion": {
+          "abstain_negative": 1,
+          "abstain_positive": 1,
+          "abstain_rate": 1.0,
+          "coverage": 0.0,
+          "covered_false_positive_rate": null,
+          "covered_recall": null,
+          "fn": 0,
+          "fp": 0,
+          "population_false_positive_rate": 0.0,
+          "precision": null,
+          "strict_recall": 0.0,
+          "tn": 0,
+          "tp": 0
+        },
+        "false_positive_delta_vs_graph_single_percentage_points": 0.0,
         "predictions": {
-          "cross-file-1": "VULNERABLE",
+          "cross-file-1": "ABSTAIN",
           "guarded-delete-1": "ABSTAIN"
         },
-        "confusion": {
-          "tp": 1,
-          "fp": 0,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 0,
-          "abstain_negative": 1,
-          "strict_recall": 1.0,
-          "covered_recall": 1.0,
-          "population_false_positive_rate": 0.0,
-          "covered_false_positive_rate": null,
-          "precision": 1.0,
-          "coverage": 0.5,
-          "abstain_rate": 0.5
-        },
+        "relative_false_positive_reduction_vs_graph_single": null,
         "traces": {
           "cross-file-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.9,
-            "path": "fast",
-            "votes": [
-              {
-                "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
-              },
-              {
-                "expert": "taint",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
-              }
-            ],
-            "planner_subtask_count": 3,
-            "model_calls": 6,
-            "tool_calls": 3,
-            "context_token_count": 1757
-          },
-          "guarded-delete-1": {
+            "confidence": 0.0,
+            "context_token_count": 2461,
             "label": "ABSTAIN",
-            "confidence": 0.9,
+            "model_calls": 10,
             "path": "slow",
+            "planner_subtask_count": 3,
+            "tool_calls": 4,
             "votes": [
               {
                 "expert": "scan",
-                "label": "VULNERABLE",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               },
               {
                 "expert": "taint",
                 "label": "ABSTAIN",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               },
               {
                 "expert": "authz",
                 "label": "ABSTAIN",
-                "validation_status": "UNRESOLVED",
-                "tool_calls": 1
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
               }
-            ],
+            ]
+          },
+          "guarded-delete-1": {
+            "confidence": 0.0,
+            "context_token_count": 1549,
+            "label": "ABSTAIN",
+            "model_calls": 9,
+            "path": "slow",
             "planner_subtask_count": 3,
-            "model_calls": 8,
             "tool_calls": 4,
-            "context_token_count": 1510
+            "votes": [
+              {
+                "expert": "scan",
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
+              },
+              {
+                "expert": "taint",
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
+              },
+              {
+                "expert": "authz",
+                "label": "ABSTAIN",
+                "tool_calls": 1,
+                "validation_status": "UNRESOLVED"
+              }
+            ]
           }
-        },
-        "false_positive_delta_vs_graph_single_percentage_points": -100.0,
-        "relative_false_positive_reduction_vs_graph_single": 1.0
+        }
       }
     }
   },
   "agentic_smoke": {
-    "harness_id": "agentic-vulnerability-system-v1",
-    "runtime_mode": "scripted",
     "claim_eligible": false,
-    "purpose": "wiring-only ReAct and LangGraph diagnostic",
+    "harness_id": "agentic-vulnerability-system-v1",
+    "purpose": "wiring-only ReAct and LangGraph diagnostic with a bounded eval witness",
+    "runtime_mode": "scripted",
     "verdict": {
-      "runtime_mode": "scripted",
-      "label": "VULNERABLE",
+      "blocked_tasks": [],
       "confidence": 0.9,
-      "path": "fast",
-      "rationale": "2 high-confidence experts formed an early quorum.",
+      "context_accounting": "utf8-byte-upper-bound",
+      "context_token_count": 3581,
+      "label": "ABSTAIN",
+      "model_calls": 9,
+      "path": "slow",
       "planner": {
-        "runtime_mode": "scripted",
+        "model_calls": 2,
+        "model_ids": [
+          "scripted-plan"
+        ],
         "plan": {
-          "candidate_id": "cross-file-1",
-          "vulnerability_hypotheses": [
-            "command injection"
-          ],
+          "candidate_id": "C01",
+          "rationale": "Two applicable checks of injection and a separate authorization assessment.",
           "subtasks": [
             {
-              "task_id": "find-command-sink",
-              "objective": "Locate the cross-file command sink.",
-              "expert": "scan",
-              "allowed_validator": "run_static_check",
+              "allowed_validator": "probe_python_eval",
               "dependencies": [],
-              "success_condition": "A command execution sink is located."
+              "expert": "scan",
+              "fixture_case_id": null,
+              "objective": "Check two concrete inputs reaching eval in admitted code.",
+              "success_condition": "Check two concrete inputs reaching eval in admitted code.",
+              "task_id": "scan"
             },
             {
-              "task_id": "trace-request",
-              "objective": "Trace request input into the command sink.",
-              "expert": "taint",
               "allowed_validator": "trace_dataflow",
-              "dependencies": [
-                "find-command-sink"
-              ],
-              "success_condition": "The unsanitized source-to-sink path is established."
+              "dependencies": [],
+              "expert": "taint",
+              "fixture_case_id": null,
+              "objective": "Independently check parameter flow from input to eval.",
+              "success_condition": "Independently check parameter flow from input to eval.",
+              "task_id": "taint"
+            },
+            {
+              "allowed_validator": "compare_route_and_service_guard",
+              "dependencies": [],
+              "expert": "authz",
+              "fixture_case_id": null,
+              "objective": "Assess whether permissions are applicable.",
+              "success_condition": "Assess whether permissions are applicable.",
+              "task_id": "authz"
             }
           ],
-          "rationale": "The entry delegates a request-derived command to another file."
+          "vulnerability_hypotheses": [
+            "Python eval injection"
+          ]
         },
+        "runtime_mode": "scripted",
+        "tool_calls": 1,
+        "tool_observation_token_count": 184,
         "trace": [
           {
-            "step": 1,
-            "model_id": "scripted-planner",
-            "tool_call": {
-              "call_id": "planner-tool-1",
-              "name": "read_span",
-              "arguments": {
-                "path": "controller.py"
-              }
-            },
+            "model_id": "scripted-plan",
             "observation": {
-              "tool": "read_span",
-              "status": "ok",
-              "content": "def handle(request):\n    command = request.args['cmd']\n    return run_command(command)\n",
-              "evidence_ids": [
-                "span:controller.py"
-              ],
-              "metadata": {
-                "adapter_tier": "unknown",
-                "language": "unknown",
-                "path": "controller.py",
-                "defines": [
-                  "handle"
-                ],
-                "calls": [
-                  "run_command"
-                ],
-                "imports": [],
-                "routes": [],
-                "guards": [],
-                "observation_token_count": 168,
-                "observation_truncated": false,
-                "model_payload_suppressed": false
-              },
               "citation_id": "planner/tool:1",
-              "validation_status": null,
-              "subject": null
+              "content": "def endpoint(request):\n    payload = request.args['expression']\n    return calculate(payload, 'audit')\n",
+              "evidence_ids": [
+                "span:api.py::endpoint@3-5"
+              ],
+              "fixture_proof": null,
+              "metadata": {
+                "adapter_tier": "ast",
+                "calls": [
+                  "operations.calculate"
+                ],
+                "defines": [
+                  "api.endpoint",
+                  "endpoint"
+                ],
+                "guards": [],
+                "imports": [
+                  "operations.calculate"
+                ],
+                "language": "python",
+                "model_payload_suppressed": false,
+                "observation_token_count": 184,
+                "observation_truncated": false,
+                "path": "api.py::endpoint@3-5",
+                "routes": []
+              },
+              "status": "ok",
+              "subject": null,
+              "tool": "read_span",
+              "validation_status": null
+            },
+            "step": 1,
+            "tool_call": {
+              "arguments": {
+                "path": "api.py::endpoint@3-5"
+              },
+              "call_id": "planner-1",
+              "name": "read_span"
             }
           }
         ],
-        "model_ids": [
-          "scripted-planner"
-        ],
-        "model_calls": 2,
-        "tool_calls": 1,
-        "tool_observation_token_count": 168,
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "total_tokens": null
         }
       },
-      "votes": [
-        {
-          "expert": "scan",
-          "label": "VULNERABLE",
-          "confidence": 0.9,
-          "validation_status": "UNRESOLVED",
-          "evidence_ids": [
-            "scan/tool:1"
-          ],
-          "supporting_observation_ids": [],
-          "counter_observation_ids": [],
-          "unresolved_observation_ids": [],
-          "rationale": "scan reached a scripted fixture conclusion.",
-          "runtime_mode": "scripted",
-          "trace": [
-            {
-              "step": 1,
-              "model_id": "scripted-scan",
-              "tool_call": {
-                "call_id": "scan-tool-1",
-                "name": "run_static_check",
-                "arguments": {
-                  "path": "service.py"
-                }
-              },
-              "observation": {
-                "tool": "run_static_check",
-                "status": "ok",
-                "content": "{\"finding_count\":1,\"findings\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"text\":\"return subprocess.run(command, shell=True)\"}],\"path\":\"service.py\"}",
-                "evidence_ids": [
-                  "static:service.py"
-                ],
-                "metadata": {
-                  "observation_token_count": 309,
-                  "observation_truncated": false,
-                  "model_payload_suppressed": false
-                },
-                "citation_id": "scan/tool:1",
-                "validation_status": "UNRESOLVED",
-                "subject": null
-              }
-            }
-          ],
-          "model_ids": [
-            "scripted-scan"
-          ],
-          "model_calls": 2,
-          "tool_calls": 1,
-          "tool_observation_token_count": 309,
-          "usage": {
-            "input_tokens": null,
-            "output_tokens": null,
-            "total_tokens": null
-          }
-        },
-        {
-          "expert": "taint",
-          "label": "VULNERABLE",
-          "confidence": 0.9,
-          "validation_status": "UNRESOLVED",
-          "evidence_ids": [
-            "taint/tool:1"
-          ],
-          "supporting_observation_ids": [],
-          "counter_observation_ids": [],
-          "unresolved_observation_ids": [],
-          "rationale": "taint reached a scripted fixture conclusion.",
-          "runtime_mode": "scripted",
-          "trace": [
-            {
-              "step": 1,
-              "model_id": "scripted-taint",
-              "tool_call": {
-                "call_id": "taint-tool-1",
-                "name": "trace_dataflow",
-                "arguments": {
-                  "source_path": "controller.py"
-                }
-              },
-              "observation": {
-                "tool": "trace_dataflow",
-                "status": "ok",
-                "content": "{\"declared_input_parameters\":[],\"flow_status\":\"MAY_REACH\",\"status\":\"UNRESOLVED\",\"trace\":[{\"path\":\"controller.py\",\"sanitizers\":[],\"sinks\":[],\"sources\":[{\"categories\":[\"untrusted-input\"],\"line\":2,\"text\":\"command = request.args['cmd']\"}],\"tainted_calls\":[\"run_command\"],\"tainted_variables\":[]},{\"path\":\"service.py\",\"sanitizers\":[],\"sinks\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"tainted\":true,\"text\":\"return subprocess.run(command, shell=True)\"}],\"sources\":[],\"tainted_calls\":[\"subprocess.run\"],\"tainted_variables\":[]}],\"unresolved_edges\":[]}",
-                "evidence_ids": [
-                  "taint:controller.py",
-                  "taint:service.py"
-                ],
-                "metadata": {
-                  "observation_token_count": 754,
-                  "observation_truncated": false,
-                  "model_payload_suppressed": false
-                },
-                "citation_id": "taint/tool:1",
-                "validation_status": "UNRESOLVED",
-                "subject": null
-              }
-            }
-          ],
-          "model_ids": [
-            "scripted-taint"
-          ],
-          "model_calls": 2,
-          "tool_calls": 1,
-          "tool_observation_token_count": 754,
-          "usage": {
-            "input_tokens": null,
-            "output_tokens": null,
-            "total_tokens": null
-          }
-        }
-      ],
+      "rationale": "Fewer than 2 material expert votes were available.",
+      "retrieval_context_token_count": 610,
+      "runtime_mode": "scripted",
       "task_executions": [
         {
-          "task_id": "find-command-sink",
+          "task_id": "scan",
+          "validator_completed": true,
           "vote": {
-            "expert": "scan",
-            "label": "VULNERABLE",
             "confidence": 0.9,
-            "validation_status": "UNRESOLVED",
+            "counter_observation_ids": [],
             "evidence_ids": [
               "scan/tool:1"
             ],
-            "supporting_observation_ids": [],
-            "counter_observation_ids": [],
-            "unresolved_observation_ids": [],
-            "rationale": "scan reached a scripted fixture conclusion.",
+            "expert": "scan",
+            "label": "VULNERABLE",
+            "model_calls": 2,
+            "model_ids": [
+              "scripted-tool-driven"
+            ],
+            "rationale": "Development transport reports its own typed tool observation.",
             "runtime_mode": "scripted",
+            "supporting_observation_ids": [],
+            "tool_calls": 1,
+            "tool_observation_token_count": 1393,
             "trace": [
               {
-                "step": 1,
-                "model_id": "scripted-scan",
-                "tool_call": {
-                  "call_id": "scan-tool-1",
-                  "name": "run_static_check",
-                  "arguments": {
-                    "path": "service.py"
-                  }
-                },
+                "model_id": "scripted-tool-driven",
                 "observation": {
-                  "tool": "run_static_check",
-                  "status": "ok",
-                  "content": "{\"finding_count\":1,\"findings\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"text\":\"return subprocess.run(command, shell=True)\"}],\"path\":\"service.py\"}",
-                  "evidence_ids": [
-                    "static:service.py"
-                  ],
-                  "metadata": {
-                    "observation_token_count": 309,
-                    "observation_truncated": false,
-                    "model_payload_suppressed": false
-                  },
                   "citation_id": "scan/tool:1",
-                  "validation_status": "UNRESOLVED",
-                  "subject": null
+                  "content": "{\"assumptions\":[\"request fields model attacker-controlled strings\",\"unshadowed eval models the Python builtin\"],\"attempts\":[{\"input\":\"(481516 + 2342)\",\"outcome\":\"input reached eval\",\"sink_line\":2,\"sink_path\":\"operations.py::calculate@1-2\",\"trace\":[{\"depth\":0,\"event\":\"enter\",\"path\":\"api.py::endpoint@3-5\"},{\"event\":\"input\",\"key\":\"expression\",\"line\":2,\"path\":\"api.py::endpoint@3-5\"},{\"depth\":1,\"event\":\"enter\",\"path\":\"operations.py::calculate@1-2\"}]},{\"input\":\"(271828 - 31415)\",\"outcome\":\"input reached eval\",\"sink_line\":2,\"sink_path\":\"operations.py::calculate@1-2\",\"trace\":[{\"depth\":0,\"event\":\"enter\",\"path\":\"api.py::endpoint@3-5\"},{\"event\":\"input\",\"key\":\"expression\",\"line\":2,\"path\":\"api.py::endpoint@3-5\"},{\"depth\":1,\"event\":\"enter\",\"path\":\"operations.py::calculate@1-2\"}]}],\"entry_boolean_arguments\":{},\"function_header_lines\":[1],\"input_parameters\":[\"request\"],\"method\":\"bounded-concrete-input-probe\",\"property_id\":\"dynamic-evaluation\",\"scope\":\"admitted Python function slices; not a full application exploit\",\"source_path\":\"api.py::endpoint@3-5\",\"status\":\"CONFIRMED\",\"summary\":\"Two different inputs reached the same eval argument.\"}",
+                  "evidence_ids": [
+                    "probe:api.py::endpoint@3-5"
+                  ],
+                  "fixture_proof": null,
+                  "metadata": {
+                    "model_payload_suppressed": false,
+                    "observation_token_count": 1393,
+                    "observation_truncated": false
+                  },
+                  "status": "ok",
+                  "subject": {
+                    "analysis_scope": null,
+                    "candidate_id": "C01",
+                    "entry_boolean_arguments": {},
+                    "entry_condition_assumptions": {},
+                    "entry_line": 3,
+                    "entry_path": "api.py::endpoint@3-5",
+                    "entry_value_assumptions": {},
+                    "input_parameters": [
+                      "request"
+                    ],
+                    "property_id": "dynamic-evaluation",
+                    "repository_id": "probe-smoke",
+                    "source_digest": "aa1f162265c9a98d415bfcc9f88d44136fd18a28e2bc0d161f2e645066eebbc9"
+                  },
+                  "tool": "probe_python_eval",
+                  "validation_status": "CONFIRMED"
+                },
+                "step": 1,
+                "tool_call": {
+                  "arguments": {
+                    "source_path": "api.py::endpoint@3-5"
+                  },
+                  "call_id": "scan-1",
+                  "name": "probe_python_eval"
                 }
               }
             ],
-            "model_ids": [
-              "scripted-scan"
-            ],
-            "model_calls": 2,
-            "tool_calls": 1,
-            "tool_observation_token_count": 309,
+            "unresolved_observation_ids": [],
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "total_tokens": null
-            }
+            },
+            "validation_status": "CONFIRMED"
           }
         },
         {
-          "task_id": "trace-request",
+          "task_id": "taint",
+          "validator_completed": true,
           "vote": {
-            "expert": "taint",
-            "label": "VULNERABLE",
             "confidence": 0.9,
-            "validation_status": "UNRESOLVED",
-            "evidence_ids": [
-              "taint/tool:1"
-            ],
-            "supporting_observation_ids": [],
             "counter_observation_ids": [],
-            "unresolved_observation_ids": [],
-            "rationale": "taint reached a scripted fixture conclusion.",
+            "evidence_ids": [],
+            "expert": "taint",
+            "label": "ABSTAIN",
+            "model_calls": 3,
+            "model_ids": [
+              "scripted-tool-driven"
+            ],
+            "rationale": "The proposed material vote was rejected for insufficient evidence.",
             "runtime_mode": "scripted",
+            "supporting_observation_ids": [],
+            "tool_calls": 1,
+            "tool_observation_token_count": 764,
             "trace": [
               {
-                "step": 1,
-                "model_id": "scripted-taint",
-                "tool_call": {
-                  "call_id": "taint-tool-1",
-                  "name": "trace_dataflow",
-                  "arguments": {
-                    "source_path": "controller.py"
-                  }
-                },
+                "model_id": "scripted-tool-driven",
                 "observation": {
-                  "tool": "trace_dataflow",
-                  "status": "ok",
-                  "content": "{\"declared_input_parameters\":[],\"flow_status\":\"MAY_REACH\",\"status\":\"UNRESOLVED\",\"trace\":[{\"path\":\"controller.py\",\"sanitizers\":[],\"sinks\":[],\"sources\":[{\"categories\":[\"untrusted-input\"],\"line\":2,\"text\":\"command = request.args['cmd']\"}],\"tainted_calls\":[\"run_command\"],\"tainted_variables\":[]},{\"path\":\"service.py\",\"sanitizers\":[],\"sinks\":[{\"category\":\"command-execution\",\"line\":3,\"match\":\"subprocess.run(\",\"tainted\":true,\"text\":\"return subprocess.run(command, shell=True)\"}],\"sources\":[],\"tainted_calls\":[\"subprocess.run\"],\"tainted_variables\":[]}],\"unresolved_edges\":[]}",
-                  "evidence_ids": [
-                    "taint:controller.py",
-                    "taint:service.py"
-                  ],
-                  "metadata": {
-                    "observation_token_count": 754,
-                    "observation_truncated": false,
-                    "model_payload_suppressed": false
-                  },
                   "citation_id": "taint/tool:1",
-                  "validation_status": "UNRESOLVED",
-                  "subject": null
+                  "content": "{\"declared_input_parameters\":[\"request\"],\"flow_status\":\"MAY_REACH\",\"status\":\"UNRESOLVED\",\"trace\":[{\"path\":\"api.py::endpoint@3-5\",\"sanitizers\":[],\"sinks\":[],\"sources\":[{\"categories\":[\"untrusted-input\"],\"line\":2,\"text\":\"payload = request.args['expression']\"}],\"tainted_calls\":[\"operations.calculate\"],\"tainted_variables\":[]},{\"path\":\"operations.py::calculate@1-2\",\"sanitizers\":[],\"sinks\":[{\"category\":\"code-execution\",\"line\":2,\"match\":\"eval(\",\"tainted\":true,\"text\":\"return eval(expression)\"}],\"sources\":[],\"tainted_calls\":[\"eval\"],\"tainted_variables\":[]}],\"unresolved_edges\":[]}",
+                  "evidence_ids": [
+                    "taint:api.py::endpoint@3-5",
+                    "taint:operations.py::calculate@1-2"
+                  ],
+                  "fixture_proof": null,
+                  "metadata": {
+                    "model_payload_suppressed": false,
+                    "observation_token_count": 764,
+                    "observation_truncated": false
+                  },
+                  "status": "ok",
+                  "subject": null,
+                  "tool": "trace_dataflow",
+                  "validation_status": "UNRESOLVED"
+                },
+                "step": 1,
+                "tool_call": {
+                  "arguments": {
+                    "source_path": "api.py::endpoint@3-5"
+                  },
+                  "call_id": "taint-1",
+                  "name": "trace_dataflow"
                 }
               }
             ],
-            "model_ids": [
-              "scripted-taint"
-            ],
-            "model_calls": 2,
-            "tool_calls": 1,
-            "tool_observation_token_count": 754,
+            "unresolved_observation_ids": [],
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "total_tokens": null
-            }
+            },
+            "validation_status": "UNRESOLVED"
+          }
+        },
+        {
+          "task_id": "authz",
+          "validator_completed": true,
+          "vote": {
+            "confidence": 0.9,
+            "counter_observation_ids": [],
+            "evidence_ids": [
+              "authz/tool:1"
+            ],
+            "expert": "authz",
+            "label": "ABSTAIN",
+            "model_calls": 2,
+            "model_ids": [
+              "scripted-tool-driven"
+            ],
+            "rationale": "Development transport reports its own typed tool observation.",
+            "runtime_mode": "scripted",
+            "supporting_observation_ids": [],
+            "tool_calls": 1,
+            "tool_observation_token_count": 630,
+            "trace": [
+              {
+                "model_id": "scripted-tool-driven",
+                "observation": {
+                  "citation_id": "authz/tool:1",
+                  "content": "{\"interpretation\":\"no sensitive authorization-relevant action was established\",\"recognized_guard_precedes_actions\":false,\"records\":[{\"distance\":0,\"guard_lines\":[],\"guards\":[],\"path\":\"api.py::endpoint@3-5\",\"principals\":[],\"resources\":[],\"sensitive\":false,\"sensitive_lines\":[]},{\"distance\":1,\"guard_lines\":[],\"guards\":[],\"path\":\"operations.py::calculate@1-2\",\"principals\":[],\"resources\":[],\"sensitive\":false,\"sensitive_lines\":[]}],\"status\":\"UNRESOLVED\"}",
+                  "evidence_ids": [
+                    "authz:api.py::endpoint@3-5",
+                    "authz:operations.py::calculate@1-2"
+                  ],
+                  "fixture_proof": null,
+                  "metadata": {
+                    "model_payload_suppressed": false,
+                    "observation_token_count": 630,
+                    "observation_truncated": false
+                  },
+                  "status": "ok",
+                  "subject": null,
+                  "tool": "compare_route_and_service_guard",
+                  "validation_status": "UNRESOLVED"
+                },
+                "step": 1,
+                "tool_call": {
+                  "arguments": {
+                    "route_path": "api.py::endpoint@3-5"
+                  },
+                  "call_id": "authz-1",
+                  "name": "compare_route_and_service_guard"
+                }
+              }
+            ],
+            "unresolved_observation_ids": [],
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "total_tokens": null
+            },
+            "validation_status": "UNRESOLVED"
           }
         }
       ],
-      "model_calls": 6,
-      "tool_calls": 3,
+      "tool_calls": 4,
+      "tool_observation_token_count": 2971,
       "usage": {
         "input_tokens": null,
         "output_tokens": null,
         "total_tokens": null
       },
-      "retrieval_context_token_count": 526,
-      "tool_observation_token_count": 1231,
-      "context_token_count": 1757,
-      "context_accounting": "utf8-byte-upper-bound"
-    }
-  },
-  "synthetic": {
-    "dataset": "controlled-two-case-smoke",
-    "purpose": "validate directional wiring only; not a reported benchmark result",
-    "systems": {
-      "V1": {
-        "predictions": {
-          "cross-file-1": "ABSTAIN",
-          "guarded-delete-1": "VULNERABLE"
-        },
-        "traces": {
-          "cross-file-1": {
-            "label": "ABSTAIN",
-            "confidence": 0.35,
-            "path": "single",
-            "experts": [
-              "scan"
-            ]
+      "votes": [
+        {
+          "confidence": 0.9,
+          "counter_observation_ids": [],
+          "evidence_ids": [
+            "scan/tool:1"
+          ],
+          "expert": "scan",
+          "label": "VULNERABLE",
+          "model_calls": 2,
+          "model_ids": [
+            "scripted-tool-driven"
+          ],
+          "rationale": "Development transport reports its own typed tool observation.",
+          "runtime_mode": "scripted",
+          "supporting_observation_ids": [],
+          "tool_calls": 1,
+          "tool_observation_token_count": 1393,
+          "trace": [
+            {
+              "model_id": "scripted-tool-driven",
+              "observation": {
+                "citation_id": "scan/tool:1",
+                "content": "{\"assumptions\":[\"request fields model attacker-controlled strings\",\"unshadowed eval models the Python builtin\"],\"attempts\":[{\"input\":\"(481516 + 2342)\",\"outcome\":\"input reached eval\",\"sink_line\":2,\"sink_path\":\"operations.py::calculate@1-2\",\"trace\":[{\"depth\":0,\"event\":\"enter\",\"path\":\"api.py::endpoint@3-5\"},{\"event\":\"input\",\"key\":\"expression\",\"line\":2,\"path\":\"api.py::endpoint@3-5\"},{\"depth\":1,\"event\":\"enter\",\"path\":\"operations.py::calculate@1-2\"}]},{\"input\":\"(271828 - 31415)\",\"outcome\":\"input reached eval\",\"sink_line\":2,\"sink_path\":\"operations.py::calculate@1-2\",\"trace\":[{\"depth\":0,\"event\":\"enter\",\"path\":\"api.py::endpoint@3-5\"},{\"event\":\"input\",\"key\":\"expression\",\"line\":2,\"path\":\"api.py::endpoint@3-5\"},{\"depth\":1,\"event\":\"enter\",\"path\":\"operations.py::calculate@1-2\"}]}],\"entry_boolean_arguments\":{},\"function_header_lines\":[1],\"input_parameters\":[\"request\"],\"method\":\"bounded-concrete-input-probe\",\"property_id\":\"dynamic-evaluation\",\"scope\":\"admitted Python function slices; not a full application exploit\",\"source_path\":\"api.py::endpoint@3-5\",\"status\":\"CONFIRMED\",\"summary\":\"Two different inputs reached the same eval argument.\"}",
+                "evidence_ids": [
+                  "probe:api.py::endpoint@3-5"
+                ],
+                "fixture_proof": null,
+                "metadata": {
+                  "model_payload_suppressed": false,
+                  "observation_token_count": 1393,
+                  "observation_truncated": false
+                },
+                "status": "ok",
+                "subject": {
+                  "analysis_scope": null,
+                  "candidate_id": "C01",
+                  "entry_boolean_arguments": {},
+                  "entry_condition_assumptions": {},
+                  "entry_line": 3,
+                  "entry_path": "api.py::endpoint@3-5",
+                  "entry_value_assumptions": {},
+                  "input_parameters": [
+                    "request"
+                  ],
+                  "property_id": "dynamic-evaluation",
+                  "repository_id": "probe-smoke",
+                  "source_digest": "aa1f162265c9a98d415bfcc9f88d44136fd18a28e2bc0d161f2e645066eebbc9"
+                },
+                "tool": "probe_python_eval",
+                "validation_status": "CONFIRMED"
+              },
+              "step": 1,
+              "tool_call": {
+                "arguments": {
+                  "source_path": "api.py::endpoint@3-5"
+                },
+                "call_id": "scan-1",
+                "name": "probe_python_eval"
+              }
+            }
+          ],
+          "unresolved_observation_ids": [],
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null
           },
-          "guarded-delete-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.8500000000000001,
-            "path": "single",
-            "experts": [
-              "scan"
-            ]
-          }
+          "validation_status": "CONFIRMED"
         },
-        "confusion": {
-          "tp": 0,
-          "fp": 1,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 1,
-          "abstain_negative": 0
-        },
-        "strict_recall": 0.0,
-        "population_false_positive_rate": 1.0,
-        "coverage": 0.5
-      },
-      "V2": {
-        "predictions": {
-          "cross-file-1": "ABSTAIN",
-          "guarded-delete-1": "VULNERABLE"
-        },
-        "traces": {
-          "cross-file-1": {
-            "label": "ABSTAIN",
-            "confidence": 0.35,
-            "path": "single",
-            "experts": [
-              "scan"
-            ]
+        {
+          "confidence": 0.9,
+          "counter_observation_ids": [],
+          "evidence_ids": [],
+          "expert": "taint",
+          "label": "ABSTAIN",
+          "model_calls": 3,
+          "model_ids": [
+            "scripted-tool-driven"
+          ],
+          "rationale": "The proposed material vote was rejected for insufficient evidence.",
+          "runtime_mode": "scripted",
+          "supporting_observation_ids": [],
+          "tool_calls": 1,
+          "tool_observation_token_count": 764,
+          "trace": [
+            {
+              "model_id": "scripted-tool-driven",
+              "observation": {
+                "citation_id": "taint/tool:1",
+                "content": "{\"declared_input_parameters\":[\"request\"],\"flow_status\":\"MAY_REACH\",\"status\":\"UNRESOLVED\",\"trace\":[{\"path\":\"api.py::endpoint@3-5\",\"sanitizers\":[],\"sinks\":[],\"sources\":[{\"categories\":[\"untrusted-input\"],\"line\":2,\"text\":\"payload = request.args['expression']\"}],\"tainted_calls\":[\"operations.calculate\"],\"tainted_variables\":[]},{\"path\":\"operations.py::calculate@1-2\",\"sanitizers\":[],\"sinks\":[{\"category\":\"code-execution\",\"line\":2,\"match\":\"eval(\",\"tainted\":true,\"text\":\"return eval(expression)\"}],\"sources\":[],\"tainted_calls\":[\"eval\"],\"tainted_variables\":[]}],\"unresolved_edges\":[]}",
+                "evidence_ids": [
+                  "taint:api.py::endpoint@3-5",
+                  "taint:operations.py::calculate@1-2"
+                ],
+                "fixture_proof": null,
+                "metadata": {
+                  "model_payload_suppressed": false,
+                  "observation_token_count": 764,
+                  "observation_truncated": false
+                },
+                "status": "ok",
+                "subject": null,
+                "tool": "trace_dataflow",
+                "validation_status": "UNRESOLVED"
+              },
+              "step": 1,
+              "tool_call": {
+                "arguments": {
+                  "source_path": "api.py::endpoint@3-5"
+                },
+                "call_id": "taint-1",
+                "name": "trace_dataflow"
+              }
+            }
+          ],
+          "unresolved_observation_ids": [],
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null
           },
-          "guarded-delete-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.8500000000000001,
-            "path": "single",
-            "experts": [
-              "scan"
-            ]
-          }
+          "validation_status": "UNRESOLVED"
         },
-        "confusion": {
-          "tp": 0,
-          "fp": 1,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 1,
-          "abstain_negative": 0
-        },
-        "strict_recall": 0.0,
-        "population_false_positive_rate": 1.0,
-        "coverage": 0.5
-      },
-      "V3": {
-        "predictions": {
-          "cross-file-1": "VULNERABLE",
-          "guarded-delete-1": "VULNERABLE"
-        },
-        "traces": {
-          "cross-file-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.8500000000000001,
-            "path": "single",
-            "experts": [
-              "scan"
-            ]
+        {
+          "confidence": 0.9,
+          "counter_observation_ids": [],
+          "evidence_ids": [
+            "authz/tool:1"
+          ],
+          "expert": "authz",
+          "label": "ABSTAIN",
+          "model_calls": 2,
+          "model_ids": [
+            "scripted-tool-driven"
+          ],
+          "rationale": "Development transport reports its own typed tool observation.",
+          "runtime_mode": "scripted",
+          "supporting_observation_ids": [],
+          "tool_calls": 1,
+          "tool_observation_token_count": 630,
+          "trace": [
+            {
+              "model_id": "scripted-tool-driven",
+              "observation": {
+                "citation_id": "authz/tool:1",
+                "content": "{\"interpretation\":\"no sensitive authorization-relevant action was established\",\"recognized_guard_precedes_actions\":false,\"records\":[{\"distance\":0,\"guard_lines\":[],\"guards\":[],\"path\":\"api.py::endpoint@3-5\",\"principals\":[],\"resources\":[],\"sensitive\":false,\"sensitive_lines\":[]},{\"distance\":1,\"guard_lines\":[],\"guards\":[],\"path\":\"operations.py::calculate@1-2\",\"principals\":[],\"resources\":[],\"sensitive\":false,\"sensitive_lines\":[]}],\"status\":\"UNRESOLVED\"}",
+                "evidence_ids": [
+                  "authz:api.py::endpoint@3-5",
+                  "authz:operations.py::calculate@1-2"
+                ],
+                "fixture_proof": null,
+                "metadata": {
+                  "model_payload_suppressed": false,
+                  "observation_token_count": 630,
+                  "observation_truncated": false
+                },
+                "status": "ok",
+                "subject": null,
+                "tool": "compare_route_and_service_guard",
+                "validation_status": "UNRESOLVED"
+              },
+              "step": 1,
+              "tool_call": {
+                "arguments": {
+                  "route_path": "api.py::endpoint@3-5"
+                },
+                "call_id": "authz-1",
+                "name": "compare_route_and_service_guard"
+              }
+            }
+          ],
+          "unresolved_observation_ids": [],
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "total_tokens": null
           },
-          "guarded-delete-1": {
-            "label": "VULNERABLE",
-            "confidence": 0.8500000000000001,
-            "path": "single",
-            "experts": [
-              "scan"
-            ]
+          "validation_status": "UNRESOLVED"
+        }
+      ],
+      "retrieval_admission": {
+        "subject_digest": "aa1f162265c9a98d415bfcc9f88d44136fd18a28e2bc0d161f2e645066eebbc9",
+        "records": [
+          {
+            "path": "operations.py::calculate@1-2",
+            "bound_call_source": "api.py::endpoint@3-5",
+            "call_symbol": "operations.calculate",
+            "graph_distance": 1,
+            "document_sha256": "56d38be301bf65fed7aab3d338fe9cbb439f5c9dea18de5b135512ec0b0e5926",
+            "source_sha256": null,
+            "serialized_token_cost": 218,
+            "status": "admitted",
+            "reason": "source_resolved_direct_callee"
           }
-        },
-        "confusion": {
-          "tp": 1,
-          "fp": 1,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 0,
-          "abstain_negative": 0
-        },
-        "strict_recall": 1.0,
-        "population_false_positive_rate": 1.0,
-        "coverage": 1.0
-      },
-      "V4": {
-        "predictions": {
-          "cross-file-1": "ABSTAIN",
-          "guarded-delete-1": "ABSTAIN"
-        },
-        "traces": {
-          "cross-file-1": {
-            "label": "ABSTAIN",
-            "confidence": 0.8500000000000001,
-            "path": "slow",
-            "experts": [
-              "scan",
-              "taint",
-              "flow"
-            ]
-          },
-          "guarded-delete-1": {
-            "label": "ABSTAIN",
-            "confidence": 0.8500000000000001,
-            "path": "slow",
-            "experts": [
-              "scan",
-              "taint",
-              "authz"
-            ]
-          }
-        },
-        "confusion": {
-          "tp": 0,
-          "fp": 0,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 1,
-          "abstain_negative": 1
-        },
-        "strict_recall": 0.0,
-        "population_false_positive_rate": 0.0,
-        "coverage": 0.0
-      },
-      "V5": {
-        "predictions": {
-          "cross-file-1": "ABSTAIN",
-          "guarded-delete-1": "ABSTAIN"
-        },
-        "traces": {
-          "cross-file-1": {
-            "label": "ABSTAIN",
-            "confidence": 0.8500000000000001,
-            "path": "slow",
-            "experts": [
-              "scan",
-              "taint",
-              "flow"
-            ]
-          },
-          "guarded-delete-1": {
-            "label": "ABSTAIN",
-            "confidence": 0.8500000000000001,
-            "path": "slow",
-            "experts": [
-              "scan",
-              "taint",
-              "authz"
-            ]
-          }
-        },
-        "confusion": {
-          "tp": 0,
-          "fp": 0,
-          "tn": 0,
-          "fn": 0,
-          "abstain_positive": 1,
-          "abstain_negative": 1
-        },
-        "strict_recall": 0.0,
-        "population_false_positive_rate": 0.0,
-        "coverage": 0.0
+        ]
       }
     }
   },
   "schemas": {
-    "ChatMessage": {
-      "$defs": {
-        "ModelToolCall": {
-          "additionalProperties": false,
-          "properties": {
-            "call_id": {
-              "title": "Call Id",
-              "type": "string"
-            },
-            "name": {
-              "title": "Name",
-              "type": "string"
-            },
-            "arguments": {
-              "additionalProperties": true,
-              "title": "Arguments",
-              "type": "object"
-            }
-          },
-          "required": [
-            "call_id",
-            "name",
-            "arguments"
-          ],
-          "title": "ModelToolCall",
-          "type": "object"
-        }
-      },
-      "additionalProperties": false,
-      "properties": {
-        "role": {
-          "enum": [
-            "system",
-            "user",
-            "assistant",
-            "tool"
-          ],
-          "title": "Role",
-          "type": "string"
-        },
-        "content": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Content"
-        },
-        "name": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Name"
-        },
-        "tool_call_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Tool Call Id"
-        },
-        "tool_calls": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/ModelToolCall"
-          },
-          "title": "Tool Calls",
-          "type": "array"
-        }
-      },
-      "required": [
-        "role"
-      ],
-      "title": "ChatMessage",
-      "type": "object"
-    },
-    "ModelReply": {
-      "$defs": {
-        "ModelToolCall": {
-          "additionalProperties": false,
-          "properties": {
-            "call_id": {
-              "title": "Call Id",
-              "type": "string"
-            },
-            "name": {
-              "title": "Name",
-              "type": "string"
-            },
-            "arguments": {
-              "additionalProperties": true,
-              "title": "Arguments",
-              "type": "object"
-            }
-          },
-          "required": [
-            "call_id",
-            "name",
-            "arguments"
-          ],
-          "title": "ModelToolCall",
-          "type": "object"
-        },
-        "ModelUsage": {
-          "additionalProperties": false,
-          "properties": {
-            "input_tokens": {
-              "anyOf": [
-                {
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Input Tokens"
-            },
-            "output_tokens": {
-              "anyOf": [
-                {
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Output Tokens"
-            },
-            "total_tokens": {
-              "anyOf": [
-                {
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Total Tokens"
-            }
-          },
-          "title": "ModelUsage",
-          "type": "object"
-        }
-      },
-      "additionalProperties": false,
-      "properties": {
-        "model_id": {
-          "title": "Model Id",
-          "type": "string"
-        },
-        "content": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Content"
-        },
-        "tool_calls": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/ModelToolCall"
-          },
-          "title": "Tool Calls",
-          "type": "array"
-        },
-        "usage": {
-          "$ref": "#/$defs/ModelUsage"
-        }
-      },
-      "required": [
-        "model_id"
-      ],
-      "title": "ModelReply",
-      "type": "object"
-    },
-    "ValidationSubject": {
-      "additionalProperties": false,
-      "properties": {
-        "input_parameters": {
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "title": "Input Parameters",
-          "type": "array"
-        },
-        "entry_boolean_arguments": {
-          "additionalProperties": {
-            "type": "boolean"
-          },
-          "title": "Entry Boolean Arguments",
-          "type": "object"
-        },
-        "candidate_id": {
-          "title": "Candidate Id",
-          "type": "string"
-        },
-        "repository_id": {
-          "title": "Repository Id",
-          "type": "string"
-        },
-        "entry_path": {
-          "title": "Entry Path",
-          "type": "string"
-        },
-        "entry_line": {
-          "anyOf": [
-            {
-              "minimum": 1,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Entry Line"
-        },
-        "source_digest": {
-          "title": "Source Digest",
-          "type": "string"
-        },
-        "analysis_scope": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Analysis Scope"
-        }
-      },
-      "required": [
-        "candidate_id",
-        "repository_id",
-        "entry_path",
-        "source_digest"
-      ],
-      "title": "ValidationSubject",
-      "type": "object"
-    },
-    "ToolObservation": {
-      "$defs": {
-        "ValidationStatus": {
-          "enum": [
-            "CONFIRMED",
-            "REFUTED",
-            "UNRESOLVED"
-          ],
-          "title": "ValidationStatus",
-          "type": "string"
-        },
-        "ValidationSubject": {
-          "additionalProperties": false,
-          "properties": {
-            "input_parameters": {
-              "default": [],
-              "items": {
-                "type": "string"
-              },
-              "title": "Input Parameters",
-              "type": "array"
-            },
-            "entry_boolean_arguments": {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "title": "Entry Boolean Arguments",
-              "type": "object"
-            },
-            "candidate_id": {
-              "title": "Candidate Id",
-              "type": "string"
-            },
-            "repository_id": {
-              "title": "Repository Id",
-              "type": "string"
-            },
-            "entry_path": {
-              "title": "Entry Path",
-              "type": "string"
-            },
-            "entry_line": {
-              "anyOf": [
-                {
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Entry Line"
-            },
-            "source_digest": {
-              "title": "Source Digest",
-              "type": "string"
-            },
-            "analysis_scope": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Analysis Scope"
-            }
-          },
-          "required": [
-            "candidate_id",
-            "repository_id",
-            "entry_path",
-            "source_digest"
-          ],
-          "title": "ValidationSubject",
-          "type": "object"
-        }
-      },
-      "additionalProperties": false,
-      "properties": {
-        "tool": {
-          "title": "Tool",
-          "type": "string"
-        },
-        "status": {
-          "enum": [
-            "ok",
-            "error",
-            "blocked"
-          ],
-          "title": "Status",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "evidence_ids": {
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "title": "Evidence Ids",
-          "type": "array"
-        },
-        "metadata": {
-          "additionalProperties": true,
-          "title": "Metadata",
-          "type": "object"
-        },
-        "citation_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Citation Id"
-        },
-        "validation_status": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ValidationStatus"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "subject": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ValidationSubject"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        }
-      },
-      "required": [
-        "tool",
-        "status",
-        "content"
-      ],
-      "title": "ToolObservation",
-      "type": "object"
-    },
     "AgentExpertConclusion": {
       "$defs": {
         "ValidationStatus": {
@@ -1262,6 +829,28 @@
       },
       "additionalProperties": false,
       "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "counter_observation_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Counter Observation Ids",
+          "type": "array"
+        },
+        "evidence_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
         "expert": {
           "enum": [
             "scan",
@@ -1280,22 +869,10 @@
           "title": "Label",
           "type": "string"
         },
-        "confidence": {
-          "maximum": 1.0,
-          "minimum": 0.0,
-          "title": "Confidence",
-          "type": "number"
-        },
-        "validation_status": {
-          "$ref": "#/$defs/ValidationStatus"
-        },
-        "evidence_ids": {
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "title": "Evidence Ids",
-          "type": "array"
+        "rationale": {
+          "maxLength": 360,
+          "title": "Rationale",
+          "type": "string"
         },
         "supporting_observation_ids": {
           "default": [],
@@ -1303,14 +880,6 @@
             "type": "string"
           },
           "title": "Supporting Observation Ids",
-          "type": "array"
-        },
-        "counter_observation_ids": {
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "title": "Counter Observation Ids",
           "type": "array"
         },
         "unresolved_observation_ids": {
@@ -1321,10 +890,8 @@
           "title": "Unresolved Observation Ids",
           "type": "array"
         },
-        "rationale": {
-          "maxLength": 360,
-          "title": "Rationale",
-          "type": "string"
+        "validation_status": {
+          "$ref": "#/$defs/ValidationStatus"
         }
       },
       "required": [
@@ -1337,101 +904,33 @@
       "title": "AgentExpertConclusion",
       "type": "object"
     },
-    "ValidationPlan": {
-      "$defs": {
-        "ValidationSubtask": {
-          "additionalProperties": false,
-          "properties": {
-            "task_id": {
-              "maxLength": 64,
-              "title": "Task Id",
-              "type": "string"
-            },
-            "objective": {
-              "maxLength": 280,
-              "title": "Objective",
-              "type": "string"
-            },
-            "expert": {
-              "enum": [
-                "scan",
-                "taint",
-                "authz"
-              ],
-              "title": "Expert",
-              "type": "string"
-            },
-            "allowed_validator": {
-              "maxLength": 80,
-              "title": "Allowed Validator",
-              "type": "string"
-            },
-            "dependencies": {
-              "default": [],
-              "items": {
-                "type": "string"
-              },
-              "title": "Dependencies",
-              "type": "array"
-            },
-            "success_condition": {
-              "maxLength": 220,
-              "title": "Success Condition",
-              "type": "string"
-            }
-          },
-          "required": [
-            "task_id",
-            "objective",
-            "expert",
-            "allowed_validator",
-            "success_condition"
-          ],
-          "title": "ValidationSubtask",
-          "type": "object"
-        }
-      },
-      "additionalProperties": false,
-      "properties": {
-        "candidate_id": {
-          "title": "Candidate Id",
-          "type": "string"
-        },
-        "vulnerability_hypotheses": {
-          "items": {
-            "maxLength": 180,
-            "type": "string"
-          },
-          "title": "Vulnerability Hypotheses",
-          "type": "array"
-        },
-        "subtasks": {
-          "items": {
-            "$ref": "#/$defs/ValidationSubtask"
-          },
-          "title": "Subtasks",
-          "type": "array"
-        },
-        "rationale": {
-          "maxLength": 600,
-          "title": "Rationale",
-          "type": "string"
-        }
-      },
-      "required": [
-        "candidate_id",
-        "vulnerability_hypotheses",
-        "subtasks",
-        "rationale"
-      ],
-      "title": "ValidationPlan",
-      "type": "object"
-    },
     "AgenticVerdict": {
       "$defs": {
         "AgentExpertVote": {
           "additionalProperties": false,
           "properties": {
+            "confidence": {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Confidence",
+              "type": "number"
+            },
+            "counter_observation_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Counter Observation Ids",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
             "expert": {
               "enum": [
                 "scan",
@@ -1450,45 +949,16 @@
               "title": "Label",
               "type": "string"
             },
-            "confidence": {
-              "maximum": 1.0,
-              "minimum": 0.0,
-              "title": "Confidence",
-              "type": "number"
+            "model_calls": {
+              "minimum": 1,
+              "title": "Model Calls",
+              "type": "integer"
             },
-            "validation_status": {
-              "$ref": "#/$defs/ValidationStatus"
-            },
-            "evidence_ids": {
-              "default": [],
+            "model_ids": {
               "items": {
                 "type": "string"
               },
-              "title": "Evidence Ids",
-              "type": "array"
-            },
-            "supporting_observation_ids": {
-              "default": [],
-              "items": {
-                "type": "string"
-              },
-              "title": "Supporting Observation Ids",
-              "type": "array"
-            },
-            "counter_observation_ids": {
-              "default": [],
-              "items": {
-                "type": "string"
-              },
-              "title": "Counter Observation Ids",
-              "type": "array"
-            },
-            "unresolved_observation_ids": {
-              "default": [],
-              "items": {
-                "type": "string"
-              },
-              "title": "Unresolved Observation Ids",
+              "title": "Model Ids",
               "type": "array"
             },
             "rationale": {
@@ -1499,24 +969,13 @@
             "runtime_mode": {
               "$ref": "#/$defs/AgentRuntimeMode"
             },
-            "trace": {
-              "items": {
-                "$ref": "#/$defs/ReActStep"
-              },
-              "title": "Trace",
-              "type": "array"
-            },
-            "model_ids": {
+            "supporting_observation_ids": {
+              "default": [],
               "items": {
                 "type": "string"
               },
-              "title": "Model Ids",
+              "title": "Supporting Observation Ids",
               "type": "array"
-            },
-            "model_calls": {
-              "minimum": 1,
-              "title": "Model Calls",
-              "type": "integer"
             },
             "tool_calls": {
               "minimum": 1,
@@ -1528,8 +987,26 @@
               "title": "Tool Observation Token Count",
               "type": "integer"
             },
+            "trace": {
+              "items": {
+                "$ref": "#/$defs/ReActStep"
+              },
+              "title": "Trace",
+              "type": "array"
+            },
+            "unresolved_observation_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Unresolved Observation Ids",
+              "type": "array"
+            },
             "usage": {
               "$ref": "#/$defs/ModelUsage"
+            },
+            "validation_status": {
+              "$ref": "#/$defs/ValidationStatus"
             }
           },
           "required": [
@@ -1557,9 +1034,92 @@
           "title": "AgentRuntimeMode",
           "type": "string"
         },
+        "BlockedValidationTask": {
+          "additionalProperties": false,
+          "properties": {
+            "dependencies": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Dependencies",
+              "type": "array"
+            },
+            "expert": {
+              "enum": [
+                "scan",
+                "taint",
+                "authz"
+              ],
+              "title": "Expert",
+              "type": "string"
+            },
+            "task_id": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "expert",
+            "dependencies"
+          ],
+          "title": "BlockedValidationTask",
+          "type": "object"
+        },
+        "FixtureProofScope": {
+          "additionalProperties": false,
+          "properties": {
+            "contract_id": {
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "coverage": {
+              "enum": [
+                "candidate",
+                "local"
+              ],
+              "title": "Coverage",
+              "type": "string"
+            },
+            "method": {
+              "enum": [
+                "source_pattern",
+                "bounded_execution",
+                "complete_static_analysis"
+              ],
+              "title": "Method",
+              "type": "string"
+            },
+            "property_id": {
+              "title": "Property Id",
+              "type": "string"
+            },
+            "supported_statuses": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/ValidationStatus"
+              },
+              "title": "Supported Statuses",
+              "type": "array"
+            }
+          },
+          "required": [
+            "contract_id",
+            "property_id",
+            "coverage",
+            "method"
+          ],
+          "title": "FixtureProofScope",
+          "type": "object"
+        },
         "ModelToolCall": {
           "additionalProperties": false,
           "properties": {
+            "arguments": {
+              "additionalProperties": true,
+              "title": "Arguments",
+              "type": "object"
+            },
             "call_id": {
               "title": "Call Id",
               "type": "string"
@@ -1567,11 +1127,6 @@
             "name": {
               "title": "Name",
               "type": "string"
-            },
-            "arguments": {
-              "additionalProperties": true,
-              "title": "Arguments",
-              "type": "object"
             }
           },
           "required": [
@@ -1631,18 +1186,10 @@
         "PlannerResult": {
           "additionalProperties": false,
           "properties": {
-            "runtime_mode": {
-              "$ref": "#/$defs/AgentRuntimeMode"
-            },
-            "plan": {
-              "$ref": "#/$defs/ValidationPlan"
-            },
-            "trace": {
-              "items": {
-                "$ref": "#/$defs/ReActStep"
-              },
-              "title": "Trace",
-              "type": "array"
+            "model_calls": {
+              "minimum": 1,
+              "title": "Model Calls",
+              "type": "integer"
             },
             "model_ids": {
               "items": {
@@ -1651,13 +1198,14 @@
               "title": "Model Ids",
               "type": "array"
             },
-            "model_calls": {
-              "minimum": 1,
-              "title": "Model Calls",
-              "type": "integer"
+            "plan": {
+              "$ref": "#/$defs/ValidationPlan"
+            },
+            "runtime_mode": {
+              "$ref": "#/$defs/AgentRuntimeMode"
             },
             "tool_calls": {
-              "minimum": 1,
+              "minimum": 0,
               "title": "Tool Calls",
               "type": "integer"
             },
@@ -1665,6 +1213,13 @@
               "minimum": 0,
               "title": "Tool Observation Token Count",
               "type": "integer"
+            },
+            "trace": {
+              "items": {
+                "$ref": "#/$defs/ReActStep"
+              },
+              "title": "Trace",
+              "type": "array"
             },
             "usage": {
               "$ref": "#/$defs/ModelUsage"
@@ -1686,20 +1241,20 @@
         "ReActStep": {
           "additionalProperties": false,
           "properties": {
+            "model_id": {
+              "title": "Model Id",
+              "type": "string"
+            },
+            "observation": {
+              "$ref": "#/$defs/ToolObservation"
+            },
             "step": {
               "minimum": 1,
               "title": "Step",
               "type": "integer"
             },
-            "model_id": {
-              "title": "Model Id",
-              "type": "string"
-            },
             "tool_call": {
               "$ref": "#/$defs/ModelToolCall"
-            },
-            "observation": {
-              "$ref": "#/$defs/ToolObservation"
             }
           },
           "required": [
@@ -1714,18 +1269,17 @@
         "ToolObservation": {
           "additionalProperties": false,
           "properties": {
-            "tool": {
-              "title": "Tool",
-              "type": "string"
-            },
-            "status": {
-              "enum": [
-                "ok",
-                "error",
-                "blocked"
+            "citation_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
               ],
-              "title": "Status",
-              "type": "string"
+              "default": null,
+              "title": "Citation Id"
             },
             "content": {
               "title": "Content",
@@ -1739,27 +1293,10 @@
               "title": "Evidence Ids",
               "type": "array"
             },
-            "metadata": {
-              "additionalProperties": true,
-              "title": "Metadata",
-              "type": "object"
-            },
-            "citation_id": {
+            "fixture_proof": {
               "anyOf": [
                 {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Citation Id"
-            },
-            "validation_status": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/ValidationStatus"
+                  "$ref": "#/$defs/FixtureProofScope"
                 },
                 {
                   "type": "null"
@@ -1767,10 +1304,39 @@
               ],
               "default": null
             },
+            "metadata": {
+              "additionalProperties": true,
+              "title": "Metadata",
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "ok",
+                "error",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
             "subject": {
               "anyOf": [
                 {
                   "$ref": "#/$defs/ValidationSubject"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "tool": {
+              "title": "Tool",
+              "type": "string"
+            },
+            "validation_status": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ValidationStatus"
                 },
                 {
                   "type": "null"
@@ -1794,13 +1360,10 @@
               "title": "Candidate Id",
               "type": "string"
             },
-            "vulnerability_hypotheses": {
-              "items": {
-                "maxLength": 180,
-                "type": "string"
-              },
-              "title": "Vulnerability Hypotheses",
-              "type": "array"
+            "rationale": {
+              "maxLength": 600,
+              "title": "Rationale",
+              "type": "string"
             },
             "subtasks": {
               "items": {
@@ -1809,10 +1372,13 @@
               "title": "Subtasks",
               "type": "array"
             },
-            "rationale": {
-              "maxLength": 600,
-              "title": "Rationale",
-              "type": "string"
+            "vulnerability_hypotheses": {
+              "items": {
+                "maxLength": 180,
+                "type": "string"
+              },
+              "title": "Vulnerability Hypotheses",
+              "type": "array"
             }
           },
           "required": [
@@ -1836,13 +1402,21 @@
         "ValidationSubject": {
           "additionalProperties": false,
           "properties": {
-            "input_parameters": {
-              "default": [],
-              "items": {
-                "type": "string"
-              },
-              "title": "Input Parameters",
-              "type": "array"
+            "analysis_scope": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Analysis Scope"
+            },
+            "candidate_id": {
+              "title": "Candidate Id",
+              "type": "string"
             },
             "entry_boolean_arguments": {
               "additionalProperties": {
@@ -1851,17 +1425,12 @@
               "title": "Entry Boolean Arguments",
               "type": "object"
             },
-            "candidate_id": {
-              "title": "Candidate Id",
-              "type": "string"
-            },
-            "repository_id": {
-              "title": "Repository Id",
-              "type": "string"
-            },
-            "entry_path": {
-              "title": "Entry Path",
-              "type": "string"
+            "entry_condition_assumptions": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "title": "Entry Condition Assumptions",
+              "type": "object"
             },
             "entry_line": {
               "anyOf": [
@@ -1876,11 +1445,24 @@
               "default": null,
               "title": "Entry Line"
             },
-            "source_digest": {
-              "title": "Source Digest",
+            "entry_path": {
+              "title": "Entry Path",
               "type": "string"
             },
-            "analysis_scope": {
+            "entry_value_assumptions": {
+              "additionalProperties": true,
+              "title": "Entry Value Assumptions",
+              "type": "object"
+            },
+            "input_parameters": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Input Parameters",
+              "type": "array"
+            },
+            "property_id": {
               "anyOf": [
                 {
                   "type": "string"
@@ -1890,7 +1472,15 @@
                 }
               ],
               "default": null,
-              "title": "Analysis Scope"
+              "title": "Property Id"
+            },
+            "repository_id": {
+              "title": "Repository Id",
+              "type": "string"
+            },
+            "source_digest": {
+              "title": "Source Digest",
+              "type": "string"
             }
           },
           "required": [
@@ -1905,25 +1495,6 @@
         "ValidationSubtask": {
           "additionalProperties": false,
           "properties": {
-            "task_id": {
-              "maxLength": 64,
-              "title": "Task Id",
-              "type": "string"
-            },
-            "objective": {
-              "maxLength": 280,
-              "title": "Objective",
-              "type": "string"
-            },
-            "expert": {
-              "enum": [
-                "scan",
-                "taint",
-                "authz"
-              ],
-              "title": "Expert",
-              "type": "string"
-            },
             "allowed_validator": {
               "maxLength": 80,
               "title": "Allowed Validator",
@@ -1937,9 +1508,40 @@
               "title": "Dependencies",
               "type": "array"
             },
+            "expert": {
+              "enum": [
+                "scan",
+                "taint",
+                "authz"
+              ],
+              "title": "Expert",
+              "type": "string"
+            },
+            "fixture_case_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Fixture Case Id"
+            },
+            "objective": {
+              "maxLength": 280,
+              "title": "Objective",
+              "type": "string"
+            },
             "success_condition": {
               "maxLength": 220,
               "title": "Success Condition",
+              "type": "string"
+            },
+            "task_id": {
+              "maxLength": 64,
+              "title": "Task Id",
               "type": "string"
             }
           },
@@ -1967,6 +1569,18 @@
               ],
               "title": "Task Id"
             },
+            "validator_completed": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Validator Completed"
+            },
             "vote": {
               "$ref": "#/$defs/AgentExpertVote"
             }
@@ -1977,12 +1591,123 @@
           ],
           "title": "ValidationTaskExecution",
           "type": "object"
+        },
+        "RetrievalAdmissionAudit": {
+          "additionalProperties": false,
+          "properties": {
+            "subject_digest": {
+              "title": "Subject Digest",
+              "type": "string"
+            },
+            "records": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/SourceAdmissionRecord"
+              },
+              "title": "Records",
+              "type": "array"
+            }
+          },
+          "required": [
+            "subject_digest"
+          ],
+          "title": "RetrievalAdmissionAudit",
+          "type": "object"
+        },
+        "SourceAdmissionRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "title": "Path",
+              "type": "string"
+            },
+            "bound_call_source": {
+              "title": "Bound Call Source",
+              "type": "string"
+            },
+            "call_symbol": {
+              "title": "Call Symbol",
+              "type": "string"
+            },
+            "graph_distance": {
+              "minimum": 1,
+              "title": "Graph Distance",
+              "type": "integer"
+            },
+            "document_sha256": {
+              "title": "Document Sha256",
+              "type": "string"
+            },
+            "source_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Sha256"
+            },
+            "serialized_token_cost": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Serialized Token Cost",
+              "type": "integer"
+            },
+            "status": {
+              "enum": [
+                "admitted",
+                "skipped"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "reason": {
+              "title": "Reason",
+              "type": "string"
+            }
+          },
+          "required": [
+            "path",
+            "bound_call_source",
+            "call_symbol",
+            "graph_distance",
+            "document_sha256",
+            "status",
+            "reason"
+          ],
+          "title": "SourceAdmissionRecord",
+          "type": "object"
         }
       },
       "additionalProperties": false,
       "properties": {
-        "runtime_mode": {
-          "$ref": "#/$defs/AgentRuntimeMode"
+        "blocked_tasks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BlockedValidationTask"
+          },
+          "title": "Blocked Tasks",
+          "type": "array"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "context_accounting": {
+          "const": "utf8-byte-upper-bound",
+          "default": "utf8-byte-upper-bound",
+          "title": "Context Accounting",
+          "type": "string"
+        },
+        "context_token_count": {
+          "minimum": 0,
+          "title": "Context Token Count",
+          "type": "integer"
         },
         "label": {
           "enum": [
@@ -1993,11 +1718,10 @@
           "title": "Label",
           "type": "string"
         },
-        "confidence": {
-          "maximum": 1.0,
-          "minimum": 0.0,
-          "title": "Confidence",
-          "type": "number"
+        "model_calls": {
+          "minimum": 1,
+          "title": "Model Calls",
+          "type": "integer"
         },
         "path": {
           "enum": [
@@ -2006,10 +1730,6 @@
             "slow"
           ],
           "title": "Path",
-          "type": "string"
-        },
-        "rationale": {
-          "title": "Rationale",
           "type": "string"
         },
         "planner": {
@@ -2023,12 +1743,17 @@
           ],
           "default": null
         },
-        "votes": {
-          "items": {
-            "$ref": "#/$defs/AgentExpertVote"
-          },
-          "title": "Votes",
-          "type": "array"
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "retrieval_context_token_count": {
+          "minimum": 0,
+          "title": "Retrieval Context Token Count",
+          "type": "integer"
+        },
+        "runtime_mode": {
+          "$ref": "#/$defs/AgentRuntimeMode"
         },
         "task_executions": {
           "default": [],
@@ -2038,22 +1763,9 @@
           "title": "Task Executions",
           "type": "array"
         },
-        "model_calls": {
-          "minimum": 1,
-          "title": "Model Calls",
-          "type": "integer"
-        },
         "tool_calls": {
           "minimum": 1,
           "title": "Tool Calls",
-          "type": "integer"
-        },
-        "usage": {
-          "$ref": "#/$defs/ModelUsage"
-        },
-        "retrieval_context_token_count": {
-          "minimum": 0,
-          "title": "Retrieval Context Token Count",
           "type": "integer"
         },
         "tool_observation_token_count": {
@@ -2061,16 +1773,26 @@
           "title": "Tool Observation Token Count",
           "type": "integer"
         },
-        "context_token_count": {
-          "minimum": 0,
-          "title": "Context Token Count",
-          "type": "integer"
+        "usage": {
+          "$ref": "#/$defs/ModelUsage"
         },
-        "context_accounting": {
-          "const": "utf8-byte-upper-bound",
-          "default": "utf8-byte-upper-bound",
-          "title": "Context Accounting",
-          "type": "string"
+        "votes": {
+          "items": {
+            "$ref": "#/$defs/AgentExpertVote"
+          },
+          "title": "Votes",
+          "type": "array"
+        },
+        "retrieval_admission": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RetrievalAdmissionAudit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2089,6 +1811,828 @@
       ],
       "title": "AgenticVerdict",
       "type": "object"
+    },
+    "ChatMessage": {
+      "$defs": {
+        "ModelToolCall": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "additionalProperties": true,
+              "title": "Arguments",
+              "type": "object"
+            },
+            "call_id": {
+              "title": "Call Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "call_id",
+            "name",
+            "arguments"
+          ],
+          "title": "ModelToolCall",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "tool_call_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Call Id"
+        },
+        "tool_calls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ModelToolCall"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "ChatMessage",
+      "type": "object"
+    },
+    "ModelReply": {
+      "$defs": {
+        "ModelToolCall": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "additionalProperties": true,
+              "title": "Arguments",
+              "type": "object"
+            },
+            "call_id": {
+              "title": "Call Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "call_id",
+            "name",
+            "arguments"
+          ],
+          "title": "ModelToolCall",
+          "type": "object"
+        },
+        "ModelUsage": {
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Input Tokens"
+            },
+            "output_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Output Tokens"
+            },
+            "total_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Total Tokens"
+            }
+          },
+          "title": "ModelUsage",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        },
+        "model_id": {
+          "title": "Model Id",
+          "type": "string"
+        },
+        "tool_calls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ModelToolCall"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        },
+        "usage": {
+          "$ref": "#/$defs/ModelUsage"
+        }
+      },
+      "required": [
+        "model_id"
+      ],
+      "title": "ModelReply",
+      "type": "object"
+    },
+    "ToolObservation": {
+      "$defs": {
+        "FixtureProofScope": {
+          "additionalProperties": false,
+          "properties": {
+            "contract_id": {
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "coverage": {
+              "enum": [
+                "candidate",
+                "local"
+              ],
+              "title": "Coverage",
+              "type": "string"
+            },
+            "method": {
+              "enum": [
+                "source_pattern",
+                "bounded_execution",
+                "complete_static_analysis"
+              ],
+              "title": "Method",
+              "type": "string"
+            },
+            "property_id": {
+              "title": "Property Id",
+              "type": "string"
+            },
+            "supported_statuses": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/ValidationStatus"
+              },
+              "title": "Supported Statuses",
+              "type": "array"
+            }
+          },
+          "required": [
+            "contract_id",
+            "property_id",
+            "coverage",
+            "method"
+          ],
+          "title": "FixtureProofScope",
+          "type": "object"
+        },
+        "ValidationStatus": {
+          "enum": [
+            "CONFIRMED",
+            "REFUTED",
+            "UNRESOLVED"
+          ],
+          "title": "ValidationStatus",
+          "type": "string"
+        },
+        "ValidationSubject": {
+          "additionalProperties": false,
+          "properties": {
+            "analysis_scope": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Analysis Scope"
+            },
+            "candidate_id": {
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "entry_boolean_arguments": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "title": "Entry Boolean Arguments",
+              "type": "object"
+            },
+            "entry_condition_assumptions": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "title": "Entry Condition Assumptions",
+              "type": "object"
+            },
+            "entry_line": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Entry Line"
+            },
+            "entry_path": {
+              "title": "Entry Path",
+              "type": "string"
+            },
+            "entry_value_assumptions": {
+              "additionalProperties": true,
+              "title": "Entry Value Assumptions",
+              "type": "object"
+            },
+            "input_parameters": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Input Parameters",
+              "type": "array"
+            },
+            "property_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Property Id"
+            },
+            "repository_id": {
+              "title": "Repository Id",
+              "type": "string"
+            },
+            "source_digest": {
+              "title": "Source Digest",
+              "type": "string"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "repository_id",
+            "entry_path",
+            "source_digest"
+          ],
+          "title": "ValidationSubject",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "citation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation Id"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "fixture_proof": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FixtureProofScope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "error",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationSubject"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "validation_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "tool",
+        "status",
+        "content"
+      ],
+      "title": "ToolObservation",
+      "type": "object"
+    },
+    "ValidationPlan": {
+      "$defs": {
+        "ValidationSubtask": {
+          "additionalProperties": false,
+          "properties": {
+            "allowed_validator": {
+              "maxLength": 80,
+              "title": "Allowed Validator",
+              "type": "string"
+            },
+            "dependencies": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Dependencies",
+              "type": "array"
+            },
+            "expert": {
+              "enum": [
+                "scan",
+                "taint",
+                "authz"
+              ],
+              "title": "Expert",
+              "type": "string"
+            },
+            "fixture_case_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Fixture Case Id"
+            },
+            "objective": {
+              "maxLength": 280,
+              "title": "Objective",
+              "type": "string"
+            },
+            "success_condition": {
+              "maxLength": 220,
+              "title": "Success Condition",
+              "type": "string"
+            },
+            "task_id": {
+              "maxLength": 64,
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "objective",
+            "expert",
+            "allowed_validator",
+            "success_condition"
+          ],
+          "title": "ValidationSubtask",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "subtasks": {
+          "items": {
+            "$ref": "#/$defs/ValidationSubtask"
+          },
+          "title": "Subtasks",
+          "type": "array"
+        },
+        "vulnerability_hypotheses": {
+          "items": {
+            "maxLength": 180,
+            "type": "string"
+          },
+          "title": "Vulnerability Hypotheses",
+          "type": "array"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "vulnerability_hypotheses",
+        "subtasks",
+        "rationale"
+      ],
+      "title": "ValidationPlan",
+      "type": "object"
+    },
+    "ValidationSubject": {
+      "additionalProperties": false,
+      "properties": {
+        "analysis_scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Analysis Scope"
+        },
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "entry_boolean_arguments": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Entry Boolean Arguments",
+          "type": "object"
+        },
+        "entry_condition_assumptions": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Entry Condition Assumptions",
+          "type": "object"
+        },
+        "entry_line": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entry Line"
+        },
+        "entry_path": {
+          "title": "Entry Path",
+          "type": "string"
+        },
+        "entry_value_assumptions": {
+          "additionalProperties": true,
+          "title": "Entry Value Assumptions",
+          "type": "object"
+        },
+        "input_parameters": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Parameters",
+          "type": "array"
+        },
+        "property_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Property Id"
+        },
+        "repository_id": {
+          "title": "Repository Id",
+          "type": "string"
+        },
+        "source_digest": {
+          "title": "Source Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "repository_id",
+        "entry_path",
+        "source_digest"
+      ],
+      "title": "ValidationSubject",
+      "type": "object"
+    }
+  },
+  "synthetic": {
+    "dataset": "controlled-two-case-smoke",
+    "purpose": "validate directional wiring only; not a reported benchmark result",
+    "systems": {
+      "V1": {
+        "confusion": {
+          "abstain_negative": 0,
+          "abstain_positive": 1,
+          "fn": 0,
+          "fp": 1,
+          "tn": 0,
+          "tp": 0
+        },
+        "coverage": 0.5,
+        "population_false_positive_rate": 1.0,
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "strict_recall": 0.0,
+        "traces": {
+          "cross-file-1": {
+            "confidence": 0.35,
+            "experts": [
+              "scan"
+            ],
+            "label": "ABSTAIN",
+            "path": "single"
+          },
+          "guarded-delete-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan"
+            ],
+            "label": "VULNERABLE",
+            "path": "single"
+          }
+        }
+      },
+      "V2": {
+        "confusion": {
+          "abstain_negative": 0,
+          "abstain_positive": 1,
+          "fn": 0,
+          "fp": 1,
+          "tn": 0,
+          "tp": 0
+        },
+        "coverage": 0.5,
+        "population_false_positive_rate": 1.0,
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "strict_recall": 0.0,
+        "traces": {
+          "cross-file-1": {
+            "confidence": 0.35,
+            "experts": [
+              "scan"
+            ],
+            "label": "ABSTAIN",
+            "path": "single"
+          },
+          "guarded-delete-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan"
+            ],
+            "label": "VULNERABLE",
+            "path": "single"
+          }
+        }
+      },
+      "V3": {
+        "confusion": {
+          "abstain_negative": 0,
+          "abstain_positive": 0,
+          "fn": 0,
+          "fp": 1,
+          "tn": 0,
+          "tp": 1
+        },
+        "coverage": 1.0,
+        "population_false_positive_rate": 1.0,
+        "predictions": {
+          "cross-file-1": "VULNERABLE",
+          "guarded-delete-1": "VULNERABLE"
+        },
+        "strict_recall": 1.0,
+        "traces": {
+          "cross-file-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan"
+            ],
+            "label": "VULNERABLE",
+            "path": "single"
+          },
+          "guarded-delete-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan"
+            ],
+            "label": "VULNERABLE",
+            "path": "single"
+          }
+        }
+      },
+      "V4": {
+        "confusion": {
+          "abstain_negative": 1,
+          "abstain_positive": 1,
+          "fn": 0,
+          "fp": 0,
+          "tn": 0,
+          "tp": 0
+        },
+        "coverage": 0.0,
+        "population_false_positive_rate": 0.0,
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "strict_recall": 0.0,
+        "traces": {
+          "cross-file-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan",
+              "taint",
+              "flow"
+            ],
+            "label": "ABSTAIN",
+            "path": "slow"
+          },
+          "guarded-delete-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan",
+              "taint",
+              "authz"
+            ],
+            "label": "ABSTAIN",
+            "path": "slow"
+          }
+        }
+      },
+      "V5": {
+        "confusion": {
+          "abstain_negative": 1,
+          "abstain_positive": 1,
+          "fn": 0,
+          "fp": 0,
+          "tn": 0,
+          "tp": 0
+        },
+        "coverage": 0.0,
+        "population_false_positive_rate": 0.0,
+        "predictions": {
+          "cross-file-1": "ABSTAIN",
+          "guarded-delete-1": "ABSTAIN"
+        },
+        "strict_recall": 0.0,
+        "traces": {
+          "cross-file-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan",
+              "taint",
+              "flow"
+            ],
+            "label": "ABSTAIN",
+            "path": "slow"
+          },
+          "guarded-delete-1": {
+            "confidence": 0.8500000000000001,
+            "experts": [
+              "scan",
+              "taint",
+              "authz"
+            ],
+            "label": "ABSTAIN",
+            "path": "slow"
+          }
+        }
+      }
     }
   }
 }

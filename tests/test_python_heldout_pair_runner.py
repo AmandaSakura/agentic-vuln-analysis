@@ -60,7 +60,7 @@ def test_runner_gates_before_trials_and_preserves_full_denominator(monkeypatch, 
         query="example",
     )
     tasks = [("pair", "vulnerable", EmptyIndex(), candidate, (), AgentSystemVersion.E1_LOCAL_SINGLE)]
-    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: (tasks, {}, {}))
+    monkeypatch.setattr(lifecycle, "build_task_plan", lambda root, config: (tasks, {}, {}, {}))
     monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
     monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
     monkeypatch.setenv("ANTIGRAVITY_API_KEY", "test-key")
@@ -140,7 +140,7 @@ def test_heldout_gate_runs_exactly_ten_cells_and_updates_pointer(monkeypatch, tm
             for case in pair.cases:
                 for system in config.systems:
                     tasks.append((pair.pair_id, case.revision_role, EmptyIndex(), candidates[case.case_id], (), system))
-        return tasks, {}, {}
+        return tasks, {}, {}, {}
 
     def complete(index, candidate, system, journal, budget, **kwargs):
         assert kwargs["graph_direction"] == "both"
@@ -156,7 +156,7 @@ def test_heldout_gate_runs_exactly_ten_cells_and_updates_pointer(monkeypatch, tm
             "verdict": None,
         }
 
-    monkeypatch.setattr(lifecycle, "build_tasks", fake_build_tasks)
+    monkeypatch.setattr(lifecycle, "build_task_plan", fake_build_tasks)
     monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
     monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
     monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: events.append(("gate",)))
@@ -187,7 +187,7 @@ def test_runner_blocks_without_api_key_after_full_gate(monkeypatch, tmp_path):
     setup_config(tmp_path)
     mod = importlib.import_module('cv_agent.evaluation.runners.run_python_heldout_pair_matrix')
     events = []
-    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: ([], {}, {}))
+    monkeypatch.setattr(lifecycle, "build_task_plan", lambda root, config: ([], {}, {}, {}))
     monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: events.append("gate"))
     monkeypatch.delenv("ANTIGRAVITY_API_KEY", raising=False)
 
@@ -225,7 +225,7 @@ def test_runner_continues_after_abstain(monkeypatch, tmp_path):
         ("pair", "vulnerable", EmptyIndex(), candidates[0], (), AgentSystemVersion.E1_LOCAL_SINGLE),
         ("pair", "fixed", EmptyIndex(), candidates[1], (), AgentSystemVersion.E1_LOCAL_SINGLE),
     ]
-    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: (tasks, {}, {}))
+    monkeypatch.setattr(lifecycle, "build_task_plan", lambda root, config: (tasks, {}, {}, {}))
     monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: None)
     monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
     monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")
@@ -290,7 +290,7 @@ def test_runner_continues_after_failed_cell(monkeypatch, tmp_path):
         ("pair", "vulnerable", EmptyIndex(), candidates[0], (), AgentSystemVersion.E1_LOCAL_SINGLE),
         ("pair", "fixed", EmptyIndex(), candidates[1], (), AgentSystemVersion.E1_LOCAL_SINGLE),
     ]
-    monkeypatch.setattr(lifecycle, "build_tasks", lambda root, config: (tasks, {}, {}))
+    monkeypatch.setattr(lifecycle, "build_task_plan", lambda root, config: (tasks, {}, {}, {}))
     monkeypatch.setattr(lifecycle, "require_passing_tests", lambda: None)
     monkeypatch.setattr(lifecycle, "snapshot_sources", lambda root, path: {})
     monkeypatch.setattr(lifecycle, "source_fingerprint", lambda root: "fingerprint")

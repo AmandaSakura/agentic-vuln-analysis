@@ -10,7 +10,7 @@ import pytest
 from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
 from cv_agent.tools.identity import repository_source_digest
 from cv_agent.domain.chat import ModelToolCall
-from cv_agent.domain.evidence import ValidationSubject
+from cv_agent.domain.evidence import FixtureProofScope, ValidationSubject
 from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemVersion
 from cv_agent.runtime.model import OpenAICompatibleChatModel
@@ -186,6 +186,7 @@ def test_static_permission_patterns_do_not_confirm_or_refute_candidate():
     )
     registry = _registry(RepositoryIndex([vulnerable, fixed]))
     subject = ValidationSubject(
+        property_id="chmod-mode-others-write",
         candidate_id="perm",
         repository_id="repo",
         entry_path=vulnerable.path,
@@ -359,6 +360,52 @@ def test_command_construction_inspection_classifies_admitted_helpers(helper_text
     assert payload["helpers"][0]["path"] == helper.path
 
 
+@pytest.mark.parametrize("quoted, expected", [("shlex.quote(model_uri)", "SANITIZED"), ("model_uri", "UNSANITIZED")])
+@pytest.mark.parametrize("pure_helper", [False, True])
+def test_side_helper_effects_require_resolution_before_command_proof(quoted, expected, pure_helper):
+    # C3: unused return does not imply irrelevant execution effects. Compare an
+    # unresolved callee with an explicitly modelled literal unpacking.
+    backend, helper = _command_documents(
+        "def get_cmd(model_uri):\n"
+        f"    cmd = f\"mlserver start {{{quoted}}}\"\n"
+        "    return cmd, {}\n"
+    )
+    backend = backend.model_copy(update={
+        "calls": (*backend.calls, "fetch_artifact"),
+        "text": (
+            "def serve(model_uri):\n"
+            "    fetch_artifact(model_uri)\n"
+            "    command, command_env = mlserver.get_cmd(model_uri)\n"
+            "    command = \"exec \" + command\n"
+            "    return subprocess.Popen([\"bash\", \"-c\", command])\n"
+        ),
+    })
+    unrelated = CodeDocument(
+        repository_id="repo",
+        path="mlflow/tracking/artifact_utils.py::fetch_artifact@1-3",
+        text=("def fetch_artifact(uri):\n    name, rest = (uri, '')\n    return name\n" if pure_helper else
+              "def fetch_artifact(uri):\n    name, rest = split_uri(uri)\n    return name\n"),
+        defines=("fetch_artifact",),
+    )
+    result = _invoke(
+        _registry(RepositoryIndex([backend, helper, unrelated])),
+        "inspect_command_construction",
+        {"source_path": backend.path},
+        _scope(backend.path, helper.path, unrelated.path),
+    )
+    payload = json.loads(result.content)
+
+    if pure_helper:
+        assert payload["sink_facts"], payload
+        assert payload["command_construction_status"] == expected, payload
+        assert payload["issues"] == [], payload
+    else:
+        assert not payload["sink_facts"], payload
+        assert payload["command_construction_status"] == "AMBIGUOUS", payload
+        assert payload["issues"], payload
+    assert unrelated.path in {helper["path"] for helper in payload["helpers"]}, payload
+
+
 def test_command_construction_inspection_keeps_unavailable_callee_unresolved():
     backend, _ = _command_documents(
         "def get_cmd(model_uri):\n"
@@ -405,7 +452,7 @@ def test_static_permission_signal_interprets_python_integer_literals(mode, other
             "UNRESOLVED",
         ),
         ("def tmp():\n    for unused in []:\n        os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
-        ("def tmp(enabled):\n    if enabled:\n        os.chmod(tmp_dir, 0o777)\n", "CONFIRMED"),
+        ("def tmp(enabled):\n    if enabled:\n        os.chmod(tmp_dir, 0o777)\n", "UNRESOLVED"),
         (
             "def tmp():\n"
             "    import pathlib as os\n"
@@ -440,6 +487,7 @@ def test_permission_mode_validator_has_bounded_positive_negative_and_unresolved_
     document = CodeDocument(repository_id="repo", path="perm.py::tmp@1-5", text=source)
     index = RepositoryIndex([document])
     subject = ValidationSubject(
+        property_id="chmod-mode-others-write",
         candidate_id="perm",
         repository_id="repo",
         entry_path=document.path,
@@ -1111,18 +1159,26 @@ def test_fixed_pair_late_unrelated_guard_does_not_confirm_fix():
 
 def test_fixture_runner_is_registered_bounded_and_network_disabled():
     index, _ = cross_file_fixture()
+    test_scope = FixtureProofScope(
+        contract_id="contract_test",
+        property_id="test",
+        coverage="candidate",
+        method="bounded_execution",
+        supported_statuses=(ValidationStatus.CONFIRMED, ValidationStatus.REFUTED),
+    )
     registry = _registry(
         index,
         fixture_cases=(
-            FixtureCase(case_id="confirmed", runner=_confirmed_fixture),
-            FixtureCase(case_id="network", runner=_network_probe_fixture),
-            FixtureCase(case_id="alias", runner=_socket_alias_fixture),
+            FixtureCase(case_id="confirmed", runner=_confirmed_fixture, proof_scope=test_scope),
+            FixtureCase(case_id="network", runner=_network_probe_fixture, proof_scope=test_scope),
+            FixtureCase(case_id="alias", runner=_socket_alias_fixture, proof_scope=test_scope),
             FixtureCase(
                 case_id="timeout",
                 runner=_slow_fixture,
                 timeout_seconds=0.2,
+                proof_scope=test_scope,
             ),
-            FixtureCase(case_id="large", runner=_large_fixture),
+            FixtureCase(case_id="large", runner=_large_fixture, proof_scope=test_scope),
         ),
     )
 
@@ -1157,9 +1213,16 @@ def test_fixture_runner_is_registered_bounded_and_network_disabled():
         _scope(),
     )
 
-    assert json.loads(confirmed.content)["status"] == "CONFIRMED"
-    assert json.loads(network.content)["status"] == "REFUTED"
-    assert json.loads(alias.content)["status"] == "REFUTED"
+    # These transport/isolation fixtures have no candidate subject. Preserve
+    # their measurements while withholding candidate-level status (C1/A1).
+    for observation, raw_status in (
+        (confirmed, "CONFIRMED"), (network, "REFUTED"), (alias, "REFUTED")
+    ):
+        payload = json.loads(observation.content)
+        assert observation.validation_status == ValidationStatus.UNRESOLVED
+        assert payload["status"] == "UNRESOLVED"
+        assert payload["raw_status"] == raw_status
+        assert payload["proof_scope_error"] == "missing_validation_subject"
     assert json.loads(timeout.content)["status"] == "UNRESOLVED"
     assert large.status == "error"
     assert json.loads(large.content)["observation_truncated"] is True
@@ -1291,7 +1354,7 @@ def test_budgeted_validation_output_remains_valid_json_with_explicit_error():
     assert token_payload["observation_truncated"] is True
     assert token_payload["reason"] == "token_budget"
 
-    suppressed_observation = _invoke(
+    exhausted_observation = _invoke(
         token_registry,
         "run_static_check",
         {"path": "many.py"},
@@ -1300,13 +1363,19 @@ def test_budgeted_validation_output_remains_valid_json_with_explicit_error():
             max_observation_tokens=1,
         ),
     )
-    suppressed_payload = json.loads(suppressed_observation.content)
+    exhausted_payload = json.loads(exhausted_observation.content)
 
-    assert suppressed_observation.status == "error"
-    assert suppressed_payload["observation_truncated"] is True
-    assert suppressed_payload["reason"] == "token_budget"
-    assert suppressed_observation.metadata["model_payload_suppressed"] is True
-    assert token_registry.prompt_payload(suppressed_observation) == ""
+    assert exhausted_observation.status == "error"
+    assert exhausted_payload["observation_truncated"] is True
+    assert exhausted_payload["reason"] == "token_budget"
+    # Nothing fits, so the Harness answers with its own diagnostic rather than an
+    # empty tool message: silence reads as "the tool returned nothing" and makes the
+    # model poll again. JSON tools keep a parseable payload, and the diagnostic is not
+    # charged to the budget it reports exhausted.
+    assert "budget is spent" in exhausted_payload["diagnostic"]
+    assert exhausted_observation.metadata["model_payload_suppressed"] is False
+    assert exhausted_observation.metadata["observation_token_count"] == 0
+    assert token_registry.prompt_payload(exhausted_observation) != ""
 
 
 def test_json_tool_registry_rejects_impossible_marker_budget():
@@ -1341,9 +1410,15 @@ def test_loopback_http_validator_confirms_bypass_and_refutes_guarded_case():
     vulnerable_payload = json.loads(vulnerable.content)
     guarded_payload = json.loads(guarded.content)
 
-    assert vulnerable_payload["status"] == "CONFIRMED"
+    # The local HTTP pair measures response codes. With no candidate subject
+    # or proof contract it cannot emit a strong candidate verdict (C1/C5).
+    assert vulnerable_payload["status"] == "UNRESOLVED"
+    assert vulnerable_payload["raw_status"] == "CONFIRMED"
+    assert vulnerable_payload["proof_scope_error"] == "missing_proof_scope"
     assert vulnerable_payload["details"]["bind_host"] == "127.0.0.1"
-    assert guarded_payload["status"] == "REFUTED"
+    assert guarded_payload["status"] == "UNRESOLVED"
+    assert guarded_payload["raw_status"] == "REFUTED"
+    assert guarded_payload["proof_scope_error"] == "missing_proof_scope"
     assert guarded_payload["details"]["unauthorized_status"] == 403
 
     unknown = _invoke(

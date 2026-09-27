@@ -1,4 +1,5 @@
 """Regression coverage for the four follow-up semantic review findings."""
+import ast
 import json
 import subprocess
 import sys
@@ -62,11 +63,18 @@ def test_tsx_adapter_preserves_code_and_masks_literals(expression, count):
         assert len(_matching_lines(span.document, SINK_RULES)) == count
 
 
-def inspect_and_trace(caller_text, helper_text):
+def inspect_and_trace(caller_text, helper_text, *, input_parameters=None):
     caller = CodeDocument(repository_id="r", path="entry.py", text=caller_text, language="python", defines=("entry",), calls=("build_cmd",))
     helper = CodeDocument(repository_id="r", path="helper.py", text=helper_text, language="python", defines=("build_cmd",))
     index = RepositoryIndex([caller, helper])
-    subject = ValidationSubject(candidate_id="c", repository_id="r", entry_path=caller.path, source_digest=repository_source_digest(index))
+    # These owned command fixtures quantify over their entry string inputs.
+    # Production callers must supply their own declared source set.
+    if input_parameters is None:
+        entry = next(node for node in ast.parse(caller_text).body if isinstance(node, ast.FunctionDef))
+        input_parameters = tuple(arg.arg for arg in (*entry.args.posonlyargs, *entry.args.args, *entry.args.kwonlyargs))
+    subject = ValidationSubject(property_id="command-execution", input_parameters=input_parameters,
+                                candidate_id="c", repository_id="r", entry_path=caller.path,
+                                source_digest=repository_source_digest(index))
     scope = ToolExecutionScope(candidate_path=caller.path, admitted_paths=frozenset([caller.path, helper.path]), subject=subject, max_observation_tokens=10000)
     inspection = command_construction(index, CommandConstructionInput(source_path=caller.path), scope).model_copy(update={"citation_id": "tool:cmd"})
     static = static_check(index, PathInput(path=caller.path), scope).model_copy(update={"citation_id": "tool:static"})
@@ -74,8 +82,9 @@ def inspect_and_trace(caller_text, helper_text):
     return json.loads(inspection.content), trace, subject
 
 
-def vote(trace, subject, label):
-    ids = tuple(step.observation.citation_id for step in trace)
+def vote(trace, subject, label, *, supporting_tools=None):
+    ids = tuple(step.observation.citation_id for step in trace
+                if supporting_tools is None or step.observation.tool in supporting_tools)
     conclusion = AgentExpertConclusion(expert="scan", label=label, confidence=0.8, rationale="Assess caller and admitted helper command construction.", validation_status="UNRESOLVED", evidence_ids=ids, supporting_observation_ids=ids)
     validate_conclusion(conclusion, trace, frozenset(ids), subject=subject)
 

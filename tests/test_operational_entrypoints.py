@@ -93,5 +93,6 @@ def test_standalone_workers_preserve_bytes_and_start_in_isolation(tmp_path, name
 def test_scripts_root_contains_only_documented_shell_commands():
     assert {path.name for path in (ROOT / "scripts").iterdir()} == {
         "README.md", "probes", "heldout_gate.sh", "heldout_matrix.sh",
-        "deepseek.sh", "fetch_benchmarks.sh",
+        "deepseek.sh", "fetch_benchmarks.sh", "jev_pilot.sh", "hp003_jev_active.sh",
+        "jev_v3_comparison.sh",
     }

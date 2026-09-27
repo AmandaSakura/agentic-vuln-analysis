@@ -23,6 +23,7 @@ def render_planner_prompt(
     tools: ToolRegistry,
     candidate: Candidate,
     evidence: list[Evidence],
+    locked_tasks: tuple[ValidationSubtask, ...] = (),
 ) -> str:
     validators = set(harness.validation.validators) & set(tools.available_names)
     planner_context = {
@@ -32,7 +33,12 @@ def render_planner_prompt(
             "path": candidate.path,
             "repository_id": candidate.repository_id,
             **({"analysis_scope": candidate.analysis_scope} if candidate.analysis_scope is not None else {}),
+            **({"property_id": candidate.property_id} if candidate.property_id is not None else {}),
         },
+        **({"locked_mandatory_tasks": [
+            {"task_id": t.task_id, "expert": t.expert, "allowed_validator": t.allowed_validator}
+            for t in locked_tasks
+        ]} if locked_tasks else {}),
         "retrieved_evidence_index": [
             {
                 "evidence_id": item.evidence_id,
@@ -46,6 +52,8 @@ def render_planner_prompt(
             "The evidence index lists paths, not source contents. "
             "Read the candidate span once with read_span before planning; "
             "do not browse the repository during planning."
+            + (" Mandatory tasks in locked_mandatory_tasks are locked and immutable; "
+               "only propose additional non-redundant subtasks." if locked_tasks else "")
         ),
     }
     capabilities = {
@@ -106,145 +114,15 @@ def validate_plan(
     tools: ToolRegistry,
     candidate: Candidate,
     evidence: list[Evidence] | None = None,
+    subject: ValidationSubject | None = None,
 ) -> None:
-    if plan.candidate_id != candidate.candidate_id:
-        raise ValueError("planner output carries the wrong candidate identity")
-    if len(plan.subtasks) > harness.planner_max_subtasks:
-        raise ValueError("planner exceeded maximum_subtasks")
-    scheduled = set(system_spec.expert_order)
-    validators = set(harness.validation.validators) & set(tools.names)
-    for task in plan.subtasks:
-        if task.expert not in scheduled:
-            raise ValueError(
-                f"planner assigned task {task.task_id} to unscheduled expert {task.expert}"
-            )
-        if task.allowed_validator not in validators:
-            raise ValueError(
-                f"planner selected unregistered validator {task.allowed_validator}"
-            )
-        expert_tools = set(expert_spec(harness, task.expert).tools)
-        if task.allowed_validator not in expert_tools:
-            raise ValueError(
-                f"planner assigned validator {task.allowed_validator} to expert "
-                f"{task.expert}, which cannot execute it"
-            )
-        if task.allowed_validator not in tools.available_names:
-            raise ValueError(
-                f"validator {task.allowed_validator} is unavailable for this run; "
-                "choose from Planning capabilities"
-            )
-    fixture_tasks = [
-        task.task_id for task in plan.subtasks
-        if task.allowed_validator == "run_fixture_test"
-    ]
-    evidence_text = "\n".join(item.text for item in (evidence or ()))
-    planning_text = "\n".join(
-        item
-        for item in (evidence_text, candidate.analysis_scope or "")
-        if item
+    from cv_agent.agents.plan_policy import validate_plan_policy
+    validate_plan_policy(
+        plan,
+        harness=harness,
+        system_spec=system_spec,
+        tools=tools,
+        candidate=candidate,
+        evidence=evidence,
+        subject=subject,
     )
-    planned_validators = {task.allowed_validator for task in plan.subtasks}
-    if (
-        "validate_permission_mode" in tools.available_names
-        and "os.chmod" in planning_text
-        and "validate_permission_mode" not in planned_validators
-    ):
-        raise ValueError(
-            "planner must schedule validate_permission_mode for os.chmod "
-            "filesystem permission candidates"
-        )
-    if (
-        "validate_permission_mode" in tools.available_names
-        and "os.chmod" in planning_text
-        and "authz" in system_spec.expert_order
-        and not any(
-            task.expert == "authz"
-            and task.allowed_validator == "validate_permission_mode"
-            for task in plan.subtasks
-        )
-    ):
-        raise ValueError(
-            "planner must assign authz validate_permission_mode for os.chmod "
-            "resource access-control semantics"
-        )
-    command_construction_candidate = (
-        "inspect_command_construction" in tools.available_names
-        and "get_cmd" in planning_text
-        and (
-            "subprocess.Popen" in planning_text
-            or "bash" in planning_text
-            or ".execute(" in planning_text
-            or "命令注入" in planning_text
-            or "command injection" in planning_text.casefold()
-        )
-    )
-    if (
-        command_construction_candidate
-        and "inspect_command_construction" not in planned_validators
-    ):
-        raise ValueError(
-            "planner must schedule inspect_command_construction for admitted "
-            "get_cmd shell-command candidates"
-        )
-    if (
-        command_construction_candidate
-        and "scan" in system_spec.expert_order
-        and not any(
-            task.expert == "scan"
-            and task.allowed_validator == "inspect_command_construction"
-            for task in plan.subtasks
-        )
-    ):
-        raise ValueError(
-            "planner must assign scan inspect_command_construction for admitted "
-            "get_cmd shell-command candidates"
-        )
-    if (
-        command_construction_candidate
-        and "taint" in system_spec.expert_order
-        and not any(
-            task.expert == "taint"
-            and task.allowed_validator == "inspect_command_construction"
-            for task in plan.subtasks
-        )
-    ):
-        raise ValueError(
-            "planner must assign taint inspect_command_construction for admitted "
-            "get_cmd shell-command candidates"
-        )
-    if command_construction_candidate:
-        redundant_scan = [
-            task for task in plan.subtasks
-            if task.expert == "scan"
-            and task.allowed_validator != "inspect_command_construction"
-        ]
-        if redundant_scan:
-            raise ValueError(
-                "planner must not schedule redundant scan validators after "
-                "scan inspect_command_construction for admitted get_cmd "
-                "shell-command candidates"
-            )
-    if fixture_tasks:
-        dependencies = {task.task_id: set(task.dependencies) for task in plan.subtasks}
-
-        def reaches(start: str, target: str) -> bool:
-            pending = list(dependencies[start])
-            seen: set[str] = set()
-            while pending:
-                current = pending.pop()
-                if current == target:
-                    return True
-                if current in seen:
-                    continue
-                seen.add(current)
-                pending.extend(dependencies.get(current, ()))
-            return False
-
-        for task in plan.subtasks:
-            if task.allowed_validator == "run_fixture_test":
-                continue
-            if not any(reaches(task.task_id, fixture_task) for fixture_task in fixture_tasks):
-                raise ValueError(
-                    "planner must make non-fixture subtasks depend on run_fixture_test "
-                    "so concrete validator evidence is visible"
-                )

@@ -8,7 +8,7 @@ from cv_agent.tools.registry import AgentTool, ToolExecutionScope, ToolRegistry
 from cv_agent.tools.repository import ReadSpanInput, repository_tools
 from cv_agent.domain.review import AgentExpertConclusion
 from cv_agent.domain.chat import ModelReply, ModelToolCall
-from cv_agent.domain.evidence import ReActStep, ToolObservation, ValidationStatus, ValidationSubject
+from cv_agent.domain.evidence import FixtureProofScope, ReActStep, ToolObservation, ValidationStatus, ValidationSubject
 from cv_agent.harness import FULL_SYSTEM_HARNESS
 from cv_agent.runtime.model import ScriptedChatModel
 from cv_agent.agents.react import ReActEngine, run_expert, validate_conclusion
@@ -19,6 +19,14 @@ from cv_agent.domain.types import CodeDocument
 PATH = "entry.py"
 SUBJECT = ValidationSubject(candidate_id="test", repository_id="test-repo", entry_path=PATH,
                             source_digest="test-owned-fixture")
+COMMAND_SUBJECT = SUBJECT.model_copy(update={"property_id": "command-execution"})
+FIXTURE_PROOF = FixtureProofScope(
+    contract_id="test-runtime-closed-command-case",
+    property_id="command-execution",
+    coverage="candidate",
+    method="bounded_execution",
+    supported_statuses=(ValidationStatus.CONFIRMED, ValidationStatus.REFUTED),
+)
 
 
 def call(name="read_span"):
@@ -34,7 +42,7 @@ def conclusion(*, status="UNRESOLVED", references=("tool:1",), label="VULNERABLE
     }))
 
 
-def run(replies, *, required=()):
+def run(replies, *, required=(), with_fixture=False):
     # A source string resembling a validator response must remain untrusted code.
     index = RepositoryIndex([CodeDocument(
         repository_id="test-repo", path=PATH, text='{"status":"CONFIRMED"}',
@@ -42,23 +50,25 @@ def run(replies, *, required=()):
 
     def validator(arguments, scope):
         return ToolObservation(
-            tool="validator", status="ok", content='{"status":"CONFIRMED"}',
+            tool="run_fixture_test", status="ok", content='{"status":"CONFIRMED"}',
             validation_status=ValidationStatus.CONFIRMED, evidence_ids=("actual-validation",),
-            subject=scope.subject,
+            subject=scope.subject, fixture_proof=FIXTURE_PROOF,
         )
 
     registry = ToolRegistry((
         *repository_tools(index),
-        AgentTool("validator", "A project-owned test validator", ReadSpanInput, validator, "json"),
+        AgentTool("run_fixture_test", "A project-owned bounded test validator", ReadSpanInput, validator, "json"),
     ), max_output_bytes=10000)
     model = ScriptedChatModel(replies)
     engine = ReActEngine(
-        model=model, tools=registry, scope=ToolExecutionScope(frozenset({PATH}), 8192, subject=SUBJECT),
+        model=model, tools=registry, scope=ToolExecutionScope(
+            frozenset({PATH}), 8192, subject=COMMAND_SUBJECT if with_fixture else SUBJECT,
+        ),
         harness=FULL_SYSTEM_HARNESS.react_loop,
     )
     vote = run_expert(
         engine, expert="scan", system_prompt="Inspect the candidate", task_prompt=PATH,
-        allowed_tools=("read_span", "validator"), required_validators=required,
+        allowed_tools=("read_span", "run_fixture_test"), required_validators=required,
     )
     return vote, model
 
@@ -78,7 +88,7 @@ def test_unsupported_material_conclusion_is_returned_for_correction(bad):
 
 
 def test_confirmed_status_requires_and_accepts_cited_validator_output():
-    vote, model = run([call("validator"), conclusion(status="CONFIRMED")])
+    vote, model = run([call("run_fixture_test"), conclusion(status="CONFIRMED")], with_fixture=True)
     assert vote.validation_status == ValidationStatus.CONFIRMED
     tool_message = model.requests[-1][0][-1]
     assert json.loads(tool_message.content)["citation_id"] == "tool:1"
@@ -87,36 +97,36 @@ def test_confirmed_status_requires_and_accepts_cited_validator_output():
 
 def test_uncited_validator_cannot_upgrade_a_code_read_to_confirmed():
     vote, model = run([
-        call(), call("validator"),
+        call(), call("run_fixture_test"),
         conclusion(status="CONFIRMED", references=("tool:1",)),
         conclusion(status="CONFIRMED", references=("tool:2",)),
-    ])
+    ], with_fixture=True)
     assert vote.evidence_ids == ("tool:2",)
     assert vote.model_calls == 4
 
 
 def test_assigned_validator_cannot_be_skipped():
     vote, model = run([
-        call(), conclusion(), call("validator"),
+        call(), conclusion(), call("run_fixture_test"),
         conclusion(status="CONFIRMED", references=("tool:2",)),
-    ], required=("validator",))
+    ], required=("run_fixture_test",), with_fixture=True)
     assert vote.tool_calls == 2
     assert "Assigned validation tools" in model.requests[2][0][-1].content
 
 
 def test_unresolved_prediction_cannot_ignore_a_contradictory_concrete_witness():
     vote, model = run([
-        call(), call('validator'),
+        call(), call('run_fixture_test'),
         conclusion(label='SAFE', references=('tool:1',)),
         conclusion(status='CONFIRMED', references=('tool:2',)),
-    ])
+    ], with_fixture=True)
     assert vote.label == 'VULNERABLE'
     assert vote.model_calls == 4
     assert 'contradicts' in model.requests[-1][0][-1].content
 
 
 def test_abstention_remains_possible_despite_a_concrete_witness():
-    vote, _ = run([call('validator'), conclusion(label='ABSTAIN')])
+    vote, _ = run([call('run_fixture_test'), conclusion(label='ABSTAIN')], with_fixture=True)
     assert vote.label == 'ABSTAIN'
 
 
@@ -182,9 +192,11 @@ def test_permission_requirement_cannot_be_bypassed_by_citation_selection(tool, l
     with pytest.raises(ValueError, match="validate_permission_mode"):
         validate_conclusion(output, trace, frozenset(), subject=SUBJECT)
     validate_conclusion(output.model_copy(update={"label": "ABSTAIN"}), trace, frozenset(), subject=SUBJECT)
+    # C1: the positive control declares the bounded property being proved.
+    permission_subject = SUBJECT.model_copy(update={"property_id": "chmod-mode-others-write"})
     # A complete, matching validator still permits the corresponding judgment.
     witness = permission.model_copy(update={
-        "tool": "validate_permission_mode", "subject": SUBJECT,
+        "tool": "validate_permission_mode", "subject": permission_subject,
         "validation_status": ValidationStatus.CONFIRMED if label == "VULNERABLE" else ValidationStatus.REFUTED,
     })
     supported = output.model_copy(update={
@@ -192,7 +204,7 @@ def test_permission_requirement_cannot_be_bypassed_by_citation_selection(tool, l
         "unresolved_observation_ids": (),
     })
     validate_conclusion(supported, [trace[0].model_copy(update={"observation": witness})],
-                        frozenset(), subject=SUBJECT)
+                        frozenset(), subject=permission_subject)
     # A permission result from another candidate must not taint this assessment.
     foreign = permission.model_copy(update={"evidence_ids": ("permission_mode:other.py",),
                                            "content": json.dumps({"path": "other.py", "permission_mode_check": {}})})
@@ -250,41 +262,55 @@ def test_concrete_conflict_check_is_symmetric_and_candidate_bound(status, label)
     from cv_agent.agents.react import validate_conclusion
     output = AgentExpertConclusion(expert='scan', label=label, confidence=0.9,
         validation_status='UNRESOLVED', evidence_ids=('local:entry',), rationale='Source prediction')
-    observation = ToolObservation(tool='validator', status='ok', content='witness',
-                                  subject=SUBJECT, validation_status=status)
+    observation = ToolObservation(tool='run_fixture_test', status='ok', content='witness',
+                                  subject=COMMAND_SUBJECT, validation_status=status,
+                                  fixture_proof=FIXTURE_PROOF)
     step = ReActStep(step=1, model_id='test',
-        tool_call=ModelToolCall(call_id='test', name='validator', arguments={}), observation=observation)
+        tool_call=ModelToolCall(call_id='test', name='run_fixture_test', arguments={}), observation=observation)
     with pytest.raises(ValueError, match='contradicts'):
-        validate_conclusion(output, [step], frozenset({'local:entry'}), subject=SUBJECT)
-    # Another candidate, a truncated observation, and an unresolved result cannot veto a prediction.
+        validate_conclusion(output, [step], frozenset({'local:entry'}), subject=COMMAND_SUBJECT)
+    # Another candidate and an unresolved result cannot veto a prediction.
     for changed in (
-        observation.model_copy(update={'subject': SUBJECT.model_copy(update={'candidate_id': 'other'})}),
-        observation.model_copy(update={'metadata': {'observation_truncated': True}}),
+        observation.model_copy(update={'subject': COMMAND_SUBJECT.model_copy(update={'candidate_id': 'other'})}),
         observation.model_copy(update={'validation_status': ValidationStatus.UNRESOLVED}),
     ):
         if label == 'SAFE':
             with pytest.raises(ValueError, match='affirmative counter-evidence'):
                 validate_conclusion(output, [step.model_copy(update={'observation': changed})],
-                                    frozenset({'local:entry'}), subject=SUBJECT)
+                                    frozenset({'local:entry'}), subject=COMMAND_SUBJECT)
         else:
-            validate_conclusion(output, [step.model_copy(update={'observation': changed})],
-                                frozenset({'local:entry'}), subject=SUBJECT)
+            # The mismatched/refuted fixture no longer vetoes this label, but
+            # a source read alone still lacks affirmative command proof (C4).
+            with pytest.raises(ValueError, match='inspect_command_construction'):
+                validate_conclusion(output, [step.model_copy(update={'observation': changed})],
+                                    frozenset({'local:entry'}), subject=COMMAND_SUBJECT)
+    # C6 migration: a truncated observation is not a successful observation at
+    # all, so the unified floor (no_successful_observation) rejects a material
+    # prediction before the specific gates are reached.
+    truncated = observation.model_copy(update={'metadata': {'observation_truncated': True}})
+    with pytest.raises(ValueError, match='successful typed tool observation'):
+        validate_conclusion(output, [step.model_copy(update={'observation': truncated})],
+                            frozenset({'local:entry'}), subject=COMMAND_SUBJECT)
 
 
 def _cited_safe_observation(tool, payload, **kwargs):
     citation_id = kwargs.pop("citation_id", "tool:1")
+    # C1: these synthetic command proofs represent this candidate/snapshot.
+    # Explicit subject=None remains available for missing-identity controls.
+    if tool == "inspect_command_construction":
+        kwargs.setdefault("subject", COMMAND_SUBJECT)
     return ToolObservation(tool=tool, status="ok", content=json.dumps(payload),
                            citation_id=citation_id, **kwargs)
 
 
-def _validate_cited_prediction(observation, *, label="SAFE", status="UNRESOLVED"):
+def _validate_cited_prediction(observation, *, label="SAFE", status="UNRESOLVED", subject=SUBJECT):
     output = AgentExpertConclusion(
         expert="scan", label=label, confidence=0.8, validation_status=status,
         evidence_ids=("tool:1",), rationale="Candidate assessment from cited evidence.",
     )
     step = ReActStep(step=1, model_id="test", observation=observation,
                     tool_call=ModelToolCall(call_id="test", name=observation.tool, arguments={}))
-    validate_conclusion(output, [step], frozenset(), subject=SUBJECT)
+    validate_conclusion(output, [step], frozenset(), subject=subject)
 
 
 @pytest.mark.parametrize("observation", [
@@ -315,10 +341,21 @@ def _validate_cited_prediction(observation, *, label="SAFE", status="UNRESOLVED"
                             validation_status=ValidationStatus.REFUTED),
 ])
 def test_safe_requires_counter_evidence_not_successful_tool_execution(observation):
-    with pytest.raises(ValueError, match="affirmative counter-evidence"):
-        _validate_cited_prediction(observation)
+    if observation.metadata.get("observation_truncated"):
+        # C6 migration: truncated observations are not successful observations,
+        # so material predictions are rejected by the unified floor before the
+        # specific gates.
+        with pytest.raises(ValueError, match="successful typed tool observation"):
+            _validate_cited_prediction(observation)
+    else:
+        with pytest.raises(ValueError, match="affirmative counter-evidence"):
+            _validate_cited_prediction(observation)
     _validate_cited_prediction(observation, label="ABSTAIN")
-    _validate_cited_prediction(observation, label="VULNERABLE")
+    if observation.metadata.get("observation_truncated"):
+        with pytest.raises(ValueError, match="successful typed tool observation"):
+            _validate_cited_prediction(observation, label="VULNERABLE")
+    else:
+        _validate_cited_prediction(observation, label="VULNERABLE")
 
 
 @pytest.mark.parametrize("observation", [
@@ -329,18 +366,24 @@ def test_safe_requires_counter_evidence_not_successful_tool_execution(observatio
         "recognized_guard_precedes_actions": True, "status": "UNRESOLVED"}),
     _cited_safe_observation("inspect_command_construction", {
         "command_construction_status": "SANITIZED", "status": "UNRESOLVED"}),
-    _cited_safe_observation("validator", {"status": "REFUTED"},
-                            validation_status=ValidationStatus.REFUTED, subject=SUBJECT),
+    _cited_safe_observation("run_fixture_test", {"status": "REFUTED"},
+                            validation_status=ValidationStatus.REFUTED,
+                            subject=COMMAND_SUBJECT, fixture_proof=FIXTURE_PROOF),
 ])
 def test_affirmative_counter_evidence_can_support_unresolved_safe_prediction(observation):
-    _validate_cited_prediction(observation)
+    _validate_cited_prediction(
+        observation,
+        subject=COMMAND_SUBJECT
+        if observation.tool in {"inspect_command_construction", "run_fixture_test"} else SUBJECT,
+    )
 
 
 def test_matching_concrete_refutation_still_supports_safe_refuted():
     _validate_cited_prediction(_cited_safe_observation(
-        "validator", {"status": "REFUTED"},
-        validation_status=ValidationStatus.REFUTED, subject=SUBJECT,
-    ), status="REFUTED")
+        "run_fixture_test", {"status": "REFUTED"},
+        validation_status=ValidationStatus.REFUTED,
+        subject=COMMAND_SUBJECT, fixture_proof=FIXTURE_PROOF,
+    ), status="REFUTED", subject=COMMAND_SUBJECT)
 
 
 def test_command_counter_evidence_blocks_unresolved_vulnerability_prediction():
@@ -367,14 +410,20 @@ def test_command_counter_evidence_blocks_unresolved_vulnerability_prediction():
                   tool_call=ModelToolCall(call_id="cmd", name="inspect_command_construction", arguments={})),
     ]
 
-    validate_conclusion(output, trace, frozenset(), subject=SUBJECT)
+    # C5: candidate-bound SANITIZED observed in the full trace contradicts
+    # VULNERABLE even when omitted from supporting citations
+    # (citation-choice invariance). helper-local safety is still distinguished
+    # via _command_status candidate binding (different source_path returns
+    # None and does not block).
+    with pytest.raises(ValueError, match="command-construction counter-evidence"):
+        validate_conclusion(output, trace, frozenset(), subject=COMMAND_SUBJECT)
 
     with pytest.raises(ValueError, match="command-construction counter-evidence"):
         validate_conclusion(
             output.model_copy(update={"evidence_ids": ("tool:2",)}),
             trace,
             frozenset(),
-            subject=SUBJECT,
+            subject=COMMAND_SUBJECT,
         )
 
     supported = output.model_copy(update={
@@ -382,7 +431,7 @@ def test_command_counter_evidence_blocks_unresolved_vulnerability_prediction():
         "label": "SAFE",
         "rationale": "Quoted construction is counter-evidence.",
     })
-    validate_conclusion(supported, trace, frozenset(), subject=SUBJECT)
+    validate_conclusion(supported, trace, frozenset(), subject=COMMAND_SUBJECT)
 
 
 def test_unestablished_taint_trace_cannot_support_vulnerable_without_command_support():
@@ -401,7 +450,7 @@ def test_unestablished_taint_trace_cannot_support_vulnerable_without_command_sup
                     tool_call=ModelToolCall(call_id="trace", name="trace_dataflow", arguments={}))
 
     with pytest.raises(ValueError, match="NOT_ESTABLISHED"):
-        validate_conclusion(output, [step], frozenset(), subject=SUBJECT)
+        validate_conclusion(output, [step], frozenset(), subject=COMMAND_SUBJECT)
 
     command_support = _cited_safe_observation("inspect_command_construction", {
         "command_construction_status": "UNSANITIZED", "status": "UNRESOLVED",
@@ -414,11 +463,12 @@ def test_unestablished_taint_trace_cannot_support_vulnerable_without_command_sup
                       tool_call=ModelToolCall(call_id="cmd", name="inspect_command_construction", arguments={})),
         ],
         frozenset(),
-        subject=SUBJECT,
+        subject=COMMAND_SUBJECT,
     )
 
 
 def test_static_chmod_match_requires_permission_validator_for_material_prediction():
+    permission_subject = SUBJECT.model_copy(update={"property_id": "chmod-mode-others-write"})
     static = _cited_safe_observation("run_static_check", {
         "finding_count": 1,
         "path": PATH,
@@ -439,14 +489,14 @@ def test_static_chmod_match_requires_permission_validator_for_material_predictio
                            tool_call=ModelToolCall(call_id="static", name="run_static_check", arguments={}))
 
     with pytest.raises(ValueError, match="validate_permission_mode"):
-        validate_conclusion(output, [static_step], frozenset(), subject=SUBJECT)
+        validate_conclusion(output, [static_step], frozenset(), subject=permission_subject)
 
     validator = _cited_safe_observation(
         "validate_permission_mode",
         {"status": "CONFIRMED"},
         citation_id="tool:2",
         validation_status=ValidationStatus.CONFIRMED,
-        subject=SUBJECT,
+        subject=permission_subject,
     )
     validate_conclusion(
         output.model_copy(update={
@@ -459,7 +509,7 @@ def test_static_chmod_match_requires_permission_validator_for_material_predictio
                       tool_call=ModelToolCall(call_id="perm", name="validate_permission_mode", arguments={})),
         ],
         frozenset(),
-        subject=SUBJECT,
+        subject=permission_subject,
     )
 
 
@@ -489,7 +539,7 @@ def test_static_command_sink_requires_command_construction_inspection():
                             tool_call=ModelToolCall(call_id="read", name="read_span", arguments={}))
 
     with pytest.raises(ValueError, match="inspect_command_construction"):
-        validate_conclusion(output, [static_step, get_cmd_step], frozenset(), subject=SUBJECT)
+        validate_conclusion(output, [static_step, get_cmd_step], frozenset(), subject=COMMAND_SUBJECT)
 
     command = _cited_safe_observation(
         "inspect_command_construction",
@@ -505,7 +555,7 @@ def test_static_command_sink_requires_command_construction_inspection():
                       tool_call=ModelToolCall(call_id="cmd", name="inspect_command_construction", arguments={})),
         ],
         frozenset(),
-        subject=SUBJECT,
+        subject=COMMAND_SUBJECT,
     )
 
 
@@ -515,10 +565,10 @@ def test_typed_citation_feedback_names_missing_bibliography_field():
                supporting_observation_ids=['tool:2'], rationale='Validator confirmed the candidate.')
     good = dict(bad, evidence_ids=['span:entry.py', 'tool:2'])
     vote, model = run([
-        call(), call('validator'),
+        call(), call('run_fixture_test'),
         ModelReply(model_id='scripted', content=json.dumps(bad)),
         ModelReply(model_id='scripted', content=json.dumps(good)),
-    ])
+    ], with_fixture=True)
     feedback = model.requests[-1][0][-1].content
     assert 'evidence_ids' in feedback
     assert 'supporting_observation_ids' in feedback

@@ -7,7 +7,7 @@ from uuid import uuid4
 from cv_agent.evaluation.runners.run_micro_benchmark import load_default_model_config
 from cv_agent.runtime.paths import PROJECT_ROOT as project_root
 from cv_agent.runtime.journal import Journal, Trial, RecordedTools, utc_now
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, select_owasp_entry
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties, select_owasp_entry
 from cv_agent.evaluation.protocols.development import require_development_acceptance
 from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.evaluation.metrics import metrics, paired, replay_fast_prefix, provider_usage
@@ -115,7 +115,7 @@ def run(pilot, positive_check=False, graph_check=False, lexical_check=False, fas
     identity = build_run_identity(project_root, {'BenchmarkJava': project_root/'data/raw/BenchmarkJava'})
     if identity['datasets'] != manifest['identity']['datasets']:
         raise ValueError('Dataset checkout differs from frozen manifest')
-    inputs = load_owasp_agentic_inputs(project_root/'data/raw', case_ids=ids)
+    inputs = load_owasp_agentic_inputs(project_root/'data/raw', case_ids=ids, property_ids=development_owasp_properties(project_root, ids))
     candidates = inputs.candidates if pilot else select_owasp_entry(inputs, config['entry_method'])
     index = MetadataBM25Index(inputs.index.documents.values()) if lexical_check else inputs.index
     fixture_cases = (

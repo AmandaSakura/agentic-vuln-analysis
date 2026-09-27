@@ -1,0 +1,21 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "advisory_profile": "configs/profiles/advisory_matrix_v4.json",
+  "case_ids": ["hp003_a", "hp003_b"],
+  "systems": ["E4_JEV_V3", "E4_RULE_V1", "E4"],
+  "fixture_policy": "disabled",
+  "expert_policy": "fixed",
+  "concurrency": 1,
+  "max_requests": 200,
+  "max_seconds": 1800,
+  "routing": {
+    "spec_version": 3,
+    "mode": "active",
+    "base_url": "https://api.typesafe.ai/v1",
+    "model": "jev-1.13.0",
+    "timeout_seconds": 60,
+    "min_choice_probability": 0.85,
+    "max_source_observation_tokens": 6144
+  }
+}

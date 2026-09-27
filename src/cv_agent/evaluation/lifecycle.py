@@ -14,10 +14,11 @@ from cv_agent.runtime.journal import LockedJournal, utc_now
 from cv_agent.runtime.provider import load_experiment_model
 from cv_agent.runtime.snapshots import snapshot_sources
 from .datasets.advisory_config import PythonHeldoutPairExperimentConfig
-from .datasets.advisory_tasks import build_tasks
+from .datasets.advisory_tasks import build_task_plan
 from .metrics import provider_usage
 from .protocols.advisory import heldout_pair_acceptance_issues
 from .protocols.development import transport_issues
+from .protocols.readiness import assess_run_readiness
 from .results import rows_with_truth, save_json, summarize_pair_run
 
 
@@ -32,14 +33,23 @@ def run_advisory_experiment(
     execute=None,
 ) -> Path:
     """Run the advisory protocol; preparation and execution can be supplied offline."""
-    prepare_tasks = build_tasks if prepare is None else prepare
     execute_candidate = run_candidate if execute is None else execute
     manifest = json.loads((root / config.source_manifest).read_text())
     run_dir = output or root / run_root / uuid4().hex
     run_dir.mkdir(parents=True, exist_ok=False)
     if latest_pointer is not None:
         save_json(root / latest_pointer, {"run_directory": run_dir.relative_to(root).as_posix()})
-    tasks, subjects, identities = prepare_tasks(root, config)
+    if prepare is None:
+        tasks, subjects, identities, fixture_registry = build_task_plan(root, config)
+    else:
+        prepared = prepare(root, config)
+        if len(prepared) == 3:
+            tasks, subjects, identities = prepared
+            fixture_registry = {}
+        elif len(prepared) == 4:
+            tasks, subjects, identities, fixture_registry = prepared
+        else:
+            raise ValueError("advisory preparation must return tasks, subjects, identities[, fixture_registry]")
     require_passing_tests()
     model_config, api_key = load_experiment_model(root, config.model_config_path)
     save_json(
@@ -53,7 +63,14 @@ def run_advisory_experiment(
             "source_sha256": snapshot_sources(root, run_dir),
             "subjects": {case: subject.model_dump(mode="json") for case, subject in subjects.items()},
             "case_identities": identities,
-            "claim_eligible": False,
+            "uses_trusted_fixtures": bool(fixture_registry),
+            "validation_fixture_registry": fixture_registry,
+            "trusted_fixture_note": (
+                "Registered run_fixture_test outcomes are trusted, exact-scope development "
+                "regression evidence when present. They make a run auditable but do not "
+                "turn a non-final or fixture-backed run into an independent generalization benchmark."
+            ),
+            "claim_eligible": config.claim_eligible,
         },
     )
     rows: list[dict] = []
@@ -123,5 +140,6 @@ def run_advisory_experiment(
         decision = {"passed": not issues, "issues": issues, "automatic_expansion": False}
         save_json(run_dir / "acceptance.json", decision)
         journal.write({"event": "run_end", "interrupted": interrupted or budget.cancelled.is_set()})
+        save_json(run_dir / "readiness.json", assess_run_readiness(run_dir))
     print(json.dumps(decision), flush=True)
     return run_dir

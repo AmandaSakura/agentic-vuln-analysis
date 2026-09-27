@@ -16,7 +16,18 @@ from cv_agent.tools.validation.commands import command_construction
 from cv_agent.tools.validation.comparison import compare_versions
 from cv_agent.tools.validation.dataflow import trace_dataflow
 from cv_agent.tools.validation.fixtures import fixture, loopback
-from cv_agent.tools.validation.models import CaseInput, CommandConstructionInput, CompareGuardInput, FindReferencesInput, FixtureCase, LoopbackCase, PathInput, SourceFlowInput, TraceDataflowInput
+from cv_agent.tools.validation.models import (
+    CaseInput,
+    CommandConstructionInput,
+    CompareGuardInput,
+    FindReferencesInput,
+    FixtureCapability,
+    FixtureCase,
+    LoopbackCase,
+    PathInput,
+    SourceFlowInput,
+    TraceDataflowInput,
+)
 from cv_agent.tools.validation.patterns import PRINCIPAL_PATTERN, RESOURCE_PATTERN, SANITIZER_RULES, SINK_RULES, SOURCE_RULES, pattern_tool, references, static_check
 from cv_agent.tools.validation.permissions import permission_mode
 from cv_agent.tools.validation.probes import concrete_eval_probe
@@ -29,6 +40,7 @@ def _json_tool(
     handler: Callable[[FrozenModel, ToolExecutionScope], ToolObservation],
     *, available: bool = True,
     validation_statuses: tuple[ValidationStatus, ...] = (),
+    fixture_capabilities: tuple[FixtureCapability, ...] = (),
 ) -> AgentTool:
     return AgentTool(
         name=name,
@@ -38,6 +50,7 @@ def _json_tool(
         content_type="json",
         available=available,
         validation_statuses=validation_statuses,
+        fixture_capabilities=fixture_capabilities,
     )
 
 
@@ -59,6 +72,23 @@ def validation_tools(
     if len(loopbacks) != len(loopback_list):
         raise ValueError("loopback cases must have unique ids")
 
+    capabilities = tuple(
+        FixtureCapability(
+            case_id=case.case_id,
+            property_id=case.proof_scope.property_id
+            if case.proof_scope
+            else (case.subject.property_id if case.subject else None),
+            coverage=case.proof_scope.coverage if case.proof_scope else None,
+            method=case.proof_scope.method if case.proof_scope else None,
+            supported_statuses=case.proof_scope.supported_statuses
+            if case.proof_scope
+            else (),
+            subject=case.subject,
+            proof_scope=case.proof_scope,
+        )
+        for case in fixture_list
+    )
+
     return (
         _json_tool(
             'find_references',
@@ -79,6 +109,7 @@ def validation_tools(
             partial(fixture, fixtures),
             available=bool(fixtures),
             validation_statuses=(ValidationStatus.CONFIRMED, ValidationStatus.REFUTED),
+            fixture_capabilities=capabilities,
         ),
         _json_tool(
             'find_sources',
@@ -108,6 +139,8 @@ def validation_tools(
             (
                 'Independently probe request input reaching eval using two concrete inputs in a '
                 'bounded Python function-slice interpreter. Use the candidate entry as source_path. '
+                'Candidate confirmation requires request/req in the declared input_parameters; '
+                'the probe cannot infer external control from a parameter name. '
                 'Does not execute repository code or prove application exploitability. Unsupported '
                 'syntax and no witness mean UNRESOLVED, not SAFE.'
             ),

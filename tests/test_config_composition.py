@@ -1,4 +1,4 @@
-"""New reusable declarations resolve to the frozen v4 protocol exactly."""
+"""Current declarations preserve v4 protocol plus explicit C1 proof obligations."""
 import json
 from pathlib import Path
 
@@ -6,6 +6,44 @@ import pytest
 from pydantic import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+
+def _reviewed_config(frozen):
+    from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig
+    historical = PythonHeldoutPairExperimentConfig.model_validate_json((ROOT/'configs/history'/frozen).read_text())
+    assert all(pair.property_id is None for pair in historical.pairs)
+    hp003_condition_assumptions = {
+        "sys.platform.startswith('linux')": True,
+        "is_windows()": False,
+        "self._env_manager != em.LOCAL": False,
+        "os.path.exists(artifact_uri)": True,
+    }
+    hp003_value_assumptions = {
+        "port": 5000,
+        "host": "127.0.0.1",
+        "timeout": None,
+        "self._nworkers": None,
+        "model_config": None,
+        "synchronous": False,
+        "MLServerDefaultModelName": "mlflow-model",
+        "MLServerMLflowRuntime": "mlserver_mlflow.MLflowRuntime",
+    }
+    # Reviewed protocol deltas are the explicit proof obligation plus the
+    # hp003 command scenario that used to live only in fixture prose. Retain
+    # frozen cases, labels, budgets and abstention allowances.
+    return historical.model_copy(update={'pairs': tuple(
+        pair.model_copy(update={
+            'property_id': property_id,
+            **({
+                'entry_condition_assumptions': hp003_condition_assumptions,
+                'entry_value_assumptions': hp003_value_assumptions,
+            } if property_id == 'command-execution' else {}),
+        })
+        for pair, property_id in zip(historical.pairs, (
+            'temporary-directory-race', 'authorization-boundary', 'command-execution',
+        ), strict=True)
+    )})
 
 
 def _parts(profile):
@@ -19,11 +57,11 @@ def _parts(profile):
     ('gate','python_heldout_pair_gate_v4.json',10),
     ('matrix','python_heldout_pairs_v4.json',30),
 ])
-def test_composed_protocol_equals_frozen_config(profile, frozen, count):
+def test_composed_protocol_preserves_frozen_config_with_declared_properties(profile, frozen, count):
     from cv_agent.evaluation.datasets.composition import compose_advisory_config
     from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPairExperimentConfig, planned_heldout_cells
     dataset, selection = _parts(profile)
-    expected = PythonHeldoutPairExperimentConfig.model_validate_json((ROOT/'configs/history'/frozen).read_text())
+    expected = _reviewed_config(frozen)
     actual = compose_advisory_config(dataset, selection)
     assert actual.model_dump(mode='json', by_alias=True) == expected.model_dump(mode='json', by_alias=True)
     assert planned_heldout_cells(actual) == planned_heldout_cells(expected)
@@ -61,8 +99,7 @@ def test_current_runner_reads_composed_files_without_historical_fallback(tmp_pat
     runner = importlib.import_module(f'cv_agent.evaluation.runners.run_python_heldout_pair_{name}')
     for group in ('datasets', 'profiles'):
         shutil.copytree(ROOT / 'configs' / group, tmp_path / 'configs' / group)
-    expected = PythonHeldoutPairExperimentConfig.model_validate_json(
-        (ROOT / 'configs/history' / frozen).read_text())
+    expected = _reviewed_config(frozen)
     assert runner.load_config(tmp_path) == expected
     dataset_path = tmp_path / 'configs/datasets/advisory_pairs_v4.json'
     dataset = json.loads(dataset_path.read_text())
@@ -86,3 +123,26 @@ def test_current_runner_reads_composed_files_without_historical_fallback(tmp_pat
     profile.write_text(json.dumps({**payload, 'pairs': []}))
     with pytest.raises(ValidationError, match='Extra inputs'):
         runner.load_config(tmp_path)
+
+
+def test_composed_dataset_allows_only_non_development_final_role_claims():
+    from cv_agent.evaluation.datasets.composition import AdvisoryDataset, AdvisoryRunProfile, compose_advisory_config
+    from test_python_heldout_pair_config import config_dict
+
+    dataset, profile = _parts('gate')
+    payload = dataset.model_dump(mode='json')
+    with pytest.raises(ValidationError, match='final-test'):
+        AdvisoryDataset.model_validate({**payload, 'claim_eligible': True})
+    final_dataset = AdvisoryDataset.model_validate({**payload, 'dataset_role': 'final-test', 'claim_eligible': True})
+    with pytest.raises(ValidationError, match='development advisory pairs'):
+        compose_advisory_config(final_dataset, profile)
+
+    fresh = config_dict()
+    fresh['dataset_role'] = 'final-test'
+    fresh['claim_eligible'] = True
+    fresh['selected_cells'] = []
+    dataset = AdvisoryDataset.model_validate({key: fresh[key] for key in ('dataset_role', 'claim_eligible', 'source_manifest', 'pairs')})
+    profile = AdvisoryRunProfile.model_validate({key: value for key, value in fresh.items() if key not in {'dataset_role', 'claim_eligible', 'source_manifest', 'pairs'}})
+    config = compose_advisory_config(dataset, profile)
+    assert config.dataset_role == 'final-test'
+    assert config.claim_eligible is True

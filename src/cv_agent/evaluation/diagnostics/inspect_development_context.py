@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = PROJECT_ROOT
-from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs
+from cv_agent.evaluation.datasets.owasp_live import load_owasp_agentic_inputs, development_owasp_properties
 from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.tools.registry import ToolRegistry
 from cv_agent.harness import AgentSystemVersion
@@ -17,7 +17,7 @@ from cv_agent.retrieval.bm25 import MetadataBM25Index
 
 def main():
     manifest = json.loads((ROOT/'configs/datasets/development_manifest.json').read_text())
-    inputs = load_owasp_agentic_inputs(ROOT/'data/raw',case_ids=manifest['case_ids'])
+    inputs = load_owasp_agentic_inputs(ROOT/'data/raw',case_ids=manifest['case_ids'], property_ids=development_owasp_properties(ROOT, manifest['case_ids']))
     rows=[]
     bm25 = MetadataBM25Index(inputs.index.documents.values())
     variants=[('E1',AgentSystemVersion.E1_LOCAL_SINGLE,inputs.index),

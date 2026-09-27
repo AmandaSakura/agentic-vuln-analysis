@@ -13,6 +13,7 @@ def pair_and_case():
     pair = PythonPair.model_validate({
         "pair_id": "langchain_template_traversal",
         "fixture_id": "template_traversal",
+        "property_id": "template-traversal",
         "repository_url": "https://github.com/example/project",
         "advisory": "GHSA-example",
         "cve": "CVE-2099-0001",
@@ -75,6 +76,7 @@ def test_full_package_index_binds_fixture_to_candidate_and_source(monkeypatch, t
     assert source_hashes["pkg/a.py"]
     tool = pair_fixture_tool(tmp_path, pair, case, index, candidate, langchain_observations())
     subject = candidate_subject(index, candidate)
+    assert candidate.property_id == subject.property_id == pair.property_id
     scope = ToolExecutionScope(frozenset(index.documents), 4096, candidate_path=candidate.path, subject=subject)
     result = tool.handler(PythonPairFixtureInput(fixture_id="template_traversal"), scope)
     assert result.validation_status == "CONFIRMED"
@@ -126,3 +128,23 @@ def test_e2_and_e3_share_the_same_index_document_set(tmp_path):
     assert candidate.path in e2_paths
     assert candidate.path in e3_paths
     assert any("pkg/b.py::helper" in path for path in e3_paths)
+
+
+@pytest.mark.parametrize('property_id', [None, 'command-execution', 'sandbox-attr-format-escape'])
+@pytest.mark.parametrize('changed', ['pair', 'candidate'])
+def test_pair_fixture_cannot_stamp_another_property(tmp_path, property_id, changed):
+    write_package(tmp_path)
+    pair, case = pair_and_case()
+    index, candidate, _ = build_pair_input(tmp_path, pair, case)
+    if changed == 'pair':
+        pair = pair.model_copy(update={'property_id': property_id})
+    else:
+        candidate = candidate.model_copy(update={'property_id': property_id})
+    with pytest.raises(ValueError, match='property'):
+        pair_fixture_tool(tmp_path, pair, case, index, candidate, langchain_observations())
+
+
+def test_python_pair_missing_property_stops_before_reading_checkout(tmp_path):
+    pair, case = pair_and_case()
+    with pytest.raises(ValueError, match='property_id'):
+        build_pair_input(tmp_path, pair.model_copy(update={'property_id': None}), case)

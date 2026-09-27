@@ -1,0 +1,17 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "advisory_profile": "configs/profiles/advisory_matrix_v4.json",
+  "case_ids": ["hp001_a", "hp001_b"],
+  "systems": ["E4_JEV", "E3", "E4"],
+  "max_requests": 120,
+  "max_seconds": 1800,
+  "routing": {
+    "spec_version": 2,
+    "mode": "shadow",
+    "base_url": "https://api.typesafe.ai/v1",
+    "model": "jev-1.13.0",
+    "timeout_seconds": 60,
+    "min_choice_probability": 0.85
+  }
+}

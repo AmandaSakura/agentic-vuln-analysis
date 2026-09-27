@@ -12,7 +12,7 @@ Reproduce the architecture described in the resume as an executable vulnerabilit
 2. scanning, taint, and authorization specialists each run a genuine model/tool/observation ReAct loop;
 3. Code-RAG supplies AST, symbol, forward/reverse call, import, data-flow, route, and guard context across files;
 4. typed tools collect static observations and perform bounded tests or loopback HTTP checks without executing arbitrary model-generated shell commands;
-5. a quorum-inspired full/fast adjudicator combines independent specialist evidence, preserves typed validator status, and skips the third specialist only when the first two form an irreversible high-confidence quorum;
+5. a quorum-inspired full/fast adjudicator combines independent specialist evidence, preserves typed validator status, and skips the third specialist when the first two admitted material votes form an irreversible quorum;
 6. project-level evaluation separates development, held-out positive, paired negative, and oracle-diagnostic data.
 
 The target is architectural and methodological reproduction. The original prompts, model, repositories, thresholds, and raw predictions are unavailable, so the original 28% and 37% numbers cannot be reproduced exactly. This project reports the numbers produced by its own declared data and model configuration.

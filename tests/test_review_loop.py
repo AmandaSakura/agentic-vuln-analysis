@@ -67,7 +67,7 @@ def test_aliased_command_keeps_construction_counterevidence_despite_empty_scan()
     trace, subject = observations('''def entry(value):
     from os import system
     system('echo ' + shlex.quote(value))
-''', "command-execution")
+''', "command-execution", inputs=('value',))
     trace = [s for s in trace if s.observation.tool in {"run_static_check", "inspect_command_construction"}]
     assert json.loads(trace[0].observation.content)["findings"] == []
     assert json.loads(trace[1].observation.content)["command_construction_status"] == "SANITIZED"
@@ -104,7 +104,9 @@ def test_qualified_numeric_helper_is_not_ambiguous_with_other_module(tmp_path):
     scope = ToolExecutionScope(candidate_path=caller.path, subject=subject, admitted_paths=frozenset(d.path for d in repo.documents), max_observation_tokens=10000)
     observation = pattern_tool(index, "find_sanitizers", SANITIZER_RULES)(PathInput(path=helper.path), scope)
     assert json.loads(observation.content)["candidate_sanitizer_flows"]
-    vote([step(observation, 1)], subject, "SAFE")
+    # C1/C5: the sanitizer pattern remains useful, but is not a scope proof.
+    with pytest.raises(ValueError, match="matching cited proof"):
+        vote([step(observation, 1)], subject, "SAFE")
 
 
 def test_unqualified_numeric_helper_remains_unresolved_with_two_definitions():
