@@ -104,8 +104,9 @@ def _fixture_worker(
 
 def _install_fixture_isolation(
     result_fd: int, *, retained_fds: tuple[int, ...] = (), accept_only: bool = False,
+    deny_exec: bool = False,
 ) -> None:
-    """Close inherited descriptors and deny socket syscalls before fixture code runs."""
+    """Close inherited descriptors and deny selected syscalls before fixture code runs."""
 
     devnull_fd = os.open(os.devnull, os.O_RDWR)
     try:
@@ -147,7 +148,7 @@ def _install_fixture_isolation(
     if not context:
         raise RuntimeError("could not initialize fixture seccomp isolation")
     try:
-        for name in (
+        denied_syscalls = (
             b"socket",
             b"socketpair",
             b"connect",
@@ -159,7 +160,10 @@ def _install_fixture_isolation(
             b"sendmsg",
             b"recvfrom",
             b"recvmsg",
-        ):
+        )
+        if deny_exec:
+            denied_syscalls += (b"execve", b"execveat")
+        for name in denied_syscalls:
             if accept_only and name in {
                 b"accept", b"accept4", b"sendto", b"sendmsg", b"recvfrom", b"recvmsg",
             }:
@@ -168,6 +172,10 @@ def _install_fixture_isolation(
                 continue
             syscall = seccomp.seccomp_syscall_resolve_name(name)
             if syscall < 0:
+                if deny_exec and name in {b"execve", b"execveat"}:
+                    raise RuntimeError(
+                        f"could not resolve fixture seccomp syscall {name.decode()}"
+                    )
                 continue
             result = seccomp.seccomp_rule_add(context, deny, syscall, 0)
             if result != 0:
@@ -178,6 +186,17 @@ def _install_fixture_isolation(
             raise RuntimeError("could not load fixture seccomp isolation")
     finally:
         seccomp.seccomp_release(context)
+
+    if deny_exec:
+        # This must run after loading seccomp, before any target import or audit hook.
+        # Successful execution replaces this worker, so the parent gets no result.
+        try:
+            os.execv("/bin/true", ["/bin/true"])
+        except OSError as error:
+            if error.errno != errno.EPERM:
+                raise RuntimeError("fixture exec isolation self-test failed") from error
+        else:
+            raise RuntimeError("fixture exec isolation self-test unexpectedly returned")
 
 
 def _wait_for_fixture_exit(
