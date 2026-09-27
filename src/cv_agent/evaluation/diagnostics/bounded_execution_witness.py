@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import nullcontext
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 from uuid import uuid4
@@ -48,8 +49,26 @@ _WORKER_TIMEOUT = 12.0
 _REPLAY_TIMEOUT = 5.0
 
 
-def _worker_path() -> str:
-    return f"{Path(sys.executable).parent}:/bin:/usr/bin"
+def _worker_path(python_executable: Path | None = None) -> str:
+    return f"{(python_executable or Path(sys.executable)).parent}:/bin:/usr/bin"
+
+
+def _interpreter_identity(expected: Path | None) -> dict[str, Any]:
+    """Check the running Python's invoked path and venv prefix, without imports."""
+    executable = Path(sys.executable).absolute()
+    prefix = Path(sys.prefix).resolve()
+    expected_path = expected.absolute() if expected is not None else None
+    expected_prefix = expected_path.parent.parent.resolve() if expected_path else None
+    return {
+        "executable": str(executable),
+        "prefix": str(prefix),
+        "base_prefix": str(Path(sys.base_prefix).resolve()),
+        "version": platform.python_version(),
+        "expected_executable": str(expected_path) if expected_path else None,
+        "expected_prefix": str(expected_prefix) if expected_prefix else None,
+        "matches_manifest": (expected_path is None or
+                             (executable == expected_path and prefix == expected_prefix)),
+    }
 
 
 class SourceFileBinding(FrozenModel):
@@ -84,6 +103,7 @@ class WitnessManifest(FrozenModel):
     recorder_command: str
     recorder_arguments: tuple[str, ...] = ()
     bash_path: Path = Path("/bin/bash")
+    python_executable: Path | None = None
     constructor_args: tuple[Any, ...] = ()
     constructor_kwargs: dict[str, Any] = Field(default_factory=dict)
     call_args: tuple[Any, ...] = ()
@@ -105,6 +125,8 @@ class WitnessManifest(FrozenModel):
             raise ValueError("entry_file_sha256 must be a lowercase full-file SHA256")
         if not _COMMAND_NAME.fullmatch(self.recorder_command):
             raise ValueError("recorder_command must be one simple executable name")
+        if self.python_executable is not None and not self.python_executable.is_absolute():
+            raise ValueError("python_executable must be an absolute path")
         if any(not re.fullmatch(r"[A-Za-z0-9._-]+", part)
                for part in self.recorder_arguments):
             raise ValueError("recorder arguments must be simple literal words")
@@ -151,6 +173,15 @@ def _safe_relative_path(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value and not path.is_absolute() and value == str(path)
                 and all(part not in {".", ".."} for part in path.parts))
+
+
+def _safe_runtime_path(path: Path) -> bool:
+    return (
+        path.is_absolute()
+        and ".." not in path.parts
+        and re.fullmatch(r"/[A-Za-z0-9_./-]+", str(path)) is not None
+        and path.resolve(strict=True) == path
+    )
 
 
 def _sha256(path: Path) -> str:
@@ -347,13 +378,19 @@ def _verify_module_sources(manifest: WitnessManifest, checkout: Path) -> list[st
 
 def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             probe_path: Path) -> None:
+    interpreter = _interpreter_identity(manifest.python_executable)
     try:
+        if not interpreter["matches_manifest"]:
+            _write_result(result_fd, {"kind": "error", "gap": "worker_interpreter_mismatch",
+                                      "interpreter": interpreter})
+            return
         checkout = manifest.checkout_root.resolve(strict=True)
         for binding in manifest.source_modules:
             source = checkout / binding.relative_path
             if not _inside(source, checkout) or _sha256(source) != binding.sha256:
                 _write_result(result_fd, {"kind": "error", "gap": "source_mismatch",
-                                          "module": binding.module_name})
+                                          "module": binding.module_name,
+                                          "interpreter": interpreter})
                 return
         _apply_fixture_limits()
         _install_fixture_isolation(result_fd, deny_exec=True)
@@ -379,13 +416,15 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             payload["phase"] = phase
             payload["seccomp_selftest"] = True
             payload["hook_selftest"] = selftest_seen
+            payload["interpreter"] = interpreter
             _write_result(result_fd, payload)
             os._exit(0)
 
         sys.addaudithook(audit)
         sys.audit("cv_agent.witness.hook_selftest")
         if not selftest_seen:
-            _write_result(result_fd, {"kind": "error", "gap": "hook_selftest_failed"})
+            _write_result(result_fd, {"kind": "error", "gap": "hook_selftest_failed",
+                                      "interpreter": interpreter})
             return
         sys.path.insert(0, str(checkout))
         import importlib
@@ -393,7 +432,8 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         source_gaps = _verify_module_sources(manifest, checkout)
         if source_gaps:
             _write_result(result_fd, {"kind": "error", "gap": "source_mismatch",
-                                      "source_gaps": source_gaps})
+                                      "source_gaps": source_gaps,
+                                      "interpreter": interpreter})
             return
         target_class = getattr(module, manifest.class_name)
         target = target_class(*manifest.constructor_args, **manifest.constructor_kwargs)
@@ -403,33 +443,45 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         phase = "invoke"
         getattr(target, manifest.method_name)(*manifest.call_args, **call_kwargs)
         _write_result(result_fd, {"kind": "no_event", "seccomp_selftest": True,
-                                  "hook_selftest": True, "source_verified": True})
+                                  "hook_selftest": True, "source_verified": True,
+                                  "interpreter": interpreter})
     except BaseException as error:
         _write_result(result_fd, {"kind": "error", "gap": "target_or_isolation_error",
-                                  "error": f"{type(error).__name__}: {error}"})
+                                  "error": f"{type(error).__name__}: {error}",
+                                  "interpreter": interpreter})
     finally:
         os._exit(0)
 
 
 def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> dict[str, Any]:
     read_fd, write_fd = os.pipe()
+    manifest_path: Path | None = None
     try:
-        command = [sys.executable, "-m", __name__, "--worker", str(write_fd),
-                   str(runtime), str(probe_path)]
-        environment = {"PATH": _worker_path(), "LC_ALL": "C", "LANG": "C",
+        deadline = time.monotonic() + _WORKER_TIMEOUT
+        manifest_bytes = manifest.model_dump_json().encode("utf-8")
+        manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
+        manifest_fd, raw_manifest_path = tempfile.mkstemp(
+            prefix="witness-manifest-", suffix=".json", dir=runtime,
+        )
+        manifest_path = Path(raw_manifest_path)
+        with os.fdopen(manifest_fd, "wb") as stream:
+            stream.write(manifest_bytes)
+        cache_prefix = Path(tempfile.mkdtemp(prefix="witness-pycache-", dir=runtime))
+        python = manifest.python_executable or Path(sys.executable)
+        command = [str(python), "-m", __name__, "--worker", str(write_fd),
+                   str(runtime), str(probe_path), str(manifest_path), manifest_digest]
+        environment = {"PATH": _worker_path(manifest.python_executable),
+                       "LC_ALL": "C", "LANG": "C",
                        "PYTHONDONTWRITEBYTECODE": "1",
+                       "PYTHONPYCACHEPREFIX": str(cache_prefix),
                        "PYTHONPATH": str(Path(__file__).resolve().parents[3])}
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+        process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, pass_fds=(write_fd,),
                                    env=environment, cwd=runtime)
         os.close(write_fd)
         write_fd = -1
-        assert process.stdin is not None
-        process.stdin.write(manifest.model_dump_json().encode())
-        process.stdin.close()
         chunks: list[bytes] = []
         size = 0
-        deadline = time.monotonic() + _WORKER_TIMEOUT
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -470,16 +522,19 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> d
         os.close(read_fd)
         if write_fd >= 0:
             os.close(write_fd)
+        if manifest_path is not None:
+            manifest_path.unlink(missing_ok=True)
 
 
-def _verified_bash_command(argv: Any, bash_path: Path) -> str | None:
+def _verified_bash_command(argv: Any, bash_path: Path,
+                           python_executable: Path | None = None) -> str | None:
     if (not isinstance(argv, list) or len(argv) != 3
             or argv[1] != "-c" or not all(isinstance(x, str) for x in argv)):
         return None
     executable = argv[0]
     if executable not in {"bash", "sh"} and not Path(executable).is_absolute():
         return None
-    resolved = (shutil.which(executable, path=_worker_path())
+    resolved = (shutil.which(executable, path=_worker_path(python_executable))
                 if not Path(executable).is_absolute() else executable)
     if resolved is None:
         return None
@@ -524,8 +579,17 @@ def _bound_emitter(event: dict[str, Any], manifest: WitnessManifest,
 
 def _replay(command: str, manifest: WitnessManifest, runtime: Path) -> dict[str, Any]:
     recorder_dir = runtime / "recorder_bin"
-    recorder_dir.mkdir(exist_ok=True)
+    if recorder_dir.is_symlink():
+        return {"ok": False, "gap": "recorder_directory_is_symlink"}
+    if not recorder_dir.exists():
+        recorder_dir.mkdir()
+    if not recorder_dir.is_dir():
+        return {"ok": False, "gap": "recorder_directory_invalid"}
     recorder = recorder_dir / manifest.recorder_command
+    if recorder.is_symlink():
+        return {"ok": False, "gap": "recorder_is_symlink"}
+    if recorder.exists() and not recorder.is_file():
+        return {"ok": False, "gap": "recorder_path_invalid"}
     receipt = uuid4().hex
     recorder.write_text(
         "#!/bin/bash\n"
@@ -534,15 +598,19 @@ def _replay(command: str, manifest: WitnessManifest, runtime: Path) -> dict[str,
     )
     recorder.chmod(0o755)
     bash_path = manifest.bash_path.resolve(strict=True)
-    if len(command.encode("utf-8")) > 16_384:
+    if len(command.encode("utf-8")) > 2_048:
         return {"ok": False, "gap": "bash_command_too_large"}
     try:
+        python = manifest.python_executable or Path(sys.executable)
+        cache_prefix = Path(tempfile.mkdtemp(prefix="replay-pycache-", dir=runtime))
         process = subprocess.Popen(
-            [sys.executable, "-m", __name__, "--replay-worker", str(runtime),
-             str(manifest.checkout_root.resolve()), str(bash_path), str(recorder)],
+            [str(python), "-m", __name__, "--replay-worker", str(runtime),
+             str(manifest.checkout_root.resolve()), str(bash_path), str(recorder),
+             str(manifest.python_executable) if manifest.python_executable else ""],
             cwd=runtime,
-            env={"PATH": _worker_path(), "LC_ALL": "C",
+            env={"PATH": _worker_path(manifest.python_executable), "LC_ALL": "C",
                  "LANG": "C", "PYTHONDONTWRITEBYTECODE": "1",
+                 "PYTHONPYCACHEPREFIX": str(cache_prefix),
                  "PYTHONPATH": str(Path(__file__).resolve().parents[3])},
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -582,6 +650,9 @@ def _replay(command: str, manifest: WitnessManifest, runtime: Path) -> dict[str,
         return {"ok": False, "gap": "bash_replay_failed",
                 "error": f"{type(error).__name__}: {error}"}
     prefix = receipt.encode() + b"\0"
+    if output.startswith(b"replay_interpreter_mismatch"):
+        return {"ok": False, "gap": "replay_interpreter_mismatch",
+                "returncode": process.returncode}
     if process.returncode != 0 or not output.startswith(prefix):
         return {"ok": False, "gap": "bash_replay_failed",
                 "returncode": process.returncode, "stdout_prefix": output[:100].decode(errors="replace")}
@@ -596,7 +667,10 @@ def _replay(command: str, manifest: WitnessManifest, runtime: Path) -> dict[str,
 
 
 def _replay_worker(runtime: Path, checkout: Path, bash_path: Path, recorder: Path,
-                   command: str) -> None:
+                   command: str, expected_python: Path | None) -> None:
+    if not _interpreter_identity(expected_python)["matches_manifest"]:
+        os.write(1, b"replay_interpreter_mismatch")
+        os._exit(126)
     try:
         loader = {
             "x86_64": Path("/lib64/ld-linux-x86-64.so.2"),
@@ -619,17 +693,125 @@ def _prepare_input(runtime: Path, manifest: WitnessManifest, nonce: str,
                    *, malicious: bool) -> tuple[Path, dict[str, str]]:
     suffix = f"$(printf {nonce})" if malicious else nonce
     path = runtime / f"{manifest.probe_directory_prefix}{suffix}"
-    path.mkdir()
+    if path.is_symlink():
+        raise ValueError("probe directory cannot be a symlink")
+    path.mkdir(exist_ok=True)
+    if not path.is_dir():
+        raise ValueError("probe path is not a directory")
     hashes: dict[str, str] = {}
     for relative, content in manifest.precondition_files.items():
         target = path / relative
+        parent_part = path
+        for component in Path(relative).parts[:-1]:
+            parent_part /= component
+            if parent_part.is_symlink():
+                raise ValueError("probe precondition parent cannot be a symlink")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content)
+        if target.is_symlink():
+            raise ValueError("probe precondition cannot be a symlink")
+        if target.exists():
+            if not target.is_file() or target.read_text() != content:
+                raise ValueError("existing probe precondition differs from the manifest")
+        else:
+            target.write_text(content)
         hashes[relative] = _sha256(target)
+    expected_directories = {Path(".")}
+    for relative in manifest.precondition_files:
+        parent = Path(relative).parent
+        while parent != Path("."):
+            expected_directories.add(parent)
+            parent = parent.parent
+    for item in path.rglob("*"):
+        relative = item.relative_to(path)
+        if item.is_symlink():
+            raise ValueError("probe preconditions cannot contain symlinks")
+        if item.is_dir() and relative not in expected_directories:
+            raise ValueError("probe directory has undeclared content")
+        if item.is_file() and relative.as_posix() not in manifest.precondition_files:
+            raise ValueError("probe directory has undeclared content")
     return path, hashes
 
 
-def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> WitnessResult:
+def _diagnostic_result(
+    manifest: WitnessManifest,
+    checkout: Path,
+    runtime: Path,
+    probe_path: Path,
+    event: dict[str, Any],
+    assumption_gaps: tuple[str, ...],
+    details: dict[str, Any],
+) -> WitnessResult:
+    """Keep measuring after proof gaps while making candidate proof impossible."""
+    gaps = list(assumption_gaps)
+    details["diagnostic_only"] = True
+    observed_popen_event = (
+        event.get("kind") == "command_event"
+        and event.get("event") == "subprocess.Popen"
+        and event.get("authentic_subprocess_popen") is True
+    )
+    details["observed_popen_event"] = observed_popen_event
+    details["reached_popen"] = (
+        observed_popen_event
+        and event.get("phase") == "invoke"
+        and event.get("candidate_frame") is not None
+        and _bound_emitter(event, manifest, checkout)
+        and not event.get("loaded_source_gaps")
+    )
+    if event.get("kind") != "command_event":
+        gaps.append(event.get("gap", "command_boundary_not_reached"))
+    else:
+        if event.get("phase") != "invoke":
+            gaps.append("import_time_command_event" if event.get("phase") == "import"
+                        else "event_outside_candidate_entry")
+        if event.get("candidate_frame") is None:
+            gaps.append("event_outside_candidate_frame")
+        if not _bound_emitter(event, manifest, checkout):
+            gaps.append("emitter_source_not_bound")
+        if event.get("loaded_source_gaps"):
+            gaps.extend(event["loaded_source_gaps"])
+        if not event.get("seccomp_selftest") or not event.get("hook_selftest"):
+            gaps.append("isolation_selftest_failed")
+        if not event.get("authentic_subprocess_popen"):
+            gaps.append("audit_event_not_authenticated")
+        if not event.get("preexec_verified_none"):
+            gaps.append("preexec_not_verified")
+        if not event.get("actual_executable_is_bash"):
+            gaps.append("actual_executable_not_verified_bash")
+        if event.get("captured_cwd") is not None:
+            gaps.append("captured_cwd_not_replayed")
+        if event.get("shell_env_keys"):
+            gaps.append("captured_shell_environment_not_replayed")
+        argv = event.get("argv")
+        marker = f"$(printf {details['probe_nonce']})"
+        if not isinstance(argv, list) or not any(marker in part for part in argv):
+            gaps.append("probe_not_in_argv" if event.get("env_has_probe")
+                        else "preempted_by_unrelated_command_event")
+        if (details["reached_popen"] and event.get("actual_executable_is_bash")
+                and event.get("captured_cwd") is None and not event.get("shell_env_keys")):
+            command = _verified_bash_command(
+                argv, manifest.bash_path, manifest.python_executable,
+            )
+            if command is None:
+                gaps.append("unsupported_shell_argv")
+            elif not _simple_recorder_command(command, manifest, probe_path):
+                gaps.append("unsupported_shell_command_shape")
+            else:
+                replay = _replay(command, manifest, runtime)
+                details["probe_replay"] = replay
+                if not replay.get("ok"):
+                    gaps.append(replay.get("gap", "bash_replay_failed"))
+    return WitnessResult(
+        status=ValidationStatus.UNRESOLVED,
+        raw_status="UNRESOLVED",
+        gaps=tuple(dict.fromkeys(gaps)),
+        details=details,
+    )
+
+
+def run_witness(
+    manifest: WitnessManifest, *, nonce: str | None = None, diagnostic_only: bool = False,
+    diagnostic_runtime_dir: Path | None = None,
+) -> WitnessResult:
     """Observe one candidate-bound input and an independent benign control.
 
     ``CONFIRMED`` requires actual Bash expansion at the first source-bound
@@ -641,8 +823,10 @@ def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> Witne
         nonce = uuid4().hex
     if not _NONCE.fullmatch(nonce):
         raise ValueError("nonce must be 12-64 ASCII letters or digits")
+    if diagnostic_runtime_dir is not None and not diagnostic_only:
+        raise ValueError("a persistent probe directory is diagnostic-only")
     assumption_gaps = _assumption_gaps(manifest)
-    if assumption_gaps:
+    if assumption_gaps and not diagnostic_only:
         return _unresolved(*assumption_gaps,
                            details={"subject": manifest.subject.model_dump(mode="json")})
     control_nonce = hashlib.sha256(f"control:{nonce}".encode()).hexdigest()[:24]
@@ -658,8 +842,21 @@ def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> Witne
             return _unresolved("unsupported_bash_binary")
     except OSError as error:
         return _unresolved("source_or_bash_unavailable", details={"error": str(error)})
-    with tempfile.TemporaryDirectory(prefix="cv-agent-witness-") as name:
+    if diagnostic_runtime_dir is None:
+        runtime_context = tempfile.TemporaryDirectory(prefix="cv-agent-witness-")
+    else:
+        if (not diagnostic_runtime_dir.is_absolute() or ".." in diagnostic_runtime_dir.parts
+                or re.fullmatch(r"/[A-Za-z0-9_./-]+", str(diagnostic_runtime_dir)) is None
+                or diagnostic_runtime_dir.is_symlink()):
+            raise ValueError("diagnostic runtime path contains unsupported syntax or symlinks")
+        diagnostic_runtime_dir.mkdir(parents=True, exist_ok=True)
+        if not _safe_runtime_path(diagnostic_runtime_dir):
+            raise ValueError("diagnostic runtime path contains a symlinked parent")
+        runtime_context = nullcontext(str(diagnostic_runtime_dir.resolve(strict=True)))
+    with runtime_context as name:
         runtime = Path(name)
+        if not _safe_runtime_path(runtime):
+            return _unresolved("unsafe_probe_runtime_path")
         probe_path, probe_files = _prepare_input(runtime, manifest, nonce, malicious=True)
         control_path, control_files = _prepare_input(runtime, manifest, control_nonce,
                                                      malicious=False)
@@ -670,9 +867,14 @@ def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> Witne
             "control_path": str(control_path), "control_nonce": control_nonce,
             "precondition_sha256": {"probe": probe_files, "control": control_files},
             "claim_eligible": False,
+            "assumption_gaps": list(assumption_gaps),
         }
         event = _run_worker(manifest, runtime, probe_path)
         details["probe_event"] = event
+        if diagnostic_only:
+            return _diagnostic_result(
+                manifest, checkout, runtime, probe_path, event, assumption_gaps, details,
+            )
         if event.get("kind") != "command_event":
             return _unresolved(event.get("gap", "command_boundary_not_reached"), details=details)
         if event.get("phase") != "invoke" or event.get("candidate_frame") is None:
@@ -697,7 +899,9 @@ def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> Witne
         if not isinstance(argv, list) or not any(marker in part for part in argv):
             return _unresolved("probe_not_in_argv" if event.get("env_has_probe") else
                                "preempted_by_unrelated_command_event", details=details)
-        command = _verified_bash_command(argv, manifest.bash_path)
+        command = _verified_bash_command(
+            argv, manifest.bash_path, manifest.python_executable,
+        )
         if command is None:
             return _unresolved("unsupported_shell_argv", details=details)
         if event.get("shell_env_keys"):
@@ -725,7 +929,9 @@ def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> Witne
                 or not isinstance(control_event.get("argv"), list)
                 or control_event["argv"][:2] != argv[:2]):
             return _unresolved("benign_control_failed", details=details)
-        control_command = _verified_bash_command(control_event.get("argv"), manifest.bash_path)
+        control_command = _verified_bash_command(
+            control_event.get("argv"), manifest.bash_path, manifest.python_executable,
+        )
         if (control_command is None or control_event.get("shell_env_keys")
                 or not _simple_recorder_command(control_command, manifest, control_path)):
             return _unresolved("benign_control_failed", details=details)
@@ -748,20 +954,29 @@ def run_witness(manifest: WitnessManifest, *, nonce: str | None = None) -> Witne
 
 
 def _main() -> None:
-    if len(sys.argv) == 6 and sys.argv[1] == "--replay-worker":
+    if len(sys.argv) == 7 and sys.argv[1] == "--replay-worker":
         _replay_worker(Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]),
-                       Path(sys.argv[5]), sys.stdin.buffer.read().decode("utf-8"))
+                       Path(sys.argv[5]), sys.stdin.buffer.read().decode("utf-8"),
+                       Path(sys.argv[6]) if sys.argv[6] else None)
         return
-    if len(sys.argv) != 5 or sys.argv[1] != "--worker":
+    if len(sys.argv) != 7 or sys.argv[1] != "--worker":
         raise SystemExit("this module is an internal witness worker")
     result_fd = int(sys.argv[2])
     runtime = Path(sys.argv[3])
     probe_path = Path(sys.argv[4])
+    manifest_path = Path(sys.argv[5])
+    manifest_digest = sys.argv[6]
     try:
-        manifest = WitnessManifest.model_validate_json(sys.stdin.buffer.read())
+        if not _inside(manifest_path, runtime):
+            raise ValueError("worker manifest is outside its runtime directory")
+        manifest_bytes = manifest_path.read_bytes()
+        if len(manifest_bytes) > 5_000_000 or hashlib.sha256(manifest_bytes).hexdigest() != manifest_digest:
+            raise ValueError("worker manifest identity differs from its launcher")
+        manifest = WitnessManifest.model_validate_json(manifest_bytes)
     except BaseException as error:
         _write_result(result_fd, {"kind": "error", "gap": "invalid_worker_manifest",
-                                  "error": f"{type(error).__name__}: {error}"})
+                                  "error": f"{type(error).__name__}: {error}",
+                                  "interpreter": _interpreter_identity(None)})
         return
     _worker(manifest, result_fd, runtime, probe_path)
 
