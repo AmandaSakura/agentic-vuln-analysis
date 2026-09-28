@@ -14,6 +14,7 @@ import os
 import platform
 import re
 import select
+import signal
 import shlex
 import shutil
 import subprocess
@@ -30,6 +31,7 @@ from pydantic import Field, model_validator
 from cv_agent.domain.evidence import ValidationStatus, ValidationSubject
 from cv_agent.domain.types import FrozenModel
 from cv_agent.runtime.fixture_isolation import restrict_fixture_filesystem
+from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
 from cv_agent.tools.validation.fixtures import (
     _apply_fixture_limits,
     _install_fixture_isolation,
@@ -47,6 +49,7 @@ _NONCE = re.compile(r"[A-Za-z0-9]{12,64}\Z")
 _RESULT_LIMIT = 64_000
 _WORKER_TIMEOUT = 12.0
 _REPLAY_TIMEOUT = 5.0
+_TRACE_LIMIT = 16_000_000
 
 
 def _worker_path(python_executable: Path | None = None) -> str:
@@ -229,7 +232,7 @@ def _write_result(fd: int, payload: dict[str, Any]) -> None:
                          default=str).encode("utf-8")
     if len(encoded) > _RESULT_LIMIT:
         encoded = b'{"kind":"error","gap":"witness_result_too_large"}'
-    view = memoryview(encoded)
+    view = memoryview(encoded + b"\n")
     while view:
         written = os.write(fd, view)
         view = view[written:]
@@ -377,8 +380,28 @@ def _verify_module_sources(manifest: WitnessManifest, checkout: Path) -> list[st
 
 
 def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
-            probe_path: Path) -> None:
+            probe_path: Path, read_grants: tuple[IsolationReadGrant, ...] = (),
+            record_open_attempts: bool = False) -> None:
     interpreter = _interpreter_identity(manifest.python_executable)
+    phase = "preflight"
+    open_attempts: list[dict[str, Any]] = []
+    open_attempt_count = 0
+    read_roots: tuple[Path, ...] = ()
+
+    def emit(payload: dict[str, Any]) -> None:
+        if record_open_attempts:
+            payload.update(phase=phase, open_attempts=open_attempts,
+                           open_attempt_count=open_attempt_count,
+                           attempts_truncated=open_attempt_count > len(open_attempts),
+                           isolation_read_roots=[str(path) for path in read_roots])
+        _write_result(result_fd, payload)
+
+    def progress() -> None:
+        if record_open_attempts:
+            _write_result(result_fd, {"kind": "progress", "phase": phase,
+                                      "isolation_read_roots": [str(path) for path in read_roots],
+                                      "interpreter": interpreter})
+
     try:
         if not interpreter["matches_manifest"]:
             _write_result(result_fd, {"kind": "error", "gap": "worker_interpreter_mismatch",
@@ -392,24 +415,57 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                                           "module": binding.module_name,
                                           "interpreter": interpreter})
                 return
+        for grant in read_grants:
+            if not grant.is_current():
+                emit({"kind": "error", "gap": f"isolation_read_grant_stale:{grant.path}",
+                      "interpreter": interpreter})
+                return
         _apply_fixture_limits()
         _install_fixture_isolation(result_fd, deny_exec=True)
         # _install_fixture_isolation performs an actual execve/execveat EPERM
         # self-test before returning. The audit hook is installed afterward.
-        restrict_fixture_filesystem(_read_roots(checkout, runtime))
+        read_roots = (*_read_roots(checkout, runtime), *(grant.path for grant in read_grants))
+        restrict_fixture_filesystem(read_roots)
         selftest_seen = False
         phase = "import"
         expected_code: Any = None
         trusted_popen_codes = (subprocess.Popen._execute_child.__code__,
                                subprocess.Popen.__init__.__code__)
+        recording_command = False
 
         def audit(event: str, args: tuple[Any, ...]) -> None:
-            nonlocal selftest_seen
+            nonlocal selftest_seen, open_attempt_count, recording_command
             if event == "cv_agent.witness.hook_selftest":
                 selftest_seen = True
                 return
+            if event == "open" and record_open_attempts and not recording_command:
+                # Audit events precede syscalls and do not establish denial. No
+                # source hashing/path I/O here: that would recursively audit open.
+                open_attempt_count += 1
+                path = args[0] if args else None
+                if isinstance(path, bytes):
+                    path = os.fsdecode(path)
+                if not isinstance(path, (str, int, type(None))):
+                    path = "unsupported_path_object"
+                frames = []
+                frame = sys._getframe(1)
+                for _ in range(4):
+                    if frame is None:
+                        break
+                    frames.append({"file": frame.f_code.co_filename,
+                                   "line": frame.f_lineno,
+                                   "qualname": frame.f_code.co_qualname})
+                    frame = frame.f_back
+                open_attempts.append({"path": path, "phase": phase,
+                                      "flags": args[2] if len(args) > 2 and
+                                      isinstance(args[2], int) else None,
+                                      "thread": __import__("_thread").get_ident(),
+                                      "frames": frames})
+                del open_attempts[:-32]
+                return
             if event not in _COMMAND_EVENTS:
                 return
+            recording_command = True
             payload = _capture_event(event, args, checkout, manifest, expected_code,
                                      trusted_popen_codes)
             payload["loaded_source_gaps"] = _verify_module_sources(manifest, checkout)
@@ -417,48 +473,61 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             payload["seccomp_selftest"] = True
             payload["hook_selftest"] = selftest_seen
             payload["interpreter"] = interpreter
-            _write_result(result_fd, payload)
+            emit(payload)
             os._exit(0)
 
         sys.addaudithook(audit)
         sys.audit("cv_agent.witness.hook_selftest")
         if not selftest_seen:
-            _write_result(result_fd, {"kind": "error", "gap": "hook_selftest_failed",
+            emit({"kind": "error", "gap": "hook_selftest_failed",
                                       "interpreter": interpreter})
             return
         sys.path.insert(0, str(checkout))
         import importlib
+        progress()
         module = importlib.import_module(manifest.module_name)
         source_gaps = _verify_module_sources(manifest, checkout)
         if source_gaps:
-            _write_result(result_fd, {"kind": "error", "gap": "source_mismatch",
+            emit({"kind": "error", "gap": "source_mismatch",
                                       "source_gaps": source_gaps,
                                       "interpreter": interpreter})
             return
         target_class = getattr(module, manifest.class_name)
+        phase = "construct"
+        progress()
         target = target_class(*manifest.constructor_args, **manifest.constructor_kwargs)
         expected_code = getattr(target_class, manifest.method_name).__code__
         call_kwargs = dict(manifest.call_kwargs)
         call_kwargs[manifest.probe_argument] = str(probe_path)
         phase = "invoke"
+        progress()
         getattr(target, manifest.method_name)(*manifest.call_args, **call_kwargs)
-        _write_result(result_fd, {"kind": "no_event", "seccomp_selftest": True,
+        emit({"kind": "no_event", "seccomp_selftest": True,
                                   "hook_selftest": True, "source_verified": True,
                                   "interpreter": interpreter})
     except BaseException as error:
-        _write_result(result_fd, {"kind": "error", "gap": "target_or_isolation_error",
+        emit({"kind": "error", "gap": "target_or_isolation_error",
                                   "error": f"{type(error).__name__}: {error}",
+                                  "error_filename": error.filename if isinstance(error, OSError) else None,
+                                  "error_errno": error.errno if isinstance(error, OSError) else None,
                                   "interpreter": interpreter})
     finally:
         os._exit(0)
 
 
-def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> dict[str, Any]:
+def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
+                read_grants: tuple[IsolationReadGrant, ...] = (),
+                trace_path: Path | None = None) -> dict[str, Any]:
     read_fd, write_fd = os.pipe()
     manifest_path: Path | None = None
+    process: subprocess.Popen | None = None
     try:
         deadline = time.monotonic() + _WORKER_TIMEOUT
-        manifest_bytes = manifest.model_dump_json().encode("utf-8")
+        manifest_bytes = json.dumps({
+            "manifest": manifest.model_dump(mode="json"),
+            "read_grants": [grant.model_dump(mode="json") for grant in read_grants],
+            "record_open_attempts": trace_path is not None,
+        }, sort_keys=True).encode("utf-8")
         manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
         manifest_fd, raw_manifest_path = tempfile.mkstemp(
             prefix="witness-manifest-", suffix=".json", dir=runtime,
@@ -470,6 +539,9 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> d
         python = manifest.python_executable or Path(sys.executable)
         command = [str(python), "-m", __name__, "--worker", str(write_fd),
                    str(runtime), str(probe_path), str(manifest_path), manifest_digest]
+        if trace_path is not None:
+            from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import trace_command
+            command = trace_command(command, trace_path)
         environment = {"PATH": _worker_path(manifest.python_executable),
                        "LC_ALL": "C", "LANG": "C",
                        "PYTHONDONTWRITEBYTECODE": "1",
@@ -477,7 +549,7 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> d
                        "PYTHONPATH": str(Path(__file__).resolve().parents[3])}
         process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, pass_fds=(write_fd,),
-                                   env=environment, cwd=runtime)
+                                   env=environment, cwd=runtime, start_new_session=True)
         os.close(write_fd)
         write_fd = -1
         chunks: list[bytes] = []
@@ -485,10 +557,14 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> d
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                process.kill()
+                os.killpg(process.pid, signal.SIGKILL)
                 process.wait()
                 return {"kind": "error", "gap": "worker_timeout"}
-            ready, _, _ = select.select([read_fd], [], [], remaining)
+            if trace_path is not None and trace_path.stat().st_size > _TRACE_LIMIT:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                return {"kind": "error", "gap": "read_trace_too_large"}
+            ready, _, _ = select.select([read_fd], [], [], min(remaining, 0.1))
             if not ready:
                 continue
             chunk = os.read(read_fd, 16_384)
@@ -497,28 +573,39 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path) -> d
             chunks.append(chunk)
             size += len(chunk)
             if size > _RESULT_LIMIT:
-                process.kill()
+                os.killpg(process.pid, signal.SIGKILL)
                 process.wait()
                 return {"kind": "error", "gap": "worker_result_too_large"}
         try:
             process.wait(timeout=max(0.01, deadline - time.monotonic()))
         except subprocess.TimeoutExpired:
-            process.kill()
+            os.killpg(process.pid, signal.SIGKILL)
             process.wait()
             return {"kind": "error", "gap": "worker_timeout_after_result"}
         encoded = b"".join(chunks)
-        if process.returncode != 0 or not encoded or len(encoded) > _RESULT_LIMIT:
-            return {"kind": "error", "gap": "worker_missing_or_invalid_result",
-                    "returncode": process.returncode}
         try:
-            return json.loads(encoded)
+            messages = [json.loads(line) for line in encoded.splitlines() if line]
         except json.JSONDecodeError as error:
             return {"kind": "error", "gap": "worker_invalid_json",
                     "error": str(error), "raw": encoded[:4000].decode(errors="replace")}
+        observed = next((item for item in reversed(messages)
+                         if isinstance(item, dict) and item.get("kind") == "progress"), {})
+        final = next((item for item in reversed(messages)
+                      if isinstance(item, dict) and item.get("kind") != "progress"), None)
+        if process.returncode != 0 or final is None:
+            gap = "worker_missing_or_invalid_result"
+            if process.returncode < 0:
+                gap = f"worker_terminated:{signal.Signals(-process.returncode).name}"
+            return {**observed, "kind": "error", "gap": gap,
+                    "returncode": process.returncode}
+        return final
     except (OSError, ValueError, json.JSONDecodeError) as error:
         return {"kind": "error", "gap": "worker_launch_error",
                 "error": f"{type(error).__name__}: {error}"}
     finally:
+        if process is not None and process.poll() is None:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait()
         os.close(read_fd)
         if write_fd >= 0:
             os.close(write_fd)
@@ -743,6 +830,9 @@ def _diagnostic_result(
 ) -> WitnessResult:
     """Keep measuring after proof gaps while making candidate proof impossible."""
     gaps = list(assumption_gaps)
+    gaps.extend(event.get("read_diagnostics", {}).get("gaps", []))
+    gaps.extend(item["gap"] for item in
+                event.get("read_diagnostics", {}).get("read_denials", []))
     details["diagnostic_only"] = True
     observed_popen_event = (
         event.get("kind") == "command_event"
@@ -811,6 +901,8 @@ def _diagnostic_result(
 def run_witness(
     manifest: WitnessManifest, *, nonce: str | None = None, diagnostic_only: bool = False,
     diagnostic_runtime_dir: Path | None = None,
+    diagnostic_read_grants: tuple[IsolationReadGrant, ...] = (),
+    diagnostic_trace_path: Path | None = None,
 ) -> WitnessResult:
     """Observe one candidate-bound input and an independent benign control.
 
@@ -825,6 +917,22 @@ def run_witness(
         raise ValueError("nonce must be 12-64 ASCII letters or digits")
     if diagnostic_runtime_dir is not None and not diagnostic_only:
         raise ValueError("a persistent probe directory is diagnostic-only")
+    if (diagnostic_read_grants or diagnostic_trace_path is not None) and not diagnostic_only:
+        raise ValueError("read grants and syscall tracing are diagnostic-only")
+    if diagnostic_read_grants and diagnostic_trace_path is None:
+        raise ValueError("diagnostic read grants require syscall tracing")
+    if diagnostic_trace_path is not None:
+        if not diagnostic_trace_path.is_absolute():
+            raise ValueError("diagnostic trace path must be absolute")
+        if diagnostic_trace_path.exists() or diagnostic_trace_path.is_symlink():
+            raise FileExistsError(diagnostic_trace_path)
+    for grant in diagnostic_read_grants:
+        if not grant.is_current():
+            return _unresolved(f"isolation_read_grant_stale:{grant.path}", details={
+                "diagnostic_only": True, "claim_eligible": False,
+                "isolation_read_grants": [item.model_dump(mode="json")
+                                          for item in diagnostic_read_grants],
+            })
     assumption_gaps = _assumption_gaps(manifest)
     if assumption_gaps and not diagnostic_only:
         return _unresolved(*assumption_gaps,
@@ -868,8 +976,35 @@ def run_witness(
             "precondition_sha256": {"probe": probe_files, "control": control_files},
             "claim_eligible": False,
             "assumption_gaps": list(assumption_gaps),
+            "isolation_read_grants": [grant.model_dump(mode="json")
+                                      for grant in diagnostic_read_grants],
         }
-        event = _run_worker(manifest, runtime, probe_path)
+        if diagnostic_trace_path is None:
+            event = _run_worker(manifest, runtime, probe_path)
+        else:
+            event = _run_worker(manifest, runtime, probe_path,
+                                diagnostic_read_grants, diagnostic_trace_path)
+            from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import summarize_trace
+            roots = tuple(Path(path) for path in event.get("isolation_read_roots", []))
+            summary = (summarize_trace(diagnostic_trace_path, roots)
+                       if event.get("gap") != "worker_launch_error" else {
+                           "observed_only": True, "read_denials": [],
+                           "gaps": ["isolation_trace_not_created_by_run"],
+                           "trace_sha256": None, "trace_size": None,
+                       })
+            summary.update(open_attempts=event.get("open_attempts", []),
+                           open_attempt_count=event.get("open_attempt_count", 0),
+                           attempts_truncated=event.get("attempts_truncated", False))
+            event["read_diagnostics"] = summary
+            if event.get("gap") == "target_or_isolation_error" and summary["read_denials"]:
+                # Preserve the exception text separately. Earlier caught denials
+                # need not have caused a later, unrelated target exception.
+                filename = event.get("error_filename")
+                matching = next((item for item in summary["read_denials"]
+                                 if filename and item["path"] == str(Path(filename).resolve())
+                                 and event.get("error_errno") == 13), None)
+                event["gap"] = (matching["gap"] if matching else
+                                "target_error_after_observed_read_denials")
         details["probe_event"] = event
         if diagnostic_only:
             return _diagnostic_result(
@@ -972,13 +1107,17 @@ def _main() -> None:
         manifest_bytes = manifest_path.read_bytes()
         if len(manifest_bytes) > 5_000_000 or hashlib.sha256(manifest_bytes).hexdigest() != manifest_digest:
             raise ValueError("worker manifest identity differs from its launcher")
-        manifest = WitnessManifest.model_validate_json(manifest_bytes)
+        envelope = json.loads(manifest_bytes)
+        manifest = WitnessManifest.model_validate(envelope["manifest"])
+        read_grants = tuple(IsolationReadGrant.model_validate(item)
+                            for item in envelope["read_grants"])
+        record_open_attempts = envelope["record_open_attempts"] is True
     except BaseException as error:
         _write_result(result_fd, {"kind": "error", "gap": "invalid_worker_manifest",
                                   "error": f"{type(error).__name__}: {error}",
                                   "interpreter": _interpreter_identity(None)})
         return
-    _worker(manifest, result_fd, runtime, probe_path)
+    _worker(manifest, result_fd, runtime, probe_path, read_grants, record_open_attempts)
 
 
 if __name__ == "__main__":
