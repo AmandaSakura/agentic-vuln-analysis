@@ -48,11 +48,13 @@ def main() -> None:
         "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
         "source_digest": manifest.subject.source_digest,
         "read_policy_sha256": hashlib.sha256(grant_bytes).hexdigest(),
+        "resource_profile": manifest.resource_profile.model_dump(mode="json"),
         "elapsed_seconds": time.monotonic() - start,
         "child_cpu_seconds": {
             "user": usage_after.ru_utime - usage_before.ru_utime,
             "system": usage_after.ru_stime - usage_before.ru_stime,
         },
+        "resource_accounting": result.details.get("probe_event", {}).get("resource_accounting"),
         "result": result.model_dump(mode="json"),
     }
     args.output.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n")

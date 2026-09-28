@@ -399,14 +399,21 @@ def test_manifest_rejects_target_stubs_and_revision_role(tmp_path: Path) -> None
 def test_label_role_cannot_affect_result_bytes(tmp_path: Path) -> None:
     manifest = _manifest(tmp_path, DIRECT)
     # Roles are deliberately outside the invocation manifest. An external
-    # scorer may flip them. Two real runs have distinct temporary directories,
-    # so normalize only those non-semantic absolute roots before byte comparison.
+    # scorer may flip them. Normalize temporary roots and volatile process
+    # measurements; retain statuses, provenance, arguments and actual limits.
     serialized: list[bytes] = []
     for external_revision_role in ("vulnerable", "fixed"):
         assert external_revision_role not in manifest.model_dump_json()
         result = run_witness(manifest, nonce=NONCE)
         assert result.status == ValidationStatus.CONFIRMED, result.model_dump()
-        record = result.model_dump_json()
+        normalized = result.model_dump(mode="json")
+        for event_name in ("probe_event", "control_event"):
+            event = normalized["details"][event_name]
+            assert event["applied_resource_limits"]["cpu"] == [5, 5]
+            for field in ("target_pid", "target_self_usage", "resource_accounting"):
+                event.pop(field)
+        import json
+        record = json.dumps(normalized, sort_keys=True)
         expanded_path = result.details["probe_path"].replace(f"$(printf {NONCE})", NONCE)
         record = record.replace(expanded_path, "<EXPANDED_PATH>")
         record = record.replace(result.details["probe_path"], "<PROBE_PATH>")

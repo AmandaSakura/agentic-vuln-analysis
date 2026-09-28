@@ -20,6 +20,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from contextlib import nullcontext
 from pathlib import Path, PurePosixPath
@@ -31,7 +32,12 @@ from pydantic import Field, model_validator
 from cv_agent.domain.evidence import ValidationStatus, ValidationSubject
 from cv_agent.domain.types import FrozenModel
 from cv_agent.runtime.fixture_isolation import restrict_fixture_filesystem
+from cv_agent.runtime.witness_resources import WitnessResourceProfile
 from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.evaluation.diagnostics.process_resource_accounting import (
+    ProcessResourceSampler,
+    self_usage,
+)
 from cv_agent.tools.validation.fixtures import (
     _apply_fixture_limits,
     _install_fixture_isolation,
@@ -47,7 +53,6 @@ _DOTTED_NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)*\
 _COMMAND_NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9-]*\Z")
 _NONCE = re.compile(r"[A-Za-z0-9]{12,64}\Z")
 _RESULT_LIMIT = 64_000
-_WORKER_TIMEOUT = 12.0
 _REPLAY_TIMEOUT = 5.0
 _TRACE_LIMIT = 16_000_000
 
@@ -107,6 +112,7 @@ class WitnessManifest(FrozenModel):
     recorder_arguments: tuple[str, ...] = ()
     bash_path: Path = Path("/bin/bash")
     python_executable: Path | None = None
+    resource_profile: WitnessResourceProfile = Field(default_factory=WitnessResourceProfile.fixture_default)
     constructor_args: tuple[Any, ...] = ()
     constructor_kwargs: dict[str, Any] = Field(default_factory=dict)
     call_args: tuple[Any, ...] = ()
@@ -387,8 +393,16 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
     open_attempts: list[dict[str, Any]] = []
     open_attempt_count = 0
     read_roots: tuple[Path, ...] = ()
+    applied_limits: dict[str, tuple[int, int]] | None = None
+
+    def resource_record() -> dict[str, Any]:
+        return {"target_pid": os.getpid(), "target_self_usage": self_usage(),
+                "resource_profile": manifest.resource_profile.model_dump(mode="json"),
+                "applied_resource_limits": applied_limits,
+                "current_resource_limits": manifest.resource_profile.actual_limits()}
 
     def emit(payload: dict[str, Any]) -> None:
+        payload.update(resource_record())
         if record_open_attempts:
             payload.update(phase=phase, open_attempts=open_attempts,
                            open_attempt_count=open_attempt_count,
@@ -397,10 +411,10 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         _write_result(result_fd, payload)
 
     def progress() -> None:
-        if record_open_attempts:
+        if record_open_attempts or manifest.resource_profile.name != "fixture_default":
             _write_result(result_fd, {"kind": "progress", "phase": phase,
                                       "isolation_read_roots": [str(path) for path in read_roots],
-                                      "interpreter": interpreter})
+                                      "interpreter": interpreter, **resource_record()})
 
     try:
         if not interpreter["matches_manifest"]:
@@ -408,6 +422,7 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                                       "interpreter": interpreter})
             return
         checkout = manifest.checkout_root.resolve(strict=True)
+        progress()
         for binding in manifest.source_modules:
             source = checkout / binding.relative_path
             if not _inside(source, checkout) or _sha256(source) != binding.sha256:
@@ -420,12 +435,40 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                 emit({"kind": "error", "gap": f"isolation_read_grant_stale:{grant.path}",
                       "interpreter": interpreter})
                 return
-        _apply_fixture_limits()
+        if manifest.resource_profile.name == "fixture_default":
+            _apply_fixture_limits()
+        else:
+            # Keep SIGXCPU blocked in the target and all subsequently created
+            # threads. The trusted waiter receives siginfo without depending on
+            # a Python signal handler returning from a long C extension call.
+            signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGXCPU})
+
+            def watch_cpu_limit() -> None:
+                info = signal.sigwaitinfo({signal.SIGXCPU})
+                if info is None:
+                    return
+                # SI_KERNEL is 0x80 in Linux asm-generic/siginfo.h. User-sent
+                # SIGXCPU must not be described as resource exhaustion.
+                gap = ("cpu_limit_exceeded" if info.si_code == 0x80
+                       else "target_signal:SIGXCPU")
+                emit({"kind": "error", "gap": gap, "phase": phase,
+                      "cpu_limit_signal": {"signal": "SIGXCPU", "si_code": info.si_code,
+                                           "si_pid": info.si_pid, "si_uid": info.si_uid},
+                      "interpreter": interpreter})
+                os._exit(0)
+
+            manifest.resource_profile.apply()
+        applied_limits = manifest.resource_profile.actual_limits()
         _install_fixture_isolation(result_fd, deny_exec=True)
         # _install_fixture_isolation performs an actual execve/execveat EPERM
         # self-test before returning. The audit hook is installed afterward.
         read_roots = (*_read_roots(checkout, runtime), *(grant.path for grant in read_grants))
         restrict_fixture_filesystem(read_roots)
+        if manifest.resource_profile.name != "fixture_default":
+            # Created after both restrictions: the trusted monitor inherits
+            # the same seccomp and Landlock policy as target-created threads.
+            threading.Thread(target=watch_cpu_limit, name="witness-cpu-limit",
+                             daemon=True).start()
         selftest_seen = False
         phase = "import"
         expected_code: Any = None
@@ -521,8 +564,89 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
     read_fd, write_fd = os.pipe()
     manifest_path: Path | None = None
     process: subprocess.Popen | None = None
+    top_sampler: ProcessResourceSampler | None = None
+    target_sampler: ProcessResourceSampler | None = None
+    observed: dict[str, Any] = {}
+    final: dict[str, Any] | None = None
+    pending = b""
+    parent_kill_reason: str | None = None
+    deadline = time.monotonic() + manifest.resource_profile.wall_seconds
+
+    def kill_group() -> None:
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                # The group can vanish between an observation and cleanup.
+                # This does not erase its last phase or the parent's reason.
+                pass
+
+    def sample() -> None:
+        if top_sampler is not None:
+            top_sampler.sample()
+        if target_sampler is not None and target_sampler is not top_sampler:
+            target_sampler.sample()
+
+    def consume(chunk: bytes) -> None:
+        nonlocal pending, observed, final, target_sampler
+        pending += chunk
+        while b"\n" in pending:
+            line, pending = pending.split(b"\n", 1)
+            payload = json.loads(line)
+            if not isinstance(payload, dict):
+                raise ValueError("worker message must be an object")
+            if payload.get("kind") == "progress":
+                observed = payload
+            else:
+                final = payload
+            pid = payload.get("target_pid")
+            if target_sampler is None and type(pid) is int and pid > 0:
+                target_sampler = ProcessResourceSampler(pid)
+            sample()
+
+    def finish(outcome: dict[str, Any], kill_reason: str | None = None) -> dict[str, Any]:
+        """Keep observations and read the launcher's own CPU before reaping."""
+        nonlocal parent_kill_reason
+        parent_kill_reason = kill_reason
+        if process is not None:
+            if kill_reason is not None:
+                kill_group()
+            while os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None:
+                sample()
+                if time.monotonic() >= deadline and parent_kill_reason is None:
+                    parent_kill_reason = "wall_timeout_after_result"
+                    kill_group()
+                time.sleep(0.01)
+            if top_sampler is not None:
+                top_sampler.finish_unreaped()
+            process.wait()
+        result = {**observed, **outcome}
+        if process is not None:
+            result["returncode"] = process.returncode
+            if result.get("gap") == "worker_missing_or_invalid_result" and process.returncode < 0:
+                result["gap"] = f"worker_terminated:{signal.Signals(-process.returncode).name}"
+            if process.returncode != 0 and final is not None and outcome.get("kind") != "error":
+                # A delivered command record does not waive a failed worker.
+                # Preserve it for diagnostics while restoring the proof gate.
+                result["incomplete_result"] = outcome
+                result["kind"] = "error"
+                result["gap"] = (f"worker_terminated:{signal.Signals(-process.returncode).name}"
+                                 if process.returncode < 0 else "worker_nonzero_exit")
+        if parent_kill_reason is not None:
+            result["parent_kill_reason"] = parent_kill_reason
+        if target_sampler is not None:
+            target = target_sampler.summary()
+            target["self_reported_usage"] = result.get("target_self_usage")
+            target["self_report_is_final"] = final is not None and outcome is final
+        else:
+            target = None
+        result["resource_accounting"] = {
+            "target": target,
+            "tracer": top_sampler.summary() if trace_path is not None and top_sampler else None,
+        }
+        return result
+
     try:
-        deadline = time.monotonic() + _WORKER_TIMEOUT
         manifest_bytes = json.dumps({
             "manifest": manifest.model_dump(mode="json"),
             "read_grants": [grant.model_dump(mode="json") for grant in read_grants],
@@ -550,6 +674,10 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
         process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, pass_fds=(write_fd,),
                                    env=environment, cwd=runtime, start_new_session=True)
+        top_sampler = ProcessResourceSampler(process.pid)
+        if trace_path is None:
+            target_sampler = top_sampler
+        sample()
         os.close(write_fd)
         write_fd = -1
         chunks: list[bytes] = []
@@ -557,14 +685,11 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
-                return {"kind": "error", "gap": "worker_timeout"}
+                return finish({"kind": "error", "gap": "worker_timeout"}, "wall_timeout")
             if trace_path is not None and trace_path.stat().st_size > _TRACE_LIMIT:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
-                return {"kind": "error", "gap": "read_trace_too_large"}
-            ready, _, _ = select.select([read_fd], [], [], min(remaining, 0.1))
+                return finish({"kind": "error", "gap": "read_trace_too_large"}, "trace_size_limit")
+            sample()
+            ready, _, _ = select.select([read_fd], [], [], min(remaining, 0.01))
             if not ready:
                 continue
             chunk = os.read(read_fd, 16_384)
@@ -573,38 +698,24 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             chunks.append(chunk)
             size += len(chunk)
             if size > _RESULT_LIMIT:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
-                return {"kind": "error", "gap": "worker_result_too_large"}
-        try:
-            process.wait(timeout=max(0.01, deadline - time.monotonic()))
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.wait()
-            return {"kind": "error", "gap": "worker_timeout_after_result"}
-        encoded = b"".join(chunks)
-        try:
-            messages = [json.loads(line) for line in encoded.splitlines() if line]
-        except json.JSONDecodeError as error:
-            return {"kind": "error", "gap": "worker_invalid_json",
-                    "error": str(error), "raw": encoded[:4000].decode(errors="replace")}
-        observed = next((item for item in reversed(messages)
-                         if isinstance(item, dict) and item.get("kind") == "progress"), {})
-        final = next((item for item in reversed(messages)
-                      if isinstance(item, dict) and item.get("kind") != "progress"), None)
-        if process.returncode != 0 or final is None:
-            gap = "worker_missing_or_invalid_result"
-            if process.returncode < 0:
-                gap = f"worker_terminated:{signal.Signals(-process.returncode).name}"
-            return {**observed, "kind": "error", "gap": gap,
-                    "returncode": process.returncode}
-        return final
+                return finish({"kind": "error", "gap": "worker_result_too_large"}, "result_size_limit")
+            try:
+                consume(chunk)
+            except (ValueError, json.JSONDecodeError) as error:
+                return finish({"kind": "error", "gap": "worker_invalid_json",
+                               "error": str(error)}, "invalid_result")
+        if pending:
+            return finish({"kind": "error", "gap": "worker_invalid_json"})
+        if final is None:
+            return finish({"kind": "error", "gap": "worker_missing_or_invalid_result"})
+        return finish(final)
     except (OSError, ValueError, json.JSONDecodeError) as error:
-        return {"kind": "error", "gap": "worker_launch_error",
-                "error": f"{type(error).__name__}: {error}"}
+        return finish({"kind": "error", "gap": "worker_launch_error",
+                       "error": f"{type(error).__name__}: {error}"},
+                      "launcher_error" if process is not None else None)
     finally:
         if process is not None and process.poll() is None:
-            os.killpg(process.pid, signal.SIGKILL)
+            kill_group()
             process.wait()
         os.close(read_fd)
         if write_fd >= 0:
@@ -915,6 +1026,9 @@ def run_witness(
         nonce = uuid4().hex
     if not _NONCE.fullmatch(nonce):
         raise ValueError("nonce must be 12-64 ASCII letters or digits")
+    WitnessResourceProfile.model_validate(manifest.resource_profile.model_dump())
+    if manifest.resource_profile.name != "fixture_default" and not diagnostic_only:
+        raise ValueError("nondefault resource profiles are diagnostic-only")
     if diagnostic_runtime_dir is not None and not diagnostic_only:
         raise ValueError("a persistent probe directory is diagnostic-only")
     if (diagnostic_read_grants or diagnostic_trace_path is not None) and not diagnostic_only:
@@ -976,6 +1090,7 @@ def run_witness(
             "precondition_sha256": {"probe": probe_files, "control": control_files},
             "claim_eligible": False,
             "assumption_gaps": list(assumption_gaps),
+            "resource_profile": manifest.resource_profile.model_dump(mode="json"),
             "isolation_read_grants": [grant.model_dump(mode="json")
                                       for grant in diagnostic_read_grants],
         }

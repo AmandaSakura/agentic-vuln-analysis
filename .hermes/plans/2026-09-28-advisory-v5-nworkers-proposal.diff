@@ -1,0 +1,11 @@
+--- configs/datasets/advisory_pairs_v4.json
++++ configs/datasets/advisory_pairs_v5.json
+@@ -181,7 +181,7 @@
+         "port": 5000,
+         "host": "127.0.0.1",
+         "timeout": null,
+-        "self._nworkers": null,
++        "self._nworkers": 1,
+         "model_config": null,
+         "synchronous": false,
+         "MLServerDefaultModelName": "mlflow-model",
