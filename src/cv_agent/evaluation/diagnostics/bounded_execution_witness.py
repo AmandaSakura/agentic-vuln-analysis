@@ -60,6 +60,10 @@ _STACK_LIMIT = 64_000
 _STACK_TIMEOUT_MARGIN = 3.0
 
 
+class _CapturedCommand(BaseException):
+    """Abort Popen and leave the audit callback before running its verifier."""
+
+
 def _worker_path(python_executable: Path | None = None) -> str:
     return f"{(python_executable or Path(sys.executable)).parent}:/bin:/usr/bin"
 
@@ -268,7 +272,8 @@ def _frame_data(frame: Any, checkout: Path) -> dict[str, Any]:
 
 def _capture_event(event: str, args: tuple[Any, ...], checkout: Path,
                    manifest: WitnessManifest, expected_code: Any,
-                   trusted_popen_codes: tuple[Any, Any]) -> dict[str, Any]:
+                   trusted_popen_codes: tuple[Any, Any],
+                   preexec_capture: list[Any] | None = None) -> dict[str, Any]:
     frames: list[dict[str, Any]] = []
     code_objects: list[Any] = []
     preexec_values: list[Any] = []
@@ -300,6 +305,8 @@ def _capture_event(event: str, args: tuple[Any, ...], checkout: Path,
                       and code_objects[1] is trusted_popen_codes[1])
     preexec_verified_none = (authentic_popen and len(preexec_values) == 2
                              and all(value is None for value in preexec_values))
+    if preexec_capture is not None:
+        preexec_capture.extend(preexec_values)
     argv: list[str] | None = None
     env_has_probe = False
     env_keys: list[str] = []
@@ -391,13 +398,19 @@ def _verify_module_sources(manifest: WitnessManifest, checkout: Path) -> list[st
 def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             probe_path: Path, read_grants: tuple[IsolationReadGrant, ...] = (),
             record_open_attempts: bool = False, stack_result_fd: int | None = None,
-            worker_deadline: float | None = None) -> None:
+            worker_deadline: float | None = None, verify_obligations: bool = False) -> None:
     interpreter = _interpreter_identity(manifest.python_executable)
     phase = "preflight"
     open_attempts: list[dict[str, Any]] = []
     open_attempt_count = 0
     read_roots: tuple[Path, ...] = ()
     applied_limits: dict[str, tuple[int, int]] | None = None
+    values = branches = None
+    pending_command: dict[str, Any] | None = None
+    pending_preexec: list[Any] = []
+    verifier_active = False
+    captured_command_unwound = False
+    concurrent_command_events: list[str] = []
 
     def resource_record() -> dict[str, Any]:
         return {"target_pid": os.getpid(), "target_self_usage": self_usage(),
@@ -427,6 +440,11 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                                       "interpreter": interpreter})
             return
         checkout = manifest.checkout_root.resolve(strict=True)
+        if verify_obligations:
+            from cv_agent.evaluation.diagnostics.witness_values import ValueAssumptionObserver
+            from cv_agent.evaluation.diagnostics.witness_branches import BranchAssumptionObserver
+            values = ValueAssumptionObserver(manifest)
+            branches = BranchAssumptionObserver(manifest)
         progress()
         for binding in manifest.source_modules:
             source = checkout / binding.relative_path
@@ -487,9 +505,14 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         trusted_popen_codes = (subprocess.Popen._execute_child.__code__,
                                subprocess.Popen.__init__.__code__)
         recording_command = False
+        recording_thread: int | None = None
+        worker_pid = os.getpid()
 
         def audit(event: str, args: tuple[Any, ...]) -> None:
-            nonlocal selftest_seen, open_attempt_count, recording_command
+            nonlocal selftest_seen, open_attempt_count, recording_command, recording_thread
+            nonlocal pending_command, pending_preexec
+            if branches is not None:
+                branches.audit_event(event, args)
             if event == "cv_agent.witness.hook_selftest":
                 selftest_seen = True
                 return
@@ -520,14 +543,47 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                 return
             if event not in _COMMAND_EVENTS:
                 return
+            if recording_command:
+                # The trusted verifier fork and its child have their own hook.
+                # A target thread attempting a command concurrently cannot
+                # silently borrow the completed candidate's first event.
+                if os.getpid() == worker_pid and threading.get_ident() != recording_thread:
+                    concurrent_command_events.append(event)
+                    raise RuntimeError("concurrent target command during witness capture")
+                if verifier_active and (os.getpid() != worker_pid or event == 'os.fork'):
+                    return
+                concurrent_command_events.append(event)
+                raise _CapturedCommand()
             recording_command = True
+            recording_thread = threading.get_ident()
+            preexec_capture: list[Any] = []
             payload = _capture_event(event, args, checkout, manifest, expected_code,
-                                     trusted_popen_codes)
+                                     trusted_popen_codes, preexec_capture)
             payload["loaded_source_gaps"] = _verify_module_sources(manifest, checkout)
             payload["phase"] = phase
             payload["seccomp_selftest"] = True
             payload["hook_selftest"] = selftest_seen
             payload["interpreter"] = interpreter
+            if verify_obligations:
+                assert values is not None and branches is not None
+                values.verify_module_values()
+                value_record = values.result()
+                condition_record = branches.report()
+                branches.close()
+                boolean_gaps = [gap for gap in _assumption_gaps(manifest)
+                                if gap.startswith("entry_boolean_argument_unverified:")]
+                payload["assumption_verification"] = {
+                    "enabled": True, "values": value_record, "conditions": condition_record,
+                    "gaps": list(dict.fromkeys([*boolean_gaps, *value_record["gaps"],
+                                                *condition_record["gaps"]])),
+                    "environment": {"sys_platform": sys.platform, "os_name": os.name},
+                }
+                pending_command = payload
+                pending_preexec = preexec_capture
+                # Profile/trace callbacks are inhibited inside an audit hook.
+                # A fork here would inherit that inhibition. Abort Popen and
+                # unwind this callback before measuring the actual callable.
+                raise _CapturedCommand()
             emit(payload)
             os._exit(0)
 
@@ -556,10 +612,18 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         call_kwargs[manifest.probe_argument] = str(probe_path)
         phase = "invoke"
         progress()
+        if verify_obligations:
+            assert values is not None and branches is not None
+            def observe_entry(frame: Any) -> None:
+                values.observe_entry(frame)
+                values.verify_module_values()
+            branches.install(expected_code, on_entry=observe_entry)
         getattr(target, manifest.method_name)(*manifest.call_args, **call_kwargs)
         emit({"kind": "no_event", "seccomp_selftest": True,
                                   "hook_selftest": True, "source_verified": True,
                                   "interpreter": interpreter})
+    except _CapturedCommand:
+        captured_command_unwound = True
     except BaseException as error:
         emit({"kind": "error", "gap": "target_or_isolation_error",
                                   "error": f"{type(error).__name__}: {error}",
@@ -567,6 +631,29 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                                   "error_errno": error.errno if isinstance(error, OSError) else None,
                                   "interpreter": interpreter})
     finally:
+        if branches is not None:
+            branches.close()
+        if captured_command_unwound:
+            # The handled capture exception has now left sys.exception().
+            # Inheriting that synthetic exception would change the real
+            # callable's behavior and can manufacture a false confirmation.
+            if pending_command is None:
+                emit({'kind': 'error', 'gap': 'command_capture_missing', 'phase': phase})
+            else:
+                from cv_agent.evaluation.diagnostics.witness_preexec import verify_preexec
+                verifier_active = True
+                try:
+                    if (pending_command['authentic_subprocess_popen'] and len(pending_preexec) == 2
+                            and pending_preexec[0] is pending_preexec[1]):
+                        pending_command['preexec_verification'] = verify_preexec(
+                            pending_preexec[0], verify_sources=lambda: _verify_module_sources(manifest, checkout),
+                        )
+                    else:
+                        pending_command['preexec_verification'] = {'ok': False, 'gap': 'preexec_capture_mismatch'}
+                finally:
+                    verifier_active = False
+                pending_command['concurrent_command_events'] = list(concurrent_command_events)
+                emit(pending_command)
         if stack_result_fd is not None:
             faulthandler.cancel_dump_traceback_later()
         os._exit(0)
@@ -574,7 +661,8 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
 
 def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
                 read_grants: tuple[IsolationReadGrant, ...] = (),
-                trace_path: Path | None = None, stack_capture: bool = False) -> dict[str, Any]:
+                trace_path: Path | None = None, stack_capture: bool = False,
+                verify_obligations: bool = False) -> dict[str, Any]:
     read_fd, write_fd = os.pipe()
     stack_read_fd, stack_write_fd = os.pipe() if stack_capture else (-1, -1)
     if stack_capture:
@@ -700,6 +788,7 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             "record_open_attempts": trace_path is not None,
             "stack_result_fd": stack_write_fd if stack_capture else None,
             "worker_deadline": deadline if stack_capture else None,
+            "verify_obligations": verify_obligations,
         }, sort_keys=True).encode("utf-8")
         manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
         manifest_fd, raw_manifest_path = tempfile.mkstemp(
@@ -1070,12 +1159,124 @@ def _diagnostic_result(
     )
 
 
+def _verification_result(
+    manifest: WitnessManifest, checkout: Path, runtime: Path, probe_path: Path,
+    control_path: Path, event: dict[str, Any], assumption_gaps: tuple[str, ...],
+    details: dict[str, Any], read_grants: tuple[IsolationReadGrant, ...],
+    trace_path: Path | None, stack_capture: bool,
+) -> WitnessResult:
+    """Require complete runtime obligations on the probe and its benign control."""
+    gaps: list[str] = []
+    details['verification_mode'] = True
+    details['diagnostic_only'] = False
+    details['reached_popen'] = (
+        event.get('kind') == 'command_event' and event.get('event') == 'subprocess.Popen'
+        and event.get('phase') == 'invoke' and event.get('candidate_frame') is not None
+        and event.get('authentic_subprocess_popen') is True
+        and _bound_emitter(event, manifest, checkout) and not event.get('loaded_source_gaps')
+    )
+
+    def measure(record: dict[str, Any], path: Path, *, control: bool) -> dict[str, Any] | None:
+        event_gaps: list[str] = []
+        boundary_gaps: list[str] = []
+        if record.get('kind') != 'command_event':
+            boundary_gaps.append(record.get('gap', 'command_boundary_not_reached'))
+        if record.get('phase') != 'invoke' or record.get('candidate_frame') is None:
+            boundary_gaps.append('event_outside_candidate_frame')
+        if not _bound_emitter(record, manifest, checkout):
+            boundary_gaps.append('emitter_source_not_bound')
+        if not record.get('authentic_subprocess_popen'):
+            boundary_gaps.append('audit_event_not_authenticated')
+        if record.get('event') != 'subprocess.Popen':
+            boundary_gaps.append('unsupported_command_event')
+        if not record.get('seccomp_selftest') or not record.get('hook_selftest'):
+            boundary_gaps.append('isolation_selftest_failed')
+        boundary_gaps.extend(record.get('loaded_source_gaps', []))
+        if not record.get('actual_executable_is_bash'):
+            boundary_gaps.append('actual_executable_not_verified_bash')
+        if record.get('captured_cwd') is not None:
+            boundary_gaps.append('captured_cwd_not_replayed')
+        if record.get('shell_env_keys'):
+            boundary_gaps.append('captured_shell_environment_not_replayed')
+        if record.get('concurrent_command_events'):
+            boundary_gaps.append('concurrent_target_command_event')
+        event_gaps.extend(boundary_gaps)
+        assumptions = record.get('assumption_verification', {})
+        if assumptions.get('enabled') is not True:
+            event_gaps.extend(assumption_gaps)
+            event_gaps.append('runtime_assumption_verification_missing')
+        else:
+            event_gaps.extend(assumptions.get('gaps', []))
+        preexec = record.get('preexec_verification', {})
+        if preexec.get('ok') is not True:
+            event_gaps.append('preexec_not_verified')
+            event_gaps.append(preexec.get('gap', 'preexec_verification_missing'))
+            event_gaps.extend(preexec.get('source_gaps', []))
+        argv = record.get('argv')
+        if not control:
+            marker = f"$(printf {details['probe_nonce']})"
+            if not isinstance(argv, list) or not any(marker in part for part in argv):
+                event_gaps.append('probe_not_in_argv' if record.get('env_has_probe')
+                                  else 'preempted_by_unrelated_command_event')
+        replay = None
+        if not boundary_gaps:
+            command = _verified_bash_command(argv, manifest.bash_path, manifest.python_executable)
+            if command is None:
+                event_gaps.append('unsupported_shell_argv')
+            elif not _simple_recorder_command(command, manifest, path):
+                event_gaps.append('unsupported_shell_command_shape')
+            else:
+                replay = _replay(command, manifest, runtime)
+                details['control_replay' if control else 'probe_replay'] = replay
+                if not replay.get('ok'):
+                    event_gaps.append(replay.get('gap', 'bash_replay_failed'))
+        if control:
+            if record.get('event') != event.get('event') or (
+                not isinstance(argv, list) or not isinstance(event.get('argv'), list)
+                or argv[:2] != event['argv'][:2]
+            ):
+                event_gaps.append('benign_control_command_mismatch')
+            if replay is None or not replay.get('ok'):
+                event_gaps.append('benign_control_failed')
+            elif replay.get('arguments') != [*manifest.recorder_arguments, str(path)]:
+                event_gaps.append('benign_control_failed')
+            if event_gaps:
+                gaps.append('benign_control_failed')
+                gaps.extend(f'benign_control:{gap}' for gap in event_gaps)
+        else:
+            gaps.extend(event_gaps)
+        return replay
+
+    probe_replay = measure(event, probe_path, control=False)
+    control_trace = trace_path.with_name(trace_path.stem + '.control' + trace_path.suffix) if trace_path else None
+    if control_trace is not None and control_trace.exists():
+        return _unresolved(*gaps, 'benign_control_trace_exists', details=details)
+    control_event = _run_worker(manifest, runtime, control_path, read_grants,
+                                control_trace, stack_capture, True)
+    details['control_event'] = control_event
+    measure(control_event, control_path, control=True)
+    if gaps:
+        return _unresolved(*dict.fromkeys(gaps), details=details)
+    assert probe_replay is not None
+    marker = f"$(printf {details['probe_nonce']})"
+    expanded = str(probe_path).replace(marker, details['probe_nonce'])
+    arguments = probe_replay['arguments']
+    if arguments == [*manifest.recorder_arguments, expanded]:
+        return WitnessResult(status=ValidationStatus.CONFIRMED,
+                             raw_status='EXPANDED_OBSERVED', details=details)
+    if arguments == [*manifest.recorder_arguments, str(probe_path)]:
+        return WitnessResult(status=ValidationStatus.UNRESOLVED,
+                             raw_status='LITERAL_OBSERVED', details=details)
+    return _unresolved('ambiguous_replay_observation', details=details)
+
+
 def run_witness(
     manifest: WitnessManifest, *, nonce: str | None = None, diagnostic_only: bool = False,
     diagnostic_runtime_dir: Path | None = None,
     diagnostic_read_grants: tuple[IsolationReadGrant, ...] = (),
     diagnostic_trace_path: Path | None = None,
     diagnostic_stack_capture: bool = False,
+    verify_obligations: bool = False,
 ) -> WitnessResult:
     """Observe one candidate-bound input and an independent benign control.
 
@@ -1086,15 +1287,18 @@ def run_witness(
     """
     if nonce is None:
         nonce = uuid4().hex
+    if verify_obligations and diagnostic_only:
+        raise ValueError('verification and observation-only diagnostic modes are exclusive')
     if not _NONCE.fullmatch(nonce):
         raise ValueError("nonce must be 12-64 ASCII letters or digits")
     WitnessResourceProfile.model_validate(manifest.resource_profile.model_dump())
-    if manifest.resource_profile.name != "fixture_default" and not diagnostic_only:
+    extended_mode = diagnostic_only or verify_obligations
+    if manifest.resource_profile.name != "fixture_default" and not extended_mode:
         raise ValueError("nondefault resource profiles are diagnostic-only")
-    if diagnostic_runtime_dir is not None and not diagnostic_only:
+    if diagnostic_runtime_dir is not None and not extended_mode:
         raise ValueError("a persistent probe directory is diagnostic-only")
     if (diagnostic_read_grants or diagnostic_trace_path is not None
-            or diagnostic_stack_capture) and not diagnostic_only:
+            or diagnostic_stack_capture) and not extended_mode:
         raise ValueError("read grants, stacks and syscall tracing are diagnostic-only")
     if diagnostic_trace_path is not None:
         if not diagnostic_trace_path.is_absolute():
@@ -1109,7 +1313,7 @@ def run_witness(
                                           for item in diagnostic_read_grants],
             })
     assumption_gaps = _assumption_gaps(manifest)
-    if assumption_gaps and not diagnostic_only:
+    if assumption_gaps and not extended_mode:
         return _unresolved(*assumption_gaps,
                            details={"subject": manifest.subject.model_dump(mode="json")})
     control_nonce = hashlib.sha256(f"control:{nonce}".encode()).hexdigest()[:24]
@@ -1156,13 +1360,13 @@ def run_witness(
                                       for grant in diagnostic_read_grants],
         }
         if (diagnostic_trace_path is None and not diagnostic_read_grants
-                and not diagnostic_stack_capture):
+                and not diagnostic_stack_capture and not verify_obligations):
             event = _run_worker(manifest, runtime, probe_path)
         else:
             event = _run_worker(manifest, runtime, probe_path,
                                 diagnostic_read_grants, diagnostic_trace_path,
-                                diagnostic_stack_capture)
-        if diagnostic_only:
+                                diagnostic_stack_capture, verify_obligations)
+        if extended_mode:
             details["strace_enabled"] = diagnostic_trace_path is not None
             details["stack_capture_enabled"] = diagnostic_stack_capture
         if diagnostic_trace_path is not None:
@@ -1188,6 +1392,12 @@ def run_witness(
                 event["gap"] = (matching["gap"] if matching else
                                 "target_error_after_observed_read_denials")
         details["probe_event"] = event
+        if verify_obligations:
+            return _verification_result(
+                manifest, checkout, runtime, probe_path, control_path, event,
+                assumption_gaps, details, diagnostic_read_grants,
+                diagnostic_trace_path, diagnostic_stack_capture,
+            )
         if diagnostic_only:
             return _diagnostic_result(
                 manifest, checkout, runtime, probe_path, event, assumption_gaps, details,
@@ -1296,6 +1506,7 @@ def _main() -> None:
         record_open_attempts = envelope["record_open_attempts"] is True
         stack_result_fd = envelope["stack_result_fd"]
         worker_deadline = envelope["worker_deadline"]
+        verify_obligations = envelope['verify_obligations'] is True
         if stack_result_fd is not None and (
                 type(stack_result_fd) is not int or stack_result_fd <= 2
                 or stack_result_fd == result_fd
@@ -1307,7 +1518,7 @@ def _main() -> None:
                                   "interpreter": _interpreter_identity(None)})
         return
     _worker(manifest, result_fd, runtime, probe_path, read_grants, record_open_attempts,
-            stack_result_fd, worker_deadline)
+            stack_result_fd, worker_deadline, verify_obligations)
 
 
 if __name__ == "__main__":

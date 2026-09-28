@@ -28,6 +28,8 @@ def main() -> None:
                         help="keep isolation and the command audit hook without syscall tracing")
     parser.add_argument("--dump-stacks", action="store_true",
                         help="capture all-thread Python stacks three seconds before the worker deadline")
+    parser.add_argument('--verify-obligations', action='store_true',
+                        help='verify runtime assumptions/preexec and run the benign target control')
     args = parser.parse_args()
     if not args.runtime_dir.is_absolute():
         raise ValueError("shared diagnostic runtime path must be absolute")
@@ -42,12 +44,13 @@ def main() -> None:
     result = run_witness(
         manifest,
         nonce=args.nonce,
-        diagnostic_only=True,
+        diagnostic_only=not args.verify_obligations,
         diagnostic_runtime_dir=args.runtime_dir,
         diagnostic_read_grants=grants,
         diagnostic_trace_path=(None if args.no_strace else
                                args.output.with_suffix(".strace.log").absolute()),
         diagnostic_stack_capture=args.dump_stacks,
+        verify_obligations=args.verify_obligations,
     )
     usage_after = resource.getrusage(resource.RUSAGE_CHILDREN)
     record = {
@@ -57,6 +60,7 @@ def main() -> None:
         "resource_profile": manifest.resource_profile.model_dump(mode="json"),
         "strace_enabled": not args.no_strace,
         "stack_capture_enabled": args.dump_stacks,
+        'verification_mode': args.verify_obligations,
         "elapsed_seconds": time.monotonic() - start,
         "child_cpu_seconds": {
             "user": usage_after.ru_utime - usage_before.ru_utime,
