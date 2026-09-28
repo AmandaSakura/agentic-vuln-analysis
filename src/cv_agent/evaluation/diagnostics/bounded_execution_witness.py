@@ -107,6 +107,7 @@ class WitnessManifest(FrozenModel):
 
     subject: ValidationSubject
     checkout_root: Path
+    import_root: str = '.'
     module_name: str
     class_name: str
     method_name: str
@@ -129,6 +130,8 @@ class WitnessManifest(FrozenModel):
 
     @model_validator(mode="after")
     def check_manifest(self) -> WitnessManifest:
+        if self.import_root != '.' and not _safe_relative_path(self.import_root):
+            raise ValueError('source import root must remain relative to checkout')
         if not _DOTTED_NAME.fullmatch(self.module_name):
             raise ValueError("module_name must be a dotted Python name")
         if not all(_DOTTED_NAME.fullmatch(x) and "." not in x for x in (
@@ -593,7 +596,11 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             emit({"kind": "error", "gap": "hook_selftest_failed",
                                       "interpreter": interpreter})
             return
-        sys.path.insert(0, str(checkout))
+        source_import_root = (checkout / manifest.import_root).resolve(strict=True)
+        if not source_import_root.is_relative_to(checkout) or not source_import_root.is_dir():
+            emit({'kind': 'error', 'gap': 'source_import_root_outside_checkout'})
+            return
+        sys.path.insert(0, str(source_import_root))
         import importlib
         progress()
         module = importlib.import_module(manifest.module_name)
@@ -912,6 +919,29 @@ def _simple_recorder_command(command: str, manifest: WitnessManifest,
     }
 
 
+def _recorder_from_boundary(command: str, manifest: WitnessManifest,
+                            probe_path: Path) -> WitnessManifest | None:
+    """Select a recorder only from an exact direct command containing our path."""
+    for argument in (str(probe_path), shlex.quote(str(probe_path))):
+        suffix = ' ' + argument
+        if not command.endswith(suffix):
+            continue
+        prefix = command[:-len(suffix)]
+        if prefix.startswith('exec '):
+            prefix = prefix[5:]
+        words = prefix.split(' ')
+        if (not words or not _COMMAND_NAME.fullmatch(words[0])
+                or any(not re.fullmatch(r'[A-Za-z0-9._-]+', word) for word in words[1:])):
+            continue
+        selected = WitnessManifest.model_validate({
+            **manifest.model_dump(mode='json'),
+            'recorder_command': words[0], 'recorder_arguments': words[1:],
+        })
+        if _simple_recorder_command(command, selected, probe_path):
+            return selected
+    return None
+
+
 def _bound_emitter(event: dict[str, Any], manifest: WitnessManifest,
                    checkout: Path) -> bool:
     emitter = event.get("emitter_frame")
@@ -1164,6 +1194,7 @@ def _verification_result(
     control_path: Path, event: dict[str, Any], assumption_gaps: tuple[str, ...],
     details: dict[str, Any], read_grants: tuple[IsolationReadGrant, ...],
     trace_path: Path | None, stack_capture: bool,
+    derive_recorder: bool = False,
 ) -> WitnessResult:
     """Require complete runtime obligations on the probe and its benign control."""
     gaps: list[str] = []
@@ -1175,6 +1206,18 @@ def _verification_result(
         and event.get('authentic_subprocess_popen') is True
         and _bound_emitter(event, manifest, checkout) and not event.get('loaded_source_gaps')
     )
+    if derive_recorder:
+        details['recorder_derivation_enabled'] = True
+        if not details['reached_popen']:
+            return _unresolved(event.get('gap', 'recorder_boundary_not_qualified'), details=details)
+        command = _verified_bash_command(event.get('argv'), manifest.bash_path, manifest.python_executable)
+        selected = _recorder_from_boundary(command, manifest, probe_path) if command is not None else None
+        if selected is None:
+            return _unresolved('recorder_prefix_not_established', details=details)
+        manifest = selected
+        details['derived_recorder'] = {
+            'command': manifest.recorder_command, 'arguments': list(manifest.recorder_arguments),
+        }
 
     def measure(record: dict[str, Any], path: Path, *, control: bool) -> dict[str, Any] | None:
         event_gaps: list[str] = []
@@ -1277,6 +1320,7 @@ def run_witness(
     diagnostic_trace_path: Path | None = None,
     diagnostic_stack_capture: bool = False,
     verify_obligations: bool = False,
+    derive_recorder: bool = False,
 ) -> WitnessResult:
     """Observe one candidate-bound input and an independent benign control.
 
@@ -1289,6 +1333,8 @@ def run_witness(
         nonce = uuid4().hex
     if verify_obligations and diagnostic_only:
         raise ValueError('verification and observation-only diagnostic modes are exclusive')
+    if derive_recorder and not verify_obligations:
+        raise ValueError('recorder derivation requires verification mode')
     if not _NONCE.fullmatch(nonce):
         raise ValueError("nonce must be 12-64 ASCII letters or digits")
     WitnessResourceProfile.model_validate(manifest.resource_profile.model_dump())
@@ -1397,6 +1443,7 @@ def run_witness(
                 manifest, checkout, runtime, probe_path, control_path, event,
                 assumption_gaps, details, diagnostic_read_grants,
                 diagnostic_trace_path, diagnostic_stack_capture,
+                derive_recorder,
             )
         if diagnostic_only:
             return _diagnostic_result(

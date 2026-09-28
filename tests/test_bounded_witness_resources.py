@@ -128,12 +128,14 @@ def test_nondefault_direct_expansion_remains_diagnostic_only(tmp_path: Path) -> 
 
 
 def test_wall_timeout_reports_parent_kill_and_preserves_last_phase(tmp_path: Path) -> None:
+    # Leave room for traced interpreter/import startup under full-suite load;
+    # the 30-second entry sleep still deterministically exceeds this budget.
     manifest = _manifest_with_profile(tmp_path, """
         import time
         class Service:
             def serve(self, model_uri):
                 time.sleep(30)
-    """, _profile(soft=10, hard=12, wall=2.0))
+    """, _profile(soft=10, hard=12, wall=6.0))
     result = _traced_run(tmp_path, manifest)
     event = result.details["probe_event"]
     assert result.status == ValidationStatus.UNRESOLVED

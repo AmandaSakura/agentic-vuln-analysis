@@ -8,7 +8,8 @@ from functools import partial
 
 from cv_agent.tools.registry import AgentTool, ToolExecutionScope
 from cv_agent.tools.repository import repository_tools
-from cv_agent.domain.evidence import ToolObservation, ValidationStatus
+from cv_agent.domain.evidence import ToolObservation, ValidationStatus, ValidationSubject
+from cv_agent.tools.validation.witness_manifest import WitnessExecutionContext, WitnessSupplement
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.domain.types import FrozenModel
 from cv_agent.tools.validation.authorization import compare_guard, guards, routes, semantic_matches
@@ -31,6 +32,7 @@ from cv_agent.tools.validation.models import (
 from cv_agent.tools.validation.patterns import PRINCIPAL_PATTERN, RESOURCE_PATTERN, SANITIZER_RULES, SINK_RULES, SOURCE_RULES, pattern_tool, references, static_check
 from cv_agent.tools.validation.permissions import permission_mode
 from cv_agent.tools.validation.probes import concrete_eval_probe
+from cv_agent.tools.validation.bounded_witness import BoundedWitnessService, TOOL_NAME as WITNESS_TOOL
 
 
 def _json_tool(
@@ -41,6 +43,7 @@ def _json_tool(
     *, available: bool = True,
     validation_statuses: tuple[ValidationStatus, ...] = (),
     fixture_capabilities: tuple[FixtureCapability, ...] = (),
+    candidate_witness_supports: Callable[[ValidationSubject], bool] | None = None,
 ) -> AgentTool:
     return AgentTool(
         name=name,
@@ -51,6 +54,7 @@ def _json_tool(
         available=available,
         validation_statuses=validation_statuses,
         fixture_capabilities=fixture_capabilities,
+        candidate_witness_supports=candidate_witness_supports,
     )
 
 
@@ -61,6 +65,8 @@ def validation_tools(
     paired_paths: Mapping[str, str] | None = None,
     fixture_cases: Iterable[FixtureCase] = (),
     loopback_cases: Iterable[LoopbackCase] = (),
+    witness_contexts: Mapping[str, WitnessExecutionContext] | None = None,
+    witness_nonce_factory: Callable[[], str] | None = None,
 ) -> tuple[AgentTool, ...]:
     paired = dict(paired_paths or {})
     fixture_list = tuple(fixture_cases)
@@ -88,8 +94,26 @@ def validation_tools(
         )
         for case in fixture_list
     )
+    witness_service = BoundedWitnessService(index, witness_contexts or {},
+                                           nonce_factory=witness_nonce_factory)
 
     return (
+        _json_tool(
+            WITNESS_TOOL,
+            ('Build a source-bound command witness from this candidate and the system runtime. '
+             'Supply constructor_parameters={} and precondition_files={} first; fill only '
+             'reported missing constructor parameters using JSON data. The system owns all '
+             'source, probe, control, command recorder and isolation settings. Actual expansion '
+             'with all runtime obligations and benign control can return CONFIRMED; literal or '
+             'incomplete observations stay UNRESOLVED and never prove SAFE. Input class: the '
+             'caller can create and supply an existing local directory with shell metacharacters '
+             'in its name. Remote reachability remains unestablished.'),
+            WitnessSupplement,
+            witness_service.handle,
+            available=bool(witness_contexts),
+            validation_statuses=(ValidationStatus.CONFIRMED,),
+            candidate_witness_supports=witness_service.supports,
+        ),
         _json_tool(
             'find_references',
             'Find admitted definitions and call references for one symbol.',
@@ -241,6 +265,8 @@ def full_agent_tools(
     paired_paths: Mapping[str, str] | None = None,
     fixture_cases: Iterable[FixtureCase] = (),
     loopback_cases: Iterable[LoopbackCase] = (),
+    witness_contexts: Mapping[str, WitnessExecutionContext] | None = None,
+    witness_nonce_factory: Callable[[], str] | None = None,
 ) -> tuple[AgentTool, ...]:
     return (
         *repository_tools(index),
@@ -250,5 +276,7 @@ def full_agent_tools(
             paired_paths=paired_paths,
             fixture_cases=fixture_cases,
             loopback_cases=loopback_cases,
+            witness_contexts=witness_contexts,
+            witness_nonce_factory=witness_nonce_factory,
         ),
     )

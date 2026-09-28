@@ -16,6 +16,7 @@ from cv_agent.agents.voting import QuorumPolicy, SingleExpertPolicy
 from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemHarness, AgentSystemVersion, ExpertAgentHarness
 from cv_agent.runtime.model import ChatModel, OpenAICompatibleChatModel, trusted_runtime_mode
 from cv_agent.agents.react import ReActEngine, run_expert, run_planner
+from cv_agent.agents.evidence_policy import validator_observation_completed
 from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count, fit_text_to_serialized_context
 from cv_agent.domain.types import Candidate, Evidence, ExpertVote, FrozenModel
 
@@ -575,6 +576,7 @@ class AgenticPipeline:
             tools=self.tools,
             candidate=state["candidate"],
             evidence=state["evidence"],
+            subject=candidate_subject(self.index, state["candidate"]),
         )
 
     def _validate_plan(
@@ -700,6 +702,12 @@ class AgenticPipeline:
             # first check rather than another optional tool.
             allowed_tools = ("run_fixture_test",)
             required_validators = ("run_fixture_test",)
+        elif (task is None and name == "scan"
+              and "run_bounded_execution_witness" in allowed_tools
+              and self.tools.candidate_witness_available(candidate_subject(self.index, state["candidate"]))):
+            # The system builds the manifest. The expert may fill structured
+            # missing constructor data in a later call, then cite its proof.
+            required_validators = ("run_bounded_execution_witness",)
         vote = run_expert(
             self._engine(name, state),
             expert=spec.expert,
@@ -710,13 +718,11 @@ class AgenticPipeline:
         )
         executions = [*state["task_executions"], ValidationTaskExecution(
             task_id=task.task_id if task else None, vote=vote,
-            validator_completed=task is None or any(
-                step.observation.tool == task.allowed_validator
-                and step.observation.status == "ok"
-                and not step.observation.metadata.get("observation_truncated")
-                and not step.observation.metadata.get("model_payload_suppressed")
+            validator_completed=all(any(
+                step.observation.tool == validator
+                and validator_observation_completed(step.observation)
                 for step in vote.trace
-            ),
+            ) for validator in required_validators),
         )]
         completed = {item.task_id for item in executions if item.task_id is not None}
         plan = self._active_plan(state)

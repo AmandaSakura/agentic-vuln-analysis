@@ -93,6 +93,12 @@ def required_tasks(
     # independent permission obligation in the same candidate context.
     fixture_case_ids = qualified_fixture_case_ids(tools, subject, candidate)
     qualified_fixture = bool(fixture_case_ids) and "scan" in system_spec.expert_order
+    qualified_witness = (
+        not qualified_fixture and subject is not None
+        and _subject_matches_candidate(subject, candidate)
+        and "scan" in system_spec.expert_order
+        and tools.candidate_witness_available(subject)
+    )
     if qualified_fixture:
         tasks.append(
             ValidationSubtask(
@@ -105,6 +111,17 @@ def required_tasks(
                 success_condition="Record concrete fixture test results; do not infer safety from absence.",
             )
         )
+
+    witness_dependencies: tuple[str, ...] = ()
+    if qualified_witness:
+        tasks.append(ValidationSubtask(
+            task_id="req-witness-1", expert="scan",
+            allowed_validator="run_bounded_execution_witness",
+            objective="Build and execute a source-bound command witness from the candidate.",
+            dependencies=(),
+            success_condition="Record complete probe/control obligations or concrete gaps; literal observations remain unresolved.",
+        ))
+        witness_dependencies = ("req-witness-1",)
 
     # 2. Command construction obligation
     if (
@@ -119,7 +136,7 @@ def required_tasks(
                     expert="scan",
                     allowed_validator="inspect_command_construction",
                     objective="Inspect admitted get_cmd shell-command construction.",
-                    dependencies=(),
+                    dependencies=witness_dependencies,
                     success_condition="Record sanitized or unsanitized shell arguments.",
                 )
             )
@@ -130,7 +147,7 @@ def required_tasks(
                     expert="taint",
                     allowed_validator="inspect_command_construction",
                     objective="Trace parameter dataflow to shell command construction.",
-                    dependencies=(),
+                    dependencies=witness_dependencies,
                     success_condition="Record tainted parameter reachability to shell execution.",
                 )
             )
@@ -346,11 +363,22 @@ def validate_plan_policy(
 
     # Check if there is a qualified candidate-level fixture for this candidate
     qualified_fixture_ids = set(qualified_fixture_case_ids(tools, subject, candidate))
+    qualified_witness = (
+        subject is not None and _subject_matches_candidate(subject, candidate)
+        and tools.candidate_witness_available(subject)
+    )
     has_qualified_fixture = any(
         task.allowed_validator == "run_fixture_test"
         and task.fixture_case_id in qualified_fixture_ids
         for task in plan.subtasks
     )
+    witness_tasks = [task for task in plan.subtasks
+                     if task.allowed_validator == "run_bounded_execution_witness"]
+    if witness_tasks and not qualified_witness:
+        raise ValueError("planned witness is not qualified for this candidate and source snapshot")
+    if qualified_witness and not has_qualified_fixture and "scan" in system_spec.expert_order:
+        if not any(task.expert == "scan" for task in witness_tasks):
+            raise ValueError("planner must assign scan run_bounded_execution_witness for this candidate")
 
     # Command construction checks
     cmd_candidate = is_command_construction_candidate(text)
@@ -382,6 +410,7 @@ def validate_plan_policy(
             if t.expert == "scan"
             and t.allowed_validator != "inspect_command_construction"
             and t.allowed_validator != "run_fixture_test"
+            and t.allowed_validator != "run_bounded_execution_witness"
         ]
         if redundant_scan:
             raise ValueError(
@@ -389,6 +418,26 @@ def validate_plan_policy(
                 "scan inspect_command_construction for admitted get_cmd "
                 "shell-command candidates"
             )
+
+    if witness_tasks:
+        tasks_by_id = {task.task_id: task for task in plan.subtasks}
+
+        def depends_on_witness(task: ValidationSubtask) -> bool:
+            pending = list(task.dependencies)
+            seen: set[str] = set()
+            witnesses = {item.task_id for item in witness_tasks}
+            while pending:
+                dependency = pending.pop()
+                if dependency in witnesses:
+                    return True
+                if dependency not in seen:
+                    seen.add(dependency)
+                    pending.extend(tasks_by_id[dependency].dependencies)
+            return False
+
+        for task in plan.subtasks:
+            if task.allowed_validator == "inspect_command_construction" and not depends_on_witness(task):
+                raise ValueError("command inspection subtasks must depend on the candidate witness")
 
     if fixture_tasks:
         dependencies = {task.task_id: set(task.dependencies) for task in plan.subtasks}

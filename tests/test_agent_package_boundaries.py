@@ -187,8 +187,9 @@ def test_planner_delegates_with_the_patched_workflow_harness(monkeypatch):
 
 def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     pipeline, candidate, state = _pipeline()
-    # C1/C4/C5: reviewed expert mandates require candidate-bound proofs;
-    # reversing only these mandate edits reproduces the previous planner hash.
+    # C1/C4/C5: candidate witness guidance and the new registered schema are
+    # intentional. Removing only that guidance/schema restores the previous
+    # planner and definitions hashes; candidate identity remains unchanged.
     # The tool description requires declared probe inputs.
     # Category selection still belongs to may-flow tracing only.
     definitions = {item["function"]["name"]: item["function"]
@@ -201,7 +202,7 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
         "subject": json.dumps(identity.candidate_subject(pipeline.index, candidate).model_dump(mode="json"), sort_keys=True, separators=(",", ":")),
     }
     assert {name: hashlib.sha256(value.encode()).hexdigest() for name, value in payloads.items()} == {
-        "planner": "65401316670c5bfda164536d926607a504d4c4891568c64952c23ed4a7d438d2",
-        "definitions": "f55cdb0476b3138325ad046becb976322eff83c750af213cbcaa012520167874",
+        "planner": "964b90606817582d135db213078b2001d7d4e3acfcc00facc916c8a2d2fe374d",
+        "definitions": "3ae3c30297c899ca18a766a5e6241776824efa1283a2b7ae4b133a22d8d97e4e",
         "subject": "9f0896a13965421790d5b8ac82a555a8974618d2bcc36491937bb824532ca5ff",
     }

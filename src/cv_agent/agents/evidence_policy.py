@@ -31,6 +31,15 @@ class IncompleteValidationTaskError(ValueError):
         self.missing_validators = tuple(missing_validators)
 
 
+def validator_observation_completed(observation: ToolObservation) -> bool:
+    """A manifest-preparation reply is not an executed witness validator."""
+    return (observation.status == "ok"
+            and not observation.metadata.get("observation_truncated")
+            and not observation.metadata.get("model_payload_suppressed")
+            and (observation.tool != "run_bounded_execution_witness"
+                 or observation.metadata.get("witness_attempted") is True))
+
+
 def validate_conclusion(
     output: AgentExpertConclusion, trace: list[ReActStep],
     initial_evidence_ids: frozenset[str], required_validators: tuple[str, ...] = (),
@@ -155,9 +164,7 @@ def _validate_prediction(
                 raise ValueError("Evidence subject location is outside the inspected source slice")
     executed = Counter(
         step.observation.tool for step in (current_trace if current_trace is not None else trace)
-        if step.observation.status == "ok"
-        and not step.observation.metadata.get("observation_truncated")
-        and not step.observation.metadata.get("model_payload_suppressed")
+        if validator_observation_completed(step.observation)
     )
     if Counter(required_validators) - executed:
         missing = tuple(sorted(Counter(required_validators) - executed))
@@ -333,6 +340,15 @@ def fixture_can_support_candidate(
 def _matches_validator_subject(observation: ToolObservation, subject: ValidationSubject | None) -> bool:
     if subject is None or observation.subject != subject:
         return False
+    if observation.tool == "run_bounded_execution_witness":
+        proof = observation.fixture_proof
+        return (subject.property_id == "command-execution"
+                and observation.validation_status == ValidationStatus.CONFIRMED
+                and proof is not None
+                and proof.contract_id == "bounded-execution-witness-v1"
+                and proof.method == "bounded_execution"
+                and proof.supported_statuses == (ValidationStatus.CONFIRMED,)
+                and fixture_can_support_candidate(proof, subject, observation.validation_status))
     if observation.tool == "run_fixture_test":
         return fixture_can_support_candidate(
             observation.fixture_proof,

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 from cv_agent.domain.review import ValidationPlan
+from cv_agent.domain.evidence import ValidationSubject
 from cv_agent.harness import AgentSystemHarness, EndToEndHarness, ExpertAgentHarness
 from cv_agent.tools.registry import ToolRegistry
 from cv_agent.domain.types import Candidate, Evidence
@@ -24,8 +25,11 @@ def render_planner_prompt(
     candidate: Candidate,
     evidence: list[Evidence],
     locked_tasks: tuple[ValidationSubtask, ...] = (),
+    subject: ValidationSubject | None = None,
 ) -> str:
     validators = set(harness.validation.validators) & set(tools.available_names)
+    if not tools.candidate_witness_available(subject):
+        validators.discard("run_bounded_execution_witness")
     planner_context = {
         "candidate": {
             "candidate_id": candidate.candidate_id,
@@ -76,6 +80,10 @@ def render_planner_prompt(
             "When a run_fixture_test subtask is available for this candidate, schedule it "
             "before other advisory-scoped checks and make later non-fixture subtasks depend "
             "on it so they can see the concrete validator observation. "
+            "When run_bounded_execution_witness is available for this indexed candidate, "
+            "assign scan its system-generated witness and make command inspection tasks "
+            "depend on it. Keep mandatory static checks; an incomplete generated manifest "
+            "does not replace them. Supply only missing constructor/precondition data. "
             "Static checks provide hypotheses, not CONFIRMED or REFUTED evidence. "
             "The declared quorum requires independent expert ballots; one validator "
             "result does not replace it. Do not request agreement, duplicate one validator "

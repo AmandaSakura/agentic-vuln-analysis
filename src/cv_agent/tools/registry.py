@@ -79,6 +79,7 @@ class AgentTool:
     available: bool = True
     validation_statuses: tuple[ValidationStatus, ...] = ()
     fixture_capabilities: tuple[FixtureCapability, ...] = ()
+    candidate_witness_supports: Callable[[ValidationSubject], bool] | None = None
 
     def definition(self) -> dict[str, Any]:
         return {
@@ -138,6 +139,13 @@ class ToolRegistry:
             and cap.method != "source_pattern"
             and (cap.property_id is None or cap.property_id == subject.property_id)
         )
+
+    def candidate_witness_available(self, subject: ValidationSubject | None) -> bool:
+        """Query system-owned source qualification; no model manifest is accepted."""
+        tool = self._tools.get("run_bounded_execution_witness")
+        return bool(subject is not None and tool is not None and tool.available
+                    and tool.candidate_witness_supports is not None
+                    and tool.candidate_witness_supports(subject))
 
     def definitions(self, allowed: Iterable[str]) -> tuple[dict[str, Any], ...]:
         allowed_names = tuple(allowed)

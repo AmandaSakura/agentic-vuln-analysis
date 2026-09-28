@@ -1,0 +1,12 @@
+{
+  "dataset": "configs/datasets/advisory_pairs_v5.json",
+  "selection_profile": "configs/profiles/advisory_hp003_diagnosis_v4.json",
+  "resource_profile": "artifacts/bounded_execution_witness_resource_diagnostics/profile_heavy_target.json",
+  "read_grants": "artifacts/bounded_execution_witness_stage2_read_admission/read_grants_final.json",
+  "constructor_parameters": {"config": {}},
+  "precondition_files": {},
+  "cases": [
+    {"case_id": "hp003_a", "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"},
+    {"case_id": "hp003_b", "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"}
+  ]
+}

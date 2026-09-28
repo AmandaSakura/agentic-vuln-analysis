@@ -235,7 +235,11 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "These command facts must establish the declared candidate property "
                 "under its source, location and input assumptions; a local helper "
                 "status is not a caller proof. Other declared properties also require "
-                "matching supporting proof. Inspect your own evidence rather than "
+                "matching supporting proof. A source-bound run_bounded_execution_witness "
+                "CONFIRMED observation is positive candidate command evidence; its literal "
+                "or incomplete UNRESOLVED observation never proves SAFE. Supply only its "
+                "reported missing constructor and precondition data; runtime settings are system-owned. "
+                "Inspect your own evidence rather than "
                 "adopting another vote. "
                 "When making a SAFE prediction based on an authorization or ownership check, "
                 "first collect guard evidence with get_guards."
@@ -252,6 +256,7 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "validate_permission_mode",
                 "probe_python_eval",
                 "run_fixture_test",
+                "run_bounded_execution_witness",
             ),
             require_react_trace=True,
         ),
@@ -278,7 +283,8 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
                 "evaluation, cite a matching candidate-bound proof; static flow alone "
                 "does not support either material label. For command-execution tasks, "
                 "a dependency's candidate-bound run_fixture_test CONFIRMED or REFUTED "
-                "observation is concrete command evidence for your dataflow judgment; "
+                "observation, or run_bounded_execution_witness CONFIRMED observation, "
+                "is concrete command evidence for your dataflow judgment; "
                 "your trace_dataflow MAY_REACH/UNRESOLVED result supplies path context "
                 "and does not erase that matching fixture proof. Abstain when the required "
                 "proof is missing. A complete static command proof can still support "
@@ -332,6 +338,7 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
             "run_static_check",
             "probe_python_eval",
             "run_fixture_test",
+            "run_bounded_execution_witness",
             "run_loopback_http_case",
             "compare_vulnerable_and_fixed",
             "trace_dataflow",
