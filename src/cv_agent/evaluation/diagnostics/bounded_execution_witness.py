@@ -9,6 +9,7 @@ This is a bounded observation, not a general Python sandbox or a SAFE proof.
 from __future__ import annotations
 
 import hashlib
+import faulthandler
 import json
 import os
 import platform
@@ -55,6 +56,8 @@ _NONCE = re.compile(r"[A-Za-z0-9]{12,64}\Z")
 _RESULT_LIMIT = 64_000
 _REPLAY_TIMEOUT = 5.0
 _TRACE_LIMIT = 16_000_000
+_STACK_LIMIT = 64_000
+_STACK_TIMEOUT_MARGIN = 3.0
 
 
 def _worker_path(python_executable: Path | None = None) -> str:
@@ -387,7 +390,8 @@ def _verify_module_sources(manifest: WitnessManifest, checkout: Path) -> list[st
 
 def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             probe_path: Path, read_grants: tuple[IsolationReadGrant, ...] = (),
-            record_open_attempts: bool = False) -> None:
+            record_open_attempts: bool = False, stack_result_fd: int | None = None,
+            worker_deadline: float | None = None) -> None:
     interpreter = _interpreter_identity(manifest.python_executable)
     phase = "preflight"
     open_attempts: list[dict[str, Any]] = []
@@ -411,7 +415,8 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         _write_result(result_fd, payload)
 
     def progress() -> None:
-        if record_open_attempts or manifest.resource_profile.name != "fixture_default":
+        if (record_open_attempts or stack_result_fd is not None
+                or manifest.resource_profile.name != "fixture_default"):
             _write_result(result_fd, {"kind": "progress", "phase": phase,
                                       "isolation_read_roots": [str(path) for path in read_roots],
                                       "interpreter": interpreter, **resource_record()})
@@ -459,7 +464,8 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
 
             manifest.resource_profile.apply()
         applied_limits = manifest.resource_profile.actual_limits()
-        _install_fixture_isolation(result_fd, deny_exec=True)
+        _install_fixture_isolation(result_fd, deny_exec=True,
+                                   retained_fds=(stack_result_fd,) if stack_result_fd is not None else ())
         # _install_fixture_isolation performs an actual execve/execveat EPERM
         # self-test before returning. The audit hook is installed afterward.
         read_roots = (*_read_roots(checkout, runtime), *(grant.path for grant in read_grants))
@@ -469,6 +475,12 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             # the same seccomp and Landlock policy as target-created threads.
             threading.Thread(target=watch_cpu_limit, name="witness-cpu-limit",
                              daemon=True).start()
+        if stack_result_fd is not None:
+            assert worker_deadline is not None
+            faulthandler.dump_traceback_later(
+                max(0.01, worker_deadline - time.monotonic() - _STACK_TIMEOUT_MARGIN),
+                repeat=False, file=stack_result_fd, exit=False,
+            )
         selftest_seen = False
         phase = "import"
         expected_code: Any = None
@@ -555,13 +567,21 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                                   "error_errno": error.errno if isinstance(error, OSError) else None,
                                   "interpreter": interpreter})
     finally:
+        if stack_result_fd is not None:
+            faulthandler.cancel_dump_traceback_later()
         os._exit(0)
 
 
 def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
                 read_grants: tuple[IsolationReadGrant, ...] = (),
-                trace_path: Path | None = None) -> dict[str, Any]:
+                trace_path: Path | None = None, stack_capture: bool = False) -> dict[str, Any]:
     read_fd, write_fd = os.pipe()
+    stack_read_fd, stack_write_fd = os.pipe() if stack_capture else (-1, -1)
+    if stack_capture:
+        os.set_blocking(stack_read_fd, False)
+    stack_bytes = bytearray()
+    stack_byte_count = 0
+    stack_eof = False
     manifest_path: Path | None = None
     process: subprocess.Popen | None = None
     top_sampler: ProcessResourceSampler | None = None
@@ -586,6 +606,24 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             top_sampler.sample()
         if target_sampler is not None and target_sampler is not top_sampler:
             target_sampler.sample()
+
+    def drain_stacks() -> None:
+        nonlocal stack_byte_count, stack_eof
+        if not stack_capture or stack_eof:
+            return
+        # Continue draining after the saved-byte limit so the native watchdog
+        # cannot block on a full pipe. Bound each turn's work as well.
+        for _ in range(32):
+            try:
+                chunk = os.read(stack_read_fd, 16_384)
+            except BlockingIOError:
+                break
+            if not chunk:
+                stack_eof = True
+                break
+            stack_byte_count += len(chunk)
+            space = max(0, _STACK_LIMIT - len(stack_bytes))
+            stack_bytes.extend(chunk[:space])
 
     def consume(chunk: bytes) -> None:
         nonlocal pending, observed, final, target_sampler
@@ -613,6 +651,7 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
                 kill_group()
             while os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None:
                 sample()
+                drain_stacks()
                 if time.monotonic() >= deadline and parent_kill_reason is None:
                     parent_kill_reason = "wall_timeout_after_result"
                     kill_group()
@@ -620,6 +659,7 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             if top_sampler is not None:
                 top_sampler.finish_unreaped()
             process.wait()
+        drain_stacks()
         result = {**observed, **outcome}
         if process is not None:
             result["returncode"] = process.returncode
@@ -644,6 +684,13 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             "target": target,
             "tracer": top_sampler.summary() if trace_path is not None and top_sampler else None,
         }
+        if stack_capture:
+            result["stack_dump"] = {
+                "enabled": True, "timeout_margin_seconds": _STACK_TIMEOUT_MARGIN,
+                "text": stack_bytes.decode("utf-8", errors="replace"),
+                "byte_count": stack_byte_count, "limit_bytes": _STACK_LIMIT,
+                "truncated": stack_byte_count > _STACK_LIMIT,
+            }
         return result
 
     try:
@@ -651,6 +698,8 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             "manifest": manifest.model_dump(mode="json"),
             "read_grants": [grant.model_dump(mode="json") for grant in read_grants],
             "record_open_attempts": trace_path is not None,
+            "stack_result_fd": stack_write_fd if stack_capture else None,
+            "worker_deadline": deadline if stack_capture else None,
         }, sort_keys=True).encode("utf-8")
         manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
         manifest_fd, raw_manifest_path = tempfile.mkstemp(
@@ -672,7 +721,8 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
                        "PYTHONPYCACHEPREFIX": str(cache_prefix),
                        "PYTHONPATH": str(Path(__file__).resolve().parents[3])}
         process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, pass_fds=(write_fd,),
+                                   stderr=subprocess.DEVNULL,
+                                   pass_fds=(write_fd, stack_write_fd) if stack_capture else (write_fd,),
                                    env=environment, cwd=runtime, start_new_session=True)
         top_sampler = ProcessResourceSampler(process.pid)
         if trace_path is None:
@@ -680,6 +730,9 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
         sample()
         os.close(write_fd)
         write_fd = -1
+        if stack_capture:
+            os.close(stack_write_fd)
+            stack_write_fd = -1
         chunks: list[bytes] = []
         size = 0
         while True:
@@ -689,8 +742,12 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
             if trace_path is not None and trace_path.stat().st_size > _TRACE_LIMIT:
                 return finish({"kind": "error", "gap": "read_trace_too_large"}, "trace_size_limit")
             sample()
-            ready, _, _ = select.select([read_fd], [], [], min(remaining, 0.01))
+            ready, _, _ = select.select([read_fd, stack_read_fd] if stack_capture and not stack_eof else [read_fd],
+                                        [], [], min(remaining, 0.01))
             if not ready:
+                continue
+            drain_stacks()
+            if read_fd not in ready:
                 continue
             chunk = os.read(read_fd, 16_384)
             if not chunk:
@@ -720,6 +777,10 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
         os.close(read_fd)
         if write_fd >= 0:
             os.close(write_fd)
+        if stack_read_fd >= 0:
+            os.close(stack_read_fd)
+        if stack_write_fd >= 0:
+            os.close(stack_write_fd)
         if manifest_path is not None:
             manifest_path.unlink(missing_ok=True)
 
@@ -1014,6 +1075,7 @@ def run_witness(
     diagnostic_runtime_dir: Path | None = None,
     diagnostic_read_grants: tuple[IsolationReadGrant, ...] = (),
     diagnostic_trace_path: Path | None = None,
+    diagnostic_stack_capture: bool = False,
 ) -> WitnessResult:
     """Observe one candidate-bound input and an independent benign control.
 
@@ -1031,10 +1093,9 @@ def run_witness(
         raise ValueError("nondefault resource profiles are diagnostic-only")
     if diagnostic_runtime_dir is not None and not diagnostic_only:
         raise ValueError("a persistent probe directory is diagnostic-only")
-    if (diagnostic_read_grants or diagnostic_trace_path is not None) and not diagnostic_only:
-        raise ValueError("read grants and syscall tracing are diagnostic-only")
-    if diagnostic_read_grants and diagnostic_trace_path is None:
-        raise ValueError("diagnostic read grants require syscall tracing")
+    if (diagnostic_read_grants or diagnostic_trace_path is not None
+            or diagnostic_stack_capture) and not diagnostic_only:
+        raise ValueError("read grants, stacks and syscall tracing are diagnostic-only")
     if diagnostic_trace_path is not None:
         if not diagnostic_trace_path.is_absolute():
             raise ValueError("diagnostic trace path must be absolute")
@@ -1094,11 +1155,17 @@ def run_witness(
             "isolation_read_grants": [grant.model_dump(mode="json")
                                       for grant in diagnostic_read_grants],
         }
-        if diagnostic_trace_path is None:
+        if (diagnostic_trace_path is None and not diagnostic_read_grants
+                and not diagnostic_stack_capture):
             event = _run_worker(manifest, runtime, probe_path)
         else:
             event = _run_worker(manifest, runtime, probe_path,
-                                diagnostic_read_grants, diagnostic_trace_path)
+                                diagnostic_read_grants, diagnostic_trace_path,
+                                diagnostic_stack_capture)
+        if diagnostic_only:
+            details["strace_enabled"] = diagnostic_trace_path is not None
+            details["stack_capture_enabled"] = diagnostic_stack_capture
+        if diagnostic_trace_path is not None:
             from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import summarize_trace
             roots = tuple(Path(path) for path in event.get("isolation_read_roots", []))
             summary = (summarize_trace(diagnostic_trace_path, roots)
@@ -1227,12 +1294,20 @@ def _main() -> None:
         read_grants = tuple(IsolationReadGrant.model_validate(item)
                             for item in envelope["read_grants"])
         record_open_attempts = envelope["record_open_attempts"] is True
+        stack_result_fd = envelope["stack_result_fd"]
+        worker_deadline = envelope["worker_deadline"]
+        if stack_result_fd is not None and (
+                type(stack_result_fd) is not int or stack_result_fd <= 2
+                or stack_result_fd == result_fd
+                or not isinstance(worker_deadline, (int, float))):
+            raise ValueError("invalid diagnostic stack transport")
     except BaseException as error:
         _write_result(result_fd, {"kind": "error", "gap": "invalid_worker_manifest",
                                   "error": f"{type(error).__name__}: {error}",
                                   "interpreter": _interpreter_identity(None)})
         return
-    _worker(manifest, result_fd, runtime, probe_path, read_grants, record_open_attempts)
+    _worker(manifest, result_fd, runtime, probe_path, read_grants, record_open_attempts,
+            stack_result_fd, worker_deadline)
 
 
 if __name__ == "__main__":

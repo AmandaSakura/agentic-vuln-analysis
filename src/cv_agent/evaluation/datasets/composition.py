@@ -51,9 +51,14 @@ def compose_advisory_config(
     })
 
 
-def load_advisory_config(root: Path, profile_path: str) -> PythonHeldoutPairExperimentConfig:
+def load_advisory_config(
+    root: Path,
+    profile_path: str,
+    *,
+    dataset_path: str = "configs/datasets/advisory_pairs_v4.json",
+) -> PythonHeldoutPairExperimentConfig:
     dataset = AdvisoryDataset.model_validate_json(
-        (root / "configs/datasets/advisory_pairs_v4.json").read_text()
+        (root / dataset_path).read_text()
     )
     profile = AdvisoryRunProfile.model_validate_json((root / profile_path).read_text())
     return compose_advisory_config(dataset, profile)

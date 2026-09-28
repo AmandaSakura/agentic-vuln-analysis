@@ -65,11 +65,16 @@ def prepare_manifest(
     template_path: Path,
     case_id: str,
     python_executable: Path,
+    *,
+    dataset_path: Path | None = None,
 ) -> WitnessManifest:
     if not python_executable.is_absolute() or not python_executable.is_file():
         raise ValueError("witness interpreter must be an existing absolute venv executable")
     profile_relative = profile_path.resolve(strict=True).relative_to(PROJECT_ROOT).as_posix()
-    config = load_advisory_config(PROJECT_ROOT, profile_relative)
+    dataset_relative = (dataset_path.resolve(strict=True).relative_to(PROJECT_ROOT).as_posix()
+                        if dataset_path is not None else "configs/datasets/advisory_pairs_v4.json")
+    config = load_advisory_config(PROJECT_ROOT, profile_relative,
+                                  dataset_path=dataset_relative)
     matches = [(pair, case) for pair in config.pairs for case in pair.cases
                if case.case_id == case_id]
     if len(matches) != 1:
@@ -113,11 +118,14 @@ def main() -> None:
     parser.add_argument("case_id")
     parser.add_argument("python_executable", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--dataset", type=Path,
+                        help="explicit dataset version for this diagnostic; default remains v4")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     manifest = prepare_manifest(
         args.config, args.template, args.case_id, args.python_executable,
+        dataset_path=args.dataset,
     )
     args.output.write_text(manifest.model_dump_json(indent=2) + "\n")
     print(args.output)

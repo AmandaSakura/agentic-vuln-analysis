@@ -73,7 +73,7 @@ def test_kernel_cpu_exhaustion_is_source_distinct_and_accounts_target_and_tracer
             def serve(self, model_uri):
                 while True:
                     pass
-    """, _profile())
+    """, _profile(soft=2, hard=4))
     result = _traced_run(tmp_path, manifest)
     assert result.status == ValidationStatus.UNRESOLVED, result.model_dump()
     assert "cpu_limit_exceeded" in result.gaps
@@ -82,12 +82,12 @@ def test_kernel_cpu_exhaustion_is_source_distinct_and_accounts_target_and_tracer
     assert event["gap"] == "cpu_limit_exceeded"
     assert event["cpu_limit_signal"]["si_code"] == 128
     assert event["cpu_limit_signal"]["si_pid"] == 0
-    assert event["applied_resource_limits"]["cpu"] == [1, 3]
+    assert event["applied_resource_limits"]["cpu"] == [2, 4]
     assert event.get("parent_kill_reason") is None
     self_usage = event["target_self_usage"]
     assert self_usage["pid"] == event["target_pid"]
     own_cpu = self_usage["user_cpu_seconds"] + self_usage["system_cpu_seconds"]
-    assert own_cpu >= 0.8
+    assert own_cpu >= 1.8
     accounting = event["resource_accounting"]
     target, tracer = accounting["target"], accounting["tracer"]
     assert target["self_reported_usage"] == self_usage

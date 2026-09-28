@@ -24,6 +24,10 @@ def main() -> None:
     parser.add_argument("output", type=Path)
     parser.add_argument("--read-grants", type=Path,
                         help="JSON list of reviewed, identity-bound leaf read grants")
+    parser.add_argument("--no-strace", action="store_true",
+                        help="keep isolation and the command audit hook without syscall tracing")
+    parser.add_argument("--dump-stacks", action="store_true",
+                        help="capture all-thread Python stacks three seconds before the worker deadline")
     args = parser.parse_args()
     if not args.runtime_dir.is_absolute():
         raise ValueError("shared diagnostic runtime path must be absolute")
@@ -41,7 +45,9 @@ def main() -> None:
         diagnostic_only=True,
         diagnostic_runtime_dir=args.runtime_dir,
         diagnostic_read_grants=grants,
-        diagnostic_trace_path=args.output.with_suffix(".strace.log").absolute(),
+        diagnostic_trace_path=(None if args.no_strace else
+                               args.output.with_suffix(".strace.log").absolute()),
+        diagnostic_stack_capture=args.dump_stacks,
     )
     usage_after = resource.getrusage(resource.RUSAGE_CHILDREN)
     record = {
@@ -49,6 +55,8 @@ def main() -> None:
         "source_digest": manifest.subject.source_digest,
         "read_policy_sha256": hashlib.sha256(grant_bytes).hexdigest(),
         "resource_profile": manifest.resource_profile.model_dump(mode="json"),
+        "strace_enabled": not args.no_strace,
+        "stack_capture_enabled": args.dump_stacks,
         "elapsed_seconds": time.monotonic() - start,
         "child_cpu_seconds": {
             "user": usage_after.ru_utime - usage_before.ru_utime,
