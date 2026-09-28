@@ -49,7 +49,7 @@
 
 ## 5. Stage 2c and stop
 
-- [ ] Reuse the two v5 manifests, pinned existing Python 3.12 environments, original shared path/nonce, four exact read grants and unchanged heavy_target. No internal stubs, dependency installation, strace or model requests.
-- [ ] Run each snapshot once in verification mode; that invocation includes one probe and its benign target control. Save complete source/branch/value/preexec/control/argv/replay records and machine-checked same-input differential.
-- [ ] Preserve original artifacts; commit durable results. hp003_b literal remains unresolved. If hp003_a does not confirm, report its exact gaps and stop without additional modeling/runs.
-- [ ] State that input manifest is human-authored; this measures tool verification, not autonomous system discovery.
+- [x] Reuse the two v5 manifests, pinned existing Python 3.12 environments, original shared path/nonce, four exact read grants and unchanged heavy_target. No internal stubs, dependency installation, strace or model requests.
+- [x] Run each snapshot once in verification mode; that invocation includes one probe and its benign target control. Save complete source/branch/value/preexec/control/argv/replay records and machine-checked same-input differential.
+- [x] Preserve original artifacts; commit durable results. hp003_b literal remains unresolved. If hp003_a does not confirm, report its exact gaps and stop without additional modeling/runs.
+- [x] State that input manifest is human-authored; this measures tool verification, not autonomous system discovery.
