@@ -1,0 +1,4349 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "phase_id": "phase2",
+  "run_id": "d735d835e8af451cbd8b260de12e2f4c",
+  "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+  "run_directory": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c",
+  "configuration": "configs/experiments/witness_scenario_phase2.json",
+  "full_live_gate": {
+    "path": "artifacts/pytest_gate/2a8732cc4ce34624bf53b52f207622f0/pytest.log",
+    "passed": 2427,
+    "elapsed_seconds": 270.88
+  },
+  "preregistration_preserved_sha256": "286643d2c557f4cbfb0dde219d4feb0438f088ceabf2639dfe3badf468f2cfdc",
+  "expected_model": "deepseek-flash",
+  "actual_raw_returned_model_ids": [
+    "deepseek-flash"
+  ],
+  "usage": {
+    "requests": 14,
+    "responses": 14,
+    "invalid_responses": 0,
+    "requests_without_reported_usage": 0,
+    "reported_total_tokens": 90153,
+    "returned_model_ids": [
+      "deepseek-flash"
+    ],
+    "monetary_cost": null,
+    "note": "Token subtotal includes malformed responses with reported usage; unknown usage and pricing are not zero.",
+    "usage_conflicts": 0,
+    "orphaned_responses": 0,
+    "duplicate_request_starts": 0
+  },
+  "request_budget": {
+    "phase_limit": 30,
+    "phase_actual": 14,
+    "max_seconds": 3600,
+    "cumulative_limit": 210,
+    "cumulative_reported_token_limit": 2500000
+  },
+  "authorization_accounting": {
+    "ledger_path": "artifacts/remaining_work_20260929/authorization_ledger.json",
+    "cumulative_requests": 46,
+    "cumulative_reported_tokens": 281330,
+    "cumulative_accounted_tokens": 281330,
+    "raw_usage_ledger_disagreements": []
+  },
+  "hard_stop": null,
+  "source_artifacts": {
+    "events.jsonl": {
+      "path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/events.jsonl",
+      "sha256": "038e37ea6dd896cad855530dbdaf1f45e35222a39d44448eb534df5810ba3390"
+    },
+    "summary.json": {
+      "path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/summary.json",
+      "sha256": "3f05db8e9f06d52c20e99c12844d633334044e1efee747897bdea4683761e900"
+    },
+    "request_audit.json": {
+      "path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/request_audit.json",
+      "sha256": "e9faf0d335c45cedfe39d1a979f372d48ee2285410ce808a2a10adb3265588e7"
+    }
+  },
+  "cells": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "scenario_proposer": "actual_model",
+      "status": "abstained",
+      "admitted_label": "ABSTAIN",
+      "admitted_vote_validation_statuses": [
+        "UNRESOLVED"
+      ],
+      "final_rationales": [
+        "inspect_command_construction returned UNAVAILABLE/UNRESOLVED and the bounded execution witness returned UNRESOLVED (recorder prefix not established), so no candidate-bound command-construction or flow evidence establishes the weakness."
+      ],
+      "confidence": 0.4,
+      "path": "single",
+      "usage": {
+        "requests": 8,
+        "responses": 8,
+        "invalid_responses": 0,
+        "requests_without_reported_usage": 0,
+        "reported_total_tokens": 51842,
+        "returned_model_ids": [
+          "deepseek-flash"
+        ],
+        "monetary_cost": null,
+        "note": "Token subtotal includes malformed responses with reported usage; unknown usage and pricing are not zero.",
+        "usage_conflicts": 0,
+        "orphaned_responses": 0,
+        "duplicate_request_starts": 0
+      },
+      "model_requests": 8,
+      "tool_calls": 7,
+      "tool_sequence": [
+        "inspect_command_construction",
+        "run_static_check",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "search_symbols",
+        "search_symbols"
+      ],
+      "cell_elapsed_seconds": 29.69,
+      "witness_call_elapsed_seconds": 14.548877000000001,
+      "witness_tool_calls": 3,
+      "accepted_preparation_responses": 2,
+      "executed_witness_attempts": 1,
+      "complete_delivered_runtime_observations": 1,
+      "tool_observation_token_count": 8192,
+      "retrieval_context_token_count": 4096,
+      "schema_rejections": 0,
+      "rejected_material_proposals": 2,
+      "automated_failure_diagnostics": {
+        "qualified_success": false,
+        "primary": "F3",
+        "contributors": [
+          "F3",
+          "F6"
+        ],
+        "delivered_confirmation": false,
+        "producer_confirmation": false,
+        "witness_tool_calls": 3,
+        "executed_witness_attempts": 1,
+        "preparation_responses": 2,
+        "runtime_unresolved_observations": 1,
+        "schema_rejections": 0,
+        "gaps": [
+          "probe_input_parameter_not_unique",
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:enable_mlserver",
+          "constructor_parameter_missing:config",
+          "constructor_parameter_missing:env_manager",
+          "recorder_prefix_not_established"
+        ],
+        "infrastructure_gaps": [],
+        "note": "Failure codes summarize recorded facts and can overlap. Accepting scenario preparation does not establish runtime scenario failure. Unsupported or wrong premises are not classified as resource failures. The phase report must review these facts before authorizing a repair."
+      },
+      "reviewed_diagnosis": {
+        "acceptance": "failed_positive_acceptance",
+        "primary": "F3",
+        "contributors": [
+          "F6"
+        ],
+        "reason": "A fully supplied classified scene executed, but enable_mlserver=false selected scoring_server/uvicorn. The positive witness did not establish its recorder prefix, returned UNRESOLVED before control/replay, and did not confirm the intended positive case. Local observation and finalization budget limits constrained further reasoning; global request caps were not exhausted."
+      },
+      "runtime_artifact_path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-zcnw6igu/witness-result.json"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "scenario_proposer": "actual_model",
+      "status": "abstained",
+      "admitted_label": "ABSTAIN",
+      "admitted_vote_validation_statuses": [
+        "UNRESOLVED"
+      ],
+      "final_rationales": [
+        "inspect_command_construction returned UNAVAILABLE/UNRESOLVED (callee not admitted) and the bounded witness returned UNRESOLVED, so no candidate-bound command-construction evidence establishes the property."
+      ],
+      "confidence": 0.3,
+      "path": "single",
+      "usage": {
+        "requests": 6,
+        "responses": 6,
+        "invalid_responses": 0,
+        "requests_without_reported_usage": 0,
+        "reported_total_tokens": 38311,
+        "returned_model_ids": [
+          "deepseek-flash"
+        ],
+        "monetary_cost": null,
+        "note": "Token subtotal includes malformed responses with reported usage; unknown usage and pricing are not zero.",
+        "usage_conflicts": 0,
+        "orphaned_responses": 0,
+        "duplicate_request_starts": 0
+      },
+      "model_requests": 6,
+      "tool_calls": 6,
+      "tool_sequence": [
+        "run_bounded_execution_witness",
+        "inspect_command_construction",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "read_span",
+        "search_symbols"
+      ],
+      "cell_elapsed_seconds": 27.969,
+      "witness_call_elapsed_seconds": 14.667903,
+      "witness_tool_calls": 3,
+      "accepted_preparation_responses": 2,
+      "executed_witness_attempts": 1,
+      "complete_delivered_runtime_observations": 1,
+      "tool_observation_token_count": 8192,
+      "retrieval_context_token_count": 4096,
+      "schema_rejections": 0,
+      "rejected_material_proposals": 1,
+      "automated_failure_diagnostics": {
+        "qualified_success": false,
+        "primary": "F3",
+        "contributors": [
+          "F3",
+          "F6"
+        ],
+        "delivered_confirmation": false,
+        "producer_confirmation": false,
+        "witness_tool_calls": 3,
+        "executed_witness_attempts": 1,
+        "preparation_responses": 2,
+        "runtime_unresolved_observations": 1,
+        "schema_rejections": 0,
+        "gaps": [
+          "probe_input_parameter_not_unique",
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:enable_mlserver",
+          "constructor_parameter_missing:config",
+          "constructor_parameter_missing:env_manager",
+          "recorder_prefix_not_established"
+        ],
+        "infrastructure_gaps": [],
+        "note": "Failure codes summarize recorded facts and can overlap. Accepting scenario preparation does not establish runtime scenario failure. Unsupported or wrong premises are not classified as resource failures. The phase report must review these facts before authorizing a repair."
+      },
+      "reviewed_diagnosis": {
+        "acceptance": "expected_fixed_side_abstention",
+        "primary": null,
+        "contributors": [],
+        "observed_runtime_diagnostics": [
+          "recorder_prefix_not_established",
+          "local_observation_budget_exhausted"
+        ],
+        "reason": "ABSTAIN/UNRESOLVED meets the preregistered fixed-side criterion. This run chose the scoring_server/uvicorn branch and did not exercise the repaired mlserver branch. Automatic F3/F6 diagnoses remain preserved as facts; UNRESOLVED alone is not causal evidence that a fixed-side scene is wrong."
+      },
+      "runtime_artifact_path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-_uc5rxad/witness-result.json"
+    }
+  ],
+  "requests_in_actual_order": [
+    {
+      "request_id": "36b7f7dcbf374c91955f90a360eaa04c",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:13.608028+00:00",
+      "response_received_time": "2026-09-29T14:08:14.924383+00:00",
+      "response_id": "2ba3ecc2-6eb4-4edc-8aac-35fec51f2ca9",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 4712,
+        "completion_tokens": 137,
+        "total_tokens": 4849,
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 4584
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 4849,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 4849,
+        "reported_usage": {
+          "completion_tokens": 137,
+          "prompt_cache_hit_tokens": 128,
+          "prompt_cache_miss_tokens": 4584,
+          "prompt_tokens": 4712,
+          "prompt_tokens_details": {
+            "cached_tokens": 128
+          },
+          "total_tokens": 4849
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 137,
+            "prompt_cache_hit_tokens": 128,
+            "prompt_cache_miss_tokens": 4584,
+            "prompt_tokens": 4712,
+            "prompt_tokens_details": {
+              "cached_tokens": 128
+            },
+            "total_tokens": 4849
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 51962
+      }
+    },
+    {
+      "request_id": "e2299055601b40758f063fed858ae909",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:15.449982+00:00",
+      "response_received_time": "2026-09-29T14:08:16.214763+00:00",
+      "response_id": "8b751121-662d-499e-8aaa-3bb2378bff71",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 5351,
+        "completion_tokens": 69,
+        "total_tokens": 5420,
+        "prompt_tokens_details": {
+          "cached_tokens": 4736
+        },
+        "prompt_cache_hit_tokens": 4736,
+        "prompt_cache_miss_tokens": 615
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 5420,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 5420,
+        "reported_usage": {
+          "completion_tokens": 69,
+          "prompt_cache_hit_tokens": 4736,
+          "prompt_cache_miss_tokens": 615,
+          "prompt_tokens": 5351,
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          },
+          "total_tokens": 5420
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 69,
+            "prompt_cache_hit_tokens": 4736,
+            "prompt_cache_miss_tokens": 615,
+            "prompt_tokens": 5351,
+            "prompt_tokens_details": {
+              "cached_tokens": 4736
+            },
+            "total_tokens": 5420
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 57304
+      }
+    },
+    {
+      "request_id": "877424b954fc497bb34e0acf317fc29b",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:18.836467+00:00",
+      "response_received_time": "2026-09-29T14:08:19.810892+00:00",
+      "response_id": "74295204-b148-4b42-8dac-594e243dcd5c",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 5798,
+        "completion_tokens": 145,
+        "total_tokens": 5943,
+        "prompt_tokens_details": {
+          "cached_tokens": 5376
+        },
+        "prompt_cache_hit_tokens": 5376,
+        "prompt_cache_miss_tokens": 422
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 5943,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 5943,
+        "reported_usage": {
+          "completion_tokens": 145,
+          "prompt_cache_hit_tokens": 5376,
+          "prompt_cache_miss_tokens": 422,
+          "prompt_tokens": 5798,
+          "prompt_tokens_details": {
+            "cached_tokens": 5376
+          },
+          "total_tokens": 5943
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 145,
+            "prompt_cache_hit_tokens": 5376,
+            "prompt_cache_miss_tokens": 422,
+            "prompt_tokens": 5798,
+            "prompt_tokens_details": {
+              "cached_tokens": 5376
+            },
+            "total_tokens": 5943
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 61860
+      }
+    },
+    {
+      "request_id": "ac0956929ed346308c26931c337a810d",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:22.843217+00:00",
+      "response_received_time": "2026-09-29T14:08:24.821429+00:00",
+      "response_id": "f73d2dd4-2866-4a27-8092-7b7b625c3af6",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6654,
+        "completion_tokens": 372,
+        "total_tokens": 7026,
+        "prompt_tokens_details": {
+          "cached_tokens": 5760
+        },
+        "prompt_cache_hit_tokens": 5760,
+        "prompt_cache_miss_tokens": 894
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 7026,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 7026,
+        "reported_usage": {
+          "completion_tokens": 372,
+          "prompt_cache_hit_tokens": 5760,
+          "prompt_cache_miss_tokens": 894,
+          "prompt_tokens": 6654,
+          "prompt_tokens_details": {
+            "cached_tokens": 5760
+          },
+          "total_tokens": 7026
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 372,
+            "prompt_cache_hit_tokens": 5760,
+            "prompt_cache_miss_tokens": 894,
+            "prompt_tokens": 6654,
+            "prompt_tokens_details": {
+              "cached_tokens": 5760
+            },
+            "total_tokens": 7026
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 69800
+      }
+    },
+    {
+      "request_id": "dd9bb10d8dab4e6ab707bb86a1bf0640",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:33.888412+00:00",
+      "response_received_time": "2026-09-29T14:08:35.252182+00:00",
+      "response_id": "ccfc7a1a-dff4-4b0b-9444-7c78ea7516ef",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 8206,
+        "completion_tokens": 146,
+        "total_tokens": 8352,
+        "prompt_tokens_details": {
+          "cached_tokens": 6912
+        },
+        "prompt_cache_hit_tokens": 6912,
+        "prompt_cache_miss_tokens": 1294
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 8352,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 8352,
+        "reported_usage": {
+          "completion_tokens": 146,
+          "prompt_cache_hit_tokens": 6912,
+          "prompt_cache_miss_tokens": 1294,
+          "prompt_tokens": 8206,
+          "prompt_tokens_details": {
+            "cached_tokens": 6912
+          },
+          "total_tokens": 8352
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 146,
+            "prompt_cache_hit_tokens": 6912,
+            "prompt_cache_miss_tokens": 1294,
+            "prompt_tokens": 8206,
+            "prompt_tokens_details": {
+              "cached_tokens": 6912
+            },
+            "total_tokens": 8352
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 81756
+      }
+    },
+    {
+      "request_id": "13bf6ea6bbc14bc29e757aba4da8864c",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:35.328460+00:00",
+      "response_received_time": "2026-09-29T14:08:36.441603+00:00",
+      "response_id": "5b7480f2-f698-48b4-9bf3-0c3c180d9342",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6186,
+        "completion_tokens": 173,
+        "total_tokens": 6359,
+        "prompt_tokens_details": {
+          "cached_tokens": 768
+        },
+        "prompt_cache_hit_tokens": 768,
+        "prompt_cache_miss_tokens": 5418
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 6359,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 6359,
+        "reported_usage": {
+          "completion_tokens": 173,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 5418,
+          "prompt_tokens": 6186,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 6359
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 173,
+            "prompt_cache_hit_tokens": 768,
+            "prompt_cache_miss_tokens": 5418,
+            "prompt_tokens": 6186,
+            "prompt_tokens_details": {
+              "cached_tokens": 768
+            },
+            "total_tokens": 6359
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 66498
+      }
+    },
+    {
+      "request_id": "6ec2df3c9dcd45649ed89da5accea1b3",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:36.492672+00:00",
+      "response_received_time": "2026-09-29T14:08:37.626433+00:00",
+      "response_id": "630c61bf-3d19-45f1-a830-78d979f1f5f4",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6624,
+        "completion_tokens": 155,
+        "total_tokens": 6779,
+        "prompt_tokens_details": {
+          "cached_tokens": 6272
+        },
+        "prompt_cache_hit_tokens": 6272,
+        "prompt_cache_miss_tokens": 352
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 6779,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 6779,
+        "reported_usage": {
+          "completion_tokens": 155,
+          "prompt_cache_hit_tokens": 6272,
+          "prompt_cache_miss_tokens": 352,
+          "prompt_tokens": 6624,
+          "prompt_tokens_details": {
+            "cached_tokens": 6272
+          },
+          "total_tokens": 6779
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 155,
+            "prompt_cache_hit_tokens": 6272,
+            "prompt_cache_miss_tokens": 352,
+            "prompt_tokens": 6624,
+            "prompt_tokens_details": {
+              "cached_tokens": 6272
+            },
+            "total_tokens": 6779
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 71102
+      }
+    },
+    {
+      "request_id": "474df647281445a7be109defe7b4a389",
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:37.676900+00:00",
+      "response_received_time": "2026-09-29T14:08:38.870833+00:00",
+      "response_id": "ae94db78-1c94-4b55-8f27-1c53570847b4",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6963,
+        "completion_tokens": 151,
+        "total_tokens": 7114,
+        "prompt_tokens_details": {
+          "cached_tokens": 6656
+        },
+        "prompt_cache_hit_tokens": 6656,
+        "prompt_cache_miss_tokens": 307
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 7114,
+        "cell_key": "[\"model_proposed\", \"hp003_a\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 7114,
+        "reported_usage": {
+          "completion_tokens": 151,
+          "prompt_cache_hit_tokens": 6656,
+          "prompt_cache_miss_tokens": 307,
+          "prompt_tokens": 6963,
+          "prompt_tokens_details": {
+            "cached_tokens": 6656
+          },
+          "total_tokens": 7114
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 151,
+            "prompt_cache_hit_tokens": 6656,
+            "prompt_cache_miss_tokens": 307,
+            "prompt_tokens": 6963,
+            "prompt_tokens_details": {
+              "cached_tokens": 6656
+            },
+            "total_tokens": 7114
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 74770
+      }
+    },
+    {
+      "request_id": "d816ba2737e8426ebb3703ce1c8f27a8",
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:43.187560+00:00",
+      "response_received_time": "2026-09-29T14:08:44.227032+00:00",
+      "response_id": "eacce0e3-92a3-4645-8e6e-295409ddaa29",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 4712,
+        "completion_tokens": 139,
+        "total_tokens": 4851,
+        "prompt_tokens_details": {
+          "cached_tokens": 4480
+        },
+        "prompt_cache_hit_tokens": 4480,
+        "prompt_cache_miss_tokens": 232
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 4851,
+        "cell_key": "[\"model_proposed\", \"hp003_b\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 4851,
+        "reported_usage": {
+          "completion_tokens": 139,
+          "prompt_cache_hit_tokens": 4480,
+          "prompt_cache_miss_tokens": 232,
+          "prompt_tokens": 4712,
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          },
+          "total_tokens": 4851
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 139,
+            "prompt_cache_hit_tokens": 4480,
+            "prompt_cache_miss_tokens": 232,
+            "prompt_tokens": 4712,
+            "prompt_tokens_details": {
+              "cached_tokens": 4480
+            },
+            "total_tokens": 4851
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 51962
+      }
+    },
+    {
+      "request_id": "4326f02a07d348e79d5987122f431840",
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:47.647962+00:00",
+      "response_received_time": "2026-09-29T14:08:48.837038+00:00",
+      "response_id": "6a1b2223-5570-436b-b5ca-f4e832294f02",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 5574,
+        "completion_tokens": 144,
+        "total_tokens": 5718,
+        "prompt_tokens_details": {
+          "cached_tokens": 4736
+        },
+        "prompt_cache_hit_tokens": 4736,
+        "prompt_cache_miss_tokens": 838
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 5718,
+        "cell_key": "[\"model_proposed\", \"hp003_b\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 5718,
+        "reported_usage": {
+          "completion_tokens": 144,
+          "prompt_cache_hit_tokens": 4736,
+          "prompt_cache_miss_tokens": 838,
+          "prompt_tokens": 5574,
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          },
+          "total_tokens": 5718
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 144,
+            "prompt_cache_hit_tokens": 4736,
+            "prompt_cache_miss_tokens": 838,
+            "prompt_tokens": 5574,
+            "prompt_tokens_details": {
+              "cached_tokens": 4736
+            },
+            "total_tokens": 5718
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 59858
+      }
+    },
+    {
+      "request_id": "f72ddb3aa0744972801b02f8a21d26e3",
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:08:51.690613+00:00",
+      "response_received_time": "2026-09-29T14:08:53.825111+00:00",
+      "response_id": "ad9729e1-de5b-48f6-8115-1dda4ca971e6",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6425,
+        "completion_tokens": 390,
+        "total_tokens": 6815,
+        "prompt_tokens_details": {
+          "cached_tokens": 5632
+        },
+        "prompt_cache_hit_tokens": 5632,
+        "prompt_cache_miss_tokens": 793
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 6815,
+        "cell_key": "[\"model_proposed\", \"hp003_b\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 6815,
+        "reported_usage": {
+          "completion_tokens": 390,
+          "prompt_cache_hit_tokens": 5632,
+          "prompt_cache_miss_tokens": 793,
+          "prompt_tokens": 6425,
+          "prompt_tokens_details": {
+            "cached_tokens": 5632
+          },
+          "total_tokens": 6815
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 390,
+            "prompt_cache_hit_tokens": 5632,
+            "prompt_cache_miss_tokens": 793,
+            "prompt_tokens": 6425,
+            "prompt_tokens_details": {
+              "cached_tokens": 5632
+            },
+            "total_tokens": 6815
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 67784
+      }
+    },
+    {
+      "request_id": "6b2a918c3a9d48bd84583b0d623e47d4",
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:09:02.879883+00:00",
+      "response_received_time": "2026-09-29T14:09:03.870585+00:00",
+      "response_id": "7d6ed11f-64d9-4c7c-96de-3504d8c468cd",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 7994,
+        "completion_tokens": 107,
+        "total_tokens": 8101,
+        "prompt_tokens_details": {
+          "cached_tokens": 6784
+        },
+        "prompt_cache_hit_tokens": 6784,
+        "prompt_cache_miss_tokens": 1210
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 8101,
+        "cell_key": "[\"model_proposed\", \"hp003_b\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 8101,
+        "reported_usage": {
+          "completion_tokens": 107,
+          "prompt_cache_hit_tokens": 6784,
+          "prompt_cache_miss_tokens": 1210,
+          "prompt_tokens": 7994,
+          "prompt_tokens_details": {
+            "cached_tokens": 6784
+          },
+          "total_tokens": 8101
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 107,
+            "prompt_cache_hit_tokens": 6784,
+            "prompt_cache_miss_tokens": 1210,
+            "prompt_tokens": 7994,
+            "prompt_tokens_details": {
+              "cached_tokens": 6784
+            },
+            "total_tokens": 8101
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 79828
+      }
+    },
+    {
+      "request_id": "f186cedd3d6347f2a9fa62b87fb89355",
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:09:03.935817+00:00",
+      "response_received_time": "2026-09-29T14:09:05.592091+00:00",
+      "response_id": "e2fa0361-e570-439a-86f9-ccb3eb2d6d4a",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6048,
+        "completion_tokens": 187,
+        "total_tokens": 6235,
+        "prompt_tokens_details": {
+          "cached_tokens": 2176
+        },
+        "prompt_cache_hit_tokens": 2176,
+        "prompt_cache_miss_tokens": 3872
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 6235,
+        "cell_key": "[\"model_proposed\", \"hp003_b\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 6235,
+        "reported_usage": {
+          "completion_tokens": 187,
+          "prompt_cache_hit_tokens": 2176,
+          "prompt_cache_miss_tokens": 3872,
+          "prompt_tokens": 6048,
+          "prompt_tokens_details": {
+            "cached_tokens": 2176
+          },
+          "total_tokens": 6235
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 187,
+            "prompt_cache_hit_tokens": 2176,
+            "prompt_cache_miss_tokens": 3872,
+            "prompt_tokens": 6048,
+            "prompt_tokens_details": {
+              "cached_tokens": 2176
+            },
+            "total_tokens": 6235
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 65198
+      }
+    },
+    {
+      "request_id": "932666a730c64b02ac2c48e349fcf0b8",
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "start_time": "2026-09-29T14:09:05.644052+00:00",
+      "response_received_time": "2026-09-29T14:09:06.855419+00:00",
+      "response_id": "ba3e34d4-6890-402b-b675-c3fedf7cfc56",
+      "actual_raw_returned_model_id": "deepseek-flash",
+      "raw_reported_usage": {
+        "prompt_tokens": 6419,
+        "completion_tokens": 172,
+        "total_tokens": 6591,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144
+        },
+        "prompt_cache_hit_tokens": 6144,
+        "prompt_cache_miss_tokens": 275
+      },
+      "durable_authorization_ledger_entry": {
+        "accounted_tokens": 6591,
+        "cell_key": "[\"model_proposed\", \"hp003_b\"]",
+        "phase_id": "phase2",
+        "reported_tokens": 6591,
+        "reported_usage": {
+          "completion_tokens": 172,
+          "prompt_cache_hit_tokens": 6144,
+          "prompt_cache_miss_tokens": 275,
+          "prompt_tokens": 6419,
+          "prompt_tokens_details": {
+            "cached_tokens": 6144
+          },
+          "total_tokens": 6591
+        },
+        "reported_usage_history": [
+          {
+            "completion_tokens": 172,
+            "prompt_cache_hit_tokens": 6144,
+            "prompt_cache_miss_tokens": 275,
+            "prompt_tokens": 6419,
+            "prompt_tokens_details": {
+              "cached_tokens": 6144
+            },
+            "total_tokens": 6591
+          }
+        ],
+        "response_received": true,
+        "returned_model_id": "deepseek-flash",
+        "source_commit": "d23e59c9d13bdd5e304f96f6628287d3f222c7c7",
+        "token_reservation": 69012
+      }
+    }
+  ],
+  "all_raw_scenario_hypotheses": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "877424b954fc497bb34e0acf317fc29b",
+      "event_index": 18,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "value": "model_uri",
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line."
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "ac0956929ed346308c26931c337a810d",
+      "event_index": 23,
+      "scenario_hypothesis": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config is supplied by the deployment, not the request.",
+            "value": "None"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager and is a deployment setting.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "enable_mlserver selects mlserver vs scoring_server and is a deployment flag.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host is a deployment setting.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port is a deployment setting.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server timeout is a deployment setting.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+          "value": "model_uri"
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "4326f02a07d348e79d5987122f431840",
+      "event_index": 54,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "value": "model_uri",
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string."
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "f72ddb3aa0744972801b02f8a21d26e3",
+      "event_index": 59,
+      "scenario_hypothesis": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config dict; default None in typical serving deployments.",
+            "value": null
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend env_manager selects environment handling; default 'local' for serving.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; default False.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; default 127.0.0.1.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; default 5000.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server startup timeout in seconds; default 60.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string.",
+          "value": "model_uri"
+        }
+      }
+    }
+  ],
+  "all_witness_calls": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "e2299055601b40758f063fed858ae909",
+      "start_event_index": 13,
+      "result_event_index": 14,
+      "elapsed_seconds": 2.565343,
+      "call": {
+        "call_id": "call_00_FzanVAXd02KvYGxIDwjx7420",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {}
+        }
+      },
+      "citation_id": "scan/tool:3",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 950,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null,
+      "raw_arguments": {
+        "constructor_parameters": {},
+        "precondition_files": {}
+      },
+      "accepted_preparation": {
+        "state": "preparation",
+        "mode": "model_proposed",
+        "action": "propose_scenario",
+        "missing_inputs": [
+          {
+            "name": "input_parameter",
+            "destination": "scenario_hypothesis",
+            "classified": true
+          }
+        ]
+      },
+      "payload": {
+        "classification_status": "not_supplied",
+        "gaps": [
+          "probe_input_parameter_not_unique"
+        ],
+        "generated": {
+          "entry": {
+            "class_name": "PyFuncBackend",
+            "first_line": 229,
+            "method_name": "serve",
+            "module_name": "mlflow.pyfunc.backend",
+            "relative_path": "mlflow/pyfunc/backend.py"
+          },
+          "entry_qualified": true
+        },
+        "missing_constructor_parameters": [],
+        "preparation": {
+          "action": "propose_scenario",
+          "missing_inputs": [
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis",
+              "name": "input_parameter"
+            }
+          ],
+          "mode": "model_proposed",
+          "state": "preparation"
+        },
+        "raw_status": "UNRESOLVED",
+        "scenario_origin": null,
+        "scenario_sha256": null,
+        "scope_note": "No witness has executed. Reported call-data gaps describe preparation; scenario premises require independent runtime verification.",
+        "status": "UNRESOLVED"
+      },
+      "classification_status": "not_supplied"
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "877424b954fc497bb34e0acf317fc29b",
+      "start_event_index": 18,
+      "result_event_index": 19,
+      "elapsed_seconds": 2.973259,
+      "call": {
+        "call_id": "call_00_0LqEf9lhnODNgANax89d8902",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "input_parameter": {
+              "value": "model_uri",
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line."
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:4",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 1798,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null,
+      "raw_arguments": {
+        "constructor_parameters": {},
+        "precondition_files": {},
+        "scenario_hypothesis": {
+          "input_parameter": {
+            "value": "model_uri",
+            "classification": "attacker_controlled_input",
+            "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line."
+          }
+        }
+      },
+      "accepted_preparation": {
+        "state": "preparation",
+        "mode": "model_proposed",
+        "action": "complete_call_data",
+        "missing_inputs": [
+          {
+            "name": "port",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "host",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "timeout",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "enable_mlserver",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "config",
+            "destination": "scenario_hypothesis.constructor_parameters",
+            "classified": true
+          },
+          {
+            "name": "env_manager",
+            "destination": "scenario_hypothesis.constructor_parameters",
+            "classified": true
+          }
+        ]
+      },
+      "payload": {
+        "classification_status": "complete",
+        "gaps": [
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:enable_mlserver",
+          "constructor_parameter_missing:config",
+          "constructor_parameter_missing:env_manager"
+        ],
+        "generated": {
+          "entry": {
+            "class_name": "PyFuncBackend",
+            "first_line": 229,
+            "method_name": "serve",
+            "module_name": "mlflow.pyfunc.backend",
+            "relative_path": "mlflow/pyfunc/backend.py"
+          },
+          "entry_qualified": true
+        },
+        "missing_constructor_parameters": [
+          "config",
+          "env_manager"
+        ],
+        "preparation": {
+          "action": "complete_call_data",
+          "missing_inputs": [
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "port"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "host"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "timeout"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "enable_mlserver"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.constructor_parameters",
+              "name": "config"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.constructor_parameters",
+              "name": "env_manager"
+            }
+          ],
+          "mode": "model_proposed",
+          "state": "preparation"
+        },
+        "raw_status": "UNRESOLVED",
+        "scenario_origin": "model_proposed",
+        "scenario_sha256": "2751175d81ac25e8e5b7e6de827f79ccee09f91da157565b2d8b461b39d03a47",
+        "scope_note": "No witness has executed. Reported call-data gaps describe preparation; scenario premises require independent runtime verification.",
+        "status": "UNRESOLVED"
+      },
+      "classification_status": "complete"
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "ac0956929ed346308c26931c337a810d",
+      "start_event_index": 23,
+      "result_event_index": 24,
+      "elapsed_seconds": 9.010275,
+      "call": {
+        "call_id": "call_00_h4yyZqGcNX2mFqvG9Ih49777",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "constructor_parameters": {
+              "config": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend constructor config is supplied by the deployment, not the request.",
+                "value": "None"
+              },
+              "env_manager": {
+                "classification": "deployment_configuration",
+                "rationale": "env_manager selects the environment manager and is a deployment setting.",
+                "value": "local"
+              }
+            },
+            "entry_value_assumptions": {
+              "enable_mlserver": {
+                "classification": "deployment_configuration",
+                "rationale": "enable_mlserver selects mlserver vs scoring_server and is a deployment flag.",
+                "value": false
+              },
+              "host": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind host is a deployment setting.",
+                "value": "127.0.0.1"
+              },
+              "port": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind port is a deployment setting.",
+                "value": "5000"
+              },
+              "timeout": {
+                "classification": "deployment_configuration",
+                "rationale": "Server timeout is a deployment setting.",
+                "value": "60"
+              }
+            },
+            "input_parameter": {
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+              "value": "model_uri"
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:5",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 3708,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": true,
+      "measured_witness_result_status": "UNRESOLVED",
+      "raw_arguments": {
+        "constructor_parameters": {},
+        "precondition_files": {},
+        "scenario_hypothesis": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend constructor config is supplied by the deployment, not the request.",
+              "value": "None"
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "rationale": "env_manager selects the environment manager and is a deployment setting.",
+              "value": "local"
+            }
+          },
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "rationale": "enable_mlserver selects mlserver vs scoring_server and is a deployment flag.",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind host is a deployment setting.",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind port is a deployment setting.",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "rationale": "Server timeout is a deployment setting.",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+            "value": "model_uri"
+          }
+        }
+      },
+      "accepted_preparation": null,
+      "payload": {
+        "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-zcnw6igu/witness-result.json",
+        "claim_eligible": false,
+        "classification_status": "complete",
+        "control": {
+          "argv": null,
+          "assumption_gaps": [],
+          "assumptions_verified": false,
+          "authentic_subprocess_popen": false,
+          "candidate_frame": null,
+          "concurrent_command_events": [],
+          "emitter_frame": null,
+          "event": null,
+          "hook_selftest": false,
+          "phase": null,
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": null,
+            "normal_return": false,
+            "ok": false,
+            "source_gaps": []
+          },
+          "seccomp_selftest": false,
+          "source_gaps": []
+        },
+        "control_replay": null,
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "manifest_origin": "system_ast",
+        "manifest_sha256": "61818ae9e4ed6dce77ca7cc969118b7fefaaab3cb2c86f8862a336950ea0fe2f",
+        "probe": {
+          "argv": [
+            "bash",
+            "-c",
+            "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+          ],
+          "assumption_gaps": [],
+          "assumptions_verified": true,
+          "authentic_subprocess_popen": true,
+          "candidate_frame": {
+            "file": "mlflow/pyfunc/backend.py",
+            "first_line": 229,
+            "line": 311,
+            "module_name": "mlflow.pyfunc.backend",
+            "qualname": "PyFuncBackend.serve",
+            "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+          },
+          "concurrent_command_events": [],
+          "emitter_frame": {
+            "same_as_candidate": true
+          },
+          "event": "subprocess.Popen",
+          "hook_selftest": true,
+          "phase": "invoke",
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": "executed_child",
+            "normal_return": true,
+            "ok": true,
+            "source_gaps": []
+          },
+          "seccomp_selftest": true,
+          "source_gaps": []
+        },
+        "probe_replay": null,
+        "raw_status": "UNRESOLVED",
+        "resource_profile": {
+          "address_space_bytes": 2147483648,
+          "cpu_hard_seconds": 20,
+          "cpu_soft_seconds": 15,
+          "file_size_bytes": 1000000,
+          "name": "heavy_target",
+          "open_files": 64,
+          "wall_seconds": 30.0
+        },
+        "scenario": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "value": "None"
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "value": "local"
+            }
+          },
+          "entry_boolean_arguments": {},
+          "entry_condition_assumptions": {},
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "value": "model_uri"
+          },
+          "precondition_files": {}
+        },
+        "scenario_origin": "model_proposed",
+        "scenario_sha256": "169fa1aa3fc8b70e60aebcb2a7e872d11639794d0bdf255475f06c6aadf66c14",
+        "scenario_verification": {
+          "authority_scope": "local_caller_hypothesis",
+          "control": {
+            "gaps": [],
+            "ok": false
+          },
+          "probe": {
+            "gaps": [],
+            "ok": true
+          },
+          "remote_authority_established": false
+        },
+        "scope_note": "The caller can create and supply an existing local directory path with shell metacharacters in its name. The observation covers this concrete input under the declared candidate assumptions; remote reachability remains unestablished.",
+        "source_module_count": 977,
+        "status": "UNRESOLVED",
+        "subject_source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "classification_status": "complete"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "d816ba2737e8426ebb3703ce1c8f27a8",
+      "start_event_index": 47,
+      "result_event_index": 48,
+      "elapsed_seconds": 2.870656,
+      "call": {
+        "call_id": "call_00_4NinHS3xUAR9r5uRtn4a1560",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {}
+        }
+      },
+      "citation_id": "scan/tool:1",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 950,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null,
+      "raw_arguments": {
+        "constructor_parameters": {},
+        "precondition_files": {}
+      },
+      "accepted_preparation": {
+        "state": "preparation",
+        "mode": "model_proposed",
+        "action": "propose_scenario",
+        "missing_inputs": [
+          {
+            "name": "input_parameter",
+            "destination": "scenario_hypothesis",
+            "classified": true
+          }
+        ]
+      },
+      "payload": {
+        "classification_status": "not_supplied",
+        "gaps": [
+          "probe_input_parameter_not_unique"
+        ],
+        "generated": {
+          "entry": {
+            "class_name": "PyFuncBackend",
+            "first_line": 229,
+            "method_name": "serve",
+            "module_name": "mlflow.pyfunc.backend",
+            "relative_path": "mlflow/pyfunc/backend.py"
+          },
+          "entry_qualified": true
+        },
+        "missing_constructor_parameters": [],
+        "preparation": {
+          "action": "propose_scenario",
+          "missing_inputs": [
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis",
+              "name": "input_parameter"
+            }
+          ],
+          "mode": "model_proposed",
+          "state": "preparation"
+        },
+        "raw_status": "UNRESOLVED",
+        "scenario_origin": null,
+        "scenario_sha256": null,
+        "scope_note": "No witness has executed. Reported call-data gaps describe preparation; scenario premises require independent runtime verification.",
+        "status": "UNRESOLVED"
+      },
+      "classification_status": "not_supplied"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "4326f02a07d348e79d5987122f431840",
+      "start_event_index": 54,
+      "result_event_index": 55,
+      "elapsed_seconds": 2.799358,
+      "call": {
+        "call_id": "call_00_EAeFvvzb0N0uvwTHR0WI9007",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "input_parameter": {
+              "value": "model_uri",
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string."
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:3",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 1798,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null,
+      "raw_arguments": {
+        "constructor_parameters": {},
+        "precondition_files": {},
+        "scenario_hypothesis": {
+          "input_parameter": {
+            "value": "model_uri",
+            "classification": "attacker_controlled_input",
+            "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string."
+          }
+        }
+      },
+      "accepted_preparation": {
+        "state": "preparation",
+        "mode": "model_proposed",
+        "action": "complete_call_data",
+        "missing_inputs": [
+          {
+            "name": "port",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "host",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "timeout",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "enable_mlserver",
+            "destination": "scenario_hypothesis.entry_value_assumptions",
+            "classified": true
+          },
+          {
+            "name": "config",
+            "destination": "scenario_hypothesis.constructor_parameters",
+            "classified": true
+          },
+          {
+            "name": "env_manager",
+            "destination": "scenario_hypothesis.constructor_parameters",
+            "classified": true
+          }
+        ]
+      },
+      "payload": {
+        "classification_status": "complete",
+        "gaps": [
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:enable_mlserver",
+          "constructor_parameter_missing:config",
+          "constructor_parameter_missing:env_manager"
+        ],
+        "generated": {
+          "entry": {
+            "class_name": "PyFuncBackend",
+            "first_line": 229,
+            "method_name": "serve",
+            "module_name": "mlflow.pyfunc.backend",
+            "relative_path": "mlflow/pyfunc/backend.py"
+          },
+          "entry_qualified": true
+        },
+        "missing_constructor_parameters": [
+          "config",
+          "env_manager"
+        ],
+        "preparation": {
+          "action": "complete_call_data",
+          "missing_inputs": [
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "port"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "host"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "timeout"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.entry_value_assumptions",
+              "name": "enable_mlserver"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.constructor_parameters",
+              "name": "config"
+            },
+            {
+              "classified": true,
+              "destination": "scenario_hypothesis.constructor_parameters",
+              "name": "env_manager"
+            }
+          ],
+          "mode": "model_proposed",
+          "state": "preparation"
+        },
+        "raw_status": "UNRESOLVED",
+        "scenario_origin": "model_proposed",
+        "scenario_sha256": "0753edf39b6e21e9f626491ae3327437c08070a71978ab8f65abfb0aae37fcad",
+        "scope_note": "No witness has executed. Reported call-data gaps describe preparation; scenario premises require independent runtime verification.",
+        "status": "UNRESOLVED"
+      },
+      "classification_status": "complete"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "f72ddb3aa0744972801b02f8a21d26e3",
+      "start_event_index": 59,
+      "result_event_index": 60,
+      "elapsed_seconds": 8.997889,
+      "call": {
+        "call_id": "call_00_zYvj46NmbskcaJYxxLOR9860",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "constructor_parameters": {
+              "config": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend constructor config dict; default None in typical serving deployments.",
+                "value": null
+              },
+              "env_manager": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend env_manager selects environment handling; default 'local' for serving.",
+                "value": "local"
+              }
+            },
+            "entry_value_assumptions": {
+              "enable_mlserver": {
+                "classification": "deployment_configuration",
+                "rationale": "Flag selecting mlserver vs scoring_server implementation; default False.",
+                "value": false
+              },
+              "host": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind host for the local scoring server; default 127.0.0.1.",
+                "value": "127.0.0.1"
+              },
+              "port": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind port for the local scoring server; default 5000.",
+                "value": "5000"
+              },
+              "timeout": {
+                "classification": "deployment_configuration",
+                "rationale": "Server startup timeout in seconds; default 60.",
+                "value": "60"
+              }
+            },
+            "input_parameter": {
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string.",
+              "value": "model_uri"
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:4",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 3704,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": true,
+      "measured_witness_result_status": "UNRESOLVED",
+      "raw_arguments": {
+        "constructor_parameters": {},
+        "precondition_files": {},
+        "scenario_hypothesis": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend constructor config dict; default None in typical serving deployments.",
+              "value": null
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend env_manager selects environment handling; default 'local' for serving.",
+              "value": "local"
+            }
+          },
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "rationale": "Flag selecting mlserver vs scoring_server implementation; default False.",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind host for the local scoring server; default 127.0.0.1.",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind port for the local scoring server; default 5000.",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "rationale": "Server startup timeout in seconds; default 60.",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string.",
+            "value": "model_uri"
+          }
+        }
+      },
+      "accepted_preparation": null,
+      "payload": {
+        "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-_uc5rxad/witness-result.json",
+        "claim_eligible": false,
+        "classification_status": "complete",
+        "control": {
+          "argv": null,
+          "assumption_gaps": [],
+          "assumptions_verified": false,
+          "authentic_subprocess_popen": false,
+          "candidate_frame": null,
+          "concurrent_command_events": [],
+          "emitter_frame": null,
+          "event": null,
+          "hook_selftest": false,
+          "phase": null,
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": null,
+            "normal_return": false,
+            "ok": false,
+            "source_gaps": []
+          },
+          "seccomp_selftest": false,
+          "source_gaps": []
+        },
+        "control_replay": null,
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "manifest_origin": "system_ast",
+        "manifest_sha256": "32e835dd08e5366661b19db10aebc8cfb8153b172b6c2c1ee499b48f559b1669",
+        "probe": {
+          "argv": [
+            "bash",
+            "-c",
+            "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+          ],
+          "assumption_gaps": [],
+          "assumptions_verified": true,
+          "authentic_subprocess_popen": true,
+          "candidate_frame": {
+            "file": "mlflow/pyfunc/backend.py",
+            "first_line": 229,
+            "line": 311,
+            "module_name": "mlflow.pyfunc.backend",
+            "qualname": "PyFuncBackend.serve",
+            "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+          },
+          "concurrent_command_events": [],
+          "emitter_frame": {
+            "same_as_candidate": true
+          },
+          "event": "subprocess.Popen",
+          "hook_selftest": true,
+          "phase": "invoke",
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": "executed_child",
+            "normal_return": true,
+            "ok": true,
+            "source_gaps": []
+          },
+          "seccomp_selftest": true,
+          "source_gaps": []
+        },
+        "probe_replay": null,
+        "raw_status": "UNRESOLVED",
+        "resource_profile": {
+          "address_space_bytes": 2147483648,
+          "cpu_hard_seconds": 20,
+          "cpu_soft_seconds": 15,
+          "file_size_bytes": 1000000,
+          "name": "heavy_target",
+          "open_files": 64,
+          "wall_seconds": 30.0
+        },
+        "scenario": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "value": null
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "value": "local"
+            }
+          },
+          "entry_boolean_arguments": {},
+          "entry_condition_assumptions": {},
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "value": "model_uri"
+          },
+          "precondition_files": {}
+        },
+        "scenario_origin": "model_proposed",
+        "scenario_sha256": "93bbbe4f39adf3ec3f836d036a3624a15e02a10a82c3eb341446fd0acf2ba075",
+        "scenario_verification": {
+          "authority_scope": "local_caller_hypothesis",
+          "control": {
+            "gaps": [],
+            "ok": false
+          },
+          "probe": {
+            "gaps": [],
+            "ok": true
+          },
+          "remote_authority_established": false
+        },
+        "scope_note": "The caller can create and supply an existing local directory path with shell metacharacters in its name. The observation covers this concrete input under the declared candidate assumptions; remote reachability remains unestablished.",
+        "source_module_count": 977,
+        "status": "UNRESOLVED",
+        "subject_source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "classification_status": "complete"
+    }
+  ],
+  "tool_timeline": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "36b7f7dcbf374c91955f90a360eaa04c",
+      "start_event_index": 6,
+      "result_event_index": 7,
+      "elapsed_seconds": 0.45982,
+      "call": {
+        "call_id": "call_00_MUXxSzm9J4QeMtZmw0Z51971",
+        "name": "inspect_command_construction",
+        "arguments": {
+          "source_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "max_hops": 3
+        }
+      },
+      "citation_id": "scan/tool:1",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 1173,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "36b7f7dcbf374c91955f90a360eaa04c",
+      "start_event_index": 8,
+      "result_event_index": 9,
+      "elapsed_seconds": 0.005028,
+      "call": {
+        "call_id": "call_01_SUShnrU4Fka7BScfn0rC6294",
+        "name": "run_static_check",
+        "arguments": {
+          "path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327"
+        }
+      },
+      "citation_id": "scan/tool:2",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 460,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "e2299055601b40758f063fed858ae909",
+      "start_event_index": 13,
+      "result_event_index": 14,
+      "elapsed_seconds": 2.565343,
+      "call": {
+        "call_id": "call_00_FzanVAXd02KvYGxIDwjx7420",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {}
+        }
+      },
+      "citation_id": "scan/tool:3",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 950,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "877424b954fc497bb34e0acf317fc29b",
+      "start_event_index": 18,
+      "result_event_index": 19,
+      "elapsed_seconds": 2.973259,
+      "call": {
+        "call_id": "call_00_0LqEf9lhnODNgANax89d8902",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "input_parameter": {
+              "value": "model_uri",
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line."
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:4",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 1798,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "ac0956929ed346308c26931c337a810d",
+      "start_event_index": 23,
+      "result_event_index": 24,
+      "elapsed_seconds": 9.010275,
+      "call": {
+        "call_id": "call_00_h4yyZqGcNX2mFqvG9Ih49777",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "constructor_parameters": {
+              "config": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend constructor config is supplied by the deployment, not the request.",
+                "value": "None"
+              },
+              "env_manager": {
+                "classification": "deployment_configuration",
+                "rationale": "env_manager selects the environment manager and is a deployment setting.",
+                "value": "local"
+              }
+            },
+            "entry_value_assumptions": {
+              "enable_mlserver": {
+                "classification": "deployment_configuration",
+                "rationale": "enable_mlserver selects mlserver vs scoring_server and is a deployment flag.",
+                "value": false
+              },
+              "host": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind host is a deployment setting.",
+                "value": "127.0.0.1"
+              },
+              "port": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind port is a deployment setting.",
+                "value": "5000"
+              },
+              "timeout": {
+                "classification": "deployment_configuration",
+                "rationale": "Server timeout is a deployment setting.",
+                "value": "60"
+              }
+            },
+            "input_parameter": {
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+              "value": "model_uri"
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:5",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 3708,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": true,
+      "measured_witness_result_status": "UNRESOLVED"
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "dd9bb10d8dab4e6ab707bb86a1bf0640",
+      "start_event_index": 28,
+      "result_event_index": 29,
+      "elapsed_seconds": 0.012201,
+      "call": {
+        "call_id": "call_00_WIc9DLO8ebHIN9vuPkQR6483",
+        "name": "search_symbols",
+        "arguments": {
+          "query": "scoring_server get_cmd",
+          "top_k": 8
+        }
+      },
+      "citation_id": "scan/tool:6",
+      "tool_status": "ok",
+      "delivered_validation_status": null,
+      "observation_token_count": 103,
+      "observation_truncated": true,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "dd9bb10d8dab4e6ab707bb86a1bf0640",
+      "start_event_index": 30,
+      "result_event_index": 31,
+      "elapsed_seconds": 0.004005,
+      "call": {
+        "call_id": "call_01_QrpQz5slBbXepgHjRAc81017",
+        "name": "search_symbols",
+        "arguments": {
+          "query": "mlserver get_cmd",
+          "top_k": 8
+        }
+      },
+      "citation_id": "scan/tool:7",
+      "tool_status": "blocked",
+      "delivered_validation_status": null,
+      "observation_token_count": 0,
+      "observation_truncated": true,
+      "model_payload_suppressed": false,
+      "budget_exhausted": true,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "d816ba2737e8426ebb3703ce1c8f27a8",
+      "start_event_index": 47,
+      "result_event_index": 48,
+      "elapsed_seconds": 2.870656,
+      "call": {
+        "call_id": "call_00_4NinHS3xUAR9r5uRtn4a1560",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {}
+        }
+      },
+      "citation_id": "scan/tool:1",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 950,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "d816ba2737e8426ebb3703ce1c8f27a8",
+      "start_event_index": 49,
+      "result_event_index": 50,
+      "elapsed_seconds": 0.489067,
+      "call": {
+        "call_id": "call_01_X7B7ucAcNHlwnP5zbL6L4350",
+        "name": "inspect_command_construction",
+        "arguments": {
+          "source_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "max_hops": 3
+        }
+      },
+      "citation_id": "scan/tool:2",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 1173,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "4326f02a07d348e79d5987122f431840",
+      "start_event_index": 54,
+      "result_event_index": 55,
+      "elapsed_seconds": 2.799358,
+      "call": {
+        "call_id": "call_00_EAeFvvzb0N0uvwTHR0WI9007",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "input_parameter": {
+              "value": "model_uri",
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string."
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:3",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 1798,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": false,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "f72ddb3aa0744972801b02f8a21d26e3",
+      "start_event_index": 59,
+      "result_event_index": 60,
+      "elapsed_seconds": 8.997889,
+      "call": {
+        "call_id": "call_00_zYvj46NmbskcaJYxxLOR9860",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {},
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "constructor_parameters": {
+              "config": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend constructor config dict; default None in typical serving deployments.",
+                "value": null
+              },
+              "env_manager": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend env_manager selects environment handling; default 'local' for serving.",
+                "value": "local"
+              }
+            },
+            "entry_value_assumptions": {
+              "enable_mlserver": {
+                "classification": "deployment_configuration",
+                "rationale": "Flag selecting mlserver vs scoring_server implementation; default False.",
+                "value": false
+              },
+              "host": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind host for the local scoring server; default 127.0.0.1.",
+                "value": "127.0.0.1"
+              },
+              "port": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind port for the local scoring server; default 5000.",
+                "value": "5000"
+              },
+              "timeout": {
+                "classification": "deployment_configuration",
+                "rationale": "Server startup timeout in seconds; default 60.",
+                "value": "60"
+              }
+            },
+            "input_parameter": {
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string.",
+              "value": "model_uri"
+            }
+          }
+        }
+      },
+      "citation_id": "scan/tool:4",
+      "tool_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_token_count": 3704,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": true,
+      "measured_witness_result_status": "UNRESOLVED"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "6b2a918c3a9d48bd84583b0d623e47d4",
+      "start_event_index": 64,
+      "result_event_index": 65,
+      "elapsed_seconds": 0.004186,
+      "call": {
+        "call_id": "call_00_2IYfc6M54oVJZxb3Xj7A1958",
+        "name": "read_span",
+        "arguments": {
+          "path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327"
+        }
+      },
+      "citation_id": "scan/tool:5",
+      "tool_status": "ok",
+      "delivered_validation_status": null,
+      "observation_token_count": 567,
+      "observation_truncated": true,
+      "model_payload_suppressed": false,
+      "budget_exhausted": false,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "6b2a918c3a9d48bd84583b0d623e47d4",
+      "start_event_index": 66,
+      "result_event_index": 67,
+      "elapsed_seconds": 0.004033,
+      "call": {
+        "call_id": "call_01_ex5VCAbczkodww3wVenP5075",
+        "name": "search_symbols",
+        "arguments": {
+          "query": "scoring_server get_cmd",
+          "top_k": 10
+        }
+      },
+      "citation_id": "scan/tool:6",
+      "tool_status": "blocked",
+      "delivered_validation_status": null,
+      "observation_token_count": 0,
+      "observation_truncated": true,
+      "model_payload_suppressed": false,
+      "budget_exhausted": true,
+      "witness_attempted": null,
+      "measured_witness_result_status": null
+    }
+  ],
+  "all_raw_proposed_conclusions": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "request_id": "13bf6ea6bbc14bc29e757aba4da8864c",
+      "response_id": "5b7480f2-f698-48b4-9bf3-0c3c180d9342",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.55,
+        "validation_status": "UNRESOLVED",
+        "rationale": "Witness probe executed subprocess.Popen with bash -c and an unquoted model_uri-derived path, but returned UNRESOLVED (recorder prefix not established), so no typed confirmation; command construction remained UNAVAILABLE.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:5",
+          "scan/tool:2"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:5"
+        ]
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "request_id": "6ec2df3c9dcd45649ed89da5accea1b3",
+      "response_id": "630c61bf-3d19-45f1-a830-78d979f1f5f4",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.5,
+        "validation_status": "UNRESOLVED",
+        "rationale": "Witness probe executed subprocess.Popen via bash -c with an unquoted model_uri-derived path, but returned UNRESOLVED (recorder prefix not established); command construction stayed UNAVAILABLE, so no typed confirmation.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:5"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1"
+        ]
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "request_id": "474df647281445a7be109defe7b4a389",
+      "response_id": "ae94db78-1c94-4b55-8f27-1c53570847b4",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "ABSTAIN",
+        "confidence": 0.4,
+        "validation_status": "UNRESOLVED",
+        "rationale": "inspect_command_construction returned UNAVAILABLE/UNRESOLVED and the bounded execution witness returned UNRESOLVED (recorder prefix not established), so no candidate-bound command-construction or flow evidence establishes the weakness.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:5"
+        ]
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "request_id": "f186cedd3d6347f2a9fa62b87fb89355",
+      "response_id": "e2fa0361-e570-439a-86f9-ccb3eb2d6d4a",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.55,
+        "validation_status": "UNRESOLVED",
+        "rationale": "Witness probe executed subprocess.Popen with bash -c and an unquoted command built from model_uri-derived path; no sanitizer observed. Typed witness returned UNRESOLVED, so prediction stays unresolved.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3",
+          "scan/tool:4",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:4",
+          "scan/tool:5"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3"
+        ]
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "request_id": "932666a730c64b02ac2c48e349fcf0b8",
+      "response_id": "ba3e34d4-6890-402b-b675-c3fedf7cfc56",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "ABSTAIN",
+        "confidence": 0.3,
+        "validation_status": "UNRESOLVED",
+        "rationale": "inspect_command_construction returned UNAVAILABLE/UNRESOLVED (callee not admitted) and the bounded witness returned UNRESOLVED, so no candidate-bound command-construction evidence establishes the property.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3",
+          "scan/tool:4"
+        ],
+        "supporting_observation_ids": [],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3",
+          "scan/tool:4"
+        ]
+      }
+    }
+  ],
+  "rejected_material_proposals": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "request_id": "13bf6ea6bbc14bc29e757aba4da8864c",
+      "response_id": "5b7480f2-f698-48b4-9bf3-0c3c180d9342",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.55,
+        "validation_status": "UNRESOLVED",
+        "rationale": "Witness probe executed subprocess.Popen with bash -c and an unquoted model_uri-derived path, but returned UNRESOLVED (recorder prefix not established), so no typed confirmation; command construction remained UNAVAILABLE.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:5",
+          "scan/tool:2"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:5"
+        ]
+      },
+      "next_request_id": "6ec2df3c9dcd45649ed89da5accea1b3",
+      "evidence_rejection_feedback": "The previous final object failed schema or evidence validation. Return corrected JSON only, or call an allowed tool if more evidence is required and tool calls are still available. Validation error: Conflicting observation roles: scan/tool:5: supporting_observation_ids / unresolved_observation_ids. Assign each observation to exactly one explicit role; remove its citation and aliases from the other role arrays. evidence_ids may still list it. UNRESOLVED validation_status does not require listing supporting evidence again in unresolved_observation_ids. Keep the label only if the evidence checks below also support it. Static command-execution sink matching does not support a material prediction; cite inspect_command_construction evidence or abstain. If no shell was established, trace_dataflow with sink_category='command-execution' can supply candidate-bound flow evidence for non-shell execution. SAFE requires affirmative counter-evidence for this command property in supporting_observation_ids; counter_observation_ids and unresolved_observation_ids do not supply affirmative support.",
+      "admitted": false
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "request_id": "6ec2df3c9dcd45649ed89da5accea1b3",
+      "response_id": "630c61bf-3d19-45f1-a830-78d979f1f5f4",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.5,
+        "validation_status": "UNRESOLVED",
+        "rationale": "Witness probe executed subprocess.Popen via bash -c with an unquoted model_uri-derived path, but returned UNRESOLVED (recorder prefix not established); command construction stayed UNAVAILABLE, so no typed confirmation.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:5"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1"
+        ]
+      },
+      "next_request_id": "474df647281445a7be109defe7b4a389",
+      "evidence_rejection_feedback": "The previous final object failed schema or evidence validation. Return corrected JSON only, or call an allowed tool if more evidence is required and tool calls are still available. Validation error: Static command-execution sink matching does not support a material prediction; cite inspect_command_construction evidence or abstain. If no shell was established, trace_dataflow with sink_category='command-execution' can supply candidate-bound flow evidence for non-shell execution. SAFE requires affirmative counter-evidence for this command property in supporting_observation_ids; counter_observation_ids and unresolved_observation_ids do not supply affirmative support.",
+      "admitted": false
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "request_id": "f186cedd3d6347f2a9fa62b87fb89355",
+      "response_id": "e2fa0361-e570-439a-86f9-ccb3eb2d6d4a",
+      "raw_proposed_conclusion": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.55,
+        "validation_status": "UNRESOLVED",
+        "rationale": "Witness probe executed subprocess.Popen with bash -c and an unquoted command built from model_uri-derived path; no sanitizer observed. Typed witness returned UNRESOLVED, so prediction stays unresolved.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3",
+          "scan/tool:4",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:4",
+          "scan/tool:5"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3"
+        ]
+      },
+      "next_request_id": "932666a730c64b02ac2c48e349fcf0b8",
+      "evidence_rejection_feedback": "The previous final object failed schema or evidence validation. Return corrected JSON only, or call an allowed tool if more evidence is required and tool calls are still available. Validation error: Static command-execution sink matching does not support a material prediction; cite inspect_command_construction evidence or abstain. If no shell was established, trace_dataflow with sink_category='command-execution' can supply candidate-bound flow evidence for non-shell execution. SAFE requires affirmative counter-evidence for this command property in supporting_observation_ids; counter_observation_ids and unresolved_observation_ids do not supply affirmative support.",
+      "admitted": false
+    }
+  ],
+  "runtime_results": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "request_id": "ac0956929ed346308c26931c337a810d",
+      "citation_id": "scan/tool:5",
+      "artifact_path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-zcnw6igu/witness-result.json",
+      "artifact_sha256": "9e79739beb7d0c49badbb1eecae488600a182862c31c6744f4abc80e9a38e01c",
+      "producer": "run_bounded_execution_witness",
+      "manifest_sha256": "61818ae9e4ed6dce77ca7cc969118b7fefaaab3cb2c86f8862a336950ea0fe2f",
+      "scenario_origin": "model_proposed",
+      "scenario_sha256": "169fa1aa3fc8b70e60aebcb2a7e872d11639794d0bdf255475f06c6aadf66c14",
+      "classification_status": "complete",
+      "original_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {},
+        "input_parameters": [],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "execution_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {
+          "enable_mlserver": false,
+          "host": "127.0.0.1",
+          "port": "5000",
+          "timeout": "60"
+        },
+        "input_parameters": [
+          "model_uri"
+        ],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "scenario": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config is supplied by the deployment, not the request.",
+            "value": "None"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager and is a deployment setting.",
+            "value": "local"
+          }
+        },
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "enable_mlserver selects mlserver vs scoring_server and is a deployment flag.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host is a deployment setting.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port is a deployment setting.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server timeout is a deployment setting.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "model_supplement": {
+        "constructor_parameters": {},
+        "precondition_files": {},
+        "scenario_hypothesis": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend constructor config is supplied by the deployment, not the request.",
+              "value": "None"
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "rationale": "env_manager selects the environment manager and is a deployment setting.",
+              "value": "local"
+            }
+          },
+          "entry_boolean_arguments": {},
+          "entry_condition_assumptions": {},
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "rationale": "enable_mlserver selects mlserver vs scoring_server and is a deployment flag.",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind host is a deployment setting.",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind port is a deployment setting.",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "rationale": "Server timeout is a deployment setting.",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+            "value": "model_uri"
+          },
+          "precondition_files": {}
+        }
+      },
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "probe": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": "None",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            },
+            "env_manager": {
+              "actual": "local",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {},
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/model$(printf 401b5591928a47429d5b8d791518229c)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "enable_mlserver": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": "5000",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": "60",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "enable_mlserver",
+              "host",
+              "port",
+              "timeout"
+            ]
+          }
+        },
+        "remote_authority_established": false
+      },
+      "raw_result": {
+        "details": {
+          "assumption_gaps": [],
+          "claim_eligible": false,
+          "control_nonce": "cd75094a78b103c08910ce24",
+          "control_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/modelcd75094a78b103c08910ce24",
+          "diagnostic_only": false,
+          "entry_file_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+          "isolation_read_grants": [
+            {
+              "device_major": 1,
+              "device_minor": 9,
+              "file_kind": "character_device",
+              "path": "/dev/urandom",
+              "reason": "Observed native dependency import needs OS entropy; allow read of this exact character device, with no directory, write, or execution grant.",
+              "requested_path": "/dev/urandom",
+              "sha256": null
+            },
+            {
+              "device_major": null,
+              "device_minor": null,
+              "file_kind": "regular",
+              "path": "/etc/passwd",
+              "reason": "Dependency import uses native UID-to-home lookup; this exact account metadata file supplies the local UID entry needed for home discovery.",
+              "requested_path": "/etc/passwd",
+              "sha256": "b4e2e0878c994d7001ec03d454017bf72e6cf470b58b69a88350978bde22d6e7"
+            },
+            {
+              "device_major": null,
+              "device_minor": null,
+              "file_kind": "regular",
+              "path": "/etc/ssl/openssl.cnf",
+              "reason": "Exact local OpenSSL initialization configuration used by imported dependencies; network isolation remains enforced.",
+              "requested_path": "/etc/ssl/openssl.cnf",
+              "sha256": "47fdeeac79328ffb03c9d855237a500b4ad5216dc971a8b2f40a420b4b3c11ef"
+            },
+            {
+              "device_major": null,
+              "device_minor": null,
+              "file_kind": "regular",
+              "path": "/usr/share/zoneinfo/Etc/UTC",
+              "reason": "Observed dependency import requests this exact UTC timezone data file; canonical leaf content is SHA256-bound.",
+              "requested_path": "/usr/share/zoneinfo/UTC",
+              "sha256": "8b85846791ab2c8a5463c83a5be3c043e2570d7448434d41398969ed47e3e6f2"
+            }
+          ],
+          "precondition_sha256": {
+            "control": {},
+            "probe": {}
+          },
+          "probe_event": {
+            "actual_executable_is_bash": true,
+            "applied_resource_limits": {
+              "address_space": [
+                2147483648,
+                2147483648
+              ],
+              "cpu": [
+                15,
+                20
+              ],
+              "file_size": [
+                1000000,
+                1000000
+              ],
+              "open_files": [
+                64,
+                64
+              ]
+            },
+            "argv": [
+              "bash",
+              "-c",
+              "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+            ],
+            "assumption_verification": {
+              "conditions": {
+                "expression_match": "canonical_ast_with_whole_test_not",
+                "gaps": [],
+                "observations": [],
+                "tool_id": 4
+              },
+              "enabled": true,
+              "environment": {
+                "os_name": "posix",
+                "sys_platform": "linux"
+              },
+              "gaps": [],
+              "scenario_data": {
+                "authority_scope": "local_caller_hypothesis",
+                "constructor_parameters": {
+                  "config": {
+                    "actual": "None",
+                    "matched": true,
+                    "point": "constructor_call_boundary",
+                    "supported_value": true
+                  },
+                  "env_manager": {
+                    "actual": "local",
+                    "matched": true,
+                    "point": "constructor_call_boundary",
+                    "supported_value": true
+                  }
+                },
+                "enabled": true,
+                "entry_boolean_arguments": {},
+                "gaps": [],
+                "input_parameter": {
+                  "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/model$(printf 401b5591928a47429d5b8d791518229c)",
+                  "matched": true,
+                  "parameter": "model_uri",
+                  "point": "candidate_entry_frame",
+                  "supported_value": true
+                },
+                "precondition_files": {},
+                "remote_authority_established": false
+              },
+              "values": {
+                "gaps": [],
+                "observations": {
+                  "enable_mlserver": [
+                    {
+                      "actual": false,
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ],
+                  "host": [
+                    {
+                      "actual": "127.0.0.1",
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ],
+                  "port": [
+                    {
+                      "actual": "5000",
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ],
+                  "timeout": [
+                    {
+                      "actual": "60",
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ]
+                },
+                "verified": [
+                  "enable_mlserver",
+                  "host",
+                  "port",
+                  "timeout"
+                ]
+              }
+            },
+            "authentic_subprocess_popen": true,
+            "candidate_frame": {
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+              "first_line": 229,
+              "in_checkout": true,
+              "line": 311,
+              "module_name": "mlflow.pyfunc.backend",
+              "qualname": "PyFuncBackend.serve",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            "captured_cwd": null,
+            "concurrent_command_events": [],
+            "current_resource_limits": {
+              "address_space": [
+                2147483648,
+                2147483648
+              ],
+              "cpu": [
+                15,
+                20
+              ],
+              "file_size": [
+                1000000,
+                1000000
+              ],
+              "open_files": [
+                64,
+                64
+              ]
+            },
+            "emitter_frame": {
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+              "first_line": 229,
+              "in_checkout": true,
+              "line": 311,
+              "module_name": "mlflow.pyfunc.backend",
+              "qualname": "PyFuncBackend.serve",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            "env_has_probe": false,
+            "event": "subprocess.Popen",
+            "frames": [
+              {
+                "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+                "first_line": 1791,
+                "in_checkout": false,
+                "line": 1823,
+                "module_name": "subprocess",
+                "qualname": "Popen._execute_child",
+                "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+              },
+              {
+                "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+                "first_line": 807,
+                "in_checkout": false,
+                "line": 1026,
+                "module_name": "subprocess",
+                "qualname": "Popen.__init__",
+                "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "first_line": 229,
+                "in_checkout": true,
+                "line": 311,
+                "module_name": "mlflow.pyfunc.backend",
+                "qualname": "PyFuncBackend.serve",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+                "first_line": 416,
+                "in_checkout": false,
+                "line": 650,
+                "module_name": "__main__",
+                "qualname": "_worker",
+                "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+                "first_line": 1552,
+                "in_checkout": false,
+                "line": 1589,
+                "module_name": "__main__",
+                "qualname": "_main",
+                "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+                "first_line": 1,
+                "in_checkout": false,
+                "line": 1594,
+                "module_name": "__main__",
+                "qualname": "<module>",
+                "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+              },
+              {
+                "file": "<frozen runpy>",
+                "first_line": 65,
+                "in_checkout": false,
+                "line": 88,
+                "module_name": "runpy",
+                "qualname": "_run_code"
+              },
+              {
+                "file": "<frozen runpy>",
+                "first_line": 173,
+                "in_checkout": false,
+                "line": 198,
+                "module_name": "runpy",
+                "qualname": "_run_module_as_main"
+              }
+            ],
+            "hook_selftest": true,
+            "interpreter": {
+              "base_prefix": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+              "executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv/bin/python",
+              "expected_executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv/bin/python",
+              "expected_prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+              "matches_manifest": true,
+              "prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+              "version": "3.12.12"
+            },
+            "isolation_read_roots": [
+              "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f",
+              "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime",
+              "/home/joker/AAA_NUS_SEM3/cv_agent/src",
+              "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+              "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+              "/usr/lib",
+              "/usr/lib64",
+              "/etc/ld.so.cache",
+              "/dev/urandom",
+              "/etc/passwd",
+              "/etc/ssl/openssl.cnf",
+              "/usr/share/zoneinfo/Etc/UTC"
+            ],
+            "kind": "command_event",
+            "loaded_source_gaps": [],
+            "phase": "invoke",
+            "preexec_verification": {
+              "child_pid": 422904,
+              "elapsed_seconds": 0.43087424999976065,
+              "event_count": 4,
+              "events": [
+                {
+                  "arguments": [],
+                  "event": "cv_agent.preexec.hook_selftest",
+                  "forbidden": false,
+                  "kind": "event"
+                },
+                {
+                  "arguments": [
+                    21032832
+                  ],
+                  "event": "builtins.id",
+                  "forbidden": false,
+                  "kind": "event"
+                },
+                {
+                  "arguments": [
+                    "libc.so.6"
+                  ],
+                  "event": "ctypes.dlopen",
+                  "forbidden": false,
+                  "kind": "event"
+                },
+                {
+                  "arguments": [
+                    {
+                      "type": "CDLL"
+                    },
+                    "prctl"
+                  ],
+                  "event": "ctypes.dlsym",
+                  "forbidden": false,
+                  "kind": "event"
+                }
+              ],
+              "exception": null,
+              "exit_code": 0,
+              "forbidden_events": [],
+              "gap": null,
+              "hook_selftest": true,
+              "kind": "executed_child",
+              "native_call_coverage": "Python audit/profile; raw native process calls are not observed",
+              "normal_return": true,
+              "ok": true,
+              "parent_pid": 422832,
+              "profile_selftest": true,
+              "source_check_performed": true,
+              "source_gaps": [],
+              "timeout_seconds": 2.0,
+              "trusted_verifier_fork": true
+            },
+            "preexec_verified_none": false,
+            "resource_accounting": {
+              "target": {
+                "accounting_complete": true,
+                "accounting_scope": "own_process_cpu_only",
+                "cpu_accounting_complete": true,
+                "cpu_resolution_seconds": 0.01,
+                "fd_observed_peak": 6,
+                "fd_peak_is_lower_bound": true,
+                "last_rss_kib": 176648,
+                "last_virtual_memory_kib": 1020648,
+                "max_rss_kib": 176648,
+                "max_virtual_memory_kib": 1110804,
+                "maximum_sample_interval_seconds": 0.013914954994106665,
+                "measurement_gaps": [
+                  {
+                    "errno": 13,
+                    "error": "PermissionError",
+                    "field": "open_fd_count",
+                    "path": "/proc/422832/fd"
+                  }
+                ],
+                "memory_peaks_observed_only": true,
+                "open_fd_count": 6,
+                "pid": 422832,
+                "pid_identity_mismatch": false,
+                "pid_starttime_ticks": 4958213,
+                "sample_count": 536,
+                "sample_interval_seconds": 0.010380760999396443,
+                "sampling_elapsed_seconds": 5.494087070001115,
+                "self_report_is_final": true,
+                "self_reported_usage": {
+                  "max_rss_kib": 732368,
+                  "pid": 422832,
+                  "system_cpu_seconds": 0.801026,
+                  "user_cpu_seconds": 5.2365639999999996
+                },
+                "system_cpu_seconds": 0.81,
+                "total_cpu_seconds": 6.04,
+                "user_cpu_seconds": 5.23
+              },
+              "tracer": null
+            },
+            "resource_profile": {
+              "address_space_bytes": 2147483648,
+              "cpu_hard_seconds": 20,
+              "cpu_soft_seconds": 15,
+              "file_size_bytes": 1000000,
+              "name": "heavy_target",
+              "open_files": 64,
+              "wall_seconds": 30.0
+            },
+            "returncode": 0,
+            "seccomp_selftest": true,
+            "shell_env_keys": [],
+            "target_pid": 422832,
+            "target_self_usage": {
+              "max_rss_kib": 732368,
+              "pid": 422832,
+              "system_cpu_seconds": 0.801026,
+              "user_cpu_seconds": 5.2365639999999996
+            }
+          },
+          "probe_nonce": "401b5591928a47429d5b8d791518229c",
+          "probe_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/model$(printf 401b5591928a47429d5b8d791518229c)",
+          "reached_popen": true,
+          "recorder_derivation_enabled": true,
+          "resource_profile": {
+            "address_space_bytes": 2147483648,
+            "cpu_hard_seconds": 20,
+            "cpu_soft_seconds": 15,
+            "file_size_bytes": 1000000,
+            "name": "heavy_target",
+            "open_files": 64,
+            "wall_seconds": 30.0
+          },
+          "stack_capture_enabled": false,
+          "strace_enabled": false,
+          "subject": {
+            "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+            "candidate_id": "neutral-entry",
+            "entry_boolean_arguments": {},
+            "entry_condition_assumptions": {},
+            "entry_line": 229,
+            "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+            "entry_value_assumptions": {
+              "enable_mlserver": false,
+              "host": "127.0.0.1",
+              "port": "5000",
+              "timeout": "60"
+            },
+            "input_parameters": [
+              "model_uri"
+            ],
+            "property_id": "command-execution",
+            "repository_id": "neutral-entry",
+            "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+          },
+          "verification_mode": true
+        },
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "raw_status": "UNRESOLVED",
+        "status": "UNRESOLVED"
+      },
+      "delivered_payload": {
+        "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-zcnw6igu/witness-result.json",
+        "claim_eligible": false,
+        "classification_status": "complete",
+        "control": {
+          "argv": null,
+          "assumption_gaps": [],
+          "assumptions_verified": false,
+          "authentic_subprocess_popen": false,
+          "candidate_frame": null,
+          "concurrent_command_events": [],
+          "emitter_frame": null,
+          "event": null,
+          "hook_selftest": false,
+          "phase": null,
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": null,
+            "normal_return": false,
+            "ok": false,
+            "source_gaps": []
+          },
+          "seccomp_selftest": false,
+          "source_gaps": []
+        },
+        "control_replay": null,
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "manifest_origin": "system_ast",
+        "manifest_sha256": "61818ae9e4ed6dce77ca7cc969118b7fefaaab3cb2c86f8862a336950ea0fe2f",
+        "probe": {
+          "argv": [
+            "bash",
+            "-c",
+            "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+          ],
+          "assumption_gaps": [],
+          "assumptions_verified": true,
+          "authentic_subprocess_popen": true,
+          "candidate_frame": {
+            "file": "mlflow/pyfunc/backend.py",
+            "first_line": 229,
+            "line": 311,
+            "module_name": "mlflow.pyfunc.backend",
+            "qualname": "PyFuncBackend.serve",
+            "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+          },
+          "concurrent_command_events": [],
+          "emitter_frame": {
+            "same_as_candidate": true
+          },
+          "event": "subprocess.Popen",
+          "hook_selftest": true,
+          "phase": "invoke",
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": "executed_child",
+            "normal_return": true,
+            "ok": true,
+            "source_gaps": []
+          },
+          "seccomp_selftest": true,
+          "source_gaps": []
+        },
+        "probe_replay": null,
+        "raw_status": "UNRESOLVED",
+        "resource_profile": {
+          "address_space_bytes": 2147483648,
+          "cpu_hard_seconds": 20,
+          "cpu_soft_seconds": 15,
+          "file_size_bytes": 1000000,
+          "name": "heavy_target",
+          "open_files": 64,
+          "wall_seconds": 30.0
+        },
+        "scenario": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "value": "None"
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "value": "local"
+            }
+          },
+          "entry_boolean_arguments": {},
+          "entry_condition_assumptions": {},
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "value": "model_uri"
+          },
+          "precondition_files": {}
+        },
+        "scenario_origin": "model_proposed",
+        "scenario_sha256": "169fa1aa3fc8b70e60aebcb2a7e872d11639794d0bdf255475f06c6aadf66c14",
+        "scenario_verification": {
+          "authority_scope": "local_caller_hypothesis",
+          "control": {
+            "gaps": [],
+            "ok": false
+          },
+          "probe": {
+            "gaps": [],
+            "ok": true
+          },
+          "remote_authority_established": false
+        },
+        "scope_note": "The caller can create and supply an existing local directory path with shell metacharacters in its name. The observation covers this concrete input under the declared candidate assumptions; remote reachability remains unestablished.",
+        "source_module_count": 977,
+        "status": "UNRESOLVED",
+        "subject_source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "delivery_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "control_event_present": false,
+      "probe_replay_present": false,
+      "control_replay_present": false
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "request_id": "f72ddb3aa0744972801b02f8a21d26e3",
+      "citation_id": "scan/tool:4",
+      "artifact_path": "artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-_uc5rxad/witness-result.json",
+      "artifact_sha256": "7b02810c43038c573e68cbe11554be45895d489516e9a2e8a10b7292ef0c4aa8",
+      "producer": "run_bounded_execution_witness",
+      "manifest_sha256": "32e835dd08e5366661b19db10aebc8cfb8153b172b6c2c1ee499b48f559b1669",
+      "scenario_origin": "model_proposed",
+      "scenario_sha256": "93bbbe4f39adf3ec3f836d036a3624a15e02a10a82c3eb341446fd0acf2ba075",
+      "classification_status": "complete",
+      "original_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {},
+        "input_parameters": [],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "execution_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {
+          "enable_mlserver": false,
+          "host": "127.0.0.1",
+          "port": "5000",
+          "timeout": "60"
+        },
+        "input_parameters": [
+          "model_uri"
+        ],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "scenario": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config dict; default None in typical serving deployments.",
+            "value": null
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend env_manager selects environment handling; default 'local' for serving.",
+            "value": "local"
+          }
+        },
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; default False.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; default 127.0.0.1.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; default 5000.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server startup timeout in seconds; default 60.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "model_supplement": {
+        "constructor_parameters": {},
+        "precondition_files": {},
+        "scenario_hypothesis": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend constructor config dict; default None in typical serving deployments.",
+              "value": null
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend env_manager selects environment handling; default 'local' for serving.",
+              "value": "local"
+            }
+          },
+          "entry_boolean_arguments": {},
+          "entry_condition_assumptions": {},
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "rationale": "Flag selecting mlserver vs scoring_server implementation; default False.",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind host for the local scoring server; default 127.0.0.1.",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "rationale": "Bind port for the local scoring server; default 5000.",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "rationale": "Server startup timeout in seconds; default 60.",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command string.",
+            "value": "model_uri"
+          },
+          "precondition_files": {}
+        }
+      },
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "probe": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": null,
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            },
+            "env_manager": {
+              "actual": "local",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {},
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/model$(printf 401b5591928a47429d5b8d791518229c)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "enable_mlserver": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": "5000",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": "60",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "enable_mlserver",
+              "host",
+              "port",
+              "timeout"
+            ]
+          }
+        },
+        "remote_authority_established": false
+      },
+      "raw_result": {
+        "details": {
+          "assumption_gaps": [],
+          "claim_eligible": false,
+          "control_nonce": "cd75094a78b103c08910ce24",
+          "control_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/modelcd75094a78b103c08910ce24",
+          "diagnostic_only": false,
+          "entry_file_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+          "isolation_read_grants": [
+            {
+              "device_major": 1,
+              "device_minor": 9,
+              "file_kind": "character_device",
+              "path": "/dev/urandom",
+              "reason": "Observed native dependency import needs OS entropy; allow read of this exact character device, with no directory, write, or execution grant.",
+              "requested_path": "/dev/urandom",
+              "sha256": null
+            },
+            {
+              "device_major": null,
+              "device_minor": null,
+              "file_kind": "regular",
+              "path": "/etc/passwd",
+              "reason": "Dependency import uses native UID-to-home lookup; this exact account metadata file supplies the local UID entry needed for home discovery.",
+              "requested_path": "/etc/passwd",
+              "sha256": "b4e2e0878c994d7001ec03d454017bf72e6cf470b58b69a88350978bde22d6e7"
+            },
+            {
+              "device_major": null,
+              "device_minor": null,
+              "file_kind": "regular",
+              "path": "/etc/ssl/openssl.cnf",
+              "reason": "Exact local OpenSSL initialization configuration used by imported dependencies; network isolation remains enforced.",
+              "requested_path": "/etc/ssl/openssl.cnf",
+              "sha256": "47fdeeac79328ffb03c9d855237a500b4ad5216dc971a8b2f40a420b4b3c11ef"
+            },
+            {
+              "device_major": null,
+              "device_minor": null,
+              "file_kind": "regular",
+              "path": "/usr/share/zoneinfo/Etc/UTC",
+              "reason": "Observed dependency import requests this exact UTC timezone data file; canonical leaf content is SHA256-bound.",
+              "requested_path": "/usr/share/zoneinfo/UTC",
+              "sha256": "8b85846791ab2c8a5463c83a5be3c043e2570d7448434d41398969ed47e3e6f2"
+            }
+          ],
+          "precondition_sha256": {
+            "control": {},
+            "probe": {}
+          },
+          "probe_event": {
+            "actual_executable_is_bash": true,
+            "applied_resource_limits": {
+              "address_space": [
+                2147483648,
+                2147483648
+              ],
+              "cpu": [
+                15,
+                20
+              ],
+              "file_size": [
+                1000000,
+                1000000
+              ],
+              "open_files": [
+                64,
+                64
+              ]
+            },
+            "argv": [
+              "bash",
+              "-c",
+              "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+            ],
+            "assumption_verification": {
+              "conditions": {
+                "expression_match": "canonical_ast_with_whole_test_not",
+                "gaps": [],
+                "observations": [],
+                "tool_id": 4
+              },
+              "enabled": true,
+              "environment": {
+                "os_name": "posix",
+                "sys_platform": "linux"
+              },
+              "gaps": [],
+              "scenario_data": {
+                "authority_scope": "local_caller_hypothesis",
+                "constructor_parameters": {
+                  "config": {
+                    "actual": null,
+                    "matched": true,
+                    "point": "constructor_call_boundary",
+                    "supported_value": true
+                  },
+                  "env_manager": {
+                    "actual": "local",
+                    "matched": true,
+                    "point": "constructor_call_boundary",
+                    "supported_value": true
+                  }
+                },
+                "enabled": true,
+                "entry_boolean_arguments": {},
+                "gaps": [],
+                "input_parameter": {
+                  "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/model$(printf 401b5591928a47429d5b8d791518229c)",
+                  "matched": true,
+                  "parameter": "model_uri",
+                  "point": "candidate_entry_frame",
+                  "supported_value": true
+                },
+                "precondition_files": {},
+                "remote_authority_established": false
+              },
+              "values": {
+                "gaps": [],
+                "observations": {
+                  "enable_mlserver": [
+                    {
+                      "actual": false,
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ],
+                  "host": [
+                    {
+                      "actual": "127.0.0.1",
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ],
+                  "port": [
+                    {
+                      "actual": "5000",
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ],
+                  "timeout": [
+                    {
+                      "actual": "60",
+                      "matched": true,
+                      "point": "call_manifest",
+                      "supported_value": true
+                    }
+                  ]
+                },
+                "verified": [
+                  "enable_mlserver",
+                  "host",
+                  "port",
+                  "timeout"
+                ]
+              }
+            },
+            "authentic_subprocess_popen": true,
+            "candidate_frame": {
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+              "first_line": 229,
+              "in_checkout": true,
+              "line": 311,
+              "module_name": "mlflow.pyfunc.backend",
+              "qualname": "PyFuncBackend.serve",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            "captured_cwd": null,
+            "concurrent_command_events": [],
+            "current_resource_limits": {
+              "address_space": [
+                2147483648,
+                2147483648
+              ],
+              "cpu": [
+                15,
+                20
+              ],
+              "file_size": [
+                1000000,
+                1000000
+              ],
+              "open_files": [
+                64,
+                64
+              ]
+            },
+            "emitter_frame": {
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+              "first_line": 229,
+              "in_checkout": true,
+              "line": 311,
+              "module_name": "mlflow.pyfunc.backend",
+              "qualname": "PyFuncBackend.serve",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            "env_has_probe": false,
+            "event": "subprocess.Popen",
+            "frames": [
+              {
+                "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+                "first_line": 1791,
+                "in_checkout": false,
+                "line": 1823,
+                "module_name": "subprocess",
+                "qualname": "Popen._execute_child",
+                "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+              },
+              {
+                "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+                "first_line": 807,
+                "in_checkout": false,
+                "line": 1026,
+                "module_name": "subprocess",
+                "qualname": "Popen.__init__",
+                "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "first_line": 229,
+                "in_checkout": true,
+                "line": 311,
+                "module_name": "mlflow.pyfunc.backend",
+                "qualname": "PyFuncBackend.serve",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+                "first_line": 416,
+                "in_checkout": false,
+                "line": 650,
+                "module_name": "__main__",
+                "qualname": "_worker",
+                "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+                "first_line": 1552,
+                "in_checkout": false,
+                "line": 1589,
+                "module_name": "__main__",
+                "qualname": "_main",
+                "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+              },
+              {
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+                "first_line": 1,
+                "in_checkout": false,
+                "line": 1594,
+                "module_name": "__main__",
+                "qualname": "<module>",
+                "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+              },
+              {
+                "file": "<frozen runpy>",
+                "first_line": 65,
+                "in_checkout": false,
+                "line": 88,
+                "module_name": "runpy",
+                "qualname": "_run_code"
+              },
+              {
+                "file": "<frozen runpy>",
+                "first_line": 173,
+                "in_checkout": false,
+                "line": 198,
+                "module_name": "runpy",
+                "qualname": "_run_module_as_main"
+              }
+            ],
+            "hook_selftest": true,
+            "interpreter": {
+              "base_prefix": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+              "executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv/bin/python",
+              "expected_executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv/bin/python",
+              "expected_prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+              "matches_manifest": true,
+              "prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+              "version": "3.12.12"
+            },
+            "isolation_read_roots": [
+              "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c",
+              "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime",
+              "/home/joker/AAA_NUS_SEM3/cv_agent/src",
+              "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+              "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+              "/usr/lib",
+              "/usr/lib64",
+              "/etc/ld.so.cache",
+              "/dev/urandom",
+              "/etc/passwd",
+              "/etc/ssl/openssl.cnf",
+              "/usr/share/zoneinfo/Etc/UTC"
+            ],
+            "kind": "command_event",
+            "loaded_source_gaps": [],
+            "phase": "invoke",
+            "preexec_verification": {
+              "child_pid": 423292,
+              "elapsed_seconds": 0.4212474800006021,
+              "event_count": 4,
+              "events": [
+                {
+                  "arguments": [],
+                  "event": "cv_agent.preexec.hook_selftest",
+                  "forbidden": false,
+                  "kind": "event"
+                },
+                {
+                  "arguments": [
+                    21032832
+                  ],
+                  "event": "builtins.id",
+                  "forbidden": false,
+                  "kind": "event"
+                },
+                {
+                  "arguments": [
+                    "libc.so.6"
+                  ],
+                  "event": "ctypes.dlopen",
+                  "forbidden": false,
+                  "kind": "event"
+                },
+                {
+                  "arguments": [
+                    {
+                      "type": "CDLL"
+                    },
+                    "prctl"
+                  ],
+                  "event": "ctypes.dlsym",
+                  "forbidden": false,
+                  "kind": "event"
+                }
+              ],
+              "exception": null,
+              "exit_code": 0,
+              "forbidden_events": [],
+              "gap": null,
+              "hook_selftest": true,
+              "kind": "executed_child",
+              "native_call_coverage": "Python audit/profile; raw native process calls are not observed",
+              "normal_return": true,
+              "ok": true,
+              "parent_pid": 423202,
+              "profile_selftest": true,
+              "source_check_performed": true,
+              "source_gaps": [],
+              "timeout_seconds": 2.0,
+              "trusted_verifier_fork": true
+            },
+            "preexec_verified_none": false,
+            "resource_accounting": {
+              "target": {
+                "accounting_complete": true,
+                "accounting_scope": "own_process_cpu_only",
+                "cpu_accounting_complete": true,
+                "cpu_resolution_seconds": 0.01,
+                "fd_observed_peak": 6,
+                "fd_peak_is_lower_bound": true,
+                "last_rss_kib": 176664,
+                "last_virtual_memory_kib": 1020640,
+                "max_rss_kib": 176664,
+                "max_virtual_memory_kib": 1110796,
+                "maximum_sample_interval_seconds": 0.01576946999557549,
+                "measurement_gaps": [
+                  {
+                    "errno": 13,
+                    "error": "PermissionError",
+                    "field": "open_fd_count",
+                    "path": "/proc/423202/fd"
+                  }
+                ],
+                "memory_peaks_observed_only": true,
+                "open_fd_count": 6,
+                "pid": 423202,
+                "pid_identity_mismatch": false,
+                "pid_starttime_ticks": 4961111,
+                "sample_count": 538,
+                "sample_interval_seconds": 0.010378054998000152,
+                "sampling_elapsed_seconds": 5.506442808997235,
+                "self_report_is_final": true,
+                "self_reported_usage": {
+                  "max_rss_kib": 738396,
+                  "pid": 423202,
+                  "system_cpu_seconds": 0.809705,
+                  "user_cpu_seconds": 5.242576
+                },
+                "system_cpu_seconds": 0.82,
+                "total_cpu_seconds": 6.06,
+                "user_cpu_seconds": 5.24
+              },
+              "tracer": null
+            },
+            "resource_profile": {
+              "address_space_bytes": 2147483648,
+              "cpu_hard_seconds": 20,
+              "cpu_soft_seconds": 15,
+              "file_size_bytes": 1000000,
+              "name": "heavy_target",
+              "open_files": 64,
+              "wall_seconds": 30.0
+            },
+            "returncode": 0,
+            "seccomp_selftest": true,
+            "shell_env_keys": [],
+            "target_pid": 423202,
+            "target_self_usage": {
+              "max_rss_kib": 738396,
+              "pid": 423202,
+              "system_cpu_seconds": 0.809705,
+              "user_cpu_seconds": 5.242576
+            }
+          },
+          "probe_nonce": "401b5591928a47429d5b8d791518229c",
+          "probe_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime/model$(printf 401b5591928a47429d5b8d791518229c)",
+          "reached_popen": true,
+          "recorder_derivation_enabled": true,
+          "resource_profile": {
+            "address_space_bytes": 2147483648,
+            "cpu_hard_seconds": 20,
+            "cpu_soft_seconds": 15,
+            "file_size_bytes": 1000000,
+            "name": "heavy_target",
+            "open_files": 64,
+            "wall_seconds": 30.0
+          },
+          "stack_capture_enabled": false,
+          "strace_enabled": false,
+          "subject": {
+            "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+            "candidate_id": "neutral-entry",
+            "entry_boolean_arguments": {},
+            "entry_condition_assumptions": {},
+            "entry_line": 229,
+            "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+            "entry_value_assumptions": {
+              "enable_mlserver": false,
+              "host": "127.0.0.1",
+              "port": "5000",
+              "timeout": "60"
+            },
+            "input_parameters": [
+              "model_uri"
+            ],
+            "property_id": "command-execution",
+            "repository_id": "neutral-entry",
+            "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+          },
+          "verification_mode": true
+        },
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "raw_status": "UNRESOLVED",
+        "status": "UNRESOLVED"
+      },
+      "delivered_payload": {
+        "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/d735d835e8af451cbd8b260de12e2f4c/shared-runtime-witness-artifact-_uc5rxad/witness-result.json",
+        "claim_eligible": false,
+        "classification_status": "complete",
+        "control": {
+          "argv": null,
+          "assumption_gaps": [],
+          "assumptions_verified": false,
+          "authentic_subprocess_popen": false,
+          "candidate_frame": null,
+          "concurrent_command_events": [],
+          "emitter_frame": null,
+          "event": null,
+          "hook_selftest": false,
+          "phase": null,
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": null,
+            "normal_return": false,
+            "ok": false,
+            "source_gaps": []
+          },
+          "seccomp_selftest": false,
+          "source_gaps": []
+        },
+        "control_replay": null,
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "manifest_origin": "system_ast",
+        "manifest_sha256": "32e835dd08e5366661b19db10aebc8cfb8153b172b6c2c1ee499b48f559b1669",
+        "probe": {
+          "argv": [
+            "bash",
+            "-c",
+            "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+          ],
+          "assumption_gaps": [],
+          "assumptions_verified": true,
+          "authentic_subprocess_popen": true,
+          "candidate_frame": {
+            "file": "mlflow/pyfunc/backend.py",
+            "first_line": 229,
+            "line": 311,
+            "module_name": "mlflow.pyfunc.backend",
+            "qualname": "PyFuncBackend.serve",
+            "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+          },
+          "concurrent_command_events": [],
+          "emitter_frame": {
+            "same_as_candidate": true
+          },
+          "event": "subprocess.Popen",
+          "hook_selftest": true,
+          "phase": "invoke",
+          "preexec": {
+            "forbidden_events": [],
+            "gap": null,
+            "kind": "executed_child",
+            "normal_return": true,
+            "ok": true,
+            "source_gaps": []
+          },
+          "seccomp_selftest": true,
+          "source_gaps": []
+        },
+        "probe_replay": null,
+        "raw_status": "UNRESOLVED",
+        "resource_profile": {
+          "address_space_bytes": 2147483648,
+          "cpu_hard_seconds": 20,
+          "cpu_soft_seconds": 15,
+          "file_size_bytes": 1000000,
+          "name": "heavy_target",
+          "open_files": 64,
+          "wall_seconds": 30.0
+        },
+        "scenario": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "value": null
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "value": "local"
+            }
+          },
+          "entry_boolean_arguments": {},
+          "entry_condition_assumptions": {},
+          "entry_value_assumptions": {
+            "enable_mlserver": {
+              "classification": "deployment_configuration",
+              "value": false
+            },
+            "host": {
+              "classification": "deployment_configuration",
+              "value": "127.0.0.1"
+            },
+            "port": {
+              "classification": "deployment_configuration",
+              "value": "5000"
+            },
+            "timeout": {
+              "classification": "deployment_configuration",
+              "value": "60"
+            }
+          },
+          "input_parameter": {
+            "classification": "attacker_controlled_input",
+            "value": "model_uri"
+          },
+          "precondition_files": {}
+        },
+        "scenario_origin": "model_proposed",
+        "scenario_sha256": "93bbbe4f39adf3ec3f836d036a3624a15e02a10a82c3eb341446fd0acf2ba075",
+        "scenario_verification": {
+          "authority_scope": "local_caller_hypothesis",
+          "control": {
+            "gaps": [],
+            "ok": false
+          },
+          "probe": {
+            "gaps": [],
+            "ok": true
+          },
+          "remote_authority_established": false
+        },
+        "scope_note": "The caller can create and supply an existing local directory path with shell metacharacters in its name. The observation covers this concrete input under the declared candidate assumptions; remote reachability remains unestablished.",
+        "source_module_count": 977,
+        "status": "UNRESOLVED",
+        "subject_source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "delivery_status": "ok",
+      "delivered_validation_status": "UNRESOLVED",
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "control_event_present": false,
+      "probe_replay_present": false,
+      "control_replay_present": false
+    }
+  ],
+  "interpretation": {
+    "autonomous_scenario_discovery_measured": true,
+    "autonomous_positive_confirmation_observed": false,
+    "developer_scripted_controls_are_separate": true,
+    "fixed_producer_confirmations": 0,
+    "fixed_admitted_vulnerable_verdicts": 0,
+    "fixed_rejected_raw_vulnerable_proposals": 1,
+    "admitted_safe_verdicts": 0,
+    "held_out_claim_supported": false,
+    "note": "The protocol now reached and completely delivered one witness per cell. The actual model selected a different branch, and neither scene confirmed the candidate. Scripted controls remain capability controls, not autonomous success or generalization evidence."
+  },
+  "m0_continuation": {
+    "single_authorized_retry_consumed": true,
+    "retry_positive_acceptance_met": false,
+    "failure_independent_of_case_and_repaired_established": false,
+    "additional_m0_phase3a_model_requests_enabled": false,
+    "additional_m0_phase3b_model_requests_enabled": false,
+    "phase3a": "offline_only",
+    "phase3b": "offline_selection_environment_and_controls_only",
+    "reason": "M0 section4: after the single repair/retry failed, phases3a/3b perform only offline work unless a failure demonstrably independent of the sample has been repaired. No such exception is established by this run."
+  }
+}

@@ -1,6 +1,10 @@
 # 当前状态（2026-09-29）
 
-## 模型提出场景：阶段 1 完成，S4 已解除，阶段 2 执行中
+## 模型提出场景：阶段 2 完成，后续离线实施中
+
+阶段 2 的唯一 B 重跑已完成，执行源码为 **d23e59c**：14 次请求、90,153 reported tokens，返回模型 ID 全部为 deepseek-flash，新进程完整门禁 **2427 passed in 270.88s**。两格最终均 ABSTAIN / UNRESOLVED。各完成两次准备和一次真实见证，完整运行结果投递，没有重复执行；两格提出 enable_mlserver=false，走 scoring_server/uvicorn 分支，在 `recorder_prefix_not_established` 处不能闭合。B-a 复核为 **F3，伴随局部 F6**，没有基础设施故障证据；固定侧没有 CONFIRMED 或已准入 VULNERABLE。三份原始 VULNERABLE 提案均被证据准入拒绝，仍完整归档。
+
+累计用量为 **46 请求 / 281,330 reported tokens**，未触发硬停。按 M0 的单次重跑失败分支，后续 3a、3b 只做离线能力检查，不追加模型请求或第二轮提示修复。继续 K1、K3、K4 离线验收、近迁移与外部准备，然后 M0 汇总和 K2。G-A 留到这些工作完成后按原标准判定，K5–K8 尚未启动。具体账本、场景原文、运行结果和失败边界见 [阶段 2 报告](../.hermes/plans/2026-09-29-phase2-results.md) 与 [完整审计](../.hermes/plans/2026-09-29-phase2-summary.json)。下列阶段 1、S4 和准备记录保留其当时状态。
 
 见证工具现在接收结构化 `scenario_hypothesis`，支持注入参数、开关、条件与值前提、构造数据和预置文件。每条前提要求值、攻击者输入/部署配置/环境条件分类和理由。原候选身份保持不变，执行 subject 与场景来源单独绑定；工具掌握探针、良性对照和全部运行时核验。普通工具与注册有界见证 fixture 的未分类场景均拒绝执行，仍只允许 CONFIRMED / UNRESOLVED。
 
