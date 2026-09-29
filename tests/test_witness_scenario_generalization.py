@@ -27,6 +27,7 @@ from cv_agent.tools.identity import candidate_subject
 from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
 from cv_agent.tools.validation.registry import full_agent_tools
 from cv_agent.tools.validation.witness_manifest import WitnessExecutionContext
+from test_witness_scope_notes import scenario_projection
 
 
 TOOL = "run_bounded_execution_witness"
@@ -192,7 +193,7 @@ def test_renamed_entry_with_model_scenario_executes_and_admits_concrete_witness(
         if field != "input_parameter":
             for premise in premises.values():
                 premise.pop("rationale")
-    assert payload["scenario"] == reported_proposal
+    assert scenario_projection(payload) == reported_proposal
     assert artifact["scenario"] == _proposal()
     assert payload["scenario_sha256"] == artifact["scenario_sha256"]
     assert artifact["original_subject"] == original_subject.model_dump(mode="json")

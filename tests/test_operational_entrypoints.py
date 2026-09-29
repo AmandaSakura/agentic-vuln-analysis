@@ -102,7 +102,7 @@ def test_scripts_root_contains_only_documented_shell_commands():
 
 @pytest.mark.parametrize("phase,configuration,archived", [
     ("phase1", None, True),
-    ("phase2", "configs/experiments/witness_scenario_phase2.json", False),
+    ("phase2", "configs/experiments/witness_scenario_phase2.json", True),
 ])
 def test_scenario_launcher_selects_approved_provider_without_real_credentials(tmp_path, phase, configuration, archived):
     project = tmp_path/'project with spaces'

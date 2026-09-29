@@ -97,7 +97,7 @@ def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *
                 'tool_status': step.observation.status,
                 'witness_attempted': step.observation.metadata.get('witness_attempted', False),
                 **{key: payload[key] for key in (
-                    'raw_status', 'gaps', 'scenario_origin', 'scenario_sha256', 'scenario',
+                    'raw_status', 'gaps', 'scenario_origin', 'scenario_sha256', 'premises', 'scope_note',
                     'original_subject', 'execution_subject', 'scenario_verification', 'artifact_path', 'detail',
                 ) if key in payload},
             })

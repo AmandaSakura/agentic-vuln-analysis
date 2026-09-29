@@ -22,6 +22,7 @@ from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
 from cv_agent.tools.validation.registry import full_agent_tools
 from cv_agent.tools.validation.witness_manifest import WitnessExecutionContext, WitnessSupplement
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
+from test_witness_scope_notes import scenario_projection
 
 
 TOOL = "run_bounded_execution_witness"
@@ -110,7 +111,7 @@ def test_empty_subject_can_execute_model_scenario_without_identity_drift(tmp_pat
     assert original.input_parameters == ()
     payload = json.loads(observation.content)
     assert payload["scenario_origin"] == "model_proposed"
-    assert payload["scenario"]["input_parameter"]["classification"] == "attacker_controlled_input"
+    assert scenario_projection(payload)["input_parameter"]["classification"] == "attacker_controlled_input"
     assert payload["scenario_verification"]["probe"]["ok"] is True
     assert payload["scenario_verification"]["control"]["ok"] is True
     assert payload["scenario_verification"]["remote_authority_established"] is False

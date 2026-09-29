@@ -19,6 +19,7 @@ from cv_agent.tools.validation import FixtureCase, FixtureOutcome, full_agent_to
 from cv_agent.domain.types import Candidate, CodeDocument
 from cv_agent.tools.identity import candidate_subject
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
+from test_witness_scope_notes import reported_scenario, scenario_projection
 from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
 from cv_agent.evaluation.diagnostics.witness_contract import bounded_witness_fixture_case
 
@@ -159,7 +160,7 @@ def test_classified_real_fixture_adapter_measures_inputs_and_preserves_control(t
     assert observation.validation_status == expected, observation.content
     payload = json.loads(observation.content)
     details = payload["details"]
-    assert details["scenario"]["input_parameter"]["classification"] == "attacker_controlled_input"
+    assert scenario_projection(details) == reported_scenario(scenario.model_dump(mode="json"))
     assert details["remote_authority_established"] is False
     artifact = json.loads(Path(details["artifact_path"]).read_text())
     worker = artifact["result"]["details"]["probe_event"]

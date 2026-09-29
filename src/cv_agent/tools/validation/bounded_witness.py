@@ -27,11 +27,6 @@ from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 
 
 TOOL_NAME = "run_bounded_execution_witness"
-_SCOPE_NOTE = (
-    "The caller can create and supply an existing local directory path with shell "
-    "metacharacters in its name. The observation covers this concrete input under "
-    "the declared candidate assumptions; remote reachability remains unestablished."
-)
 _PREPARATION_SCOPE_NOTE = (
     "No witness has executed. Reported call-data gaps describe preparation; "
     "scenario premises require independent runtime verification."
@@ -66,13 +61,42 @@ def _scenario_verification(details: dict[str, Any]) -> dict[str, Any]:
     return phases
 
 
+def _scope_note(verification: dict[str, Any], details: dict[str, Any]) -> str:
+    # Declarations remain separate from measured facts. A launched worker or
+    # a proposed input does not by itself establish candidate execution.
+    observed = {
+        phase: event.get("phase") == "invoke"
+        and isinstance(event.get("candidate_frame"), dict)
+        and event.get("authentic_subprocess_popen") is True
+        and not event.get("loaded_source_gaps")
+        for phase in ("probe", "control")
+        for event in (details.get(phase + "_event", {}),)
+    }
+    if all(observed.values()) and all(verification[phase]["ok"] for phase in observed):
+        return (
+            "This observation covers only the executed concrete input under the listed premises; "
+            "remote reachability is not established."
+        )
+    if any(observed.values()):
+        return (
+            "A concrete candidate input was observed. Listed premises are declared requirements; "
+            "consult runtime verification for unmet or unverified premises. "
+            "Remote reachability is not established."
+        )
+    return (
+        "A bounded execution was attempted; candidate execution and the listed premises were not established. "
+        "Remote reachability is not established."
+    )
+
+
 def _visible_provenance(provenance: dict[str, Any]) -> dict[str, Any]:
     # The registry already delivers the immutable original ToolObservation
     # subject. Both complete subjects and all worker records live in the
     # private artifact; repeating them consumes the evidence delivery budget.
     result = {name: value for name, value in provenance.items()
-              if name not in {"original_subject", "execution_subject"}}
-    scenario = result.get("scenario")
+              if name not in {"original_subject", "execution_subject", "scenario"}}
+    scenario = provenance.get("scenario")
+    premises = []
     if scenario is not None:
         def premise(item: dict[str, Any]) -> dict[str, Any]:
             displayed = {"classification": item["classification"], "value": item["value"]}
@@ -81,11 +105,16 @@ def _visible_provenance(provenance: dict[str, Any]) -> dict[str, Any]:
                 displayed.update(value={"sha256": hashlib.sha256(encoded).hexdigest(), "bytes": len(encoded)},
                                  value_representation="canonical_json_sha256")
             return displayed
-        result["scenario"] = {
-            "input_parameter": premise(scenario["input_parameter"]),
-            **{field: {name: premise(item) for name, item in scenario[field].items()}
-               for field in scenario if field != "input_parameter"},
-        }
+        # JSON-pointer names preserve arbitrary condition expressions and
+        # relative file names without duplicating their classified values.
+        for field in sorted(scenario):
+            if field == "input_parameter":
+                premises.append({"name": "/input_parameter", **premise(scenario[field])})
+            else:
+                for name, item in sorted(scenario[field].items()):
+                    escaped = name.replace("~", "~0").replace("/", "~1")
+                    premises.append({"name": f"/{field}/{escaped}", **premise(item)})
+    result["premises"] = premises
     return result
 
 
@@ -173,7 +202,7 @@ class BoundedWitnessService:
         # Full hypotheses are already recorded in the original tool arguments.
         # Preparation reports only their digest and required field owners; all
         # classified values still accompany an actual execution result.
-        visible.pop("scenario", None)
+        visible["premises"] = []
         return ToolObservation(
             tool=TOOL_NAME, status="ok", validation_status=ValidationStatus.UNRESOLVED,
             subject=subject,
@@ -335,7 +364,7 @@ class BoundedWitnessService:
             "probe_replay": details.get("probe_replay"),
             "control_replay": details.get("control_replay"),
             "claim_eligible": False,
-            "scope_note": _SCOPE_NOTE,
+            "scope_note": _scope_note(verification, details),
         }
         return ToolObservation(
             tool=TOOL_NAME, status="ok", validation_status=result.status, subject=subject,

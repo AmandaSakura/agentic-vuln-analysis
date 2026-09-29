@@ -1,0 +1,111 @@
+{
+  "milestone": "K1",
+  "live_model_requests": 0,
+  "claim_eligible": false,
+  "autonomous_scenario_discovery_measured": false,
+  "focused_tests": {
+    "passed": 85,
+    "exit_code": 0,
+    "tests_first_failed": 11,
+    "full_suite_status": "parent_to_run",
+    "first_full_suite": {
+      "passed": 2435,
+      "failed": 3,
+      "duration_seconds": 282.31,
+      "log": "artifacts/remaining_work_20260929/k1_full_pytest.log",
+      "resolution": "Two public fixture transport assertions migrate to exact reconstructed projection; completed phase2 launcher expectation migrated by parent."
+    },
+    "fixture_projection_migration": {
+      "passed": 44,
+      "exit_code": 0,
+      "files": [
+        "tests/test_bounded_witness_admission.py",
+        "tests/test_bounded_witness_contract.py",
+        "tests/test_witness_scope_notes.py",
+        "tests/test_witness_scenario_generalization.py"
+      ]
+    }
+  },
+  "transport": "One canonical flat classified premise projection using escaped JSON-pointer names; exact nested projection is reconstructed by semantic assertions.",
+  "historical_partial_pair": "artifacts/remaining_work_20260929/k1_scripted",
+  "rows": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "developer_scripted",
+      "protocol_scenario_origin": "model_proposed",
+      "label": "VULNERABLE",
+      "validation_status": "CONFIRMED",
+      "raw_status": "EXPANDED_OBSERVED",
+      "gaps": [],
+      "live_model_requests": 0,
+      "scripted_model_calls": 3,
+      "witness_executions": 1,
+      "observation_budget": 8192,
+      "tool_observation_bytes": 6537,
+      "remaining_observation_bytes": 1655,
+      "preparation_delivery_bytes": 966,
+      "final_content_bytes": 4844,
+      "final_delivery_bytes": 5571,
+      "delivered_without_truncation": true,
+      "premise_count": 15,
+      "scope_note": "This observation covers only the executed concrete input under the listed premises; remote reachability is not established.",
+      "source_file_bindings": 977,
+      "source_binding_map_exact_before_after": true,
+      "source_binding_map_sha256": "23114cdfe2f4e538a11c3550c3e6daa7ed381b91e32cde17998d43b121c11f50",
+      "manifest_sha256": "457f3215644a43a6a053a6fcb61b365e6adcaf5cd186464cfcb5a85b42e5a915",
+      "manifest_digest_unchanged": true,
+      "scenario_sha256": "6876656f823f70cc6472882a5f3e6a547870398a598069e09f684e591905bafa",
+      "scenario_digest_unchanged": true,
+      "full_private_scene_rationale_unchanged": true,
+      "original_execution_subjects_unchanged": true,
+      "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/k1_scripted_completed/shared-runtime-witness-artifact-3jjzvq9s/witness-result.json",
+      "before_artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime-witness-artifact-pyzlh5dr/witness-result.json",
+      "result_path": "artifacts/remaining_work_20260929/k1_scripted_completed/hp003_a.json"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "developer_scripted",
+      "protocol_scenario_origin": "model_proposed",
+      "label": "ABSTAIN",
+      "validation_status": "UNRESOLVED",
+      "raw_status": "LITERAL_OBSERVED",
+      "gaps": [],
+      "live_model_requests": 0,
+      "scripted_model_calls": 3,
+      "witness_executions": 1,
+      "observation_budget": 8192,
+      "tool_observation_bytes": 6550,
+      "remaining_observation_bytes": 1642,
+      "preparation_delivery_bytes": 966,
+      "final_content_bytes": 4856,
+      "final_delivery_bytes": 5584,
+      "delivered_without_truncation": true,
+      "premise_count": 15,
+      "scope_note": "This observation covers only the executed concrete input under the listed premises; remote reachability is not established.",
+      "source_file_bindings": 977,
+      "source_binding_map_exact_before_after": true,
+      "source_binding_map_sha256": "e97a50631cd65337320c46a385544f8a07a653687228221461686ca5c3ed9f28",
+      "manifest_sha256": "f2e1bb5317e4090baf9f9845fbb05f26522dd1aa2094ae73c3c79f2264ee35cd",
+      "manifest_digest_unchanged": true,
+      "scenario_sha256": "6876656f823f70cc6472882a5f3e6a547870398a598069e09f684e591905bafa",
+      "scenario_digest_unchanged": true,
+      "full_private_scene_rationale_unchanged": true,
+      "original_execution_subjects_unchanged": true,
+      "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/k1_scripted_completed/shared-runtime-witness-artifact-lwjus4d3/witness-result.json",
+      "before_artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime-witness-artifact-_d6thzyl/witness-result.json",
+      "result_path": "artifacts/remaining_work_20260929/k1_scripted_completed/hp003_b.json"
+    }
+  ],
+  "full_suite_final": {
+    "passed": 2438,
+    "seconds": 280.37,
+    "exit_code": 0,
+    "log": "artifacts/remaining_work_20260929/k1_full_pytest_final.log"
+  },
+  "harness": "PASS",
+  "archived_launcher_migration": {
+    "test": "tests/test_operational_entrypoints.py",
+    "reason": "Phase2 command was archived after the actual completed once-only run; fake offline project still replays exact archived command.",
+    "targeted_passed": 10
+  }
+}
