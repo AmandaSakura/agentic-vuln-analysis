@@ -172,9 +172,10 @@ def select_candidate_document(
     return min(same_file, key=lambda document: (abs(_span(document.path)[0] - line_hint), document.path))
 
 
-def model_visible_analysis_scope(pair: PythonHeldoutPair) -> str:
+def model_visible_analysis_scope(pair: PythonHeldoutPair, *, include_scoped_operation: bool = True) -> str:
     entry = pair.entry_point
     critical = pair.critical_operation
+    operation = f"Scoped operation code marker: {critical['code']}. " if include_scoped_operation else ""
     conditions = ""
     if (
         pair.input_parameters
@@ -194,7 +195,7 @@ def model_visible_analysis_scope(pair: PythonHeldoutPair) -> str:
         "Use the candidate.path and retrieved_code.path values as the only exact "
         "tool-readable paths. "
         f"Declared entry code marker: {entry['code']}. "
-        f"Scoped operation code marker: {critical['code']}. "
+        f"{operation}"
         "Use repository evidence for checks, transformations and data/control flow; "
         "do not infer the answer from case identity or commit ordering."
     ) + conditions
@@ -206,7 +207,20 @@ def build_pair_input(
     case: PythonHeldoutPairCase,
     *,
     preferred_symbol: str | None = None,
+    include_scenario_assumptions: bool = True,
+    advisory_text: str | None = None,
+    include_scoped_operation: bool = True,
 ) -> tuple[RepositoryIndex, Candidate, dict[str, str]]:
+    if not include_scenario_assumptions:
+        if not advisory_text or not advisory_text.strip():
+            raise ValueError("Scenario-free input requires separately disclosed advisory_text")
+        # Remove scenario hints before either the subject or retrieval query is
+        # constructed. The caller supplies the separately disclosed advisory
+        # text instead of reusing a scenario-annotated editorial title/query.
+        pair = pair.model_copy(update={
+            "input_parameters": (), "entry_boolean_arguments": {},
+            "entry_condition_assumptions": {}, "entry_value_assumptions": {},
+        })
     if not pair.property_id or not pair.property_id.strip():
         raise ValueError("Advisory candidate requires an explicit property_id before source indexing")
     index, source_sha256 = build_package_index(root, pair, case)
@@ -219,14 +233,21 @@ def build_pair_input(
         preferred_symbol=preferred_symbol,
     )
     start, _ = _span(entry.path)
+    analysis_scope = model_visible_analysis_scope(pair, include_scoped_operation=include_scoped_operation)
+    if advisory_text is not None:
+        analysis_scope += f" Advisory summary: {advisory_text}"
+    query = (f"{pair.vulnerability_title} {pair.source_scope} {pair.analysis_scope}"
+             if advisory_text is None else
+             f"{advisory_text} {pair.entry_point['code']}"
+             + (f" {pair.critical_operation['code']}" if include_scoped_operation else ""))
     candidate = Candidate(
         candidate_id=case.case_id,
         case_id=case.case_id,
         repository_id=case.case_id,
         path=entry.path,
         line=start,
-        query=f"{pair.vulnerability_title} {pair.source_scope} {pair.analysis_scope}",
-        analysis_scope=model_visible_analysis_scope(pair),
+        query=query,
+        analysis_scope=analysis_scope,
         property_id=pair.property_id,
         input_parameters=pair.input_parameters,
         entry_boolean_arguments=pair.entry_boolean_arguments,

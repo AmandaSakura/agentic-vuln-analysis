@@ -6,8 +6,11 @@ import ast
 import hashlib
 import io
 import re
+import json
+import tempfile
 import tokenize
 from functools import partial
+from pathlib import Path
 from typing import Literal
 
 from cv_agent.domain.evidence import FixtureProofScope, ValidationStatus, ValidationSubject
@@ -35,7 +38,8 @@ class PositiveOnlyWitnessProofScope(FixtureProofScope):
 
 
 def _fixture_outcome(manifest: WitnessManifest) -> FixtureOutcome:
-    result: WitnessResult = run_witness(manifest)
+    _require_classified_manifest(manifest)
+    result: WitnessResult = run_witness(manifest, verify_obligations=True)
     if result.status == ValidationStatus.REFUTED:
         raise ValueError("bounded execution witness cannot refute a candidate")
     if result.raw_status == "LITERAL_OBSERVED" and result.status != ValidationStatus.UNRESOLVED:
@@ -44,11 +48,46 @@ def _fixture_outcome(manifest: WitnessManifest) -> FixtureOutcome:
         result.raw_status != "EXPANDED_OBSERVED" or result.gaps
     ):
         raise ValueError("confirmed witness lacks a complete expansion record")
+    from cv_agent.tools.validation.bounded_witness import (
+        _scenario_verification, _verification_summary, _visible_provenance, _write_private_json,
+    )
+    full_result = result.model_dump(mode="json")
+    provenance = {"scenario_origin": manifest.scenario_origin,
+                  "scenario": manifest.scenario_hypothesis.model_dump(mode="json"),
+                  "scenario_sha256": manifest.scenario_hypothesis.digest(),
+                  "classification_status": "complete",
+                  "original_subject": manifest.original_subject.model_dump(mode="json"),
+                  "execution_subject": manifest.subject.model_dump(mode="json")}
+    manifest_data = manifest.model_dump(mode="json")
+    manifest_digest = hashlib.sha256(json.dumps(manifest_data, sort_keys=True,
+        separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+    details = full_result.get("details", {})
+    verification = _scenario_verification(details)
+    artifact = Path(tempfile.mkdtemp(prefix="cv-agent-witness-fixture-artifact-")) / "witness-result.json"
+    _write_private_json(artifact, {"producer": "run_fixture_test", "manifest_origin": "registered_manifest",
+        **provenance, "manifest": manifest_data, "manifest_sha256": manifest_digest,
+        "scenario_verification": verification, "result": full_result})
     return FixtureOutcome(
         status=result.status,
         summary="bounded execution witness",
-        details={"witness": result.model_dump(mode="json"), "raw_status": result.raw_status},
+        details={"witness": {"status": result.status.value, "raw_status": result.raw_status, "gaps": result.gaps},
+                 "raw_status": result.raw_status, **_visible_provenance(provenance),
+                 "artifact_path": str(artifact), "manifest_sha256": manifest_digest,
+                 "remote_authority_established": False,
+                 "scenario_verification": {phase: {"ok": verification[phase]["ok"], "gaps": verification[phase]["gaps"]}
+                                           for phase in ("probe", "control")},
+                 "probe": _verification_summary(details.get("probe_event", {}), manifest.checkout_root),
+                 "control": _verification_summary(details.get("control_event", {}), manifest.checkout_root)},
     )
+
+
+def _require_classified_manifest(manifest: WitnessManifest) -> None:
+    if (manifest is None or manifest.scenario_hypothesis is None
+            or manifest.original_subject is None or manifest.scenario_origin is None):
+        raise ValueError("model-facing bounded witness requires classified scenario premises")
+    # model_copy does not validate updates. Recheck the classified scenario's
+    # original/execution subject identity before any model-facing execution.
+    WitnessManifest.model_validate(manifest.model_dump(mode="json"))
 
 
 def bounded_witness_fixture_case(
@@ -59,7 +98,10 @@ def bounded_witness_fixture_case(
     """Register only a subject-bound positive witness with an immutable proof scope."""
 
     subject = candidate_subject(index, candidate)
-    validate_witness_manifest(index, subject, manifest)
+    _require_classified_manifest(manifest)
+    if manifest.original_subject != subject:
+        raise ValueError("witness original subject does not match the indexed candidate")
+    validate_witness_manifest(index, manifest.subject, manifest)
     return FixtureCase(
         case_id=candidate.case_id,
         runner=partial(_fixture_outcome, manifest),

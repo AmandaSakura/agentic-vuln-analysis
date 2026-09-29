@@ -1,6 +1,14 @@
 # 当前状态（2026-09-29）
 
-## 候选执行见证：清单生成及工具接入，第 1 步完成
+## 模型提出场景：离线前置已完成，真实四格待授权
+
+见证工具现在接收结构化 `scenario_hypothesis`，支持注入参数、开关、条件与值前提、构造数据和预置文件。每条前提要求值、攻击者输入/部署配置/环境条件分类和理由。原候选身份保持不变，执行 subject 与场景来源单独绑定；工具掌握探针、良性对照和全部运行时核验。普通工具与注册有界见证 fixture 的未分类场景均拒绝执行，仍只允许 CONFIRMED / UNRESOLVED。
+
+严格无场景 subject、入口/advisory 提示的脚本模型真实对照已复现 2c：hp003_a **VULNERABLE / CONFIRMED / EXPANDED_OBSERVED**，hp003_b **ABSTAIN / UNRESOLVED / LITERAL_OBSERVED**。两版原始四组场景字段为空，各自 977 个源码绑定、良性对照及全部运行时义务核对通过，具体输入一致；17 项改名仓库控制也通过。模型可见结果保留所有前提值和分类，完整理由与证据保存在私有产物，源码帧仅展示仓库相对路径。
+
+四格配置已经准备：固定 E1、`gemini-3.8-flash-high(low)`，A 保留数据集场景、B 由模型提出场景，共享最多 **60 次**实际请求，逐请求日志与 reported usage 分来源记录。最终完整离线测试 **2351 passed in 242.57s**，harness **PASS**，`git diff --check` 通过。完整检查记录及边界见 [场景接口验收](reference/MODEL_PROPOSED_WITNESS_SCENARIOS.md)。目前真实模型请求 **0**，未运行 B 自主发现或第 3 步新样本；这些脚本控制不是泛化成绩，`claim_eligible=false`。只有 repository_url/commit 的端到端 held-out 输入还需要独立的候选发现和环境准备。
+
+## 候选执行见证：第 1 步完成（此前状态，保留历史）
 
 已将有界真实执行见证注册为 agent 工具 `run_bounded_execution_witness`。系统从候选 subject 和绑定源码生成入口、调用参数、前提及源码库存；模型只能补缺失构造参数和受限文件布局。探针、良性对照、核验义务与隔离配置由系统掌握，契约只允许候选级 CONFIRMED；准备响应不算完成验证，字面量观测不产生 SAFE。
 

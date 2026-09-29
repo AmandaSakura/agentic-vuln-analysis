@@ -107,7 +107,14 @@ def validation_tools(
              'with all runtime obligations and benign control can return CONFIRMED; literal or '
              'incomplete observations stay UNRESOLVED and never prove SAFE. Input class: the '
              'caller can create and supply an existing local directory with shell metacharacters '
-             'in its name. Remote reachability remains unestablished.'),
+             'in its name. When no candidate scenario is declared, propose scenario_hypothesis: '
+             'input_parameter and optional entry_boolean_arguments, entry_condition_assumptions, '
+             'entry_value_assumptions, constructor_parameters and precondition_files; every premise '
+             'uses {value, classification, rationale}, with classification attacker_controlled_input, '
+             'deployment_configuration or environment_condition. The input parameter must be '
+             'attacker_controlled_input. Keep both outer maps empty with a proposed scenario. '
+             'These are hypotheses measured at runtime; report their source and classifications '
+             'with any CONFIRMED result. Remote reachability remains unestablished.'),
             WitnessSupplement,
             witness_service.handle,
             available=bool(witness_contexts),

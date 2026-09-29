@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 
 from cv_agent.domain.evidence import ValidationSubject
 from cv_agent.domain.types import FrozenModel
@@ -24,6 +24,7 @@ from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadG
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.runtime.witness_resources import WitnessResourceProfile
 from cv_agent.tools.identity import repository_source_digest
+from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 
 if TYPE_CHECKING:
     from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
@@ -84,6 +85,7 @@ def _safe_relative(value: str) -> bool:
 class WitnessSupplement(FrozenModel):
     constructor_parameters: dict[str, Any]
     precondition_files: dict[str, str]
+    scenario_hypothesis: WitnessScenarioHypothesis | None = None
 
     @field_validator("constructor_parameters", mode="before")
     @classmethod
@@ -105,6 +107,12 @@ class WitnessSupplement(FrozenModel):
             raise ValueError("precondition text exceeds layout limit")
         return value
 
+    @model_validator(mode="after")
+    def classified_data_only(self) -> WitnessSupplement:
+        if self.scenario_hypothesis is not None and (self.constructor_parameters or self.precondition_files):
+            raise ValueError("model scenarios cannot mix unclassified constructor or file supplements")
+        return self
+
 
 @dataclass(frozen=True)
 class WitnessExecutionContext:
@@ -114,6 +122,7 @@ class WitnessExecutionContext:
     resource_profile: WitnessResourceProfile = field(default_factory=WitnessResourceProfile.fixture_default)
     read_grants: tuple[IsolationReadGrant, ...] = ()
     runtime_root: Path = field(default_factory=lambda: Path(tempfile.gettempdir()) / "cv-agent-witness")
+    dataset_scenario: WitnessScenarioHypothesis | None = None
 
 
 @dataclass(frozen=True)
@@ -394,7 +403,10 @@ def _constructor_recipe(constructor: ast.FunctionDef, method: ast.FunctionDef, t
 
 
 def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
-                           context: WitnessExecutionContext, supplement: WitnessSupplement) -> ManifestDraft:
+                           context: WitnessExecutionContext, supplement: WitnessSupplement, *,
+                           scenario: WitnessScenarioHypothesis | None = None,
+                           scenario_origin: str | None = None,
+                           original_subject: ValidationSubject | None = None) -> ManifestDraft:
     from cv_agent.evaluation.diagnostics.bounded_execution_witness import WitnessManifest
     WitnessSupplement.model_validate(supplement.model_dump())
     generated: dict[str, Any] = {"entry_qualified": False, "input_profile": "existing_local_directory"}
@@ -479,6 +491,15 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
     elif cls.bases:
         gaps.append("inherited_constructor_unsupported")
     missing = tuple(name for name in ctor_names if name not in ctor_values and name not in ctor_defaults)
+    scenario_constructor = scenario.values("constructor_parameters") if scenario_origin == "model_proposed" else {}
+    unexpected = set(scenario_constructor) - set(ctor_names)
+    if unexpected:
+        gaps.extend(f"scenario_constructor_parameter_missing:{name}" for name in sorted(unexpected))
+    for name, value in scenario_constructor.items():
+        if name in ctor_values and not _same(ctor_values[name], value):
+            gaps.append(f"scenario_constructor_assumption_conflict:{name}")
+        elif name in ctor_names:
+            ctor_values[name] = value
     unexpected = set(supplement.constructor_parameters) - set(missing)
     if unexpected:
         raise ValueError("constructor supplement contains unrequested parameters")
@@ -495,6 +516,9 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
              "import_root": context.import_root,
              "python_executable": context.python_executable, "resource_profile": context.resource_profile,
              "probe_argument": probe, "recorder_command": "cv_witness_recorder", "probe_directory_prefix": "model"}
+    if scenario is not None:
+        bound.update(original_subject=original_subject, scenario_hypothesis=scenario,
+                     scenario_origin=scenario_origin)
     if gaps:
         return ManifestDraft(None, missing, tuple(dict.fromkeys(gaps)), generated, bound)
     def ordered_call(names, positional, values, defaults):
@@ -513,7 +537,9 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
         ctor_args, ctor_kwargs = ordered_call(ctor_names, ctor_positional, ctor_values, ctor_defaults)
         manifest = WitnessManifest(**bound, call_args=call_args, call_kwargs=call_kwargs,
                                    constructor_args=ctor_args, constructor_kwargs=ctor_kwargs,
-                                   precondition_files=supplement.precondition_files)
+                                   precondition_files=(scenario.values("precondition_files")
+                                                       if scenario_origin == "model_proposed"
+                                                       else supplement.precondition_files))
     except ValueError as error:
         return ManifestDraft(None, (), (f"manifest_call_shape_unsupported:{error}",), generated, bound)
     return ManifestDraft(manifest, (), (), generated, bound)

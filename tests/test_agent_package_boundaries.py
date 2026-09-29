@@ -190,7 +190,10 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     # C1/C4/C5: candidate witness guidance and the new registered schema are
     # intentional. Removing only that guidance/schema restores the previous
     # planner and definitions hashes; candidate identity remains unchanged.
-    # The tool description requires declared probe inputs.
+    # Classified scenario input and its guidance intentionally change only
+    # the complete tool definitions. Removing scenario_hypothesis/$defs and
+    # restoring the old witness description reproduces the previous hash;
+    # this unqualified planner's prompt and candidate subject stay identical.
     # Category selection still belongs to may-flow tracing only.
     definitions = {item["function"]["name"]: item["function"]
                    for item in pipeline.tools.definitions(pipeline.tools.names)}
@@ -203,6 +206,6 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     }
     assert {name: hashlib.sha256(value.encode()).hexdigest() for name, value in payloads.items()} == {
         "planner": "964b90606817582d135db213078b2001d7d4e3acfcc00facc916c8a2d2fe374d",
-        "definitions": "3ae3c30297c899ca18a766a5e6241776824efa1283a2b7ae4b133a22d8d97e4e",
+        "definitions": "88ba6e0175b39efcdd5cbd29013a3f70715f4cb4a73c7b44d801c78976334aae",
         "subject": "9f0896a13965421790d5b8ac82a555a8974618d2bcc36491937bb824532ca5ff",
     }

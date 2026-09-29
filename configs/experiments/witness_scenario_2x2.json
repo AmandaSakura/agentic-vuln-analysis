@@ -1,0 +1,111 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "dataset": "configs/datasets/advisory_pairs_v5.json",
+  "selection_profile": "configs/profiles/advisory_hp003_diagnosis_v4.json",
+  "model_config": "configs/models/micro_benchmark_gemini_native.json",
+  "system": "E1",
+  "max_requests": 60,
+  "max_seconds": 3600,
+  "resource_profile": "artifacts/bounded_execution_witness_resource_diagnostics/profile_heavy_target.json",
+  "read_grants": "artifacts/bounded_execution_witness_stage2_read_admission/read_grants_final.json",
+  "advisory_text": "MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+  "advisory_text_origin": "dataset_advisory_summary",
+  "advisory_text_note": "Shared text derives from advisory_pairs_v5 vulnerability_title, with the editorial enable_mlserver=True annotation omitted. It is a dataset advisory summary, not the original advisory body. Only the entry code marker and this summary are supplied as editorial context to both conditions. The critical operation marker is omitted; source code within the entry remains available. B measures scenario discovery with advisory hints, not repository-only held-out discovery.",
+  "dataset_scenario": {
+    "input_parameter": {
+      "value": "model_uri",
+      "classification": "attacker_controlled_input",
+      "rationale": "The bounded scenario assumes a caller can create and supply an existing local directory path; remote reachability is not established."
+    },
+    "entry_boolean_arguments": {
+      "enable_mlserver": {
+        "value": true,
+        "classification": "deployment_configuration",
+        "rationale": "The serving caller selects the MLServer backend."
+      }
+    },
+    "entry_condition_assumptions": {
+      "sys.platform.startswith('linux')": {
+        "value": true,
+        "classification": "environment_condition",
+        "rationale": "The bounded execution environment runs on Linux."
+      },
+      "is_windows()": {
+        "value": false,
+        "classification": "environment_condition",
+        "rationale": "The process follows the non-Windows platform branch."
+      },
+      "self._env_manager != em.LOCAL": {
+        "value": false,
+        "classification": "deployment_configuration",
+        "rationale": "The backend uses the local environment manager."
+      },
+      "os.path.exists(artifact_uri)": {
+        "value": true,
+        "classification": "environment_condition",
+        "rationale": "The supplied local artifact directory exists before the serving call."
+      }
+    },
+    "entry_value_assumptions": {
+      "port": {
+        "value": 5000,
+        "classification": "deployment_configuration",
+        "rationale": "The serving endpoint has a concrete port."
+      },
+      "host": {
+        "value": "127.0.0.1",
+        "classification": "deployment_configuration",
+        "rationale": "The serving endpoint binds to a concrete host."
+      },
+      "timeout": {
+        "value": null,
+        "classification": "deployment_configuration",
+        "rationale": "The serving caller leaves the request timeout unset."
+      },
+      "self._nworkers": {
+        "value": 1,
+        "classification": "deployment_configuration",
+        "rationale": "The backend is constructed with one worker."
+      },
+      "model_config": {
+        "value": null,
+        "classification": "deployment_configuration",
+        "rationale": "The serving call supplies no model configuration override."
+      },
+      "synchronous": {
+        "value": false,
+        "classification": "deployment_configuration",
+        "rationale": "The serving caller requests asynchronous startup."
+      },
+      "MLServerDefaultModelName": {
+        "value": "mlflow-model",
+        "classification": "environment_condition",
+        "rationale": "The loaded MLServer integration supplies this default model name."
+      },
+      "MLServerMLflowRuntime": {
+        "value": "mlserver_mlflow.MLflowRuntime",
+        "classification": "environment_condition",
+        "rationale": "The loaded MLServer integration supplies this runtime class name."
+      }
+    },
+    "constructor_parameters": {
+      "config": {
+        "value": {},
+        "classification": "deployment_configuration",
+        "rationale": "The model must independently supply the empty constructor configuration after the tool reports it missing; this classification record does not fill the parameter."
+      }
+    },
+    "precondition_files": {}
+  },
+  "cases": [
+    {
+      "case_id": "hp003_a",
+      "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"
+    },
+    {
+      "case_id": "hp003_b",
+      "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"
+    }
+  ]
+}

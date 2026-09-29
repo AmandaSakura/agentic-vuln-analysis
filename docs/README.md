@@ -11,6 +11,7 @@
 
 ## 参考设计
 
+- [模型提出场景的见证接口](reference/MODEL_PROPOSED_WITNESS_SCENARIOS.md)：分类前提、离线正反控与待授权的 A/B 四格实验。
 - [完整流程与当前问题定位](reference/PROJECT_FLOW_AND_DIAGNOSIS.md)：当前入口、E1–E5、Jev、证据链和最新全矩阵的逐环节分析。
 - [Jev 接入计划](reference/JEV_IMPLEMENTATION_PLAN.md)：类型化规划分流与离线验证。
 - [Jev 配置与运行](reference/JEV_ROUTING.md)：填写密钥、执行 6 项开发对照、理解分流与成本记录。

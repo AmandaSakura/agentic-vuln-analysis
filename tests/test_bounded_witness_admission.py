@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+from pathlib import Path
 
 import pytest
 
@@ -14,6 +16,11 @@ from cv_agent.harness import FULL_SYSTEM_HARNESS
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
 from cv_agent.tools.validation import FixtureCase, FixtureOutcome, full_agent_tools
+from cv_agent.domain.types import Candidate, CodeDocument
+from cv_agent.tools.identity import candidate_subject
+from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
+from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
+from cv_agent.evaluation.diagnostics.witness_contract import bounded_witness_fixture_case
 
 
 SUBJECT = ValidationSubject(
@@ -114,3 +121,55 @@ def test_positive_witness_still_supports_candidate_vulnerable_vote():
         observation.fixture_proof, observation.subject, observation.validation_status,
     )
     _conclude(call, observation, label="VULNERABLE")
+
+
+@pytest.mark.parametrize("quoted", [False, True])
+def test_classified_real_fixture_adapter_measures_inputs_and_preserves_control(tmp_path, quoted):
+    expression = "shlex.quote(model_uri)" if quoted else "model_uri"
+    source = ("import subprocess\nimport shlex\nclass Entry:\n"
+              "    def serve(self, model_uri):\n"
+              f'        subprocess.Popen(["bash", "-c", f"record {{{expression}}}"])\n')
+    source_file = tmp_path / "entry.py"
+    source_file.write_text(source)
+    digest = hashlib.sha256(source.encode()).hexdigest()
+    span = "entry.py::Entry.serve@4-5"
+    index = RepositoryIndex((CodeDocument(repository_id="neutral", path=span,
+        text="".join(source.splitlines(keepends=True)[3:5]), language="python", source_sha256=digest),))
+    candidate = Candidate(candidate_id="neutral", case_id="neutral", repository_id="neutral", path=span,
+                          line=4, query="entry", property_id="command-execution", input_parameters=("model_uri",))
+    subject = candidate_subject(index, candidate)
+    scenario = WitnessScenarioHypothesis.model_validate({
+        "input_parameter": {"value": "model_uri", "classification": "attacker_controlled_input",
+                            "rationale": "The fixture caller supplies an existing local directory."},
+    })
+    manifest = WitnessManifest(subject=subject, original_subject=subject, scenario_hypothesis=scenario,
+        scenario_origin="dataset_provided", checkout_root=tmp_path, module_name="entry", class_name="Entry",
+        method_name="serve", entry_relative_path="entry.py", entry_file_sha256=digest, entry_first_line=4,
+        source_modules=(SourceFileBinding(module_name="entry", relative_path="entry.py", sha256=digest),),
+        probe_argument="model_uri", recorder_command="record")
+    fixture = bounded_witness_fixture_case(index, candidate, manifest)
+    registry = ToolRegistry(full_agent_tools(index, fixture_cases=(fixture,)),
+        max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes)
+    call = ModelToolCall(call_id="actual-fixture", name="run_fixture_test", arguments={"case_id": fixture.case_id})
+    observation = registry.invoke(call, allowed=("run_fixture_test",), scope=ToolExecutionScope(
+        admitted_paths=frozenset({span}), candidate_path=span, subject=subject,
+        max_observation_tokens=FULL_SYSTEM_HARNESS.react_loop.max_tool_observation_tokens), citation_id="fixture:actual")
+    expected = ValidationStatus.UNRESOLVED if quoted else ValidationStatus.CONFIRMED
+    assert observation.status == "ok", observation.content
+    assert observation.validation_status == expected, observation.content
+    payload = json.loads(observation.content)
+    details = payload["details"]
+    assert details["scenario"]["input_parameter"]["classification"] == "attacker_controlled_input"
+    assert details["remote_authority_established"] is False
+    artifact = json.loads(Path(details["artifact_path"]).read_text())
+    worker = artifact["result"]["details"]["probe_event"]
+    assert worker["assumption_verification"]["scenario_data"]["input_parameter"]["matched"] is True
+    conclusion = AgentExpertConclusion(expert="scan", label="VULNERABLE", confidence=.9,
+        validation_status=ValidationStatus.CONFIRMED, evidence_ids=(observation.citation_id,),
+        supporting_observation_ids=(observation.citation_id,), rationale="Use the conditional measured witness.")
+    trace = [ReActStep(step=1, model_id="offline", tool_call=call, observation=observation)]
+    if quoted:
+        with pytest.raises(ValueError):
+            validate_conclusion(conclusion, trace, initial_evidence_ids=frozenset(), subject=subject)
+    else:
+        validate_conclusion(conclusion, trace, initial_evidence_ids=frozenset(), subject=subject)

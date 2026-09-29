@@ -21,6 +21,7 @@ from cv_agent.runtime.witness_resources import WitnessResourceProfile
 from cv_agent.tools.registry import ToolRegistry
 from cv_agent.tools.validation.registry import full_agent_tools
 from cv_agent.tools.validation.witness_manifest import WitnessExecutionContext
+from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 
 
 TOOL = 'run_bounded_execution_witness'
@@ -33,7 +34,8 @@ def _observed(messages) -> dict[str, Any]:
 
 def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *,
                            constructor_parameters: dict[str, Any],
-                           precondition_files: dict[str, str], nonce: str) -> dict[str, Any]:
+                           precondition_files: dict[str, str], nonce: str,
+                           scenario_hypothesis: dict[str, Any] | None = None) -> dict[str, Any]:
     """Never inspect a truth label; final script reads delivered typed evidence."""
     empty = ModelReply(model_id='offline-witness-script', tool_calls=(ModelToolCall(
         call_id='discover-missing-data', name=TOOL,
@@ -48,11 +50,17 @@ def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *
             # A fully generated manifest has already executed the validator.
             # Repeating that identical call would be refused by the tool loop.
             return conclude(messages, tools)
+        arguments = (
+            {'constructor_parameters': {}, 'precondition_files': {},
+             'scenario_hypothesis': scenario_hypothesis}
+            if scenario_hypothesis is not None else
+            {'constructor_parameters': {name: constructor_parameters[name]
+                                        for name in missing if name in constructor_parameters},
+             'precondition_files': precondition_files}
+        )
         return ModelReply(model_id='offline-witness-script', tool_calls=(ModelToolCall(
             call_id='supply-constructor-layout', name=TOOL,
-            arguments={'constructor_parameters': {name: constructor_parameters[name]
-                                                  for name in missing if name in constructor_parameters},
-                       'precondition_files': precondition_files},
+            arguments=arguments,
         ),), usage=ModelUsage(input_tokens=0, output_tokens=0, total_tokens=0))
 
     def conclude(messages, tools):
@@ -76,9 +84,27 @@ def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *
     ), max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes)
     verdict = AgenticPipeline(index=index, system=AgentSystemVersion.E1_LOCAL_SINGLE,
                              models={'scan':model}, tools=registry).run(candidate)
+    witness_attempts = []
+    for vote in verdict.votes:
+        for step in vote.trace:
+            if step.observation.tool != TOOL:
+                continue
+            payload = (json.loads(step.observation.content)
+                       if step.observation.status == 'ok' else
+                       {'detail': step.observation.content})
+            witness_attempts.append({
+                'validation_status': step.observation.validation_status,
+                'tool_status': step.observation.status,
+                'witness_attempted': step.observation.metadata.get('witness_attempted', False),
+                **{key: payload[key] for key in (
+                    'raw_status', 'gaps', 'scenario_origin', 'scenario_sha256', 'scenario',
+                    'original_subject', 'execution_subject', 'scenario_verification', 'artifact_path', 'detail',
+                ) if key in payload},
+            })
     return {
         'verdict':verdict.model_dump(mode='json'), 'live_model_requests':0,
         'scripted_model_calls':len(model.requests), 'claim_eligible':False,
+        'witness_attempts': witness_attempts,
         'requests':[{'messages':[message.model_dump(mode='json') for message in messages],
                      'tools':list(tools)} for messages, tools in model.requests],
     }
@@ -97,6 +123,12 @@ def run_pair(root: Path, configuration: Path, output: Path) -> Path:
     resources = WitnessResourceProfile.model_validate_json((root/settings['resource_profile']).read_text())
     nonce = uuid4().hex
     rows = []
+    scenario_hypothesis = settings.get('scenario_hypothesis')
+    scenario_mode = settings.get('scenario_mode', 'dataset_provided')
+    if scenario_mode not in {'dataset_provided', 'model_proposed'}:
+        raise ValueError('offline scenario mode must name its actual provenance')
+    if (scenario_mode == 'model_proposed') != (scenario_hypothesis is not None):
+        raise ValueError('model-proposed offline controls require an explicit scripted hypothesis')
     for selected in settings['cases']:
         matches = [(pair,case) for pair in config.pairs for case in pair.cases
                    if case.case_id == selected['case_id']]
@@ -108,23 +140,39 @@ def run_pair(root: Path, configuration: Path, output: Path) -> Path:
         require_clean_checkout(root/case.checkout, case.commit)
         # Both detector identities are neutral. Labels remain evaluation-private.
         neutral = case.model_copy(update={'case_id':'neutral-entry'})
-        index, candidate, _ = build_pair_input(root, pair, neutral)
+        # Remove both subject premises and editorial retrieval hints. The
+        # supplied script remains an oracle control of the execution contract.
+        index, candidate, _ = build_pair_input(
+            root, pair, neutral, include_scenario_assumptions=scenario_mode == 'dataset_provided',
+            include_scoped_operation=scenario_mode == 'dataset_provided',
+            advisory_text=settings.get('advisory_text'),
+        )
         context = WitnessExecutionContext(
             checkout_root=(root/case.checkout).resolve(),
             python_executable=root/selected['python_executable'],
             import_root=pair.python_import_root or '.', resource_profile=resources,
             read_grants=grants, runtime_root=(output/'shared-runtime').resolve(),
+            dataset_scenario=(WitnessScenarioHypothesis.model_validate(settings['dataset_scenario'])
+                              if scenario_mode == 'dataset_provided' and 'dataset_scenario' in settings
+                              else None),
         )
         result = run_scripted_candidate(index,candidate,context,
             constructor_parameters=settings['constructor_parameters'],
-            precondition_files=settings['precondition_files'], nonce=nonce)
-        row = {'evaluation_case_id':selected['case_id'], **result}
+            precondition_files=settings['precondition_files'], nonce=nonce,
+            scenario_hypothesis=scenario_hypothesis)
+        row = {'evaluation_case_id':selected['case_id'], 'scenario_origin':scenario_mode,
+               'scenario_proposer':'offline_script' if scenario_hypothesis is not None else 'dataset',
+               **result}
         rows.append(row)
         (output/(selected['case_id']+'.json')).write_text(json.dumps(row,indent=2)+'\n')
     summary = {'live_model_requests':0,'claim_eligible':False,'rows':rows,
                'read_policy_sha256':hashlib.sha256(grant_bytes).hexdigest(),
                'resource_profile':resources.model_dump(mode='json'),
-               'manifest_origin':'system_ast','model_supplement_fields':['constructor_parameters','precondition_files']}
+               'scenario_origin':scenario_mode,
+               'scenario_proposer':'offline_script' if scenario_hypothesis is not None else 'dataset',
+               'autonomous_scenario_discovery_measured':False,
+               'manifest_origin':'system_ast',
+               'model_supplement_fields':['constructor_parameters','precondition_files','scenario_hypothesis']}
     (output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     return output
 

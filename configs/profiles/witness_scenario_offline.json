@@ -1,0 +1,101 @@
+{
+  "dataset": "configs/datasets/advisory_pairs_v5.json",
+  "selection_profile": "configs/profiles/advisory_hp003_diagnosis_v4.json",
+  "resource_profile": "artifacts/bounded_execution_witness_resource_diagnostics/profile_heavy_target.json",
+  "read_grants": "artifacts/bounded_execution_witness_stage2_read_admission/read_grants_final.json",
+  "scenario_mode": "model_proposed",
+  "advisory_text": "MLflow model serving may allow shell command injection. Assess the declared entry in this exact source snapshot.",
+  "advisory_text_origin": "Dataset advisory title summarized without the editorial branch annotation; this is a development control, not the original advisory body.",
+  "constructor_parameters": {},
+  "precondition_files": {},
+  "scenario_hypothesis": {
+    "input_parameter": {
+      "value": "model_uri",
+      "classification": "attacker_controlled_input",
+      "rationale": "This bounded caller can create and supply an existing local directory whose name contains shell metacharacters; remote input authority is unestablished."
+    },
+    "entry_boolean_arguments": {
+      "enable_mlserver": {
+        "value": true,
+        "classification": "deployment_configuration",
+        "rationale": "The serving deployment enables the optional MLServer backend."
+      }
+    },
+    "entry_condition_assumptions": {
+      "sys.platform.startswith('linux')": {
+        "value": true,
+        "classification": "environment_condition",
+        "rationale": "The runtime is Linux; the tool must observe the actual branch."
+      },
+      "is_windows()": {
+        "value": false,
+        "classification": "environment_condition",
+        "rationale": "The runtime must take the non-Windows branch."
+      },
+      "self._env_manager != em.LOCAL": {
+        "value": false,
+        "classification": "deployment_configuration",
+        "rationale": "The deployment selects the existing local environment manager."
+      },
+      "os.path.exists(artifact_uri)": {
+        "value": true,
+        "classification": "environment_condition",
+        "rationale": "The supplied local directory exists at the checked branch during this execution."
+      }
+    },
+    "entry_value_assumptions": {
+      "port": {
+        "value": 5000,
+        "classification": "deployment_configuration",
+        "rationale": "Use the serving port for this bounded configuration."
+      },
+      "host": {
+        "value": "127.0.0.1",
+        "classification": "deployment_configuration",
+        "rationale": "Bind the configured serving address to loopback."
+      },
+      "timeout": {
+        "value": null,
+        "classification": "deployment_configuration",
+        "rationale": "No additional timeout value is passed to serving."
+      },
+      "self._nworkers": {
+        "value": 1,
+        "classification": "deployment_configuration",
+        "rationale": "The constructed backend uses one worker."
+      },
+      "model_config": {
+        "value": null,
+        "classification": "deployment_configuration",
+        "rationale": "No model-specific serving configuration is supplied."
+      },
+      "synchronous": {
+        "value": false,
+        "classification": "deployment_configuration",
+        "rationale": "The caller requests asynchronous serving."
+      },
+      "MLServerDefaultModelName": {
+        "value": "mlflow-model",
+        "classification": "environment_condition",
+        "rationale": "The loaded dependency constant must have this actual value."
+      },
+      "MLServerMLflowRuntime": {
+        "value": "mlserver_mlflow.MLflowRuntime",
+        "classification": "environment_condition",
+        "rationale": "The loaded MLServer runtime constant must match this value."
+      }
+    },
+    "constructor_parameters": {
+      "config": {
+        "value": {},
+        "classification": "deployment_configuration",
+        "rationale": "Supply the backend's required empty literal configuration object."
+      }
+    },
+    "precondition_files": {}
+  },
+  "cases": [
+    {"case_id": "hp003_a", "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"},
+    {"case_id": "hp003_b", "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"}
+  ]
+}

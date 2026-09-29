@@ -13,6 +13,7 @@ from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFile
 from cv_agent.evaluation.diagnostics import witness_contract
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.tools.identity import candidate_subject
+from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 
 
 class _MeasuredResult:
@@ -48,37 +49,52 @@ def test_witness_scope_type_rejects_refuted_and_extra_statuses():
         (ValidationStatus.CONFIRMED, "EXPANDED_OBSERVED", ("source_mismatch",)),
     ],
 )
-def test_witness_producer_rejects_inconsistent_strong_status(monkeypatch, status, raw_status, gaps):
+def test_witness_producer_rejects_inconsistent_strong_status(monkeypatch, tmp_path, status, raw_status, gaps):
     monkeypatch.setattr(
         witness_contract,
         "run_witness",
-        lambda _: _MeasuredResult(status, raw_status, gaps),
+        lambda _, **kwargs: _MeasuredResult(status, raw_status, gaps),
     )
     with pytest.raises(ValueError):
-        witness_contract._fixture_outcome(None)
+        witness_contract._fixture_outcome(_bound_case(tmp_path)[2])
 
 
-def test_witness_producer_preserves_literal_only_as_raw_diagnostic(monkeypatch):
+def test_witness_producer_preserves_literal_only_as_raw_diagnostic(monkeypatch, tmp_path):
     monkeypatch.setattr(
         witness_contract,
         "run_witness",
-        lambda _: _MeasuredResult(ValidationStatus.UNRESOLVED, "LITERAL_OBSERVED"),
+        lambda _, **kwargs: _MeasuredResult(ValidationStatus.UNRESOLVED, "LITERAL_OBSERVED"),
     )
-    outcome = witness_contract._fixture_outcome(None)
+    outcome = witness_contract._fixture_outcome(_bound_case(tmp_path)[2])
     assert outcome.status == ValidationStatus.UNRESOLVED
     assert outcome.details["raw_status"] == "LITERAL_OBSERVED"
 
 
-def test_witness_producer_preserves_complete_positive(monkeypatch):
+def test_witness_producer_preserves_complete_positive(monkeypatch, tmp_path):
+    measured = []
+    def run(manifest, **kwargs):
+        measured.append(kwargs)
+        return _MeasuredResult(ValidationStatus.CONFIRMED, "EXPANDED_OBSERVED")
     monkeypatch.setattr(
         witness_contract,
         "run_witness",
-        lambda _: _MeasuredResult(ValidationStatus.CONFIRMED, "EXPANDED_OBSERVED"),
+        run,
     )
-    assert witness_contract._fixture_outcome(None).status == ValidationStatus.CONFIRMED
+    assert witness_contract._fixture_outcome(_bound_case(tmp_path)[2]).status == ValidationStatus.CONFIRMED
+    assert measured == [{"verify_obligations": True}]
 
 
-def _bound_case(tmp_path):
+def _classified(manifest):
+    scenario = WitnessScenarioHypothesis.model_validate({
+        "input_parameter": {"value": "model_uri", "classification": "attacker_controlled_input",
+                            "rationale": "The synthetic fixture caller supplies this directory argument."},
+    })
+    return manifest.model_copy(update={"scenario_hypothesis": scenario,
+                                      "original_subject": manifest.subject,
+                                      "scenario_origin": "dataset_provided"})
+
+
+def _bound_case(tmp_path, *, classified=True):
     source = "class Entry:\n    def serve(self, model_uri):\n        return model_uri\n"
     entry = tmp_path / "entry.py"
     entry.write_text(source)
@@ -109,7 +125,13 @@ def _bound_case(tmp_path):
         probe_argument="model_uri",
         recorder_command="sink",
     )
-    return index, candidate, manifest, entry
+    return index, candidate, _classified(manifest) if classified else manifest, entry
+
+
+def test_model_facing_fixture_rejects_unclassified_manual_manifest(tmp_path):
+    index, candidate, manifest, _ = _bound_case(tmp_path, classified=False)
+    with pytest.raises(ValueError, match="classified"):
+        witness_contract.bounded_witness_fixture_case(index, candidate, manifest)
 
 
 def test_registration_binds_index_digest_and_independent_file_sha(tmp_path):
@@ -133,6 +155,7 @@ def test_registration_binds_index_digest_and_independent_file_sha(tmp_path):
     ),))
     stale_manifest = manifest.model_copy(update={
         "subject": candidate_subject(stale_index, candidate),
+        "original_subject": candidate_subject(stale_index, candidate),
     })
     with pytest.raises(ValueError, match="indexed source"):
         witness_contract.bounded_witness_fixture_case(stale_index, candidate, stale_manifest)
@@ -178,6 +201,7 @@ def test_registration_rejects_other_method_in_same_file(tmp_path):
         ),),
         probe_argument="model_uri", recorder_command="sink",
     )
+    manifest = _classified(manifest)
     with pytest.raises(ValueError, match="entry method"):
         witness_contract.bounded_witness_fixture_case(index, candidate, manifest)
 
@@ -225,6 +249,7 @@ def test_registration_rejects_helper_hash_from_different_index_snapshot(tmp_path
         ),
         probe_argument="model_uri", recorder_command="sink",
     )
+    manifest = _classified(manifest)
     witness_contract.bounded_witness_fixture_case(index, candidate, manifest)
 
     helper.write_text(helper_unsafe)

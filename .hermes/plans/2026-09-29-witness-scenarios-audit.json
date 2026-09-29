@@ -1,0 +1,2032 @@
+{
+  "checks": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "label": "VULNERABLE",
+      "status": "CONFIRMED",
+      "raw_status": "EXPANDED_OBSERVED",
+      "source_bindings_verified": 977,
+      "original_subject_has_scenario": false,
+      "runtime_obligations_closed": true,
+      "observation_bytes": 4681,
+      "artifact_sha256": "d2c1ec7236e8d72cb5a41ef3a0b786cbe902eee1c195a1974207d6db0f6d1664"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "label": "ABSTAIN",
+      "status": "UNRESOLVED",
+      "raw_status": "LITERAL_OBSERVED",
+      "source_bindings_verified": 977,
+      "original_subject_has_scenario": false,
+      "runtime_obligations_closed": true,
+      "observation_bytes": 4693,
+      "artifact_sha256": "5d057b0eb91b2b6385b8843cb481c9e5c4195449c28e42250ae4056c419c3c8b"
+    }
+  ],
+  "comparison": {
+    "same_concrete_input": true,
+    "verification_mode": true,
+    "same_read_policy": true,
+    "same_resource_profile": true,
+    "input": {
+      "probe_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model$(printf 012ee8ba12344730ac899a76a1a16e56)",
+      "control_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c",
+      "probe_nonce": "012ee8ba12344730ac899a76a1a16e56",
+      "control_nonce": "b56610b11a1e2195f7b0128c",
+      "precondition_sha256": {
+        "control": {},
+        "probe": {}
+      }
+    },
+    "first": {
+      "manifest_sha256": "457f3215644a43a6a053a6fcb61b365e6adcaf5cd186464cfcb5a85b42e5a915",
+      "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa",
+      "status": "CONFIRMED",
+      "raw_status": "EXPANDED_OBSERVED",
+      "gaps": [],
+      "first_event_kind": "command_event",
+      "first_event_name": "subprocess.Popen",
+      "first_event_phase": "invoke",
+      "reached_popen": true,
+      "argv": [
+        "bash",
+        "-c",
+        "exec mlserver start /home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model$(printf 012ee8ba12344730ac899a76a1a16e56)"
+      ],
+      "emitter_frame": {
+        "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+        "first_line": 229,
+        "in_checkout": true,
+        "line": 311,
+        "module_name": "mlflow.pyfunc.backend",
+        "qualname": "PyFuncBackend.serve",
+        "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+      },
+      "interpreter": {
+        "base_prefix": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+        "executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv/bin/python",
+        "expected_executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv/bin/python",
+        "expected_prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+        "matches_manifest": true,
+        "prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+        "version": "3.12.12"
+      },
+      "replay_ok": true,
+      "replay_arguments": [
+        "start",
+        "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model012ee8ba12344730ac899a76a1a16e56"
+      ],
+      "candidate_frame": {
+        "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+        "first_line": 229,
+        "in_checkout": true,
+        "line": 311,
+        "module_name": "mlflow.pyfunc.backend",
+        "qualname": "PyFuncBackend.serve",
+        "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+      },
+      "assumption_verification": {
+        "conditions": {
+          "expression_match": "canonical_ast_with_whole_test_not",
+          "gaps": [],
+          "observations": [
+            {
+              "actual_values": [
+                true
+              ],
+              "branch_edges": [
+                {
+                  "actual": true,
+                  "destination_offset": 206,
+                  "execution_count": 1,
+                  "instruction_offset": 204,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": true,
+              "expression": "sys.platform.startswith('linux')",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+              "inverted": false,
+              "line": 252,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 238,
+                  "execution_count": 1,
+                  "instruction_offset": 236,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "is_windows()",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+              "inverted": true,
+              "line": 284,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 382,
+                  "execution_count": 1,
+                  "instruction_offset": 304,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "self._env_manager != em.LOCAL",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+              "inverted": false,
+              "line": 296,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 446,
+                  "execution_count": 1,
+                  "instruction_offset": 444,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 12,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "is_windows()",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+              "inverted": true,
+              "line": 308,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                true
+              ],
+              "branch_edges": [
+                {
+                  "actual": true,
+                  "destination_offset": 64,
+                  "execution_count": 1,
+                  "instruction_offset": 62,
+                  "qualname": "_get_root_uri_and_artifact_path"
+                }
+              ],
+              "column": 4,
+              "execution_count": 1,
+              "expected": true,
+              "expression": "os.path.exists(artifact_uri)",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+              "inverted": false,
+              "line": 70,
+              "module": "mlflow.tracking.artifact_utils",
+              "node_kind": "If",
+              "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 84,
+                  "execution_count": 1,
+                  "instruction_offset": 82,
+                  "qualname": "_get_root_uri_and_artifact_path"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "is_windows()",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+              "inverted": true,
+              "line": 71,
+              "module": "mlflow.tracking.artifact_utils",
+              "node_kind": "If",
+              "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+            }
+          ],
+          "tool_id": 4
+        },
+        "enabled": true,
+        "environment": {
+          "os_name": "posix",
+          "sys_platform": "linux"
+        },
+        "gaps": [],
+        "scenario_data": {
+          "authority_scope": "local_caller_hypothesis",
+          "constructor_parameters": {
+            "config": {
+              "actual": {},
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {
+            "enable_mlserver": {
+              "actual": true,
+              "matched": true,
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            }
+          },
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model$(printf 012ee8ba12344730ac899a76a1a16e56)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "precondition_files": {},
+          "remote_authority_established": false
+        },
+        "values": {
+          "gaps": [],
+          "observations": {
+            "MLServerDefaultModelName": [
+              {
+                "actual": "mlflow-model",
+                "definition_line": 7,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                "supported_value": true
+              },
+              {
+                "actual": "mlflow-model",
+                "definition_line": 7,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                "supported_value": true
+              }
+            ],
+            "MLServerMLflowRuntime": [
+              {
+                "actual": "mlserver_mlflow.MLflowRuntime",
+                "definition_line": 6,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                "supported_value": true
+              },
+              {
+                "actual": "mlserver_mlflow.MLflowRuntime",
+                "definition_line": 6,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                "supported_value": true
+              }
+            ],
+            "host": [
+              {
+                "actual": "127.0.0.1",
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "model_config": [
+              {
+                "actual": null,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "port": [
+              {
+                "actual": 5000,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "self._nworkers": [
+              {
+                "actual": 1,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "line": 229,
+                "matched": true,
+                "module_name": "mlflow.pyfunc.backend",
+                "point": "entry",
+                "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                "supported_value": true
+              }
+            ],
+            "synchronous": [
+              {
+                "actual": false,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "timeout": [
+              {
+                "actual": null,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ]
+          },
+          "verified": [
+            "MLServerDefaultModelName",
+            "MLServerMLflowRuntime",
+            "host",
+            "model_config",
+            "port",
+            "self._nworkers",
+            "synchronous",
+            "timeout"
+          ]
+        }
+      },
+      "preexec_verification": {
+        "child_pid": 26110,
+        "elapsed_seconds": 0.42819879199987554,
+        "event_count": 4,
+        "events": [
+          {
+            "arguments": [],
+            "event": "cv_agent.preexec.hook_selftest",
+            "forbidden": false,
+            "kind": "event"
+          },
+          {
+            "arguments": [
+              21032832
+            ],
+            "event": "builtins.id",
+            "forbidden": false,
+            "kind": "event"
+          },
+          {
+            "arguments": [
+              "libc.so.6"
+            ],
+            "event": "ctypes.dlopen",
+            "forbidden": false,
+            "kind": "event"
+          },
+          {
+            "arguments": [
+              {
+                "type": "CDLL"
+              },
+              "prctl"
+            ],
+            "event": "ctypes.dlsym",
+            "forbidden": false,
+            "kind": "event"
+          }
+        ],
+        "exception": null,
+        "exit_code": 0,
+        "forbidden_events": [],
+        "gap": null,
+        "hook_selftest": true,
+        "kind": "executed_child",
+        "native_call_coverage": "Python audit/profile; raw native process calls are not observed",
+        "normal_return": true,
+        "ok": true,
+        "parent_pid": 26013,
+        "profile_selftest": true,
+        "source_check_performed": true,
+        "source_gaps": [],
+        "timeout_seconds": 2.0,
+        "trusted_verifier_fork": true
+      },
+      "control_event": {
+        "actual_executable_is_bash": true,
+        "applied_resource_limits": {
+          "address_space": [
+            2147483648,
+            2147483648
+          ],
+          "cpu": [
+            15,
+            20
+          ],
+          "file_size": [
+            1000000,
+            1000000
+          ],
+          "open_files": [
+            64,
+            64
+          ]
+        },
+        "argv": [
+          "bash",
+          "-c",
+          "exec mlserver start /home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c"
+        ],
+        "assumption_verification": {
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 206,
+                    "execution_count": 1,
+                    "instruction_offset": 204,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "sys.platform.startswith('linux')",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 252,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 238,
+                    "execution_count": 1,
+                    "instruction_offset": 236,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 284,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 382,
+                    "execution_count": 1,
+                    "instruction_offset": 304,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "self._env_manager != em.LOCAL",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 296,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 446,
+                    "execution_count": 1,
+                    "instruction_offset": 444,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 12,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 308,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 64,
+                    "execution_count": 1,
+                    "instruction_offset": 62,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 4,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "os.path.exists(artifact_uri)",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+                "inverted": false,
+                "line": 70,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 84,
+                    "execution_count": 1,
+                    "instruction_offset": 82,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+                "inverted": true,
+                "line": 71,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              }
+            ],
+            "tool_id": 4
+          },
+          "enabled": true,
+          "environment": {
+            "os_name": "posix",
+            "sys_platform": "linux"
+          },
+          "gaps": [],
+          "scenario_data": {
+            "authority_scope": "local_caller_hypothesis",
+            "constructor_parameters": {
+              "config": {
+                "actual": {},
+                "matched": true,
+                "point": "constructor_call_boundary",
+                "supported_value": true
+              }
+            },
+            "enabled": true,
+            "entry_boolean_arguments": {
+              "enable_mlserver": {
+                "actual": true,
+                "matched": true,
+                "point": "candidate_entry_frame",
+                "supported_value": true
+              }
+            },
+            "gaps": [],
+            "input_parameter": {
+              "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c",
+              "matched": true,
+              "parameter": "model_uri",
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            },
+            "precondition_files": {},
+            "remote_authority_established": false
+          },
+          "values": {
+            "gaps": [],
+            "observations": {
+              "MLServerDefaultModelName": [
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                }
+              ],
+              "MLServerMLflowRuntime": [
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 6,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 6,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "model_config": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": 5000,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "self._nworkers": [
+                {
+                  "actual": 1,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                  "line": 229,
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.backend",
+                  "point": "entry",
+                  "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                  "supported_value": true
+                }
+              ],
+              "synchronous": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "MLServerDefaultModelName",
+              "MLServerMLflowRuntime",
+              "host",
+              "model_config",
+              "port",
+              "self._nworkers",
+              "synchronous",
+              "timeout"
+            ]
+          }
+        },
+        "authentic_subprocess_popen": true,
+        "candidate_frame": {
+          "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+          "first_line": 229,
+          "in_checkout": true,
+          "line": 311,
+          "module_name": "mlflow.pyfunc.backend",
+          "qualname": "PyFuncBackend.serve",
+          "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+        },
+        "captured_cwd": null,
+        "concurrent_command_events": [],
+        "current_resource_limits": {
+          "address_space": [
+            2147483648,
+            2147483648
+          ],
+          "cpu": [
+            15,
+            20
+          ],
+          "file_size": [
+            1000000,
+            1000000
+          ],
+          "open_files": [
+            64,
+            64
+          ]
+        },
+        "emitter_frame": {
+          "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+          "first_line": 229,
+          "in_checkout": true,
+          "line": 311,
+          "module_name": "mlflow.pyfunc.backend",
+          "qualname": "PyFuncBackend.serve",
+          "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+        },
+        "env_has_probe": false,
+        "event": "subprocess.Popen",
+        "frames": [
+          {
+            "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+            "first_line": 1791,
+            "in_checkout": false,
+            "line": 1823,
+            "module_name": "subprocess",
+            "qualname": "Popen._execute_child",
+            "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+          },
+          {
+            "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+            "first_line": 807,
+            "in_checkout": false,
+            "line": 1026,
+            "module_name": "subprocess",
+            "qualname": "Popen.__init__",
+            "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+            "first_line": 229,
+            "in_checkout": true,
+            "line": 311,
+            "module_name": "mlflow.pyfunc.backend",
+            "qualname": "PyFuncBackend.serve",
+            "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+            "first_line": 416,
+            "in_checkout": false,
+            "line": 650,
+            "module_name": "__main__",
+            "qualname": "_worker",
+            "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+            "first_line": 1552,
+            "in_checkout": false,
+            "line": 1589,
+            "module_name": "__main__",
+            "qualname": "_main",
+            "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+            "first_line": 1,
+            "in_checkout": false,
+            "line": 1594,
+            "module_name": "__main__",
+            "qualname": "<module>",
+            "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+          },
+          {
+            "file": "<frozen runpy>",
+            "first_line": 65,
+            "in_checkout": false,
+            "line": 88,
+            "module_name": "runpy",
+            "qualname": "_run_code"
+          },
+          {
+            "file": "<frozen runpy>",
+            "first_line": 173,
+            "in_checkout": false,
+            "line": 198,
+            "module_name": "runpy",
+            "qualname": "_run_module_as_main"
+          }
+        ],
+        "hook_selftest": true,
+        "interpreter": {
+          "base_prefix": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+          "executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv/bin/python",
+          "expected_executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv/bin/python",
+          "expected_prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+          "matches_manifest": true,
+          "prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+          "version": "3.12.12"
+        },
+        "isolation_read_roots": [
+          "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/src",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-a-py312/venv",
+          "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+          "/usr/lib",
+          "/usr/lib64",
+          "/etc/ld.so.cache",
+          "/dev/urandom",
+          "/etc/passwd",
+          "/etc/ssl/openssl.cnf",
+          "/usr/share/zoneinfo/Etc/UTC"
+        ],
+        "kind": "command_event",
+        "loaded_source_gaps": [],
+        "phase": "invoke",
+        "preexec_verification": {
+          "child_pid": 26230,
+          "elapsed_seconds": 0.45727493700019295,
+          "event_count": 4,
+          "events": [
+            {
+              "arguments": [],
+              "event": "cv_agent.preexec.hook_selftest",
+              "forbidden": false,
+              "kind": "event"
+            },
+            {
+              "arguments": [
+                21032832
+              ],
+              "event": "builtins.id",
+              "forbidden": false,
+              "kind": "event"
+            },
+            {
+              "arguments": [
+                "libc.so.6"
+              ],
+              "event": "ctypes.dlopen",
+              "forbidden": false,
+              "kind": "event"
+            },
+            {
+              "arguments": [
+                {
+                  "type": "CDLL"
+                },
+                "prctl"
+              ],
+              "event": "ctypes.dlsym",
+              "forbidden": false,
+              "kind": "event"
+            }
+          ],
+          "exception": null,
+          "exit_code": 0,
+          "forbidden_events": [],
+          "gap": null,
+          "hook_selftest": true,
+          "kind": "executed_child",
+          "native_call_coverage": "Python audit/profile; raw native process calls are not observed",
+          "normal_return": true,
+          "ok": true,
+          "parent_pid": 26117,
+          "profile_selftest": true,
+          "source_check_performed": true,
+          "source_gaps": [],
+          "timeout_seconds": 2.0,
+          "trusted_verifier_fork": true
+        },
+        "preexec_verified_none": false,
+        "resource_accounting": {
+          "target": {
+            "accounting_complete": true,
+            "accounting_scope": "own_process_cpu_only",
+            "cpu_accounting_complete": true,
+            "cpu_resolution_seconds": 0.01,
+            "fd_observed_peak": 6,
+            "fd_peak_is_lower_bound": true,
+            "last_rss_kib": 177336,
+            "last_virtual_memory_kib": 1021912,
+            "max_rss_kib": 177336,
+            "max_virtual_memory_kib": 1112068,
+            "maximum_sample_interval_seconds": 0.01600370699998166,
+            "measurement_gaps": [
+              {
+                "errno": 13,
+                "error": "PermissionError",
+                "field": "open_fd_count",
+                "path": "/proc/26117/fd"
+              }
+            ],
+            "memory_peaks_observed_only": true,
+            "open_fd_count": 6,
+            "pid": 26117,
+            "pid_identity_mismatch": false,
+            "pid_starttime_ticks": 176996,
+            "sample_count": 706,
+            "sample_interval_seconds": 0.010347936000016489,
+            "sampling_elapsed_seconds": 7.261794317999829,
+            "self_report_is_final": true,
+            "self_reported_usage": {
+              "max_rss_kib": 595456,
+              "pid": 26117,
+              "system_cpu_seconds": 0.977348,
+              "user_cpu_seconds": 6.739612
+            },
+            "system_cpu_seconds": 0.99,
+            "total_cpu_seconds": 7.72,
+            "user_cpu_seconds": 6.73
+          },
+          "tracer": null
+        },
+        "resource_profile": {
+          "address_space_bytes": 2147483648,
+          "cpu_hard_seconds": 20,
+          "cpu_soft_seconds": 15,
+          "file_size_bytes": 1000000,
+          "name": "heavy_target",
+          "open_files": 64,
+          "wall_seconds": 30.0
+        },
+        "returncode": 0,
+        "seccomp_selftest": true,
+        "shell_env_keys": [],
+        "target_pid": 26117,
+        "target_self_usage": {
+          "max_rss_kib": 595456,
+          "pid": 26117,
+          "system_cpu_seconds": 0.977348,
+          "user_cpu_seconds": 6.739612
+        }
+      },
+      "control_replay": {
+        "arguments": [
+          "start",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c"
+        ],
+        "ok": true,
+        "returncode": 0
+      }
+    },
+    "second": {
+      "manifest_sha256": "f2e1bb5317e4090baf9f9845fbb05f26522dd1aa2094ae73c3c79f2264ee35cd",
+      "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd",
+      "status": "UNRESOLVED",
+      "raw_status": "LITERAL_OBSERVED",
+      "gaps": [],
+      "first_event_kind": "command_event",
+      "first_event_name": "subprocess.Popen",
+      "first_event_phase": "invoke",
+      "reached_popen": true,
+      "argv": [
+        "bash",
+        "-c",
+        "exec mlserver start '/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model$(printf 012ee8ba12344730ac899a76a1a16e56)'"
+      ],
+      "emitter_frame": {
+        "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+        "first_line": 229,
+        "in_checkout": true,
+        "line": 311,
+        "module_name": "mlflow.pyfunc.backend",
+        "qualname": "PyFuncBackend.serve",
+        "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+      },
+      "interpreter": {
+        "base_prefix": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+        "executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv/bin/python",
+        "expected_executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv/bin/python",
+        "expected_prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+        "matches_manifest": true,
+        "prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+        "version": "3.12.12"
+      },
+      "replay_ok": true,
+      "replay_arguments": [
+        "start",
+        "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model$(printf 012ee8ba12344730ac899a76a1a16e56)"
+      ],
+      "candidate_frame": {
+        "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+        "first_line": 229,
+        "in_checkout": true,
+        "line": 311,
+        "module_name": "mlflow.pyfunc.backend",
+        "qualname": "PyFuncBackend.serve",
+        "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+      },
+      "assumption_verification": {
+        "conditions": {
+          "expression_match": "canonical_ast_with_whole_test_not",
+          "gaps": [],
+          "observations": [
+            {
+              "actual_values": [
+                true
+              ],
+              "branch_edges": [
+                {
+                  "actual": true,
+                  "destination_offset": 206,
+                  "execution_count": 1,
+                  "instruction_offset": 204,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": true,
+              "expression": "sys.platform.startswith('linux')",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+              "inverted": false,
+              "line": 252,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 238,
+                  "execution_count": 1,
+                  "instruction_offset": 236,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "is_windows()",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+              "inverted": true,
+              "line": 284,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 382,
+                  "execution_count": 1,
+                  "instruction_offset": 304,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "self._env_manager != em.LOCAL",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+              "inverted": false,
+              "line": 296,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 446,
+                  "execution_count": 1,
+                  "instruction_offset": 444,
+                  "qualname": "PyFuncBackend.serve"
+                }
+              ],
+              "column": 12,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "is_windows()",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+              "inverted": true,
+              "line": 308,
+              "module": "mlflow.pyfunc.backend",
+              "node_kind": "If",
+              "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+            },
+            {
+              "actual_values": [
+                true
+              ],
+              "branch_edges": [
+                {
+                  "actual": true,
+                  "destination_offset": 64,
+                  "execution_count": 1,
+                  "instruction_offset": 62,
+                  "qualname": "_get_root_uri_and_artifact_path"
+                }
+              ],
+              "column": 4,
+              "execution_count": 1,
+              "expected": true,
+              "expression": "os.path.exists(artifact_uri)",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+              "inverted": false,
+              "line": 70,
+              "module": "mlflow.tracking.artifact_utils",
+              "node_kind": "If",
+              "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+            },
+            {
+              "actual_values": [
+                false
+              ],
+              "branch_edges": [
+                {
+                  "actual": false,
+                  "destination_offset": 84,
+                  "execution_count": 1,
+                  "instruction_offset": 82,
+                  "qualname": "_get_root_uri_and_artifact_path"
+                }
+              ],
+              "column": 8,
+              "execution_count": 1,
+              "expected": false,
+              "expression": "is_windows()",
+              "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+              "inverted": true,
+              "line": 71,
+              "module": "mlflow.tracking.artifact_utils",
+              "node_kind": "If",
+              "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+            }
+          ],
+          "tool_id": 4
+        },
+        "enabled": true,
+        "environment": {
+          "os_name": "posix",
+          "sys_platform": "linux"
+        },
+        "gaps": [],
+        "scenario_data": {
+          "authority_scope": "local_caller_hypothesis",
+          "constructor_parameters": {
+            "config": {
+              "actual": {},
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {
+            "enable_mlserver": {
+              "actual": true,
+              "matched": true,
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            }
+          },
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/model$(printf 012ee8ba12344730ac899a76a1a16e56)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "precondition_files": {},
+          "remote_authority_established": false
+        },
+        "values": {
+          "gaps": [],
+          "observations": {
+            "MLServerDefaultModelName": [
+              {
+                "actual": "mlflow-model",
+                "definition_line": 8,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                "supported_value": true
+              },
+              {
+                "actual": "mlflow-model",
+                "definition_line": 8,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                "supported_value": true
+              }
+            ],
+            "MLServerMLflowRuntime": [
+              {
+                "actual": "mlserver_mlflow.MLflowRuntime",
+                "definition_line": 7,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                "supported_value": true
+              },
+              {
+                "actual": "mlserver_mlflow.MLflowRuntime",
+                "definition_line": 7,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                "matched": true,
+                "module_name": "mlflow.pyfunc.mlserver",
+                "point": "module_dictionary",
+                "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                "supported_value": true
+              }
+            ],
+            "host": [
+              {
+                "actual": "127.0.0.1",
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "model_config": [
+              {
+                "actual": null,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "port": [
+              {
+                "actual": 5000,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "self._nworkers": [
+              {
+                "actual": 1,
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "line": 229,
+                "matched": true,
+                "module_name": "mlflow.pyfunc.backend",
+                "point": "entry",
+                "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                "supported_value": true
+              }
+            ],
+            "synchronous": [
+              {
+                "actual": false,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ],
+            "timeout": [
+              {
+                "actual": null,
+                "matched": true,
+                "point": "call_manifest",
+                "supported_value": true
+              }
+            ]
+          },
+          "verified": [
+            "MLServerDefaultModelName",
+            "MLServerMLflowRuntime",
+            "host",
+            "model_config",
+            "port",
+            "self._nworkers",
+            "synchronous",
+            "timeout"
+          ]
+        }
+      },
+      "preexec_verification": {
+        "child_pid": 26620,
+        "elapsed_seconds": 0.43560663699986435,
+        "event_count": 4,
+        "events": [
+          {
+            "arguments": [],
+            "event": "cv_agent.preexec.hook_selftest",
+            "forbidden": false,
+            "kind": "event"
+          },
+          {
+            "arguments": [
+              21032832
+            ],
+            "event": "builtins.id",
+            "forbidden": false,
+            "kind": "event"
+          },
+          {
+            "arguments": [
+              "libc.so.6"
+            ],
+            "event": "ctypes.dlopen",
+            "forbidden": false,
+            "kind": "event"
+          },
+          {
+            "arguments": [
+              {
+                "type": "CDLL"
+              },
+              "prctl"
+            ],
+            "event": "ctypes.dlsym",
+            "forbidden": false,
+            "kind": "event"
+          }
+        ],
+        "exception": null,
+        "exit_code": 0,
+        "forbidden_events": [],
+        "gap": null,
+        "hook_selftest": true,
+        "kind": "executed_child",
+        "native_call_coverage": "Python audit/profile; raw native process calls are not observed",
+        "normal_return": true,
+        "ok": true,
+        "parent_pid": 26477,
+        "profile_selftest": true,
+        "source_check_performed": true,
+        "source_gaps": [],
+        "timeout_seconds": 2.0,
+        "trusted_verifier_fork": true
+      },
+      "control_event": {
+        "actual_executable_is_bash": true,
+        "applied_resource_limits": {
+          "address_space": [
+            2147483648,
+            2147483648
+          ],
+          "cpu": [
+            15,
+            20
+          ],
+          "file_size": [
+            1000000,
+            1000000
+          ],
+          "open_files": [
+            64,
+            64
+          ]
+        },
+        "argv": [
+          "bash",
+          "-c",
+          "exec mlserver start /home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c"
+        ],
+        "assumption_verification": {
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 206,
+                    "execution_count": 1,
+                    "instruction_offset": 204,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "sys.platform.startswith('linux')",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 252,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 238,
+                    "execution_count": 1,
+                    "instruction_offset": 236,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 284,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 382,
+                    "execution_count": 1,
+                    "instruction_offset": 304,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "self._env_manager != em.LOCAL",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 296,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 446,
+                    "execution_count": 1,
+                    "instruction_offset": 444,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 12,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 308,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 64,
+                    "execution_count": 1,
+                    "instruction_offset": 62,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 4,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "os.path.exists(artifact_uri)",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+                "inverted": false,
+                "line": 70,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 84,
+                    "execution_count": 1,
+                    "instruction_offset": 82,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+                "inverted": true,
+                "line": 71,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              }
+            ],
+            "tool_id": 4
+          },
+          "enabled": true,
+          "environment": {
+            "os_name": "posix",
+            "sys_platform": "linux"
+          },
+          "gaps": [],
+          "scenario_data": {
+            "authority_scope": "local_caller_hypothesis",
+            "constructor_parameters": {
+              "config": {
+                "actual": {},
+                "matched": true,
+                "point": "constructor_call_boundary",
+                "supported_value": true
+              }
+            },
+            "enabled": true,
+            "entry_boolean_arguments": {
+              "enable_mlserver": {
+                "actual": true,
+                "matched": true,
+                "point": "candidate_entry_frame",
+                "supported_value": true
+              }
+            },
+            "gaps": [],
+            "input_parameter": {
+              "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c",
+              "matched": true,
+              "parameter": "model_uri",
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            },
+            "precondition_files": {},
+            "remote_authority_established": false
+          },
+          "values": {
+            "gaps": [],
+            "observations": {
+              "MLServerDefaultModelName": [
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 8,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 8,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                }
+              ],
+              "MLServerMLflowRuntime": [
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "model_config": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": 5000,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "self._nworkers": [
+                {
+                  "actual": 1,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                  "line": 229,
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.backend",
+                  "point": "entry",
+                  "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                  "supported_value": true
+                }
+              ],
+              "synchronous": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "MLServerDefaultModelName",
+              "MLServerMLflowRuntime",
+              "host",
+              "model_config",
+              "port",
+              "self._nworkers",
+              "synchronous",
+              "timeout"
+            ]
+          }
+        },
+        "authentic_subprocess_popen": true,
+        "candidate_frame": {
+          "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+          "first_line": 229,
+          "in_checkout": true,
+          "line": 311,
+          "module_name": "mlflow.pyfunc.backend",
+          "qualname": "PyFuncBackend.serve",
+          "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+        },
+        "captured_cwd": null,
+        "concurrent_command_events": [],
+        "current_resource_limits": {
+          "address_space": [
+            2147483648,
+            2147483648
+          ],
+          "cpu": [
+            15,
+            20
+          ],
+          "file_size": [
+            1000000,
+            1000000
+          ],
+          "open_files": [
+            64,
+            64
+          ]
+        },
+        "emitter_frame": {
+          "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+          "first_line": 229,
+          "in_checkout": true,
+          "line": 311,
+          "module_name": "mlflow.pyfunc.backend",
+          "qualname": "PyFuncBackend.serve",
+          "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+        },
+        "env_has_probe": false,
+        "event": "subprocess.Popen",
+        "frames": [
+          {
+            "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+            "first_line": 1791,
+            "in_checkout": false,
+            "line": 1823,
+            "module_name": "subprocess",
+            "qualname": "Popen._execute_child",
+            "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+          },
+          {
+            "file": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py",
+            "first_line": 807,
+            "in_checkout": false,
+            "line": 1026,
+            "module_name": "subprocess",
+            "qualname": "Popen.__init__",
+            "sha256": "85d29b2bf0249f5436838298c9a60ee93508b1102e9ac43b001f8a7e7ae8f375"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+            "first_line": 229,
+            "in_checkout": true,
+            "line": 311,
+            "module_name": "mlflow.pyfunc.backend",
+            "qualname": "PyFuncBackend.serve",
+            "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+            "first_line": 416,
+            "in_checkout": false,
+            "line": 650,
+            "module_name": "__main__",
+            "qualname": "_worker",
+            "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+            "first_line": 1552,
+            "in_checkout": false,
+            "line": 1589,
+            "module_name": "__main__",
+            "qualname": "_main",
+            "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+          },
+          {
+            "file": "/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+            "first_line": 1,
+            "in_checkout": false,
+            "line": 1594,
+            "module_name": "__main__",
+            "qualname": "<module>",
+            "sha256": "7e78ee7aa9457f558bff4b4826230470d614ed2633b86bc7a18b5417fda888fc"
+          },
+          {
+            "file": "<frozen runpy>",
+            "first_line": 65,
+            "in_checkout": false,
+            "line": 88,
+            "module_name": "runpy",
+            "qualname": "_run_code"
+          },
+          {
+            "file": "<frozen runpy>",
+            "first_line": 173,
+            "in_checkout": false,
+            "line": 198,
+            "module_name": "runpy",
+            "qualname": "_run_module_as_main"
+          }
+        ],
+        "hook_selftest": true,
+        "interpreter": {
+          "base_prefix": "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+          "executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv/bin/python",
+          "expected_executable": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv/bin/python",
+          "expected_prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+          "matches_manifest": true,
+          "prefix": "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+          "version": "3.12.12"
+        },
+        "isolation_read_roots": [
+          "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/src",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/data/diagnostics/hp003-stage2-b-py312/venv",
+          "/home/joker/.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu",
+          "/usr/lib",
+          "/usr/lib64",
+          "/etc/ld.so.cache",
+          "/dev/urandom",
+          "/etc/passwd",
+          "/etc/ssl/openssl.cnf",
+          "/usr/share/zoneinfo/Etc/UTC"
+        ],
+        "kind": "command_event",
+        "loaded_source_gaps": [],
+        "phase": "invoke",
+        "preexec_verification": {
+          "child_pid": 26785,
+          "elapsed_seconds": 0.44674431299995376,
+          "event_count": 4,
+          "events": [
+            {
+              "arguments": [],
+              "event": "cv_agent.preexec.hook_selftest",
+              "forbidden": false,
+              "kind": "event"
+            },
+            {
+              "arguments": [
+                21032832
+              ],
+              "event": "builtins.id",
+              "forbidden": false,
+              "kind": "event"
+            },
+            {
+              "arguments": [
+                "libc.so.6"
+              ],
+              "event": "ctypes.dlopen",
+              "forbidden": false,
+              "kind": "event"
+            },
+            {
+              "arguments": [
+                {
+                  "type": "CDLL"
+                },
+                "prctl"
+              ],
+              "event": "ctypes.dlsym",
+              "forbidden": false,
+              "kind": "event"
+            }
+          ],
+          "exception": null,
+          "exit_code": 0,
+          "forbidden_events": [],
+          "gap": null,
+          "hook_selftest": true,
+          "kind": "executed_child",
+          "native_call_coverage": "Python audit/profile; raw native process calls are not observed",
+          "normal_return": true,
+          "ok": true,
+          "parent_pid": 26630,
+          "profile_selftest": true,
+          "source_check_performed": true,
+          "source_gaps": [],
+          "timeout_seconds": 2.0,
+          "trusted_verifier_fork": true
+        },
+        "preexec_verified_none": false,
+        "resource_accounting": {
+          "target": {
+            "accounting_complete": true,
+            "accounting_scope": "own_process_cpu_only",
+            "cpu_accounting_complete": true,
+            "cpu_resolution_seconds": 0.01,
+            "fd_observed_peak": 6,
+            "fd_peak_is_lower_bound": true,
+            "last_rss_kib": 177292,
+            "last_virtual_memory_kib": 1021896,
+            "max_rss_kib": 177292,
+            "max_virtual_memory_kib": 1112052,
+            "maximum_sample_interval_seconds": 0.017166659999929834,
+            "measurement_gaps": [
+              {
+                "errno": 13,
+                "error": "PermissionError",
+                "field": "open_fd_count",
+                "path": "/proc/26630/fd"
+              }
+            ],
+            "memory_peaks_observed_only": true,
+            "open_fd_count": 6,
+            "pid": 26630,
+            "pid_identity_mismatch": false,
+            "pid_starttime_ticks": 180106,
+            "sample_count": 751,
+            "sample_interval_seconds": 0.010321462999854703,
+            "sampling_elapsed_seconds": 7.748508686999912,
+            "self_report_is_final": true,
+            "self_reported_usage": {
+              "max_rss_kib": 642360,
+              "pid": 26630,
+              "system_cpu_seconds": 0.887254,
+              "user_cpu_seconds": 7.27707
+            },
+            "system_cpu_seconds": 0.9,
+            "total_cpu_seconds": 8.17,
+            "user_cpu_seconds": 7.27
+          },
+          "tracer": null
+        },
+        "resource_profile": {
+          "address_space_bytes": 2147483648,
+          "cpu_hard_seconds": 20,
+          "cpu_soft_seconds": 15,
+          "file_size_bytes": 1000000,
+          "name": "heavy_target",
+          "open_files": 64,
+          "wall_seconds": 30.0
+        },
+        "returncode": 0,
+        "seccomp_selftest": true,
+        "shell_env_keys": [],
+        "target_pid": 26630,
+        "target_self_usage": {
+          "max_rss_kib": 642360,
+          "pid": 26630,
+          "system_cpu_seconds": 0.887254,
+          "user_cpu_seconds": 7.27707
+        }
+      },
+      "control_replay": {
+        "arguments": [
+          "start",
+          "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_development_2026_09_29/paired_entry_only/shared-runtime/modelb56610b11a1e2195f7b0128c"
+        ],
+        "ok": true,
+        "returncode": 0
+      }
+    }
+  },
+  "live_model_requests": 0,
+  "claim_eligible": false
+}

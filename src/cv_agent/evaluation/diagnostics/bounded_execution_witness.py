@@ -43,6 +43,7 @@ from cv_agent.tools.validation.fixtures import (
     _apply_fixture_limits,
     _install_fixture_isolation,
 )
+from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis, subject_has_scenario
 
 
 _COMMAND_EVENTS = frozenset({
@@ -127,9 +128,23 @@ class WitnessManifest(FrozenModel):
     call_kwargs: dict[str, Any] = Field(default_factory=dict)
     precondition_files: dict[str, str] = Field(default_factory=dict)
     probe_directory_prefix: str = "model"
+    original_subject: ValidationSubject | None = None
+    scenario_hypothesis: WitnessScenarioHypothesis | None = None
+    scenario_origin: Literal["dataset_provided", "model_proposed"] | None = None
 
     @model_validator(mode="after")
     def check_manifest(self) -> WitnessManifest:
+        if self.scenario_hypothesis is not None:
+            if self.original_subject is None or self.scenario_origin is None:
+                raise ValueError("classified witness scenario requires original subject and provenance")
+            if self.scenario_hypothesis.execution_subject(self.original_subject) != self.subject:
+                raise ValueError("execution subject differs from the classified scenario")
+            if self.scenario_origin == "model_proposed" and subject_has_scenario(self.original_subject):
+                raise ValueError("model scenario cannot replace dataset premises")
+            if self.scenario_origin == "dataset_provided" and self.original_subject != self.subject:
+                raise ValueError("dataset classification must match the original subject")
+        elif self.original_subject is not None or self.scenario_origin is not None:
+            raise ValueError("scenario provenance requires a classified scenario")
         if self.import_root != '.' and not _safe_relative_path(self.import_root):
             raise ValueError('source import root must remain relative to checkout')
         if not _DOTTED_NAME.fullmatch(self.module_name):
@@ -408,7 +423,7 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
     open_attempt_count = 0
     read_roots: tuple[Path, ...] = ()
     applied_limits: dict[str, tuple[int, int]] | None = None
-    values = branches = None
+    values = branches = scenario_data = None
     pending_command: dict[str, Any] | None = None
     pending_preexec: list[Any] = []
     verifier_active = False
@@ -446,8 +461,10 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         if verify_obligations:
             from cv_agent.evaluation.diagnostics.witness_values import ValueAssumptionObserver
             from cv_agent.evaluation.diagnostics.witness_branches import BranchAssumptionObserver
+            from cv_agent.evaluation.diagnostics.witness_scenario_runtime import ScenarioDataObserver
             values = ValueAssumptionObserver(manifest)
             branches = BranchAssumptionObserver(manifest)
+            scenario_data = ScenarioDataObserver(manifest, probe_path)
         progress()
         for binding in manifest.source_modules:
             source = checkout / binding.relative_path
@@ -572,13 +589,15 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                 values.verify_module_values()
                 value_record = values.result()
                 condition_record = branches.report()
+                scenario_record = scenario_data.report()
                 branches.close()
                 boolean_gaps = [gap for gap in _assumption_gaps(manifest)
                                 if gap.startswith("entry_boolean_argument_unverified:")]
                 payload["assumption_verification"] = {
                     "enabled": True, "values": value_record, "conditions": condition_record,
+                    "scenario_data": scenario_record,
                     "gaps": list(dict.fromkeys([*boolean_gaps, *value_record["gaps"],
-                                                *condition_record["gaps"]])),
+                                                *condition_record["gaps"], *scenario_record["gaps"]])),
                     "environment": {"sys_platform": sys.platform, "os_name": os.name},
                 }
                 pending_command = payload
@@ -613,6 +632,8 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         target_class = getattr(module, manifest.class_name)
         phase = "construct"
         progress()
+        if scenario_data is not None:
+            scenario_data.observe_constructor(manifest.constructor_args, manifest.constructor_kwargs)
         target = target_class(*manifest.constructor_args, **manifest.constructor_kwargs)
         expected_code = getattr(target_class, manifest.method_name).__code__
         call_kwargs = dict(manifest.call_kwargs)
@@ -624,6 +645,7 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             def observe_entry(frame: Any) -> None:
                 values.observe_entry(frame)
                 values.verify_module_values()
+                scenario_data.observe_entry(frame)
             branches.install(expected_code, on_entry=observe_entry)
         getattr(target, manifest.method_name)(*manifest.call_args, **call_kwargs)
         emit({"kind": "no_event", "seccomp_selftest": True,

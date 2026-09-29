@@ -19,6 +19,7 @@ from cv_agent.domain.evidence import ReActStep, ValidationStatus
 from cv_agent.domain.review import AgentExpertConclusion, ValidationPlan
 from cv_agent.domain.types import Candidate, CodeDocument
 from cv_agent.tools.validation.witness_manifest import WitnessExecutionContext
+from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.runtime.model import ScriptedChatModel
@@ -30,7 +31,8 @@ from cv_agent.tools.validation.registry import full_agent_tools
 TOOL = "run_bounded_execution_witness"
 
 
-def _inputs(root: Path, *, quoted: bool = False, missing_constructor: bool = False):
+def _inputs(root: Path, *, quoted: bool = False, missing_constructor: bool = False,
+            constructor_value=7):
     root.mkdir()
     expression = "shlex.quote(model_uri)" if quoted else "model_uri"
     constructor = "    def __init__(self, token):\n        self.token = token\n" if missing_constructor else ""
@@ -56,8 +58,16 @@ def _inputs(root: Path, *, quoted: bool = False, missing_constructor: bool = Fal
     candidate = Candidate(candidate_id="neutral-candidate", case_id="neutral-case", repository_id="neutral-repo",
                           path=span, line=method.lineno, query="entry", property_id="command-execution",
                           input_parameters=("model_uri",), analysis_scope="whole Service.serve call")
+    dataset_scenario = WitnessScenarioHypothesis.model_validate({
+        "input_parameter": {"value": "model_uri", "classification": "attacker_controlled_input",
+                            "rationale": "The fixture caller supplies this directory argument."},
+        "constructor_parameters": {"token": {
+            "value": constructor_value, "classification": "deployment_configuration",
+            "rationale": "The fixture service requires this literal constructor data.",
+        }} if missing_constructor else {},
+    })
     context = WitnessExecutionContext(checkout_root=root, python_executable=Path(sys.executable),
-                                      runtime_root=root.parent / "runtime")
+                                      runtime_root=root.parent / "runtime", dataset_scenario=dataset_scenario)
     tools = ToolRegistry(full_agent_tools(index, witness_contexts={candidate.repository_id: context}),
                          max_output_bytes=FULL_SYSTEM_HARNESS.validation.max_output_bytes)
     return index, candidate, context, tools
