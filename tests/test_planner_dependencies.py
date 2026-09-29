@@ -506,6 +506,7 @@ def test_assigned_validator_keeps_repository_inspection_available():
 
 
 def test_small_budget_cannot_be_borrowed_from_a_later_expert_subtask(monkeypatch):
+    from dataclasses import replace
     import cv_agent.agents.workflow as workflow
     modified = FULL_SYSTEM_HARNESS.model_copy(update={
         "react_loop": FULL_SYSTEM_HARNESS.react_loop.model_copy(update={
@@ -514,11 +515,28 @@ def test_small_budget_cannot_be_borrowed_from_a_later_expert_subtask(monkeypatch
     })
     monkeypatch.setattr(workflow, "FULL_SYSTEM_HARNESS", modified)
     observed = {}
+    scope_limits = {}
+    producer_calls = []
     original = ToolRegistry.invoke
+    original_tools = full_agent_tools
+
+    def counted_tools(*args, **kwargs):
+        registered = original_tools(*args, **kwargs)
+        static = next(tool for tool in registered if tool.name == "run_static_check")
+
+        def counted_static(arguments, scope):
+            producer_calls.append(arguments)
+            return static.handler(arguments, scope)
+
+        return tuple(replace(tool, handler=counted_static) if tool.name == static.name else tool
+                     for tool in registered)
+
+    monkeypatch.setitem(globals(), "full_agent_tools", counted_tools)
 
     def capture(self, call, **kwargs):
         result = original(self, call, **kwargs)
         observed[kwargs.get("citation_id")] = result
+        scope_limits[kwargs.get("citation_id")] = kwargs["scope"].max_observation_tokens
         return result
 
     monkeypatch.setattr(ToolRegistry, "invoke", capture)
@@ -527,7 +545,13 @@ def test_small_budget_cannot_be_borrowed_from_a_later_expert_subtask(monkeypatch
     assert observed["scan/tool:1"].status == "error"
     assert observed["scan/tool:1"].metadata["observation_truncated"] is True
     assert observed["scan/tool:1"].metadata["observation_token_count"] <= 200
-    assert observed["scan/tool:2"].status == "error"
+    # C5/C6: clipping removes proof and cannot complete this task or unlock
+    # the next task's reserved budget. A repeat is refused, not re-executed.
+    assert observed["scan/tool:2"].status == "blocked"
     assert observed["scan/tool:2"].metadata["observation_truncated"] is True
+    assert observed["scan/tool:2"].validation_status is None
+    assert observed["scan/tool:2"].fixture_proof is None
+    assert len(producer_calls) == 1
+    assert scope_limits["scan/tool:1"] == scope_limits["scan/tool:2"] == 200
     assert sum(item.metadata["observation_token_count"] for citation, item in observed.items()
                if citation.startswith("scan/")) <= 200

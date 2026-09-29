@@ -197,6 +197,9 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     # The stage-0 cleanup additionally removes the advance input-profile hint.
     # Restoring only the description from baseline 221373f reproduces 88ba6e01;
     # schema, planner prompt and candidate subject are unchanged by that cleanup.
+    # Protocol completion now includes entry arguments and accurate Boolean/text
+    # premise schemas. Restoring the old scan mandate, witness description and
+    # old value-schema references reproduces the previous two hashes exactly.
     # Category selection still belongs to may-flow tracing only.
     definitions = {item["function"]["name"]: item["function"]
                    for item in pipeline.tools.definitions(pipeline.tools.names)}
@@ -208,7 +211,7 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
         "subject": json.dumps(identity.candidate_subject(pipeline.index, candidate).model_dump(mode="json"), sort_keys=True, separators=(",", ":")),
     }
     assert {name: hashlib.sha256(value.encode()).hexdigest() for name, value in payloads.items()} == {
-        "planner": "964b90606817582d135db213078b2001d7d4e3acfcc00facc916c8a2d2fe374d",
-        "definitions": "a224ca86b3e3ed0bc5b6eef0c746f05cfe9e183750acf3062f11aa70fa50a620",
+        "planner": "99ca29bb83396e355266971925eeb5293b958de450fc05f6493731267f80e66e",
+        "definitions": "12219ebd13391ce946d49acaf241115d75075bfface462e160ce33bbec032ce6",
         "subject": "9f0896a13965421790d5b8ac82a555a8974618d2bcc36491937bb824532ca5ff",
     }

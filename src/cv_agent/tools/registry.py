@@ -51,10 +51,10 @@ class ToolExecutionScope:
     # When a planned fixture substitutes mandatory checks, only its
     # qualified registered case may execute in that task.
     fixture_case_id: str | None = None
-    # One scope is one expert task over one frozen index, so a request it already answered
-    # cannot answer differently. Maps (tool name, canonical validated arguments) to the
-    # citation of the first successful observation.
-    answered_calls: dict[tuple[str, str], str] = field(default_factory=dict)
+    # One scope is one expert task over one frozen index. Remember successful
+    # producer execution separately from observation delivery; clipping cannot
+    # authorize repeating it. Only the original citation is stored, never proof.
+    answered_calls: dict[tuple[str, str], str | None] = field(default_factory=dict)
     budget_exhausted: bool = False
 
     def __post_init__(self) -> None:
@@ -459,12 +459,13 @@ class ToolRegistry:
             call.name,
             json.dumps(arguments.model_dump(mode="json"), sort_keys=True, separators=(",", ":")),
         )
-        previous = scope.answered_calls.get(requested)
-        if previous is not None:
+        if requested in scope.answered_calls:
+            previous = scope.answered_calls[requested]
+            reference = f" as {previous}" if previous is not None else ""
             return self.refuse(
                 call, scope, citation_id=citation_id,
                 content=(
-                    f"identical call already executed as {previous} in this task; the Harness "
+                    f"identical call already executed{reference} in this task; the Harness "
                     "does not repeat it. Reuse that observation or change the arguments. A "
                     "result that does not settle the question is this tool's limit for this "
                     "input, not a missing call."
@@ -486,13 +487,11 @@ class ToolRegistry:
             raise ValueError(
                 f"tool handler returned observation for {observation.tool}, expected {call.name}"
             )
-        finalized = self._finalize(
+        if observation.status == "ok":
+            scope.answered_calls[requested] = citation_id
+        return self._finalize(
             observation,
             scope,
             content_type=tool.content_type,
             citation_id=citation_id,
         )
-        if finalized.status == "ok" and citation_id is not None:
-            # Only a citable observation gives a refused repeat something to point back to.
-            scope.answered_calls[requested] = citation_id
-        return finalized

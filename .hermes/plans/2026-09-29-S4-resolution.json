@@ -1,0 +1,21 @@
+{
+  "cumulative_reported_tokens": 191177,
+  "cumulative_requests": 32,
+  "resolved_at": "2026-09-29T13:33:06.436617+00:00",
+  "resolved_stop": {
+    "cell_key": null,
+    "code": "S4",
+    "cumulative_reported_tokens": 191177,
+    "cumulative_requests": 32,
+    "detected_at": "2026-09-29T13:14:09.009048+00:00",
+    "detector_consumption_observed": false,
+    "held_out_experiment_run": false,
+    "phase_id": "post_phase1_authorization_audit",
+    "reason": "Post-run authorization audit found that required source fingerprinting and source archiving mechanically read protected held-out input configuration bytes, contrary to remaining-work-plan section 0.",
+    "report": ".hermes/plans/2026-09-29-STOP-S4.md",
+    "run_id": "90428b956f2b44e885c6e4461958dab5",
+    "source_commit": "d6f6af1803bfa3bc5e142e55ec82023649d1ff9e"
+  },
+  "scope": "Existing pytest gate/source fingerprint and source archives may mechanically hash/copy protected configuration bytes. No semantic detector/prompt/evaluation use authorized.",
+  "user_directive": "直接给我猛猛把剩下的干完就行，反正架构都有了"
+}

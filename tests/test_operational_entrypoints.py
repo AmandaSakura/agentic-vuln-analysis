@@ -96,14 +96,31 @@ def test_scripts_root_contains_only_documented_shell_commands():
         "deepseek.sh", "fetch_benchmarks.sh", "jev_pilot.sh", "hp003_jev_active.sh",
         "jev_v3_comparison.sh",
         "witness_scenario_phase1.sh",
+        "witness_scenario_phase2.sh",
     }
 
 
-def test_scenario_launcher_selects_approved_provider_without_real_credentials(tmp_path):
+@pytest.mark.parametrize("phase,configuration,archived", [
+    ("phase1", None, True),
+    ("phase2", "configs/experiments/witness_scenario_phase2.json", False),
+])
+def test_scenario_launcher_selects_approved_provider_without_real_credentials(tmp_path, phase, configuration, archived):
     project = tmp_path/'project with spaces'
     (project/'scripts').mkdir(parents=True)
-    script = project/'scripts/witness_scenario_phase1.sh'
-    script.write_text((ROOT/'scripts/witness_scenario_phase1.sh').read_text())
+    script = project/f'scripts/witness_scenario_{phase}.sh'
+    source = (ROOT/f'scripts/witness_scenario_{phase}.sh').read_text()
+    command = 'uv run --no-sync python -m cv_agent.evaluation.runners.run_witness_scenario_matrix --live'
+    if configuration is not None:
+        command += f' --configuration {configuration}'
+    if archived:
+        assert command not in source.splitlines()
+        assert '# ' + command in source.splitlines()
+        assert '# Completed once:' in source
+        # Replay the archived command only inside this fake offline project.
+        source = source.replace('# ' + command, command, 1)
+    else:
+        assert command in source.splitlines()
+    script.write_text(source)
     (project/'.env.experiments').write_text(
         'CV_AGENT_PROVIDER=gemini\nDEEPSEEK_MODEL=other-model\nDEEPSEEK_API_KEY=fake-offline\n')
     bash_env = tmp_path/'offline-source-guard.sh'
@@ -132,7 +149,8 @@ pathlib.Path(os.environ['CAPTURE']).write_text(json.dumps({
                         'BASH_ENV': str(bash_env), 'TEST_PROJECT': str(project)})
     assert json.loads(capture.read_text()) == {
         'argv': ['run', '--no-sync', 'python', '-m',
-                 'cv_agent.evaluation.runners.run_witness_scenario_matrix', '--live'],
+                 'cv_agent.evaluation.runners.run_witness_scenario_matrix', '--live']
+                + (['--configuration', configuration] if configuration is not None else []),
         'cwd': str(project), 'provider': 'deepseek', 'model': 'deepseek-flash',
         'key_was_exported': True,
     }

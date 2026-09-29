@@ -65,13 +65,44 @@ def test_schema_rejected_scenarios_are_preserved_without_normalization():
 def test_semantic_wrong_or_unsupported_premise_is_f3_not_resource_failure():
     row = {"status": "abstained", "predicted_label": "ABSTAIN", "verdict": None}
     timeline = [{"tool": "run_bounded_execution_witness", "schema_rejected": False,
-                 "observation": {"status": "ok", "validation_status": "UNRESOLVED", "metadata": {}},
+                 "observation": {"status": "ok", "validation_status": "UNRESOLVED",
+                                 "metadata": {"witness_attempted": True}},
                  "payload": {"classification_status": "complete", "scenario_origin": "model_proposed",
-                             "gaps": ["preempted_by_unrelated_command_event", "constructor_parameter_missing:setting"]}}]
+                             "gaps": ["preempted_by_unrelated_command_event"]}}]
     result = failure_diagnostics(row, timeline)
     assert result["primary"] == "F3"
     assert "F4" not in result["contributors"]
     assert result["gaps"] == timeline[0]["payload"]["gaps"]
+
+
+def test_accepted_preparation_only_scene_is_incomplete_protocol_not_runtime_f3():
+    row = {"status": "abstained", "predicted_label": "ABSTAIN", "verdict": {"votes": [{
+        "rationale": "Assigned validator did not complete before budget exhaustion."}]}}
+    timeline = [{"tool": "run_bounded_execution_witness", "schema_rejected": False,
+                 "observation": {"status": "ok", "validation_status": "UNRESOLVED",
+                                 "metadata": {"witness_attempted": False}},
+                 "payload": {"classification_status": "complete", "scenario_origin": "model_proposed",
+                             "gaps": ["entry_argument_missing:location", "constructor_parameter_missing:setting"]}}]
+    result = failure_diagnostics(row, timeline)
+    assert result["primary"] == "F1"
+    assert result["contributors"] == ["F1", "F6"]
+    assert result["executed_witness_attempts"] == 0
+    assert result["preparation_responses"] == 1
+    assert "F3" not in result["contributors"]
+
+
+def test_clipped_runtime_unresolved_telemetry_is_distinct_from_preparation():
+    row = {"status": "abstained", "predicted_label": "ABSTAIN", "verdict": None}
+    timeline = [{"tool": "run_bounded_execution_witness", "schema_rejected": False,
+                 "observation": {"status": "error", "validation_status": None,
+                                 "metadata": {"witness_attempted": True,
+                                              "witness_result_status": "UNRESOLVED",
+                                              "observation_truncated": True}},
+                 "payload": {"observation_truncated": True, "reason": "token_budget"}}]
+    result = failure_diagnostics(row, timeline)
+    assert result["primary"] == "F3"
+    assert result["preparation_responses"] == 0
+    assert result["executed_witness_attempts"] == 1
 
 
 def test_explicit_timeout_is_f4_and_confirmed_not_accepted_is_f5():

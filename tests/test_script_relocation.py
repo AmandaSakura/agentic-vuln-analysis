@@ -130,6 +130,7 @@ def test_shell_commands_have_valid_syntax():
         'heldout_gate.sh', 'heldout_matrix.sh', 'deepseek.sh', 'fetch_benchmarks.sh',
         'jev_pilot.sh', 'hp003_jev_active.sh', 'jev_v3_comparison.sh',
         'witness_scenario_phase1.sh',
+        'witness_scenario_phase2.sh',
     }
     for path in paths:
         shell = '/bin/sh' if path.read_text().startswith('#!/bin/sh') else '/bin/bash'

@@ -1,0 +1,1405 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "live_model_requests": 0,
+  "source": "developer_scripted",
+  "autonomous_scenario_discovery_measured": false,
+  "pytest": {
+    "passed": 2427,
+    "seconds": 269.24,
+    "log": "artifacts/remaining_work_20260929/phase2_full_pytest_final.log"
+  },
+  "first_full_pytest_preserved": {
+    "passed": 2426,
+    "failed": 1,
+    "log": "artifacts/remaining_work_20260929/phase2_full_pytest.log",
+    "migration": "C5/C6 duplicate execution expectation corrected with stronger producer-count/budget/proof assertions"
+  },
+  "harness_check": "PASS",
+  "rows": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "developer_scripted",
+      "protocol_scenario_origin": "model_proposed",
+      "label": "VULNERABLE",
+      "validation_status": "CONFIRMED",
+      "raw_status": "EXPANDED_OBSERVED",
+      "gaps": [],
+      "scripted_model_calls": 3,
+      "live_model_requests": 0,
+      "witness_executions": 1,
+      "tool_observation_token_count": 6248,
+      "source_file_bindings": 977,
+      "manifest_sha256": "457f3215644a43a6a053a6fcb61b365e6adcaf5cd186464cfcb5a85b42e5a915",
+      "scenario": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "Supply the backend's required empty literal configuration object.",
+            "value": {}
+          }
+        },
+        "entry_boolean_arguments": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "The serving deployment enables the optional MLServer backend.",
+            "value": true
+          }
+        },
+        "entry_condition_assumptions": {
+          "is_windows()": {
+            "classification": "environment_condition",
+            "rationale": "The runtime must take the non-Windows branch.",
+            "value": false
+          },
+          "os.path.exists(artifact_uri)": {
+            "classification": "environment_condition",
+            "rationale": "The supplied local directory exists at the checked branch during this execution.",
+            "value": true
+          },
+          "self._env_manager != em.LOCAL": {
+            "classification": "deployment_configuration",
+            "rationale": "The deployment selects the existing local environment manager.",
+            "value": false
+          },
+          "sys.platform.startswith('linux')": {
+            "classification": "environment_condition",
+            "rationale": "The runtime is Linux; the tool must observe the actual branch.",
+            "value": true
+          }
+        },
+        "entry_value_assumptions": {
+          "MLServerDefaultModelName": {
+            "classification": "environment_condition",
+            "rationale": "The loaded dependency constant must have this actual value.",
+            "value": "mlflow-model"
+          },
+          "MLServerMLflowRuntime": {
+            "classification": "environment_condition",
+            "rationale": "The loaded MLServer runtime constant must match this value.",
+            "value": "mlserver_mlflow.MLflowRuntime"
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind the configured serving address to loopback.",
+            "value": "127.0.0.1"
+          },
+          "model_config": {
+            "classification": "deployment_configuration",
+            "rationale": "No model-specific serving configuration is supplied.",
+            "value": null
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Use the serving port for this bounded configuration.",
+            "value": 5000
+          },
+          "self._nworkers": {
+            "classification": "deployment_configuration",
+            "rationale": "The constructed backend uses one worker.",
+            "value": 1
+          },
+          "synchronous": {
+            "classification": "deployment_configuration",
+            "rationale": "The caller requests asynchronous serving.",
+            "value": false
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "No additional timeout value is passed to serving.",
+            "value": null
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "This bounded caller can create and supply an existing local directory whose name contains shell metacharacters; remote input authority is unestablished.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 206,
+                    "execution_count": 1,
+                    "instruction_offset": 204,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "sys.platform.startswith('linux')",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 252,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 238,
+                    "execution_count": 1,
+                    "instruction_offset": 236,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 284,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 382,
+                    "execution_count": 1,
+                    "instruction_offset": 304,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "self._env_manager != em.LOCAL",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 296,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 446,
+                    "execution_count": 1,
+                    "instruction_offset": 444,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 12,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 308,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 64,
+                    "execution_count": 1,
+                    "instruction_offset": 62,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 4,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "os.path.exists(artifact_uri)",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+                "inverted": false,
+                "line": 70,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 84,
+                    "execution_count": 1,
+                    "instruction_offset": 82,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+                "inverted": true,
+                "line": 71,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              }
+            ],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": {},
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {
+            "enable_mlserver": {
+              "actual": true,
+              "matched": true,
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            }
+          },
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime/modelc05ff32d58522afc488548af",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "MLServerDefaultModelName": [
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                }
+              ],
+              "MLServerMLflowRuntime": [
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 6,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 6,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "model_config": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": 5000,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "self._nworkers": [
+                {
+                  "actual": 1,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                  "line": 229,
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.backend",
+                  "point": "entry",
+                  "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                  "supported_value": true
+                }
+              ],
+              "synchronous": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "MLServerDefaultModelName",
+              "MLServerMLflowRuntime",
+              "host",
+              "model_config",
+              "port",
+              "self._nworkers",
+              "synchronous",
+              "timeout"
+            ]
+          }
+        },
+        "probe": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 206,
+                    "execution_count": 1,
+                    "instruction_offset": 204,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "sys.platform.startswith('linux')",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 252,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 238,
+                    "execution_count": 1,
+                    "instruction_offset": 236,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 284,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 382,
+                    "execution_count": 1,
+                    "instruction_offset": 304,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "self._env_manager != em.LOCAL",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 296,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 446,
+                    "execution_count": 1,
+                    "instruction_offset": 444,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 12,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 308,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 64,
+                    "execution_count": 1,
+                    "instruction_offset": 62,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 4,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "os.path.exists(artifact_uri)",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+                "inverted": false,
+                "line": 70,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 84,
+                    "execution_count": 1,
+                    "instruction_offset": 82,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/tracking/artifact_utils.py",
+                "inverted": true,
+                "line": 71,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              }
+            ],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": {},
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {
+            "enable_mlserver": {
+              "actual": true,
+              "matched": true,
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            }
+          },
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime/model$(printf 87dc1d6cee064e1a93b4efe77b1a7253)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "MLServerDefaultModelName": [
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                }
+              ],
+              "MLServerMLflowRuntime": [
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 6,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 6,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "92d434b575c1f1c6bad6e0bcc1ded6a228160f80697c40d6551755db74b7993b",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "model_config": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": 5000,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "self._nworkers": [
+                {
+                  "actual": 1,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+                  "line": 229,
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.backend",
+                  "point": "entry",
+                  "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                  "supported_value": true
+                }
+              ],
+              "synchronous": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "MLServerDefaultModelName",
+              "MLServerMLflowRuntime",
+              "host",
+              "model_config",
+              "port",
+              "self._nworkers",
+              "synchronous",
+              "timeout"
+            ]
+          }
+        },
+        "remote_authority_established": false
+      },
+      "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime-witness-artifact-pyzlh5dr/witness-result.json"
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "developer_scripted",
+      "protocol_scenario_origin": "model_proposed",
+      "label": "ABSTAIN",
+      "validation_status": "UNRESOLVED",
+      "raw_status": "LITERAL_OBSERVED",
+      "gaps": [],
+      "scripted_model_calls": 3,
+      "live_model_requests": 0,
+      "witness_executions": 1,
+      "tool_observation_token_count": 6261,
+      "source_file_bindings": 977,
+      "manifest_sha256": "f2e1bb5317e4090baf9f9845fbb05f26522dd1aa2094ae73c3c79f2264ee35cd",
+      "scenario": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "Supply the backend's required empty literal configuration object.",
+            "value": {}
+          }
+        },
+        "entry_boolean_arguments": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "The serving deployment enables the optional MLServer backend.",
+            "value": true
+          }
+        },
+        "entry_condition_assumptions": {
+          "is_windows()": {
+            "classification": "environment_condition",
+            "rationale": "The runtime must take the non-Windows branch.",
+            "value": false
+          },
+          "os.path.exists(artifact_uri)": {
+            "classification": "environment_condition",
+            "rationale": "The supplied local directory exists at the checked branch during this execution.",
+            "value": true
+          },
+          "self._env_manager != em.LOCAL": {
+            "classification": "deployment_configuration",
+            "rationale": "The deployment selects the existing local environment manager.",
+            "value": false
+          },
+          "sys.platform.startswith('linux')": {
+            "classification": "environment_condition",
+            "rationale": "The runtime is Linux; the tool must observe the actual branch.",
+            "value": true
+          }
+        },
+        "entry_value_assumptions": {
+          "MLServerDefaultModelName": {
+            "classification": "environment_condition",
+            "rationale": "The loaded dependency constant must have this actual value.",
+            "value": "mlflow-model"
+          },
+          "MLServerMLflowRuntime": {
+            "classification": "environment_condition",
+            "rationale": "The loaded MLServer runtime constant must match this value.",
+            "value": "mlserver_mlflow.MLflowRuntime"
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind the configured serving address to loopback.",
+            "value": "127.0.0.1"
+          },
+          "model_config": {
+            "classification": "deployment_configuration",
+            "rationale": "No model-specific serving configuration is supplied.",
+            "value": null
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Use the serving port for this bounded configuration.",
+            "value": 5000
+          },
+          "self._nworkers": {
+            "classification": "deployment_configuration",
+            "rationale": "The constructed backend uses one worker.",
+            "value": 1
+          },
+          "synchronous": {
+            "classification": "deployment_configuration",
+            "rationale": "The caller requests asynchronous serving.",
+            "value": false
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "No additional timeout value is passed to serving.",
+            "value": null
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "This bounded caller can create and supply an existing local directory whose name contains shell metacharacters; remote input authority is unestablished.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 206,
+                    "execution_count": 1,
+                    "instruction_offset": 204,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "sys.platform.startswith('linux')",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 252,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 238,
+                    "execution_count": 1,
+                    "instruction_offset": 236,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 284,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 382,
+                    "execution_count": 1,
+                    "instruction_offset": 304,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "self._env_manager != em.LOCAL",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 296,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 446,
+                    "execution_count": 1,
+                    "instruction_offset": 444,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 12,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 308,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 64,
+                    "execution_count": 1,
+                    "instruction_offset": 62,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 4,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "os.path.exists(artifact_uri)",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+                "inverted": false,
+                "line": 70,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 84,
+                    "execution_count": 1,
+                    "instruction_offset": 82,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+                "inverted": true,
+                "line": 71,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              }
+            ],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": {},
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {
+            "enable_mlserver": {
+              "actual": true,
+              "matched": true,
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            }
+          },
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime/modelc05ff32d58522afc488548af",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "MLServerDefaultModelName": [
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 8,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 8,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                }
+              ],
+              "MLServerMLflowRuntime": [
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "model_config": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": 5000,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "self._nworkers": [
+                {
+                  "actual": 1,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                  "line": 229,
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.backend",
+                  "point": "entry",
+                  "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                  "supported_value": true
+                }
+              ],
+              "synchronous": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "MLServerDefaultModelName",
+              "MLServerMLflowRuntime",
+              "host",
+              "model_config",
+              "port",
+              "self._nworkers",
+              "synchronous",
+              "timeout"
+            ]
+          }
+        },
+        "probe": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 206,
+                    "execution_count": 1,
+                    "instruction_offset": 204,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "sys.platform.startswith('linux')",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 252,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 238,
+                    "execution_count": 1,
+                    "instruction_offset": 236,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 284,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 382,
+                    "execution_count": 1,
+                    "instruction_offset": 304,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "self._env_manager != em.LOCAL",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": false,
+                "line": 296,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 446,
+                    "execution_count": 1,
+                    "instruction_offset": 444,
+                    "qualname": "PyFuncBackend.serve"
+                  }
+                ],
+                "column": 12,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                "inverted": true,
+                "line": 308,
+                "module": "mlflow.pyfunc.backend",
+                "node_kind": "If",
+                "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+              },
+              {
+                "actual_values": [
+                  true
+                ],
+                "branch_edges": [
+                  {
+                    "actual": true,
+                    "destination_offset": 64,
+                    "execution_count": 1,
+                    "instruction_offset": 62,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 4,
+                "execution_count": 1,
+                "expected": true,
+                "expression": "os.path.exists(artifact_uri)",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+                "inverted": false,
+                "line": 70,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              },
+              {
+                "actual_values": [
+                  false
+                ],
+                "branch_edges": [
+                  {
+                    "actual": false,
+                    "destination_offset": 84,
+                    "execution_count": 1,
+                    "instruction_offset": 82,
+                    "qualname": "_get_root_uri_and_artifact_path"
+                  }
+                ],
+                "column": 8,
+                "execution_count": 1,
+                "expected": false,
+                "expression": "is_windows()",
+                "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/tracking/artifact_utils.py",
+                "inverted": true,
+                "line": 71,
+                "module": "mlflow.tracking.artifact_utils",
+                "node_kind": "If",
+                "sha256": "4a22cdac2a4c9df87ad59b17139b5b8058ac9bcd3b55b61f0ac22552b61d2e94"
+              }
+            ],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": {},
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {
+            "enable_mlserver": {
+              "actual": true,
+              "matched": true,
+              "point": "candidate_entry_frame",
+              "supported_value": true
+            }
+          },
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime/model$(printf 87dc1d6cee064e1a93b4efe77b1a7253)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "MLServerDefaultModelName": [
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 8,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlflow-model",
+                  "definition_line": 8,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                }
+              ],
+              "MLServerMLflowRuntime": [
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                },
+                {
+                  "actual": "mlserver_mlflow.MLflowRuntime",
+                  "definition_line": 7,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/mlserver.py",
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.mlserver",
+                  "point": "module_dictionary",
+                  "source_sha256": "8aab28c8f1c9f95395c7669022aeca5fa3113d5b3433d46566b62e7cf429e776",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "model_config": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": 5000,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "self._nworkers": [
+                {
+                  "actual": 1,
+                  "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+                  "line": 229,
+                  "matched": true,
+                  "module_name": "mlflow.pyfunc.backend",
+                  "point": "entry",
+                  "source_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+                  "supported_value": true
+                }
+              ],
+              "synchronous": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": null,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "MLServerDefaultModelName",
+              "MLServerMLflowRuntime",
+              "host",
+              "model_config",
+              "port",
+              "self._nworkers",
+              "synchronous",
+              "timeout"
+            ]
+          }
+        },
+        "remote_authority_established": false
+      },
+      "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/phase2_scripted/shared-runtime-witness-artifact-_d6thzyl/witness-result.json"
+    }
+  ]
+}

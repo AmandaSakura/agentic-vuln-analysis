@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from collections import Counter
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
-from cv_agent.agents.evidence_policy import IncompleteValidationTaskError, InsufficientEvidenceError, validate_conclusion
+from cv_agent.agents.evidence_policy import (
+    IncompleteValidationTaskError, InsufficientEvidenceError, validate_conclusion, validation_preparation,
+    validator_observation_completed,
+)
 from cv_agent.domain.review import AgentExpertConclusion, AgentExpertVote, PlannerResult, ValidationPlan
 from cv_agent.domain.chat import ChatMessage, ModelUsage
 from cv_agent.domain.evidence import ReActStep, ValidationStatus
@@ -201,6 +205,7 @@ class ReActEngine:
                         tool_calls=reply.tool_calls,
                     )
                 )
+                continuations: dict[str, str] = {}
                 for call in reply.tool_calls:
                     observation = self.tools.invoke(
                         call,
@@ -228,6 +233,19 @@ class ReActEngine:
                             content=self.tools.prompt_payload(observation),
                         )
                     )
+                    if call.name in required_validators:
+                        preparation = validation_preparation(observation)
+                        if preparation is not None:
+                            continuations[call.name] = preparation.continuation(call.name)
+                completed = Counter(step.observation.tool for step in trace
+                                    if validator_observation_completed(step.observation))
+                pending = Counter(required_validators) - completed
+                continuations = {name: message for name, message in continuations.items() if name in pending}
+                next_can_use_tools = (step_index + 1 < self.harness.max_steps - 2
+                                      if self.harness.max_steps >= 3
+                                      else step_index + 1 < self.harness.max_steps - 1)
+                if continuations and next_can_use_tools and not budget_exhausted:
+                    messages.append(ChatMessage(role="user", content="\n".join(continuations.values())))
                 continue
 
             if require_tool_attempt and self.harness.require_tool_observation and not trace:

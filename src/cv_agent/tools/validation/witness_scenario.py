@@ -11,7 +11,7 @@ import json
 import re
 from typing import Any, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, StrictBool, StrictStr, field_validator, model_validator
 
 from cv_agent.domain.evidence import ValidationSubject
 from cv_agent.domain.types import FrozenModel
@@ -50,13 +50,25 @@ class ClassifiedScenarioValue(FrozenModel):
         return value
 
 
+class ClassifiedScenarioBoolean(ClassifiedScenarioValue):
+    value: StrictBool
+
+
+class ClassifiedScenarioText(ClassifiedScenarioValue):
+    value: StrictStr
+
+
+class ClassifiedInputParameter(ClassifiedScenarioText):
+    classification: Literal["attacker_controlled_input"]
+
+
 class WitnessScenarioHypothesis(FrozenModel):
-    input_parameter: ClassifiedScenarioValue
-    entry_boolean_arguments: dict[str, ClassifiedScenarioValue] = Field(default_factory=dict)
-    entry_condition_assumptions: dict[str, ClassifiedScenarioValue] = Field(default_factory=dict)
+    input_parameter: ClassifiedInputParameter
+    entry_boolean_arguments: dict[str, ClassifiedScenarioBoolean] = Field(default_factory=dict)
+    entry_condition_assumptions: dict[str, ClassifiedScenarioBoolean] = Field(default_factory=dict)
     entry_value_assumptions: dict[str, ClassifiedScenarioValue] = Field(default_factory=dict)
     constructor_parameters: dict[str, ClassifiedScenarioValue] = Field(default_factory=dict)
-    precondition_files: dict[str, ClassifiedScenarioValue] = Field(default_factory=dict)
+    precondition_files: dict[str, ClassifiedScenarioText] = Field(default_factory=dict)
 
     @field_validator("entry_boolean_arguments", "entry_condition_assumptions", "entry_value_assumptions",
                      "constructor_parameters", "precondition_files", mode="before")

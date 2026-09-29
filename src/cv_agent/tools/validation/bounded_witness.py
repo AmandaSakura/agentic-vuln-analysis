@@ -12,6 +12,9 @@ from typing import Any
 from uuid import uuid4
 
 from cv_agent.domain.evidence import ToolObservation, ValidationStatus, ValidationSubject
+from cv_agent.domain.validation_protocol import (
+    PREPARATION_METADATA_KEY, MissingValidationInput, ValidationPreparation,
+)
 from cv_agent.tools.validation.witness_manifest import (
     WitnessExecutionContext,
     WitnessSupplement,
@@ -165,18 +168,57 @@ class BoundedWitnessService:
         missing: tuple[str, ...] | list[str] = (), generated: dict[str, Any] | None = None,
         provenance: dict[str, Any] | None = None,
     ) -> ToolObservation:
+        preparation = self._preparation(subject, gaps, provenance or {})
+        visible = _visible_provenance(provenance or {})
+        # Full hypotheses are already recorded in the original tool arguments.
+        # Preparation reports only their digest and required field owners; all
+        # classified values still accompany an actual execution result.
+        visible.pop("scenario", None)
         return ToolObservation(
             tool=TOOL_NAME, status="ok", validation_status=ValidationStatus.UNRESOLVED,
             subject=subject,
-            metadata={"witness_attempted": False},
+            metadata={"witness_attempted": False,
+                      "preparation_generated": generated or {},
+                      "preparation_provenance": provenance or {},
+                      **({PREPARATION_METADATA_KEY: preparation.model_dump(mode="json")}
+                         if preparation is not None else {})},
             content=_json({"status": ValidationStatus.UNRESOLVED.value,
                            "raw_status": "UNRESOLVED", "gaps": list(dict.fromkeys(gaps)),
                            "missing_constructor_parameters": missing,
                            "scope_note": _PREPARATION_SCOPE_NOTE,
                            "generated": {name: value for name, value in (generated or {}).items()
-                                         if name != "input_profile"},
-                           **_visible_provenance(provenance or {})}),
+                                         if name in {"entry_qualified", "entry"}},
+                           **({"preparation": preparation.model_dump(mode="json")}
+                              if preparation is not None else {}), **visible}),
         )
+
+    @staticmethod
+    def _preparation(subject: ValidationSubject | None, gaps: list[str],
+                     provenance: dict[str, Any]) -> ValidationPreparation | None:
+        if subject is None:
+            return None
+        mode = "dataset_provided" if subject_has_scenario(subject) else "model_proposed"
+        if set(gaps) == {"dataset_scenario_cannot_be_replaced"}:
+            return ValidationPreparation(mode=mode, action="use_dataset_scenario")
+        if (mode == "model_proposed" and provenance.get("scenario_sha256") is None
+                and set(gaps) == {"probe_input_parameter_not_unique"}):
+            return ValidationPreparation(mode=mode, action="propose_scenario", missing_inputs=(
+                MissingValidationInput(name="input_parameter", destination="scenario_hypothesis", classified=True),
+            ))
+        fields = []
+        for gap in dict.fromkeys(gaps):
+            kind, separator, name = gap.partition(":")
+            if not separator or kind not in {"entry_argument_missing", "constructor_parameter_missing"}:
+                return None
+            if kind == "entry_argument_missing":
+                if mode != "model_proposed":
+                    return None
+                destination = "scenario_hypothesis.entry_value_assumptions"
+            else:
+                destination = ("scenario_hypothesis.constructor_parameters"
+                               if mode == "model_proposed" else "constructor_parameters")
+            fields.append(MissingValidationInput(name=name, destination=destination, classified=mode == "model_proposed"))
+        return ValidationPreparation(mode=mode, action="complete_call_data", missing_inputs=tuple(fields)) if fields else None
 
     def handle(self, supplement: WitnessSupplement, scope: ToolExecutionScope) -> ToolObservation:
         subject = scope.subject

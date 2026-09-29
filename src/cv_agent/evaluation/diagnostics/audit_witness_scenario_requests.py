@@ -56,10 +56,14 @@ def failure_diagnostics(row: dict[str, Any], timeline: list[dict[str, Any]]) -> 
                              for gap in (item.get("payload") or {}).get("gaps", [])))
     infrastructure = [gap for gap in gaps if gap in _INFRASTRUCTURE_GAPS
                       or gap.startswith(("isolation_read_denied:", "isolation_read_grant_stale:"))]
-    accepted = any(item["observation"].get("status") == "ok"
-                   and item["observation"].get("validation_status") == "UNRESOLVED"
-                   and (item.get("payload") or {}).get("classification_status") == "complete"
-                   for item in witnesses)
+    runtime_unresolved = sum(
+        item["observation"].get("metadata", {}).get("witness_attempted") is True
+        and (item["observation"].get("validation_status") == "UNRESOLVED"
+             or item["observation"].get("metadata", {}).get("witness_result_status") == "UNRESOLVED")
+        for item in witnesses)
+    preparation_responses = sum(item["observation"].get("status") == "ok"
+        and item["observation"].get("metadata", {}).get("witness_attempted") is False
+        for item in witnesses)
     attempted = sum(item["observation"].get("metadata", {}).get("witness_attempted") is True
                     for item in witnesses)
     error = row.get("error", "") or ""
@@ -75,7 +79,7 @@ def failure_diagnostics(row: dict[str, Any], timeline: list[dict[str, Any]]) -> 
             contributors.append("F4")
         if schema_rejections >= 2:
             contributors.append("F2")
-        if accepted and not infrastructure:
+        if runtime_unresolved and not infrastructure:
             contributors.append("F3")
         if not attempted:
             contributors.append("F1")
@@ -88,9 +92,12 @@ def failure_diagnostics(row: dict[str, Any], timeline: list[dict[str, Any]]) -> 
         "qualified_success": success, "primary": primary, "contributors": contributors,
         "delivered_confirmation": confirmed, "producer_confirmation": producer_confirmed,
         "witness_tool_calls": len(witnesses), "executed_witness_attempts": attempted,
+        "preparation_responses": preparation_responses,
+        "runtime_unresolved_observations": runtime_unresolved,
         "schema_rejections": schema_rejections, "gaps": gaps,
         "infrastructure_gaps": infrastructure,
         "note": "Failure codes summarize recorded facts and can overlap. "
+                "Accepting scenario preparation does not establish runtime scenario failure. "
                 "Unsupported or wrong premises are not classified as resource failures. "
                 "The phase report must review these facts before authorizing a repair.",
     }

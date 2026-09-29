@@ -101,8 +101,9 @@ def validation_tools(
         _json_tool(
             WITNESS_TOOL,
             ('Build a source-bound command witness from this candidate and the system runtime. '
-             'Supply constructor_parameters={} and precondition_files={} first; fill only '
-             'reported missing constructor parameters using JSON data. The system owns all '
+             'With a declared dataset scenario, omit scenario_hypothesis and supply only reported '
+             'missing constructor_parameters and precondition_files in the outer maps. '
+             'The system owns all '
              'source, probe, control, command recorder and isolation settings. Actual expansion '
              'with all runtime obligations and benign control can return CONFIRMED; literal or '
              'incomplete observations stay UNRESOLVED and never prove SAFE. '
@@ -112,6 +113,11 @@ def validation_tools(
              'uses {value, classification, rationale}, with classification attacker_controlled_input, '
              'deployment_configuration or environment_condition. The input parameter must be '
              'attacker_controlled_input. Keep both outer maps empty with a proposed scenario. '
+             'Preparation has not executed validation. Fill every reported missing entry argument '
+             'in scenario_hypothesis.entry_value_assumptions and every missing constructor parameter '
+             'in scenario_hypothesis.constructor_parameters, retaining the full classified scenario. '
+             'Use JSON true/false for boolean argument and condition values, never strings. '
+             'Follow the producer preparation state and its field destinations before optional reads. '
              'These are hypotheses measured at runtime; report their source and classifications '
              'with any CONFIRMED result. Remote reachability remains unestablished.'),
             WitnessSupplement,

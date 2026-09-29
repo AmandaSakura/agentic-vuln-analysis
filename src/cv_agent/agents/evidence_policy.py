@@ -13,6 +13,7 @@ from cv_agent.domain.evidence import (
     ValidationSubject,
 )
 from cv_agent.domain.review import AgentExpertConclusion
+from cv_agent.domain.validation_protocol import PREPARATION_METADATA_KEY, ValidationPreparation
 from cv_agent.tools.identity import local_source_line
 
 
@@ -31,11 +32,26 @@ class IncompleteValidationTaskError(ValueError):
         self.missing_validators = tuple(missing_validators)
 
 
+def validation_preparation(observation: ToolObservation) -> ValidationPreparation | None:
+    """Read only complete, producer-owned typed metadata, never payload prose."""
+    if (observation.status != "ok" or observation.metadata.get("observation_truncated")
+            or observation.metadata.get("model_payload_suppressed")):
+        return None
+    value = observation.metadata.get(PREPARATION_METADATA_KEY)
+    if value is None:
+        return None
+    preparation = ValidationPreparation.model_validate(value)
+    if observation.validation_status in {ValidationStatus.CONFIRMED, ValidationStatus.REFUTED}:
+        raise ValueError("preparation cannot claim a completed validator proof")
+    return preparation
+
+
 def validator_observation_completed(observation: ToolObservation) -> bool:
     """A manifest-preparation reply is not an executed witness validator."""
     return (observation.status == "ok"
             and not observation.metadata.get("observation_truncated")
             and not observation.metadata.get("model_payload_suppressed")
+            and validation_preparation(observation) is None
             and (observation.tool != "run_bounded_execution_witness"
                  or observation.metadata.get("witness_attempted") is True))
 

@@ -1,0 +1,28 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "dataset": "configs/datasets/advisory_pairs_v5.json",
+  "selection_profile": "configs/profiles/advisory_hp003_diagnosis_v4.json",
+  "model_config": "configs/models/deepseek_flash.json",
+  "system": "E1",
+  "max_requests": 30,
+  "max_seconds": 3600,
+  "phase_id": "phase2",
+  "origins": ["model_proposed"],
+  "expected_returned_model": "deepseek-flash",
+  "authorization_ledger": "artifacts/remaining_work_20260929/authorization_ledger.json",
+  "cumulative_request_limit": 210,
+  "cumulative_token_limit": 2500000,
+  "output_token_limit": 6000,
+  "framing_token_allowance": 4096,
+  "continue_on_cell_failure": true,
+  "resource_profile": "artifacts/bounded_execution_witness_resource_diagnostics/profile_heavy_target.json",
+  "read_grants": "artifacts/bounded_execution_witness_stage2_read_admission/read_grants_final.json",
+  "advisory_text": "MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+  "advisory_text_origin": "dataset_advisory_summary",
+  "advisory_text_note": "The same advisory summary and entry context as phase 1. No dataset scenario supplied. This is the single authorized B retry after a generic protocol repair; all phase 1 results and cumulative usage remain recorded.",
+  "cases": [
+    {"case_id": "hp003_a", "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"},
+    {"case_id": "hp003_b", "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"}
+  ]
+}
