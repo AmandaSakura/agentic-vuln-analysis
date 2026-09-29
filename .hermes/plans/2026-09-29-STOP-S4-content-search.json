@@ -1,0 +1,102 @@
+{
+  "incident": {
+    "code": "S4",
+    "incident_id": "S4_content_search_20260929",
+    "detected_at": "2026-09-29T14:26:57.158506+00:00",
+    "phase_id": "K1_offline_implementation",
+    "source_commit": "132e4975e7671b0d567fc17d5eefe993c4cc88c3",
+    "reason": "A source-navigation rg included configs and printed four commit fields from protected held-out input manifests; this exceeds the mechanical fingerprint/archive-only resolution of the original S4.",
+    "exact_command": "rg -n 'phase2_scripted|run_pair|scripted_witness_acceptance|977|binding.map|snapshot.binding' configs artifacts/remaining_work_20260929/*.json .hermes/plans/2026-09-29-*.md src/cv_agent/evaluation/diagnostics/ tests/test_witness* | head -100",
+    "agent": "/root/scenario_audit",
+    "tool_output_chunk": "5eb0b4",
+    "matched_fields": [
+      {
+        "path": "configs/datasets/vulngym_heldout_inputs_v4.json",
+        "line": 500,
+        "field": "commit"
+      },
+      {
+        "path": "configs/datasets/vulngym_heldout_inputs_v2.json",
+        "line": 545,
+        "field": "commit"
+      },
+      {
+        "path": "configs/datasets/vulngym_heldout_inputs.json",
+        "line": 547,
+        "field": "commit"
+      },
+      {
+        "path": "configs/datasets/vulngym_heldout_inputs_v3.json",
+        "line": 541,
+        "field": "commit"
+      }
+    ],
+    "values_reproduced_in_report": false,
+    "labels_printed": false,
+    "source_scenarios_printed": false,
+    "usage_disclosure": "Agent reports no use in reasoning/code/selection/detector/prompt; no further protected inspection. Root received field/path disclosure only, did not reopen protected contents.",
+    "detector_consumption_observed": false,
+    "held_out_experiment_run": false,
+    "cumulative_requests": 46,
+    "cumulative_reported_tokens": 281330,
+    "report": ".hermes/plans/2026-09-29-STOP-S4-content-search.md",
+    "actions": [
+      "Interrupted K1 and K4 agents",
+      "Notified Click agent to hold",
+      "Terminated active K1 scripted supervisor; verified supervisor/worker processes absent",
+      "Retained all source modifications and partial artifacts",
+      "Stopped model/network/preparation/development work"
+    ],
+    "resolution_required": "Permit continuation after this navigation incident, retaining its disclosure and continuing to prohibit use of protected contents for detection, prompts, selection and evaluation."
+  },
+  "phase2_status": "completed_both_ABSTAIN",
+  "phase2_run_id": "d735d835e8af451cbd8b260de12e2f4c",
+  "phase2_gate": {
+    "passed": 2427,
+    "seconds": 270.88
+  },
+  "K1": {
+    "state": "partial_uncommitted",
+    "focused_tests_reported_passed": 85,
+    "full_suite_after_K1": false,
+    "pair_scripted_state": "interrupted_partial_artifacts_not_acceptance",
+    "dirty_files": [
+      {
+        "path": "src/cv_agent/evaluation/diagnostics/scripted_witness_acceptance.py",
+        "sha256": "e5329809f76ab6cab2bf8da1741b76614b01f5adb6298f8e691ff2c8e4bb9c8a"
+      },
+      {
+        "path": "src/cv_agent/tools/validation/bounded_witness.py",
+        "sha256": "80ecc8e8d89f84a5e4e8bd2185f1d8ca262e333bc71af54906c14e426b103350"
+      },
+      {
+        "path": "tests/test_witness_scenario.py",
+        "sha256": "72204d2eca9493fdf1a487a030f106e421b1dbe7c8162672f628649ecfb6b198"
+      },
+      {
+        "path": "tests/test_witness_scenario_generalization.py",
+        "sha256": "6117fb76d29c97c13e6ff590c66280ec1a98c0e1a4c13fd1be73f61de4f302cb"
+      },
+      {
+        "path": "tests/test_witness_scope_notes.py",
+        "sha256": "dc356be8a22383ccd8341bc14fb1c65c0aa2b34c73b6aa82c22aa56541f07576"
+      }
+    ]
+  },
+  "K2": "not_started",
+  "K3": "not_started",
+  "K4": "not_started",
+  "phase3a": "source_chain_review_only_v6_not_written",
+  "phase3b": {
+    "state": "selection_incomplete",
+    "network_audit": "artifacts/remaining_work_20260929/phase3b_selection/network_audit.json",
+    "descriptions_inspected": 15,
+    "selected_pairs": 0,
+    "repository_clones": 0,
+    "package_installs": 0,
+    "model_requests": 0
+  },
+  "G-A": "pending_until_M0_and_K2_complete",
+  "K5_to_K8": "not_started",
+  "claim_eligible": false
+}

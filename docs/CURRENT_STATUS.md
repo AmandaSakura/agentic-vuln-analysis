@@ -1,6 +1,8 @@
 # 当前状态（2026-09-29）
 
-## 模型提出场景：阶段 2 完成，后续离线实施中
+## 模型提出场景：阶段 2 完成，K1 实施触发新 S4 停止
+
+K1 实施中，子代理源码导航搜索误包含受保护 held-out 配置，打印四行 commit 字段，超出此前仅机械哈希/归档的解除范围。未输出标签/场景，也未用于模型、检测或选样；按 M0 §0 已停止实施并锁定共享账本。K1 未提交改动和中断的脚本产物保留，尚未完整验收；K2/K3/K4 和后续迁移未完成，G-A 尚未正式判定。具体事件、边界和恢复条件见 [新 S4 报告](../.hermes/plans/2026-09-29-STOP-S4-content-search.md)。下面的“继续”描述是此次停止前的执行分支。
 
 阶段 2 的唯一 B 重跑已完成，执行源码为 **d23e59c**：14 次请求、90,153 reported tokens，返回模型 ID 全部为 deepseek-flash，新进程完整门禁 **2427 passed in 270.88s**。两格最终均 ABSTAIN / UNRESOLVED。各完成两次准备和一次真实见证，完整运行结果投递，没有重复执行；两格提出 enable_mlserver=false，走 scoring_server/uvicorn 分支，在 `recorder_prefix_not_established` 处不能闭合。B-a 复核为 **F3，伴随局部 F6**，没有基础设施故障证据；固定侧没有 CONFIRMED 或已准入 VULNERABLE。三份原始 VULNERABLE 提案均被证据准入拒绝，仍完整归档。
 
