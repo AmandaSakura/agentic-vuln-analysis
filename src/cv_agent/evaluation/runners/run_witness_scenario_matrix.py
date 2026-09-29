@@ -17,13 +17,18 @@ from cv_agent.evaluation.datasets.advisory_source import (
 )
 from cv_agent.evaluation.datasets.composition import load_advisory_config
 from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.evaluation.diagnostics.witness_scenario_preflight import preflight_cells
+from cv_agent.evaluation.diagnostics.audit_witness_scenario_requests import audit as audit_requests
 from cv_agent.evaluation.execution import run_candidate
+from cv_agent.evaluation.experiment_guard import (
+    ExperimentGuard, ExperimentGuardPolicy, ExperimentHardStop,
+    GuardedExperimentBudget, require_committed_clean,
+)
 from cv_agent.evaluation.metrics import provider_usage
 from cv_agent.evaluation.results import save_json
 from cv_agent.harness import AgentSystemVersion
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.runtime.admission import require_passing_tests
-from cv_agent.runtime.budget import Budget
 from cv_agent.runtime.journal import Journal
 from cv_agent.runtime.paths import PROJECT_ROOT
 from cv_agent.runtime.provider import load_experiment_model
@@ -53,18 +58,31 @@ class ScenarioMatrixConfig(FrozenModel):
     system: Literal["E1"]
     max_requests: int = Field(ge=4, le=60)
     max_seconds: int = Field(ge=1)
+    phase_id: str = Field(min_length=1)
+    origins: tuple[Literal["dataset_provided", "model_proposed"], ...] = ORIGINS
+    expected_returned_model: str = Field(min_length=1)
+    authorization_ledger: str
+    cumulative_request_limit: int = Field(ge=1)
+    cumulative_token_limit: int = Field(ge=1)
+    output_token_limit: int = Field(ge=1)
+    framing_token_allowance: int = Field(ge=1)
+    continue_on_cell_failure: bool = False
     resource_profile: str
     read_grants: str
     advisory_text: str = Field(min_length=1)
     advisory_text_origin: Literal["dataset_advisory_summary"]
     advisory_text_note: str = Field(min_length=1)
-    dataset_scenario: WitnessScenarioHypothesis
+    dataset_scenario: WitnessScenarioHypothesis | None = None
     cases: tuple[ScenarioCase, ...] = Field(min_length=2, max_length=2)
 
     @model_validator(mode="after")
     def unique_cases(self):
         if len({case.case_id for case in self.cases}) != 2:
             raise ValueError("The 2x2 comparison requires two distinct snapshots")
+        if not self.origins or len(set(self.origins)) != len(self.origins):
+            raise ValueError("Scenario origins must be a nonempty unique sequence")
+        if "dataset_provided" in self.origins and self.dataset_scenario is None:
+            raise ValueError("Dataset-provided cells require classified dataset assumptions")
         return self
 
 
@@ -77,10 +95,12 @@ class ScenarioCell:
     context: WitnessExecutionContext
     registered_tools: tuple
     identity: dict[str, Any]
+    fixed: bool
 
 
-def load_config(root: Path = PROJECT_ROOT) -> ScenarioMatrixConfig:
-    return ScenarioMatrixConfig.model_validate_json((root / CONFIG_PATH).read_text())
+def load_config(root: Path = PROJECT_ROOT, configuration: Path | None = None) -> ScenarioMatrixConfig:
+    path = root / CONFIG_PATH if configuration is None else root / configuration
+    return ScenarioMatrixConfig.model_validate_json(path.read_text())
 
 
 def prepare_cells(root: Path, config: ScenarioMatrixConfig, *,
@@ -106,7 +126,7 @@ def prepare_cells(root: Path, config: ScenarioMatrixConfig, *,
     if len({pair.pair_id for pair, _, _ in selected}) != 1:
         raise ValueError("The two snapshots must belong to the same advisory pair")
     cells = []
-    for origin in ORIGINS:
+    for origin in config.origins:
         for pair, case, setting in selected:
             # Evaluation identities and revision labels remain private to the
             # journal. Source paths are the same repository-relative paths on
@@ -133,7 +153,8 @@ def prepare_cells(root: Path, config: ScenarioMatrixConfig, *,
                 witness_contexts={candidate.repository_id: context},
                 witness_nonce_factory=lambda: nonce))
             cells.append(ScenarioCell(setting.case_id, origin, index, candidate, context,
-                                      registered, case_identity(root, pair, case, hashes)))
+                                      registered, case_identity(root, pair, case, hashes),
+                                      case.revision_role == "fixed"))
     return tuple(cells)
 
 
@@ -143,6 +164,10 @@ def preparation_record(root: Path, config: ScenarioMatrixConfig,
         "dataset_role": config.dataset_role, "claim_eligible": False,
         "system": config.system, "max_requests": config.max_requests,
         "max_seconds": config.max_seconds, "live_model_requests": 0,
+        "phase_id": config.phase_id, "origins": config.origins,
+        "expected_returned_model": config.expected_returned_model,
+        "cumulative_request_limit": config.cumulative_request_limit,
+        "cumulative_token_limit": config.cumulative_token_limit,
         "declared_model_config": json.loads((root / config.model_config_path).read_text()),
         "advisory_text": config.advisory_text,
         "advisory_text_origin": config.advisory_text_origin,
@@ -156,18 +181,21 @@ def preparation_record(root: Path, config: ScenarioMatrixConfig,
         } for cell in cells],
         "resource_profile": cells[0].context.resource_profile.model_dump(mode="json"),
         "read_policy_sha256": hashlib.sha256((root / config.read_grants).read_bytes()).hexdigest(),
+        "request_preflight": preflight_cells(cells, config),
         "note": "Four development cells compare supplied scenarios with model discovery. "
                 "Advisory and entry hints remain supplied; this is not repository-only held-out discovery.",
     }
 
 
 class CellJournal:
-    def __init__(self, journal: Journal, cell: ScenarioCell):
-        self.journal, self.cell = journal, cell
+    def __init__(self, journal: Journal, cell: ScenarioCell, guard: ExperimentGuard):
+        self.journal, self.cell, self.guard = journal, cell, guard
 
     def write(self, event):
-        self.journal.write({"evaluation_case_id": self.cell.evaluation_case_id,
-                            "scenario_origin": self.cell.scenario_origin, **event})
+        enriched = {"evaluation_case_id": self.cell.evaluation_case_id,
+                    "scenario_origin": self.cell.scenario_origin, **event}
+        self.journal.write(enriched)
+        self.guard.after_event(enriched)
 
 
 def _witness_records(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -191,7 +219,7 @@ def _witness_records(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def summarize(output: Path, rows: list[dict[str, Any]], events: list[dict[str, Any]],
-              config: ScenarioMatrixConfig) -> dict[str, Any]:
+              config: ScenarioMatrixConfig, guard: ExperimentGuard | None = None) -> dict[str, Any]:
     records = _witness_records(events)
     summary = {"dataset_role": "development", "claim_eligible": False,
                "system": config.system, "max_requests": config.max_requests,
@@ -199,7 +227,17 @@ def summarize(output: Path, rows: list[dict[str, Any]], events: list[dict[str, A
                "witness_records": records,
                "note": "Results and usage are separated by scenario origin; "
                        "literal observations remain UNRESOLVED. No held-out or pooled recall claim."}
-    for origin in ORIGINS:
+    if guard is not None:
+        summary["hard_stop"] = guard.hard_stop
+        summary["authorization_accounting"] = {
+            "ledger_path": str(guard.ledger_path), "source_commit": guard.commit,
+            "cumulative_requests": len(guard.ledger["requests"]),
+            "cumulative_reported_tokens": guard.reported_tokens,
+            "cumulative_accounted_tokens": guard.accounted_tokens,
+            "request_limit": config.cumulative_request_limit,
+            "token_limit": config.cumulative_token_limit,
+        }
+    for origin in config.origins:
         selected = [row for row in rows if row["scenario_origin"] == origin]
         observed = [record for record in records if record["scenario_origin"] == origin]
         confirmed = {record["evaluation_case_id"] for record in observed
@@ -220,33 +258,48 @@ def summarize(output: Path, rows: list[dict[str, Any]], events: list[dict[str, A
     return summary
 
 
-def run(root: Path = PROJECT_ROOT, output: Path | None = None) -> Path:
+def run(root: Path = PROJECT_ROOT, output: Path | None = None, *, configuration: Path | None = None) -> Path:
     """Live entrypoint; admission and credentials are never used by preparation."""
-    config = load_config(root)
+    config = load_config(root) if configuration is None else load_config(root, configuration)
     output = output or root / "artifacts/witness_scenario_matrix" / uuid4().hex
     cells = prepare_cells(root, config, runtime_root=(output / "shared-runtime").resolve(), nonce=uuid4().hex)
+    require_committed_clean(root)
     require_passing_tests()
     model_config, api_key = load_experiment_model(root, config.model_config_path)
+    if (model_config.get("model") != config.expected_returned_model
+            or model_config.get("max_tokens") != config.output_token_limit):
+        raise ValueError("Resolved model identity and output ceiling must match the approved guard configuration")
     output.mkdir(parents=True, exist_ok=False)
+    journal = Journal(output / "events.jsonl")
+    guard = ExperimentGuard(root=root, ledger_path=root / config.authorization_ledger,
+        phase_id=config.phase_id, phase_request_limit=config.max_requests,
+        run_id=str(output.resolve()), journal=journal,
+        preflight=lambda: require_committed_clean(root),
+        policy=ExperimentGuardPolicy(expected_model_id=config.expected_returned_model,
+            cumulative_request_limit=config.cumulative_request_limit,
+            cumulative_token_limit=config.cumulative_token_limit,
+            output_token_limit=config.output_token_limit,
+            framing_token_allowance=config.framing_token_allowance))
     save_json(output / "metadata.json", {
         "config": config.model_dump(mode="json", by_alias=True),
         "preparation": preparation_record(root, config, cells), "model_config": model_config,
         "source_sha256": snapshot_sources(root, output),
+        "source_commit": guard.commit, "authorization_ledger": str(guard.ledger_path),
     })
     rows = [{"evaluation_case_id": cell.evaluation_case_id, "scenario_origin": cell.scenario_origin,
              "system": config.system, "status": "not_run", "predicted_label": None,
              "verdict": None, "model_calls": 0, "tool_calls": 0, "latency_sec": 0}
             for cell in cells]
-    journal = Journal(output / "events.jsonl")
-    budget = Budget(config.max_requests, config.max_seconds)
+    budget = GuardedExperimentBudget(config.max_requests, config.max_seconds, guard)
     journal.write({"event": "run_start", "max_requests": config.max_requests,
                    "dataset_role": "development", "claim_eligible": False})
-    summarize(output, rows, [], config)
+    summarize(output, rows, [], config, guard)
     try:
         for position, cell in enumerate(cells):
+            guard.bind_cell(json.dumps([cell.scenario_origin, cell.evaluation_case_id]), fixed=cell.fixed)
             try:
                 result = run_candidate(cell.index, cell.candidate, AgentSystemVersion.E1_LOCAL_SINGLE,
-                                       CellJournal(journal, cell), budget, model_config=model_config,
+                                       CellJournal(journal, cell, guard), budget, model_config=model_config,
                                        api_key=api_key, registered_tools=cell.registered_tools)
             except KeyboardInterrupt:
                 # run_candidate durably journals its interruption before
@@ -260,26 +313,32 @@ def run(root: Path = PROJECT_ROOT, output: Path | None = None) -> Path:
                 raise
             rows[position].update(result)
             events = [json.loads(line) for line in journal.path.read_text().splitlines()]
-            summarize(output, rows, events, config)
-            print(f"{position + 1}/4 {cell.scenario_origin} {cell.evaluation_case_id}: {result['status']}", flush=True)
+            summarize(output, rows, events, config, guard)
+            print(f"{position + 1}/{len(cells)} {cell.scenario_origin} {cell.evaluation_case_id}: {result['status']}", flush=True)
+            if guard.hard_stop is not None:
+                raise ExperimentHardStop(guard.hard_stop["code"], guard.hard_stop["reason"])
+            guard.finish_cell()
             if result["status"] in {"failed", "interrupted", "not_run"}:
-                raise RuntimeError(f"Scenario comparison stopped: {result.get('error', result['status'])}")
+                if not config.continue_on_cell_failure:
+                    raise RuntimeError(f"Scenario comparison stopped: {result.get('error', result['status'])}")
     finally:
         budget.stop()
         journal.write({"event": "run_end", "admitted_requests": budget.used})
         events = [json.loads(line) for line in journal.path.read_text().splitlines()]
-        summarize(output, rows, events, config)
+        summarize(output, rows, events, config, guard)
+        save_json(output / "request_audit.json", audit_requests(output))
     return output
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true", help="Make the approved bounded model experiment")
+    parser.add_argument("--configuration", type=Path, help="Explicit phase configuration; defaults to the initial comparison")
     args = parser.parse_args()
     if args.live:
-        print(run())
+        print(run(configuration=args.configuration))
     else:
-        config = load_config()
+        config = load_config(configuration=args.configuration)
         cells = prepare_cells(PROJECT_ROOT, config,
                               runtime_root=PROJECT_ROOT / "artifacts/witness_scenario_preview/shared-runtime",
                               nonce="PREPARATIONONLY123456")

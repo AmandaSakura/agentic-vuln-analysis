@@ -52,6 +52,9 @@ def _configuration(root):
         "selection_profile": "configs/profiles/scenario.json",
         "model_config": "configs/model.json", "system": "E1", "max_requests": 60,
         "max_seconds": 60, "resource_profile": "resources.json", "read_grants": "read_grants.json",
+        "phase_id": "offline-phase", "expected_returned_model": "fake-model",
+        "authorization_ledger": "authorization_ledger.json", "cumulative_request_limit": 210,
+        "cumulative_token_limit": 2500000, "output_token_limit": 6000, "framing_token_allowance": 4096,
         "advisory_text": "Advisory reports a command interpolation weakness.",
         "advisory_text_origin": "dataset_advisory_summary",
         "advisory_text_note": "Test editorial scenario clues are omitted.",
@@ -105,6 +108,7 @@ def test_scene_removal_requires_explicit_advisory_text_before_indexing(tmp_path)
 def _module(monkeypatch):
     from cv_agent.evaluation.runners import run_witness_scenario_matrix as module
     monkeypatch.setattr(module, "require_clean_checkout", lambda *args: None)
+    monkeypatch.setattr(module, "require_committed_clean", lambda *args: "c" * 40)
     monkeypatch.setattr(module, "case_identity", lambda root, pair, case, hashes:
                         {"case_id": case.case_id, "source_sha256": hashes})
     return module
@@ -193,7 +197,8 @@ def test_live_failure_preserves_usage_and_stops_without_retry(tmp_path, monkeypa
     config = module.ScenarioMatrixConfig.model_validate(payload)
     monkeypatch.setattr(module, "load_config", lambda root: config)
     monkeypatch.setattr(module, "require_passing_tests", lambda: None)
-    monkeypatch.setattr(module, "load_experiment_model", lambda *args: ({"model": "fake-model"}, "fake-key"))
+    monkeypatch.setattr(module, "load_experiment_model", lambda *args:
+                        ({"model": "fake-model", "max_tokens": 6000}, "fake-key"))
     monkeypatch.setattr(module, "snapshot_sources", lambda *args: {})
     calls = []
 
@@ -201,9 +206,9 @@ def test_live_failure_preserves_usage_and_stops_without_retry(tmp_path, monkeypa
         from cv_agent.runtime.journal import Trial
         calls.append(kwargs["model_config"])
         observe = budget.observer(Trial(candidate.case_id, system.value, journal), "scan")
-        observe({"event": "model_start", "request_id": "failed-request"})
+        observe({"event": "model_start", "request_id": "failed-request", "messages": [], "tools": []})
         observe({"event": "model_response_received", "request_id": "failed-request",
-                 "summary": {"usage": {"total_tokens": 19}},
+                 "summary": {"model": "fake-model", "usage": {"total_tokens": 19}},
                  "raw_response": {"usage": {"total_tokens": 19}, "choices": []}})
         observe({"event": "model_invalid_response", "request_id": "failed-request"})
         observe({"event": "model_error", "request_id": "failed-request", "error": "empty choices"})
@@ -216,7 +221,7 @@ def test_live_failure_preserves_usage_and_stops_without_retry(tmp_path, monkeypa
         module.run(tmp_path, output)
     summary = json.loads((output / "summary.json").read_text())
     results = json.loads((output / "results.json").read_text())
-    assert calls == [{"model": "fake-model"}]
+    assert calls == [{"model": "fake-model", "max_tokens": 6000}]
     assert summary["usage"]["requests"] == 1
     assert summary["usage"]["reported_total_tokens"] == 19
     assert summary["usage"]["invalid_responses"] == 1
@@ -229,10 +234,11 @@ def test_four_cells_share_one_budget_and_one_resolved_model(tmp_path, monkeypatc
     module = _module(monkeypatch)
     _, payload = _configuration(tmp_path)
     payload["max_requests"] = 4
+    payload["expected_returned_model"] = "same-model"
     config = module.ScenarioMatrixConfig.model_validate(payload)
     monkeypatch.setattr(module, "load_config", lambda root: config)
     monkeypatch.setattr(module, "require_passing_tests", lambda: None)
-    resolved = {"model": "same-model"}
+    resolved = {"model": "same-model", "max_tokens": 6000}
     monkeypatch.setattr(module, "load_experiment_model", lambda *args: (resolved, "fake-key"))
     monkeypatch.setattr(module, "snapshot_sources", lambda *args: {})
     budgets, models, systems = [], [], []
@@ -244,9 +250,9 @@ def test_four_cells_share_one_budget_and_one_resolved_model(tmp_path, monkeypatc
         systems.append(system.value)
         observe = budget.observer(Trial(candidate.case_id, system.value, journal), "scan")
         request_id = f"request-{len(budgets)}"
-        observe({"event": "model_start", "request_id": request_id})
+        observe({"event": "model_start", "request_id": request_id, "messages": [], "tools": []})
         observe({"event": "model_response_received", "request_id": request_id,
-                 "summary": {"usage": {"total_tokens": 3}}})
+                 "summary": {"model": "same-model", "usage": {"total_tokens": 3}}})
         return {"status": "abstained", "predicted_label": "ABSTAIN", "verdict": None,
                 "model_calls": 1, "tool_calls": 0, "latency_sec": 0}
 
@@ -265,10 +271,12 @@ def test_aggregate_request_exhaustion_stops_before_an_extra_request(tmp_path, mo
     module = _module(monkeypatch)
     _, payload = _configuration(tmp_path)
     payload["max_requests"] = 4
+    payload["expected_returned_model"] = "same-model"
     config = module.ScenarioMatrixConfig.model_validate(payload)
     monkeypatch.setattr(module, "load_config", lambda root: config)
     monkeypatch.setattr(module, "require_passing_tests", lambda: None)
-    monkeypatch.setattr(module, "load_experiment_model", lambda *args: ({"model": "same-model"}, "fake-key"))
+    monkeypatch.setattr(module, "load_experiment_model", lambda *args:
+                        ({"model": "same-model", "max_tokens": 6000}, "fake-key"))
     monkeypatch.setattr(module, "snapshot_sources", lambda *args: {})
 
     def complete(index, candidate, system, journal, budget, **kwargs):
@@ -278,7 +286,7 @@ def test_aggregate_request_exhaustion_stops_before_an_extra_request(tmp_path, mo
         observe = budget.observer(trial, "scan")
         try:
             for _ in range(2):
-                observe({"event": "model_start", "request_id": f"request-{budget.used}"})
+                observe({"event": "model_start", "request_id": f"request-{budget.used}", "messages": [], "tools": []})
         except BudgetExceeded as error:
             return {"status": "not_run", "predicted_label": None, "error": str(error),
                     "verdict": None, "model_calls": trial.model_calls, "tool_calls": 0, "latency_sec": 0}
@@ -296,3 +304,74 @@ def test_aggregate_request_exhaustion_stops_before_an_extra_request(tmp_path, mo
     starts = [json.loads(line) for line in (output / "events.jsonl").read_text().splitlines()
               if json.loads(line)["event"] == "model_start"]
     assert len(starts) == 4
+
+
+def test_ordinary_cell_failure_can_continue_without_reexecuting_the_cell(tmp_path, monkeypatch):
+    module = _module(monkeypatch)
+    _, payload = _configuration(tmp_path)
+    payload["continue_on_cell_failure"] = True
+    config = module.ScenarioMatrixConfig.model_validate(payload)
+    monkeypatch.setattr(module, "load_config", lambda root: config)
+    monkeypatch.setattr(module, "require_passing_tests", lambda: None)
+    monkeypatch.setattr(module, "load_experiment_model", lambda *args:
+                        ({"model": "fake-model", "max_tokens": 6000}, "fake-key"))
+    monkeypatch.setattr(module, "snapshot_sources", lambda *args: {})
+    calls = []
+
+    def complete(index, candidate, system, journal, budget, **kwargs):
+        from cv_agent.runtime.journal import Trial
+        calls.append(journal.cell.evaluation_case_id)
+        observe = budget.observer(Trial(candidate.case_id, system.value, journal), "scan")
+        request_id = f"request-{len(calls)}"
+        observe({"event": "model_start", "request_id": request_id, "messages": [], "tools": []})
+        observe({"event": "model_response_received", "request_id": request_id,
+                 "summary": {"model": "fake-model", "usage": {"total_tokens": 3}}})
+        return {"status": "failed" if len(calls) == 1 else "abstained",
+                "predicted_label": None if len(calls) == 1 else "ABSTAIN", "verdict": None,
+                "model_calls": 1, "tool_calls": 0, "latency_sec": 0,
+                "error": "ordinary protocol failure" if len(calls) == 1 else None}
+
+    monkeypatch.setattr(module, "run_candidate", complete)
+    output = module.run(tmp_path, tmp_path / "result")
+    summary = json.loads((output / "summary.json").read_text())
+    results = json.loads((output / "results.json").read_text())
+    assert calls == ["hp001_a", "hp001_b", "hp001_a", "hp001_b"]
+    assert summary["usage"]["requests"] == 4
+    assert summary["hard_stop"] is None
+    assert [row["status"] for row in results] == ["failed", "abstained", "abstained", "abstained"]
+
+
+def test_model_identity_stop_overrides_continue_flag_and_surfaces_usage(tmp_path, monkeypatch):
+    module = _module(monkeypatch)
+    _, payload = _configuration(tmp_path)
+    payload["continue_on_cell_failure"] = True
+    config = module.ScenarioMatrixConfig.model_validate(payload)
+    monkeypatch.setattr(module, "load_config", lambda root: config)
+    monkeypatch.setattr(module, "require_passing_tests", lambda: None)
+    monkeypatch.setattr(module, "load_experiment_model", lambda *args:
+                        ({"model": "fake-model", "max_tokens": 6000}, "fake-key"))
+    monkeypatch.setattr(module, "snapshot_sources", lambda *args: {})
+    calls = []
+
+    def complete(index, candidate, system, journal, budget, **kwargs):
+        from cv_agent.runtime.journal import Trial
+        calls.append(candidate.case_id)
+        observe = budget.observer(Trial(candidate.case_id, system.value, journal), "scan")
+        observe({"event": "model_start", "request_id": "first", "messages": [], "tools": []})
+        try:
+            observe({"event": "model_response_received", "request_id": "first",
+                     "summary": {"model": "different-model", "usage": {"total_tokens": 7}}})
+        except module.ExperimentHardStop as error:
+            return {"status": "failed", "predicted_label": None, "error": str(error),
+                    "verdict": None, "model_calls": 1, "tool_calls": 0, "latency_sec": 0}
+        raise AssertionError("Identity guard must stop the returned model")
+
+    monkeypatch.setattr(module, "run_candidate", complete)
+    output = tmp_path / "result"
+    with pytest.raises(module.ExperimentHardStop, match="S2"):
+        module.run(tmp_path, output)
+    summary = json.loads((output / "summary.json").read_text())
+    assert calls == ["neutral-entry"]
+    assert summary["hard_stop"]["code"] == "S2"
+    assert summary["authorization_accounting"]["cumulative_requests"] == 1
+    assert summary["usage"]["reported_total_tokens"] == 7

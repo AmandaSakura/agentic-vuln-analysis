@@ -194,6 +194,9 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     # the complete tool definitions. Removing scenario_hypothesis/$defs and
     # restoring the old witness description reproduces the previous hash;
     # this unqualified planner's prompt and candidate subject stay identical.
+    # The stage-0 cleanup additionally removes the advance input-profile hint.
+    # Restoring only the description from baseline 221373f reproduces 88ba6e01;
+    # schema, planner prompt and candidate subject are unchanged by that cleanup.
     # Category selection still belongs to may-flow tracing only.
     definitions = {item["function"]["name"]: item["function"]
                    for item in pipeline.tools.definitions(pipeline.tools.names)}
@@ -206,6 +209,6 @@ def test_planner_tool_definitions_and_subject_match_the_reviewed_bytes():
     }
     assert {name: hashlib.sha256(value.encode()).hexdigest() for name, value in payloads.items()} == {
         "planner": "964b90606817582d135db213078b2001d7d4e3acfcc00facc916c8a2d2fe374d",
-        "definitions": "88ba6e0175b39efcdd5cbd29013a3f70715f4cb4a73c7b44d801c78976334aae",
+        "definitions": "a224ca86b3e3ed0bc5b6eef0c746f05cfe9e183750acf3062f11aa70fa50a620",
         "subject": "9f0896a13965421790d5b8ac82a555a8974618d2bcc36491937bb824532ca5ff",
     }

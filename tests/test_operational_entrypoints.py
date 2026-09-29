@@ -95,4 +95,44 @@ def test_scripts_root_contains_only_documented_shell_commands():
         "README.md", "probes", "heldout_gate.sh", "heldout_matrix.sh",
         "deepseek.sh", "fetch_benchmarks.sh", "jev_pilot.sh", "hp003_jev_active.sh",
         "jev_v3_comparison.sh",
+        "witness_scenario_phase1.sh",
+    }
+
+
+def test_scenario_launcher_selects_approved_provider_without_real_credentials(tmp_path):
+    project = tmp_path/'project with spaces'
+    (project/'scripts').mkdir(parents=True)
+    script = project/'scripts/witness_scenario_phase1.sh'
+    script.write_text((ROOT/'scripts/witness_scenario_phase1.sh').read_text())
+    (project/'.env.experiments').write_text(
+        'CV_AGENT_PROVIDER=gemini\nDEEPSEEK_MODEL=other-model\nDEEPSEEK_API_KEY=fake-offline\n')
+    bash_env = tmp_path/'offline-source-guard.sh'
+    bash_env.write_text('''source() {
+    if [[ "$PWD/$1" != "$TEST_PROJECT/.env.experiments" ]]; then
+        echo 'Refusing credentials outside test project' >&2
+        return 1
+    fi
+    builtin source "$@"
+}
+''')
+    binary = tmp_path/'bin'
+    binary.mkdir()
+    uv = binary/'uv'
+    uv.write_text(f'#!{sys.executable}\n' + '''import json, os, pathlib, sys
+pathlib.Path(os.environ['CAPTURE']).write_text(json.dumps({
+    'argv': sys.argv[1:], 'cwd': os.getcwd(),
+    'provider': os.environ['CV_AGENT_PROVIDER'], 'model': os.environ['DEEPSEEK_MODEL'],
+    'key_was_exported': os.environ.get('DEEPSEEK_API_KEY') == 'fake-offline',
+}))
+''')
+    uv.chmod(0o755)
+    capture = tmp_path/'invocation.json'
+    subprocess.run(['/bin/bash', str(script)], check=True, cwd=tmp_path,
+                   env={'PATH': str(binary)+os.pathsep+'/usr/bin:/bin', 'CAPTURE': str(capture),
+                        'BASH_ENV': str(bash_env), 'TEST_PROJECT': str(project)})
+    assert json.loads(capture.read_text()) == {
+        'argv': ['run', '--no-sync', 'python', '-m',
+                 'cv_agent.evaluation.runners.run_witness_scenario_matrix', '--live'],
+        'cwd': str(project), 'provider': 'deepseek', 'model': 'deepseek-flash',
+        'key_was_exported': True,
     }

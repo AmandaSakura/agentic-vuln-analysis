@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "purpose": "Preserve the external development-sample repository exclusions without opening protected held-out input manifests or evaluator label files.",
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "canonicalization": "cv_agent.evaluation.datasets.heldout_manifest.repository_key: HTTPS github.com URLs, lowercase owner/repository, trailing slash and .git suffix removed.",
+  "url_set_hash_format": "SHA256 of UTF-8 json.dumps(sorted(canonical_urls), separators=(',', ':')); all URLs in these sets are ASCII.",
+  "excluded_repository_count": 23,
+  "excluded_repository_urls": [
+    "https://github.com/apache/airflow",
+    "https://github.com/aquasecurity/trivy",
+    "https://github.com/berriai/litellm",
+    "https://github.com/czlonkowski/n8n-mcp",
+    "https://github.com/flowiseai/flowise",
+    "https://github.com/google/adk-python",
+    "https://github.com/jlowin/fastmcp",
+    "https://github.com/langchain-ai/langchain",
+    "https://github.com/langflow-ai/langflow",
+    "https://github.com/milvus-io/milvus",
+    "https://github.com/mlflow/mlflow",
+    "https://github.com/modelcontextprotocol/typescript-sdk",
+    "https://github.com/n8n-io/n8n",
+    "https://github.com/nltk/nltk",
+    "https://github.com/nvidia/nemo",
+    "https://github.com/ollama/ollama",
+    "https://github.com/onnx/onnx",
+    "https://github.com/open-webui/open-webui",
+    "https://github.com/openclaw/openclaw",
+    "https://github.com/paperclipai/paperclip",
+    "https://github.com/prefecthq/fastmcp",
+    "https://github.com/significant-gravitas/autogpt",
+    "https://github.com/tencent/weknora"
+  ],
+  "excluded_repository_urls_sha256": "b2d9f4ebf2fb1cf5f60ff2bafc352038a8b3e09b85ecfa68660e740d62148f09",
+  "explicit_plan_exclusions_already_in_universe": [
+    "https://github.com/langflow-ai/langflow",
+    "https://github.com/mlflow/mlflow",
+    "https://github.com/open-webui/open-webui"
+  ],
+  "derived_heldout_repository_count": 16,
+  "derived_heldout_repository_urls": [
+    "https://github.com/apache/airflow",
+    "https://github.com/aquasecurity/trivy",
+    "https://github.com/berriai/litellm",
+    "https://github.com/czlonkowski/n8n-mcp",
+    "https://github.com/flowiseai/flowise",
+    "https://github.com/milvus-io/milvus",
+    "https://github.com/modelcontextprotocol/typescript-sdk",
+    "https://github.com/n8n-io/n8n",
+    "https://github.com/nvidia/nemo",
+    "https://github.com/ollama/ollama",
+    "https://github.com/onnx/onnx",
+    "https://github.com/open-webui/open-webui",
+    "https://github.com/openclaw/openclaw",
+    "https://github.com/paperclipai/paperclip",
+    "https://github.com/significant-gravitas/autogpt",
+    "https://github.com/tencent/weknora"
+  ],
+  "derived_heldout_repository_urls_sha256": "f176eb1aebd73ac3af64dce0efa50ec55ad7571db9e316974b1454209cc745ab",
+  "proof": {
+    "conclusion": "Excluding all 23 VulnGym repository URLs also excludes the 16 current held-out repositories by their frozen preparation lineage; the separate held-out repository exclusion criterion is retained.",
+    "method": "URL-only raw-catalog extraction, historical URL-only cache metadata, immutable source-manifest Git object identities, the monotone v4 preparation filter, and current aggregate preparation metadata.",
+    "direct_current_heldout_input_content_comparison_performed": false,
+    "raw_url_field_match_count": 408,
+    "raw_nonempty_record_line_count": 408,
+    "old_cache_repository_count": 17,
+    "old_cache_subject_count": 152,
+    "current_summary_repository_count": 16,
+    "current_summary_subject_count": 146,
+    "old_cache_is_exact_current_heldout_manifest": false,
+    "old_cache_note": "The preserved caches.json is historical metadata from the first v4 split, before Langflow was also excluded. It is a 17-repository superset, not the current exact 16-repository record.",
+    "current_v4_excluded_repository_urls": [
+      "https://github.com/langflow-ai/langflow",
+      "https://github.com/mlflow/mlflow"
+    ],
+    "old_cached_urls_removed_by_current_config": [
+      "https://github.com/langflow-ai/langflow"
+    ],
+    "all_old_cached_urls_in_raw_catalog": true,
+    "all_derived_current_urls_in_raw_catalog": true,
+    "derived_count_matches_current_aggregate_metadata": true,
+    "missing_old_cached_urls_from_raw_catalog": [],
+    "lineage": [
+      "prepare_heldout_inputs_v3.main reads data/raw/VulnGym/data/entries.jsonl and passes those rows directly to prepare_heldout.",
+      "prepare_heldout derives detector repository URLs exclusively from each retained raw row's repo_url; its filters can remove rows but cannot introduce a new repository.",
+      "The v3 detector input Git blob is unchanged between the initial v4 preparation commit 2d2bf98, the Langflow-exclusion correction 3a4c208, and the audited project HEAD.",
+      "The v4 build_split detector branch only filters the unchanged v3 source subjects by excluded repository URL. Its separate evaluator-label branch does not add detector subjects.",
+      "The configuration change from 2d2bf98 to 3a4c208 adds only the Langflow repository exclusion. Removing that URL from the preserved 17-repository cache set produces 16 URLs, agreeing with current summary metadata.",
+      "The current v4 detector Git blob is unchanged between 3a4c208 and the audited project HEAD. Its contents were not opened for this proof.",
+      "The cache metadata's raw-dataset revision equals the clean local VulnGym Git HEAD. All 17 metadata URLs and the derived 16 URLs are members of the 23-URL raw catalog universe."
+    ]
+  },
+  "provenance": {
+    "audited_project_revision": "221373fabac0a9d2bd9b7b462f12c56d963b52a9",
+    "raw_dataset_root": "data/raw/VulnGym",
+    "raw_dataset_revision": "cd69f7e163e08485ab5496115ae03439cda6e27e",
+    "raw_dataset_dirty": false,
+    "raw_entries_path": "data/raw/VulnGym/data/entries.jsonl",
+    "raw_entries_git_blob": "43f86b3155635053253acfea0e1bdb87b1a8b773",
+    "raw_entries_sha256": "8a0385a987dbad8e573ad06aec1b6b05367dd783b28f3bbf1ce2464aef851bf2",
+    "initial_v4_preparation_commit": "2d2bf98",
+    "langflow_exclusion_correction_commit": "3a4c208",
+    "protected_input_git_metadata_only": {
+      "v3_path": "configs/datasets/vulngym_heldout_inputs_v3.json",
+      "v3_git_blob_at_both_historical_commits_and_audited_head": "cd84f831f09a7767d32174e8c6dd4d6ab266836e",
+      "v4_path": "configs/datasets/vulngym_heldout_inputs_v4.json",
+      "v4_git_blob_at_initial_v4_commit": "46f2f79cf13e136daf9acb47d3d9f68cae06434f",
+      "v4_git_blob_at_correction_commit_and_audited_head": "bfe9a341196ded8892470d7633a01cab3910ea4b",
+      "working_tree_status_for_both_protected_input_paths": "clean",
+      "input_contents_opened": false
+    },
+    "metadata_files": [
+      {
+        "path": "artifacts/vulngym_heldout_preparation_v4/caches.json",
+        "sha256": "1c4fa250c9bcbd0a33d48cd25ee40cbca8671063a2783a10e5b3b33b17501dde",
+        "role": "Historical URL-only cache provenance: dataset identity, 17 URLs and aggregate 152 subjects."
+      },
+      {
+        "path": "artifacts/vulngym_heldout_preparation_v4/summary.json",
+        "sha256": "b75bbb95b40e48ddfaaa5ad8d76c3279d075ce74bb32303c2297501ec9a78cab",
+        "role": "Current aggregate split metadata: 16 repositories and 146 subjects; no per-entry labels used."
+      },
+      {
+        "path": "configs/preparation/vulngym_evaluation_v4.json",
+        "git_blob": "74d7ae50c736e756e8f082b6916d798d8274b159",
+        "sha256": "7f6e2db3bdc55fe2922e1aa3ee3fa032a5f9166f235c9c0b09029b355c727d39",
+        "role": "Frozen source/output path lineage and explicit MLflow plus Langflow exclusions."
+      },
+      {
+        "path": "configs/preparation/heldout_preparation_v3.json",
+        "git_blob": "5dde2fad0f99f3250b93d774677ad3b6db80a3bd",
+        "sha256": "750cf5be4a2d294bfe84769e7c9bb967a3f6c862972d19bbfb4933095880dde5",
+        "role": "v3 raw-catalog preparation configuration, not its protected detector or evaluator contents."
+      }
+    ],
+    "preparation_code": [
+      {
+        "path": "src/cv_agent/evaluation/preparation/prepare_heldout_inputs_v3.py",
+        "symbol": "main",
+        "line": 11,
+        "git_blob": "e5a4a0933b0da311d74fa30653896aba40766a75",
+        "sha256": "0407f4c0f247de7927edf9e742c919f03be2063c536862d7bcdb5f3fc356368f"
+      },
+      {
+        "path": "src/cv_agent/evaluation/datasets/heldout_manifest.py",
+        "symbol": "repository_key and prepare_heldout",
+        "line": 5,
+        "git_blob": "2db5f06d1c1bfce0a01b2cb1681fd207e306f169",
+        "sha256": "c4274adf04ff41580704018252388a32443403c0d24dd7198656fe07abf933ed"
+      },
+      {
+        "path": "src/cv_agent/evaluation/preparation/prepare_vulngym_evaluation_v4.py",
+        "symbol": "build_split and prepare",
+        "line": 12,
+        "git_blob": "4cfe71b8593f56490ffc54106cf64e9344f1a4eb",
+        "sha256": "fe6742a2d9773eda44fcc6445686bab9eee56951cd7f68758112afbdceae7333"
+      },
+      {
+        "path": "src/cv_agent/evaluation/preparation/prepare_vulngym_checkouts.py",
+        "symbol": "prepare_all",
+        "line": 83,
+        "git_blob": "04ab91f6275fea51eeaafc4286441fa103ab5055",
+        "sha256": "0063878883a63c9980a25294fd5feeba0b6de313843dcc373f0419d0dff8a027"
+      }
+    ]
+  },
+  "reader_constraints": {
+    "protected_heldout_input_manifest_contents_opened": false,
+    "evaluator_label_files_opened": false,
+    "per_entry_labels_used_for_exclusion_proof": false,
+    "raw_fields_extracted_for_this_repository_audit": ["repo_url"],
+    "raw_extraction_method": "Match the 408 literal repo_url fields and JSON-decode only their string values; no preparation function or evaluator was executed.",
+    "protected_input_metadata_methods": ["git ls-tree", "git log path history", "git status --porcelain for the two exact paths"],
+    "aggregate_preparation_summaries_and_url_only_cache_metadata_read": true,
+    "historical_report_excerpt_notice": "An initial provenance excerpt extended into historical benchmark commentary and an old exact-hit reference. None of that commentary or any entry identity was used in this proof or in the exclusion URL set; protected input and label files were not opened.",
+    "credentials_loaded": false,
+    "network_requests": 0,
+    "model_requests": 0,
+    "source_code_edits": 0,
+    "only_new_write": ".hermes/plans/2026-09-29-external-repository-exclusions.json"
+  },
+  "future_selection_rule": "Before any external sample is selected, canonicalize its repository URL with repository_key and reject membership in excluded_repository_urls. Preserve the existing PyPI/advisory/CWE/entry/dependency criteria, advisory ordering and maximum 15 inspected advisories; this proof changes no other criterion."
+}

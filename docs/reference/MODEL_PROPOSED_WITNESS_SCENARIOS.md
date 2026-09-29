@@ -33,7 +33,7 @@
 
 ## 待授权的真实模型实验
 
-[witness_scenario_2x2.json](../../configs/experiments/witness_scenario_2x2.json) 声明 hp003_a/b × A/B 共四格，固定 E1 和 `gemini-3.8-flash-high(low)`，串行执行，共享最多 60 次实际请求及 3,600 秒预算。A 保留数据集前提并附完整可信分类；B 的 subject、检索和提示均不带场景标注，由真实模型提出假设。两条件的入口与 advisory 文本一致，人工汇点标记均不提供。
+[witness_scenario_2x2.json](../../configs/experiments/witness_scenario_2x2.json) 声明 hp003_a/b × A/B 共四格，用户后续授权改为固定 E1 和 `deepseek-flash`，串行执行，共享最多 60 次实际请求及 3,600 秒预算。A 保留数据集前提并附完整可信分类；B 的 subject、检索和提示均不带场景标注，由真实模型提出假设。两条件的入口与 advisory 文本一致，人工汇点标记均不提供。阶段 0 的追加控制与新验收记录见 [阶段 0](../../.hermes/plans/2026-09-29-phase0-results.md)。
 
 请求通过 `OpenAICompatibleChatModel` 和其当前源码完整 pytest 门禁。每个实际请求与原始响应、解析失败、provider reported usage 都进入逐请求日志。失败停止批次，无重试或替代模型。来源、见证状态、最终选票、失败和用量按 A/B 分开报告；不汇总成检出率，也不以最终选票失败掩盖已经完成的见证观察。
 
@@ -43,7 +43,7 @@
 uv run --no-sync python -m cv_agent.evaluation.runners.run_witness_scenario_matrix
 ```
 
-只有获得用户对本配置的模型请求授权后，才运行 `--live`。本轮没有启动它。
+后续执行计划已授权本配置及阶段预算，启动 `--live` 仍须工作树干净并通过新进程的完整 pytest 门禁。最初接口验收没有真实模型调用；实际阶段结果另行登记。
 
 ## 泛化阶段的停止边界
 

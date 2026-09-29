@@ -29,6 +29,10 @@ _SCOPE_NOTE = (
     "metacharacters in its name. The observation covers this concrete input under "
     "the declared candidate assumptions; remote reachability remains unestablished."
 )
+_PREPARATION_SCOPE_NOTE = (
+    "No witness has executed. Reported call-data gaps describe preparation; "
+    "scenario premises require independent runtime verification."
+)
 
 
 def _json(value: Any) -> str:
@@ -168,8 +172,10 @@ class BoundedWitnessService:
             content=_json({"status": ValidationStatus.UNRESOLVED.value,
                            "raw_status": "UNRESOLVED", "gaps": list(dict.fromkeys(gaps)),
                            "missing_constructor_parameters": missing,
-                           "scope_note": _SCOPE_NOTE,
-                           "generated": generated or {}, **_visible_provenance(provenance or {})}),
+                           "scope_note": _PREPARATION_SCOPE_NOTE,
+                           "generated": {name: value for name, value in (generated or {}).items()
+                                         if name != "input_profile"},
+                           **_visible_provenance(provenance or {})}),
         )
 
     def handle(self, supplement: WitnessSupplement, scope: ToolExecutionScope) -> ToolObservation:
@@ -296,5 +302,8 @@ class BoundedWitnessService:
             metadata={"manifest_origin": "system_ast", "artifact_path": str(artifact),
                       "manifest_sha256": manifest_digest, "claim_eligible": False,
                       "witness_attempted": True, "scenario_origin": provenance["scenario_origin"],
-                      "scenario_sha256": provenance["scenario_sha256"]},
+                      "scenario_sha256": provenance["scenario_sha256"],
+                      # Private producer telemetry survives delivery clipping
+                      # for experiment stop rules; it is not supporting proof.
+                      "witness_result_status": result.status.value},
         )
