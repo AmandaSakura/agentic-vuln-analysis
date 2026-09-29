@@ -1,0 +1,36 @@
+{
+  "dataset_name": "Exploratory scenario iteration with supplied advisory and entry",
+  "model_config": "configs/models/deepseek_flash.json",
+  "systems": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+  ],
+  "concurrency": 1,
+  "limits": {
+    "max_requests": 40,
+    "max_seconds": 3600
+  },
+  "selected_cells": [
+    {
+      "case_id": "hp003_a",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp003_b",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp004_a",
+      "system": "E1"
+    },
+    {
+      "case_id": "hp004_b",
+      "system": "E1"
+    }
+  ],
+  "graph_direction": "both",
+  "graph_ranking": "distance"
+}

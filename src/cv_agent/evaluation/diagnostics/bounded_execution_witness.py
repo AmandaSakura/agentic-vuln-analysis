@@ -34,6 +34,10 @@ from cv_agent.domain.evidence import ValidationStatus, ValidationSubject
 from cv_agent.domain.types import FrozenModel
 from cv_agent.runtime.fixture_isolation import restrict_fixture_filesystem
 from cv_agent.runtime.witness_resources import WitnessResourceProfile
+from cv_agent.runtime.witness_entry import (
+    EntryInvocation, bound_instance_method, class_dictionary, click_callback,
+    module_dictionary, qualified_function, source_entry_code,
+)
 from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
 from cv_agent.evaluation.diagnostics.process_resource_accounting import (
     ProcessResourceSampler,
@@ -110,8 +114,9 @@ class WitnessManifest(FrozenModel):
     checkout_root: Path
     import_root: str = '.'
     module_name: str
-    class_name: str
+    class_name: str | None = None
     method_name: str
+    entry_invocation: EntryInvocation = "instance_method"
     entry_relative_path: str
     entry_file_sha256: str
     entry_first_line: int = Field(ge=1)
@@ -150,9 +155,14 @@ class WitnessManifest(FrozenModel):
         if not _DOTTED_NAME.fullmatch(self.module_name):
             raise ValueError("module_name must be a dotted Python name")
         if not all(_DOTTED_NAME.fullmatch(x) and "." not in x for x in (
-            self.class_name, self.method_name, self.probe_argument,
+            self.method_name, self.probe_argument,
         )):
             raise ValueError("class, method, and probe argument must be simple Python names")
+        if self.entry_invocation == "instance_method":
+            if self.class_name is None or not _DOTTED_NAME.fullmatch(self.class_name) or "." in self.class_name:
+                raise ValueError("instance method requires a simple class name")
+        elif self.class_name is not None or self.constructor_args or self.constructor_kwargs:
+            raise ValueError("function entries cannot carry class or constructor inputs")
         if not _safe_relative_path(self.entry_relative_path):
             raise ValueError("entry_relative_path must remain inside checkout")
         if not _SHA256.fullmatch(self.entry_file_sha256):
@@ -194,6 +204,11 @@ class WitnessManifest(FrozenModel):
         except (TypeError, ValueError) as error:
             raise ValueError("call manifest values must be JSON data") from error
         return self
+
+    @property
+    def entry_qualified_name(self) -> str:
+        return (f"{self.class_name}.{self.method_name}"
+                if self.class_name is not None else self.method_name)
 
 
 class WitnessResult(FrozenModel):
@@ -291,24 +306,25 @@ def _frame_data(frame: Any, checkout: Path) -> dict[str, Any]:
 def _capture_event(event: str, args: tuple[Any, ...], checkout: Path,
                    manifest: WitnessManifest, expected_code: Any,
                    trusted_popen_codes: tuple[Any, Any],
-                   preexec_capture: list[Any] | None = None) -> dict[str, Any]:
+                   preexec_capture: list[Any] | None = None, *,
+                   expected_globals: dict[str, Any] | None = None) -> dict[str, Any]:
     frames: list[dict[str, Any]] = []
     code_objects: list[Any] = []
     preexec_values: list[Any] = []
     frame = sys._getframe(2)
-    matched_code = False
+    candidate_bindings: list[bool] = []
     while frame is not None and len(frames) < 24:
         frames.append(_frame_data(frame, checkout))
         code_objects.append(frame.f_code)
         if any(frame.f_code is trusted for trusted in trusted_popen_codes):
             preexec_values.append(frame.f_locals.get("preexec_fn", object()))
-        if expected_code is not None and frame.f_code is expected_code:
-            matched_code = True
+        candidate_bindings.append(expected_code is not None and frame.f_code is expected_code
+                                  and expected_globals is not None and frame.f_globals is expected_globals)
         frame = frame.f_back
     entry_file = str((checkout / manifest.entry_relative_path).resolve())
-    candidate = next((item for item in frames if matched_code and
+    candidate = next((item for item, bound in zip(frames, candidate_bindings) if bound and
                       item["file"] == entry_file
-                      and item["qualname"] == f"{manifest.class_name}.{manifest.method_name}"
+                      and item["qualname"] == manifest.entry_qualified_name
                       and item["first_line"] == manifest.entry_first_line
                       and item.get("sha256") == manifest.entry_file_sha256), None)
     emit_index = 0
@@ -522,6 +538,7 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
         selftest_seen = False
         phase = "import"
         expected_code: Any = None
+        expected_globals: dict[str, Any] | None = None
         trusted_popen_codes = (subprocess.Popen._execute_child.__code__,
                                subprocess.Popen.__init__.__code__)
         recording_command = False
@@ -578,9 +595,16 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             recording_thread = threading.get_ident()
             preexec_capture: list[Any] = []
             payload = _capture_event(event, args, checkout, manifest, expected_code,
-                                     trusted_popen_codes, preexec_capture)
+                                     trusted_popen_codes, preexec_capture,
+                                     expected_globals=expected_globals)
             payload["loaded_source_gaps"] = _verify_module_sources(manifest, checkout)
             payload["phase"] = phase
+            payload["entry_adapter"] = {
+                "invocation": manifest.entry_invocation,
+                "public_parser_executed": False,
+                "scope": ("direct_click_callback" if manifest.entry_invocation == "click_callback"
+                          else "direct_source_entry"),
+            }
             payload["seccomp_selftest"] = True
             payload["hook_selftest"] = selftest_seen
             payload["interpreter"] = interpreter
@@ -615,6 +639,26 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             emit({"kind": "error", "gap": "hook_selftest_failed",
                                       "interpreter": interpreter})
             return
+        # Capture the trusted framework type before target imports can shadow
+        # its module or rebind its exported class. This import is worker-only.
+        trusted_click_command = None
+        if manifest.entry_invocation == "click_callback":
+            import click.core
+            trusted_click_command = click.core.Command
+        entry_file = (checkout / manifest.entry_relative_path).resolve(strict=True)
+        entry_template = None
+        pending_template_error = None
+        try:
+            entry_template = source_entry_code(entry_file.read_bytes(), entry_file,
+                                               manifest.entry_qualified_name,
+                                               manifest.entry_first_line)
+        except ValueError as error:
+            if str(error) != "entry_source_code_nonunique":
+                raise
+            # The compiler removes definitions after an unconditional raise.
+            # Preserve the genuine import error under isolation; a successful
+            # import still cannot qualify or invoke a missing source template.
+            pending_template_error = str(error)
         source_import_root = (checkout / manifest.import_root).resolve(strict=True)
         if not source_import_root.is_relative_to(checkout) or not source_import_root.is_dir():
             emit({'kind': 'error', 'gap': 'source_import_root_outside_checkout'})
@@ -629,13 +673,34 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                                       "source_gaps": source_gaps,
                                       "interpreter": interpreter})
             return
-        target_class = getattr(module, manifest.class_name)
-        phase = "construct"
-        progress()
-        if scenario_data is not None:
-            scenario_data.observe_constructor(manifest.constructor_args, manifest.constructor_kwargs)
-        target = target_class(*manifest.constructor_args, **manifest.constructor_kwargs)
-        expected_code = getattr(target_class, manifest.method_name).__code__
+        if pending_template_error is not None:
+            emit({"kind": "error", "gap": pending_template_error, "interpreter": interpreter})
+            return
+        assert entry_template is not None
+        expected_globals = module_dictionary(module)
+        try:
+            if manifest.entry_invocation == "instance_method":
+                target_class = expected_globals.get(manifest.class_name)
+                function = qualified_function(class_dictionary(target_class).get(manifest.method_name),
+                                              expected_globals, entry_template)
+                phase = "construct"
+                progress()
+                if scenario_data is not None:
+                    scenario_data.observe_constructor(manifest.constructor_args, manifest.constructor_kwargs)
+                target = target_class(*manifest.constructor_args, **manifest.constructor_kwargs)
+                entry_call = bound_instance_method(target, manifest.method_name, function)
+            elif manifest.entry_invocation == "click_callback":
+                function = click_callback(expected_globals.get(manifest.method_name),
+                                          trusted_click_command, expected_globals, entry_template)
+                entry_call = function
+            else:
+                function = qualified_function(expected_globals.get(manifest.method_name),
+                                              expected_globals, entry_template)
+                entry_call = function
+            expected_code = function.__code__
+        except ValueError as error:
+            emit({"kind": "error", "gap": str(error), "interpreter": interpreter})
+            return
         call_kwargs = dict(manifest.call_kwargs)
         call_kwargs[manifest.probe_argument] = str(probe_path)
         phase = "invoke"
@@ -647,7 +712,7 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
                 values.verify_module_values()
                 scenario_data.observe_entry(frame)
             branches.install(expected_code, on_entry=observe_entry)
-        getattr(target, manifest.method_name)(*manifest.call_args, **call_kwargs)
+        entry_call(*manifest.call_args, **call_kwargs)
         emit({"kind": "no_event", "seccomp_selftest": True,
                                   "hook_selftest": True, "source_verified": True,
                                   "interpreter": interpreter})

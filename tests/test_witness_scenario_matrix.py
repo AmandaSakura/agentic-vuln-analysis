@@ -110,7 +110,8 @@ def _module(monkeypatch):
     monkeypatch.setattr(module, "require_clean_checkout", lambda *args: None)
     monkeypatch.setattr(module, "require_committed_clean", lambda *args: "c" * 40)
     monkeypatch.setattr(module, "case_identity", lambda root, pair, case, hashes:
-                        {"case_id": case.case_id, "source_sha256": hashes})
+                        {"case_id": case.case_id, "pair_id": pair.pair_id,
+                         "revision_role": case.revision_role, "source_sha256": hashes})
     return module
 
 

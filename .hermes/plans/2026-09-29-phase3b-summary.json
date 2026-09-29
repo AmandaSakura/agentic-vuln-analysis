@@ -1,0 +1,24 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "reviewed_advisories": 15,
+  "excluded_repository_url_count": 23,
+  "source_qualified_provisional_pairs": 1,
+  "fully_qualified_pairs": 0,
+  "v7_appended": false,
+  "scripted_witness_executions": 0,
+  "live_model_requests": 0,
+  "reported_model_tokens": 0,
+  "selection_audit": ".hermes/plans/2026-09-30-phase3b-selection-audit.json",
+  "sole_provisional_pair": {
+    "advisory": "GHSA-4x4j-2g7c-83w6",
+    "repository_url": "https://github.com/python-pillow/Pillow",
+    "vulnerable_commit": "87e788339e8746e7ceb8e901df9b0c7fda55e975",
+    "fixed_commit": "8404ea5fe5df40fc34aa1e51403dd6fce0778b8a",
+    "source_version": "12.3.0.dev0",
+    "environment_status": "environment_unavailable",
+    "environment_gap": "PIL._imaging absent for exact source in restricted fresh Python 3.12 environments",
+    "precheck": "artifacts/remaining_work_20260929/phase3b_selection/pillow_import_precheck_20260930/precheck-receipts.json"
+  },
+  "no_qualified_pair_inference": "Current K3 metadata-only and isolated import capacity; no vulnerability safety or universal native-build conclusion"
+}

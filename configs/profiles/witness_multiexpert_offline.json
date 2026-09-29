@@ -1,0 +1,4 @@
+{
+  "source_configuration": "configs/profiles/witness_scenario_offline.json",
+  "response_mode": "compact"
+}

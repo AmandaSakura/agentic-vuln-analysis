@@ -1,0 +1,558 @@
+{
+  "milestone": "K4",
+  "kind": "offline_developer_scripted_acceptance",
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "scenario_origin": "developer_scripted",
+  "live_model_requests": 0,
+  "autonomous_scenario_discovery_measured": false,
+  "source_summary": "artifacts/remaining_work_20260929/k4_scripted/summary.json",
+  "source_summary_sha256": "57254d3a63b997525bfc841462d6a1343d1594b57890c2f3034432712bc5f635",
+  "configuration": "configs/profiles/witness_multiexpert_offline.json",
+  "producer_identity": [
+    "original_task_execution_ordinal",
+    "original_trace_step_ordinal"
+  ],
+  "counting_policy": "Only final admitted material ballots citing delivered, complete, candidate-bound supporting validator proof count. Aliases resolve observations; citation strings and manifest/source digests are not producer identity.",
+  "independence_note": "independent_validator_observations counts distinct original producer observations; it does not assert statistical independence.",
+  "validation": {
+    "targeted_tests_passed": 120,
+    "complete_pytest_suite": "pending_parent_run",
+    "positive_controls": [
+      "complete candidate-bound proof remains admitted",
+      "one observation shared by two final material experts",
+      "same manifest from two actual executions counts two origins"
+    ],
+    "negative_controls": [
+      "literal UNRESOLVED cannot support SAFE",
+      "preparation, clipping, suppression, error, private completion receipt and counter evidence do not count",
+      "superseded material ballots and dependency copies do not add producers"
+    ]
+  },
+  "rows": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "artifact": "artifacts/remaining_work_20260929/k4_scripted/hp003_a.json",
+      "artifact_sha256": "cea38f6293198fea6933394ec5be2559e868f7cfc2f1c0e2be31e51ca6b14fbd",
+      "dataset_role": "development",
+      "claim_eligible": false,
+      "scenario_origin": "developer_scripted",
+      "autonomous_scenario_discovery_measured": false,
+      "label": "VULNERABLE",
+      "path": "slow",
+      "votes": [
+        {
+          "expert": "scan",
+          "label": "VULNERABLE",
+          "validation_status": "CONFIRMED",
+          "supporting_observation_ids": [
+            "scan/tool:1"
+          ],
+          "unresolved_observation_ids": []
+        },
+        {
+          "expert": "taint",
+          "label": "VULNERABLE",
+          "validation_status": "CONFIRMED",
+          "supporting_observation_ids": [
+            "scan/tool:1"
+          ],
+          "unresolved_observation_ids": []
+        },
+        {
+          "expert": "authz",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "supporting_observation_ids": [],
+          "unresolved_observation_ids": []
+        }
+      ],
+      "material_votes_sharing_validator_observation": 2,
+      "independent_validator_observations": 1,
+      "validator_observation_origins": [
+        {
+          "producer_execution_ordinal": 1,
+          "producer_step_ordinal": 1,
+          "producer_task_id": "witness",
+          "producer_expert": "scan",
+          "tool": "run_bounded_execution_witness",
+          "citation_id": "scan/tool:1",
+          "evidence_aliases": [
+            "witness:neutral-entry:444596a29f42b1f8c02c83e1558893ba447cb0550eed4031b3c3e5c4eb2d9902"
+          ],
+          "material_experts": [
+            "scan",
+            "taint"
+          ]
+        }
+      ],
+      "scopes": [
+        {
+          "role": "planner",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 0
+        },
+        {
+          "role": "scan",
+          "max_observation_tokens": 4096,
+          "initial_observed_tokens": 0
+        },
+        {
+          "role": "scan",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 935
+        },
+        {
+          "role": "taint",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 0
+        },
+        {
+          "role": "authz",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 0
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "witness",
+          "expert": "scan",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 935
+        },
+        {
+          "task_id": "construction-scan",
+          "expert": "scan",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 1664
+        },
+        {
+          "task_id": "construction-taint",
+          "expert": "taint",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 1665
+        },
+        {
+          "task_id": null,
+          "expert": "authz",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 4371
+        }
+      ],
+      "live_model_requests": 0,
+      "scripted_model_calls": 10,
+      "executed_witness_attempts": 1,
+      "witness_attempts": [
+        {
+          "producer_execution_ordinal": 1,
+          "producer_step_ordinal": 1,
+          "witness_attempted": true,
+          "tool_status": "ok",
+          "validation_status": "CONFIRMED",
+          "observation_token_count": 935,
+          "observation_truncated": false,
+          "delivered_payload": {
+            "classified_scenario_ref": {
+              "arguments": "/scenario_hypothesis",
+              "sha256": "6876656f823f70cc6472882a5f3e6a547870398a598069e09f684e591905bafa"
+            },
+            "command_prefix": "exec mlserver start ",
+            "command_sha256": "1386110d617b1fd2a08d5e3098156b069591029ada4ab7b5c0ee7fcaa28ff132",
+            "emitter": "PyFuncBackend.serve",
+            "gaps": [],
+            "manifest_sha256": "444596a29f42b1f8c02c83e1558893ba447cb0550eed4031b3c3e5c4eb2d9902",
+            "premises_verified": true,
+            "raw_status": "EXPANDED_OBSERVED",
+            "remote_authority_established": false,
+            "scenario_origin": "model_proposed",
+            "scope_note": "Concrete input observed; premises verified."
+          },
+          "raw_scenario_hypothesis": {
+            "input_parameter": {
+              "value": "model_uri",
+              "classification": "attacker_controlled_input",
+              "rationale": "This bounded caller can create and supply an existing local directory whose name contains shell metacharacters; remote input authority is unestablished."
+            },
+            "entry_boolean_arguments": {
+              "enable_mlserver": {
+                "value": true,
+                "classification": "deployment_configuration",
+                "rationale": "The serving deployment enables the optional MLServer backend."
+              }
+            },
+            "entry_condition_assumptions": {
+              "sys.platform.startswith('linux')": {
+                "value": true,
+                "classification": "environment_condition",
+                "rationale": "The runtime is Linux; the tool must observe the actual branch."
+              },
+              "is_windows()": {
+                "value": false,
+                "classification": "environment_condition",
+                "rationale": "The runtime must take the non-Windows branch."
+              },
+              "self._env_manager != em.LOCAL": {
+                "value": false,
+                "classification": "deployment_configuration",
+                "rationale": "The deployment selects the existing local environment manager."
+              },
+              "os.path.exists(artifact_uri)": {
+                "value": true,
+                "classification": "environment_condition",
+                "rationale": "The supplied local directory exists at the checked branch during this execution."
+              }
+            },
+            "entry_value_assumptions": {
+              "port": {
+                "value": 5000,
+                "classification": "deployment_configuration",
+                "rationale": "Use the serving port for this bounded configuration."
+              },
+              "host": {
+                "value": "127.0.0.1",
+                "classification": "deployment_configuration",
+                "rationale": "Bind the configured serving address to loopback."
+              },
+              "timeout": {
+                "value": null,
+                "classification": "deployment_configuration",
+                "rationale": "No additional timeout value is passed to serving."
+              },
+              "self._nworkers": {
+                "value": 1,
+                "classification": "deployment_configuration",
+                "rationale": "The constructed backend uses one worker."
+              },
+              "model_config": {
+                "value": null,
+                "classification": "deployment_configuration",
+                "rationale": "No model-specific serving configuration is supplied."
+              },
+              "synchronous": {
+                "value": false,
+                "classification": "deployment_configuration",
+                "rationale": "The caller requests asynchronous serving."
+              },
+              "MLServerDefaultModelName": {
+                "value": "mlflow-model",
+                "classification": "environment_condition",
+                "rationale": "The loaded dependency constant must have this actual value."
+              },
+              "MLServerMLflowRuntime": {
+                "value": "mlserver_mlflow.MLflowRuntime",
+                "classification": "environment_condition",
+                "rationale": "The loaded MLServer runtime constant must match this value."
+              }
+            },
+            "constructor_parameters": {
+              "config": {
+                "value": {},
+                "classification": "deployment_configuration",
+                "rationale": "Supply the backend's required empty literal configuration object."
+              }
+            },
+            "precondition_files": {}
+          },
+          "complete_server_response_artifact": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/k4_scripted/shared-runtime-witness-artifact-fbtgags_/witness-result.json",
+          "raw_status": "EXPANDED_OBSERVED",
+          "source_module_count": 977,
+          "subject_source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa",
+          "scenario_verification": {
+            "authority_scope": "local_caller_hypothesis",
+            "control": {
+              "gaps": [],
+              "ok": true
+            },
+            "probe": {
+              "gaps": [],
+              "ok": true
+            },
+            "remote_authority_established": false
+          }
+        }
+      ],
+      "e5_fixed_ballot_replay": {
+        "eligible": true,
+        "full_label": "VULNERABLE",
+        "replayed_label": "VULNERABLE",
+        "label_equivalent": true,
+        "counterfactual_saved_model_calls": 2,
+        "counterfactual_saved_tool_calls": 1,
+        "note": "Offline E4-prefix counterfactual; not measured independent E5 latency or cost."
+      },
+      "e5_additional_witness_executions": 0
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "artifact": "artifacts/remaining_work_20260929/k4_scripted/hp003_b.json",
+      "artifact_sha256": "c04ca57a0da09e74fb1daaf33cbe817c76f57fa59970326f3da969c0f085fb9e",
+      "dataset_role": "development",
+      "claim_eligible": false,
+      "scenario_origin": "developer_scripted",
+      "autonomous_scenario_discovery_measured": false,
+      "label": "ABSTAIN",
+      "path": "slow",
+      "votes": [
+        {
+          "expert": "scan",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "supporting_observation_ids": [],
+          "unresolved_observation_ids": [
+            "scan/tool:1"
+          ]
+        },
+        {
+          "expert": "taint",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "supporting_observation_ids": [],
+          "unresolved_observation_ids": [
+            "scan/tool:1"
+          ]
+        },
+        {
+          "expert": "authz",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "supporting_observation_ids": [],
+          "unresolved_observation_ids": []
+        }
+      ],
+      "material_votes_sharing_validator_observation": 0,
+      "independent_validator_observations": 0,
+      "validator_observation_origins": [],
+      "scopes": [
+        {
+          "role": "planner",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 0
+        },
+        {
+          "role": "scan",
+          "max_observation_tokens": 4096,
+          "initial_observed_tokens": 0
+        },
+        {
+          "role": "scan",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 935
+        },
+        {
+          "role": "taint",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 0
+        },
+        {
+          "role": "authz",
+          "max_observation_tokens": 8192,
+          "initial_observed_tokens": 0
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "witness",
+          "expert": "scan",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 935
+        },
+        {
+          "task_id": "construction-scan",
+          "expert": "scan",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 1664
+        },
+        {
+          "task_id": "construction-taint",
+          "expert": "taint",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 1665
+        },
+        {
+          "task_id": null,
+          "expert": "authz",
+          "validator_completed": true,
+          "model_calls": 2,
+          "tool_calls": 1,
+          "tool_observation_token_count": 4371
+        }
+      ],
+      "live_model_requests": 0,
+      "scripted_model_calls": 10,
+      "executed_witness_attempts": 1,
+      "witness_attempts": [
+        {
+          "producer_execution_ordinal": 1,
+          "producer_step_ordinal": 1,
+          "witness_attempted": true,
+          "tool_status": "ok",
+          "validation_status": "UNRESOLVED",
+          "observation_token_count": 935,
+          "observation_truncated": false,
+          "delivered_payload": {
+            "classified_scenario_ref": {
+              "arguments": "/scenario_hypothesis",
+              "sha256": "6876656f823f70cc6472882a5f3e6a547870398a598069e09f684e591905bafa"
+            },
+            "command_prefix": "exec mlserver start ",
+            "command_sha256": "f0d54ac3acc06be5f1ac206788b9595cde9c185958549c9448258391d027c9b8",
+            "emitter": "PyFuncBackend.serve",
+            "gaps": [],
+            "manifest_sha256": "af046d92ca0483031646c8da59ab0237900889f8626816f0167b510be37c2989",
+            "premises_verified": true,
+            "raw_status": "LITERAL_OBSERVED",
+            "remote_authority_established": false,
+            "scenario_origin": "model_proposed",
+            "scope_note": "Concrete input observed; premises verified."
+          },
+          "raw_scenario_hypothesis": {
+            "input_parameter": {
+              "value": "model_uri",
+              "classification": "attacker_controlled_input",
+              "rationale": "This bounded caller can create and supply an existing local directory whose name contains shell metacharacters; remote input authority is unestablished."
+            },
+            "entry_boolean_arguments": {
+              "enable_mlserver": {
+                "value": true,
+                "classification": "deployment_configuration",
+                "rationale": "The serving deployment enables the optional MLServer backend."
+              }
+            },
+            "entry_condition_assumptions": {
+              "sys.platform.startswith('linux')": {
+                "value": true,
+                "classification": "environment_condition",
+                "rationale": "The runtime is Linux; the tool must observe the actual branch."
+              },
+              "is_windows()": {
+                "value": false,
+                "classification": "environment_condition",
+                "rationale": "The runtime must take the non-Windows branch."
+              },
+              "self._env_manager != em.LOCAL": {
+                "value": false,
+                "classification": "deployment_configuration",
+                "rationale": "The deployment selects the existing local environment manager."
+              },
+              "os.path.exists(artifact_uri)": {
+                "value": true,
+                "classification": "environment_condition",
+                "rationale": "The supplied local directory exists at the checked branch during this execution."
+              }
+            },
+            "entry_value_assumptions": {
+              "port": {
+                "value": 5000,
+                "classification": "deployment_configuration",
+                "rationale": "Use the serving port for this bounded configuration."
+              },
+              "host": {
+                "value": "127.0.0.1",
+                "classification": "deployment_configuration",
+                "rationale": "Bind the configured serving address to loopback."
+              },
+              "timeout": {
+                "value": null,
+                "classification": "deployment_configuration",
+                "rationale": "No additional timeout value is passed to serving."
+              },
+              "self._nworkers": {
+                "value": 1,
+                "classification": "deployment_configuration",
+                "rationale": "The constructed backend uses one worker."
+              },
+              "model_config": {
+                "value": null,
+                "classification": "deployment_configuration",
+                "rationale": "No model-specific serving configuration is supplied."
+              },
+              "synchronous": {
+                "value": false,
+                "classification": "deployment_configuration",
+                "rationale": "The caller requests asynchronous serving."
+              },
+              "MLServerDefaultModelName": {
+                "value": "mlflow-model",
+                "classification": "environment_condition",
+                "rationale": "The loaded dependency constant must have this actual value."
+              },
+              "MLServerMLflowRuntime": {
+                "value": "mlserver_mlflow.MLflowRuntime",
+                "classification": "environment_condition",
+                "rationale": "The loaded MLServer runtime constant must match this value."
+              }
+            },
+            "constructor_parameters": {
+              "config": {
+                "value": {},
+                "classification": "deployment_configuration",
+                "rationale": "Supply the backend's required empty literal configuration object."
+              }
+            },
+            "precondition_files": {}
+          },
+          "complete_server_response_artifact": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/k4_scripted/shared-runtime-witness-artifact-v9no5i3s/witness-result.json",
+          "raw_status": "LITERAL_OBSERVED",
+          "source_module_count": 977,
+          "subject_source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd",
+          "scenario_verification": {
+            "authority_scope": "local_caller_hypothesis",
+            "control": {
+              "gaps": [],
+              "ok": true
+            },
+            "probe": {
+              "gaps": [],
+              "ok": true
+            },
+            "remote_authority_established": false
+          }
+        }
+      ],
+      "e5_fixed_ballot_replay": {
+        "eligible": false,
+        "full_label": "ABSTAIN",
+        "replayed_label": "ABSTAIN",
+        "label_equivalent": true,
+        "counterfactual_saved_model_calls": 0,
+        "counterfactual_saved_tool_calls": 0,
+        "note": "No eligible early exit in the observed full-review execution."
+      },
+      "e5_additional_witness_executions": 0
+    }
+  ],
+  "e5_note": "Fixed-ballot replay of the already recorded E4 execution; no additional physical witness and no measured independent E5 latency or cost.",
+  "authorization_ledger_unchanged": {
+    "requests": 46,
+    "accounted_tokens": 281330,
+    "live_requests_added_by_K4": 0
+  },
+  "characterization_migration": {
+    "added_fields": [
+      "material_votes_sharing_validator_observation",
+      "independent_validator_observations"
+    ],
+    "actual_smoke_label": "ABSTAIN",
+    "actual_smoke_shared_votes": 0,
+    "actual_smoke_distinct_producers": 1,
+    "old_smoke_exact_after_removing_added_fields": true,
+    "old_schema_exact_after_removing_added_properties": true,
+    "baseline_sha256": "2e342d8a3be8ce5f29702bc902046f3f6d607550df8711e8b2653f2d6a6d974e",
+    "combined_preflight_matrix_guard_characterization_targeted_pass": 78,
+    "complete_pytest_suite": "pending_parent_rerun"
+  }
+}

@@ -24,6 +24,7 @@ from cv_agent.retrieval import RepositoryIndex
 from cv_agent.tools.identity import repository_source_digest
 from cv_agent.tools.registry import ToolExecutionScope
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis, subject_has_scenario
+from cv_agent.tools.validation.witness_response import compact_witness_preparation, compact_witness_response
 
 
 TOOL_NAME = "run_bounded_execution_witness"
@@ -73,20 +74,24 @@ def _scope_note(verification: dict[str, Any], details: dict[str, Any]) -> str:
         for event in (details.get(phase + "_event", {}),)
     }
     if all(observed.values()) and all(verification[phase]["ok"] for phase in observed):
-        return (
+        note = (
             "This observation covers only the executed concrete input under the listed premises; "
             "remote reachability is not established."
         )
-    if any(observed.values()):
-        return (
+    elif any(observed.values()):
+        note = (
             "A concrete candidate input was observed. Listed premises are declared requirements; "
             "consult runtime verification for unmet or unverified premises. "
             "Remote reachability is not established."
         )
-    return (
-        "A bounded execution was attempted; candidate execution and the listed premises were not established. "
-        "Remote reachability is not established."
-    )
+    else:
+        note = (
+            "A bounded execution was attempted; candidate execution and the listed premises were not established. "
+            "Remote reachability is not established."
+        )
+    adapter = next((details.get(phase + "_event", {}).get("entry_adapter") for phase in ("probe", "control")
+                    if details.get(phase + "_event", {}).get("entry_adapter")), None)
+    return "Direct callback; CLI parser not executed. " + note if adapter and adapter.get("invocation") == "click_callback" else note
 
 
 def _visible_provenance(provenance: dict[str, Any]) -> dict[str, Any]:
@@ -192,6 +197,11 @@ class BoundedWitnessService:
                 return False
         return True
 
+    def response_token_limit(self, scope: ToolExecutionScope) -> int | None:
+        subject = scope.subject
+        context = self.contexts.get(subject.repository_id) if subject is not None else None
+        return 1000 if context is not None and context.response_mode == "compact" else None
+
     def _unresolved(
         self, subject: ValidationSubject | None, gaps: list[str], *,
         missing: tuple[str, ...] | list[str] = (), generated: dict[str, Any] | None = None,
@@ -203,22 +213,29 @@ class BoundedWitnessService:
         # Preparation reports only their digest and required field owners; all
         # classified values still accompany an actual execution result.
         visible["premises"] = []
+        payload = {"status": ValidationStatus.UNRESOLVED.value,
+                   "raw_status": "UNRESOLVED", "gaps": list(dict.fromkeys(gaps)),
+                   "missing_constructor_parameters": missing,
+                   "scope_note": _PREPARATION_SCOPE_NOTE,
+                   "generated": {name: value for name, value in (generated or {}).items()
+                                 if name in {"entry_qualified", "entry"}},
+                   **({"preparation": preparation.model_dump(mode="json")}
+                      if preparation is not None else {}), **visible}
+        full_payload = json.loads(_json(payload))
+        context = self.contexts.get(subject.repository_id) if subject is not None else None
+        compact = context is not None and context.response_mode == "compact"
+        if compact:
+            payload = compact_witness_preparation(full_payload)
         return ToolObservation(
             tool=TOOL_NAME, status="ok", validation_status=ValidationStatus.UNRESOLVED,
             subject=subject,
             metadata={"witness_attempted": False,
                       "preparation_generated": generated or {},
                       "preparation_provenance": provenance or {},
+                      **({"witness_full_response": full_payload} if compact else {}),
                       **({PREPARATION_METADATA_KEY: preparation.model_dump(mode="json")}
                          if preparation is not None else {})},
-            content=_json({"status": ValidationStatus.UNRESOLVED.value,
-                           "raw_status": "UNRESOLVED", "gaps": list(dict.fromkeys(gaps)),
-                           "missing_constructor_parameters": missing,
-                           "scope_note": _PREPARATION_SCOPE_NOTE,
-                           "generated": {name: value for name, value in (generated or {}).items()
-                                         if name in {"entry_qualified", "entry"}},
-                           **({"preparation": preparation.model_dump(mode="json")}
-                              if preparation is not None else {}), **visible}),
+            content=_json(payload),
         )
 
     @staticmethod
@@ -262,6 +279,8 @@ class BoundedWitnessService:
         context = self.contexts.get(subject.repository_id)
         if context is None:
             return self._unresolved(subject, ["witness_execution_context_missing"])
+        if context.response_mode == "compact" and subject_has_scenario(subject):
+            return self._unresolved(subject, ["compact_witness_requires_model_proposed_scenario"])
         scenario = supplement.scenario_hypothesis
         origin = "model_proposed" if scenario is not None else "dataset_provided"
         if scenario is not None and subject_has_scenario(subject):
@@ -340,12 +359,15 @@ class BoundedWitnessService:
             "manifest_sha256": manifest_digest, "manifest": manifest_data,
             "execution_context": {"checkout_root": str(context.checkout_root),
                                   "python_executable": str(context.python_executable),
+                                  "response_mode": context.response_mode,
                                   "resource_profile": context.resource_profile.model_dump(mode="json"),
                                   "read_grants": [grant.model_dump(mode="json")
                                                   for grant in context.read_grants]},
             "generated": draft.generated, "result": result.model_dump(mode="json"),
         })
         details = result.details
+        adapter = next((details.get(phase + "_event", {}).get("entry_adapter") for phase in ("probe", "control")
+                        if details.get(phase + "_event", {}).get("entry_adapter")), None)
         payload = {
             **_visible_provenance(provenance),
             "scenario_verification": {
@@ -365,16 +387,32 @@ class BoundedWitnessService:
             "control_replay": details.get("control_replay"),
             "claim_eligible": False,
             "scope_note": _scope_note(verification, details),
+            **({"entry_adapter": adapter} if adapter is not None else {}),
         }
+        full_payload = payload
+        metadata = {"manifest_origin": "system_ast", "artifact_path": str(artifact),
+                    "manifest_sha256": manifest_digest, "claim_eligible": False,
+                    "witness_attempted": True, "producer_completed": True,
+                    "scenario_origin": provenance["scenario_origin"],
+                    "scenario_sha256": provenance["scenario_sha256"],
+                    "witness_result_status": result.status.value}
+        delivery_status = "ok"
+        if context.response_mode == "compact":
+            metadata["witness_full_response"] = full_payload
+            try:
+                full_payload = json.loads(_json(payload))
+                metadata["witness_full_response"] = full_payload
+                payload = compact_witness_response(full_payload, details=details)
+            except Exception as error:
+                delivery_status = "error"
+                payload = {"error": "compact_witness_response_failed", "detail": f"{type(error).__name__}: {error}",
+                           "witness_attempted": True, "raw_status": result.raw_status}
         return ToolObservation(
-            tool=TOOL_NAME, status="ok", validation_status=result.status, subject=subject,
-            fixture_proof=PositiveOnlyWitnessProofScope(), content=_json(payload),
+            tool=TOOL_NAME, status=delivery_status, validation_status=result.status if delivery_status == "ok" else None,
+            subject=subject, fixture_proof=PositiveOnlyWitnessProofScope() if delivery_status == "ok" else None,
+            content=_json(payload),
             evidence_ids=(f"witness:{subject.candidate_id}:{manifest_digest}",),
-            metadata={"manifest_origin": "system_ast", "artifact_path": str(artifact),
-                      "manifest_sha256": manifest_digest, "claim_eligible": False,
-                      "witness_attempted": True, "scenario_origin": provenance["scenario_origin"],
-                      "scenario_sha256": provenance["scenario_sha256"],
-                      # Private producer telemetry survives delivery clipping
-                      # for experiment stop rules; it is not supporting proof.
-                      "witness_result_status": result.status.value},
+            # Private producer telemetry survives projection or delivery errors
+            # for experiment stop rules; it is not supporting proof.
+            metadata=metadata,
         )

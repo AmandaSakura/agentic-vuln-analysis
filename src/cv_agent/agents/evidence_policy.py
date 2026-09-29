@@ -211,14 +211,7 @@ def _validate_prediction(
             reason_code="contradicts_concrete_validator",
             required_evidence="reconciled validator evidence",
         )
-    expected_proof = {"VULNERABLE": ValidationStatus.CONFIRMED, "SAFE": ValidationStatus.REFUTED}.get(output.label)
-    cited_proof = any(
-        _matches_validator_subject(item, subject)
-        and item.validation_status == expected_proof
-        and not item.metadata.get("observation_truncated")
-        and set(output.evidence_ids) & {*item.evidence_ids, item.citation_id}
-        for item in _supporting_observations(output, observations)
-    )
+    cited_proof = bool(supporting_validator_proofs(output, observations, subject))
     missing_bibliography = [
         item.citation_id for item in _supporting_observations(output, observations)
         if item.citation_id and _matches_validator_subject(item, subject)
@@ -351,6 +344,29 @@ def fixture_can_support_candidate(
         and status in proof.supported_statuses
         and status in {ValidationStatus.CONFIRMED, ValidationStatus.REFUTED}
     )
+
+
+def supporting_validator_proofs(
+    output: AgentExpertConclusion,
+    observations: list[ToolObservation],
+    subject: ValidationSubject | None,
+) -> tuple[ToolObservation, ...]:
+    """Return the delivered typed proofs used by the existing admission rule.
+
+    This reports supporting proof observations; it does not admit a ballot.
+    Context, unresolved results and private execution receipts are not proofs.
+    """
+    expected = {"VULNERABLE": ValidationStatus.CONFIRMED,
+                "SAFE": ValidationStatus.REFUTED}.get(output.label)
+    if expected is None:
+        return ()
+    return tuple(item for item in _supporting_observations(output, observations)
+                 if item.status == "ok"
+                 and not item.metadata.get("model_payload_suppressed")
+                 and not item.metadata.get("observation_truncated")
+                 and item.validation_status == expected
+                 and _matches_validator_subject(item, subject)
+                 and set(output.evidence_ids) & {*item.evidence_ids, item.citation_id})
 
 
 def _matches_validator_subject(observation: ToolObservation, subject: ValidationSubject | None) -> bool:

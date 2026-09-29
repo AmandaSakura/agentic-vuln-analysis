@@ -35,6 +35,10 @@ class ScenarioDataObserver:
     def observe_constructor(self, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
         if self.scenario is None:
             return
+        if self.manifest.class_name is None:
+            if self.scenario.constructor_parameters:
+                self.gaps.append("scenario_function_constructor_unsupported")
+            return
         tree = ast.parse((self.manifest.checkout_root / self.manifest.entry_relative_path).read_bytes())
         cls = next(node for node in tree.body if isinstance(node, ast.ClassDef)
                    and node.name == self.manifest.class_name)
@@ -55,7 +59,7 @@ class ScenarioDataObserver:
         file = (self.manifest.checkout_root / self.manifest.entry_relative_path).resolve()
         if (type(frame) is not FrameType or Path(frame.f_code.co_filename).resolve() != file
                 or frame.f_code.co_firstlineno != self.manifest.entry_first_line
-                or frame.f_code.co_qualname != f"{self.manifest.class_name}.{self.manifest.method_name}"
+                or frame.f_code.co_qualname != self.manifest.entry_qualified_name
                 or hashlib.sha256(file.read_bytes()).hexdigest() != self.manifest.entry_file_sha256):
             self.gaps.append("scenario_entry_binding_mismatch")
             return

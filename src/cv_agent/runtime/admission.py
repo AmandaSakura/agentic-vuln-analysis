@@ -11,6 +11,11 @@ from uuid import uuid4
 from cv_agent.runtime.paths import PROJECT_ROOT
 
 
+# Full witness regressions exceed five minutes. Keep a finite deadline while
+# requiring the same complete suite and unchanged snapshot in each process.
+FULL_TEST_TIMEOUT_SECONDS = 900
+
+
 def fingerprint_files(root: Path) -> list[Path]:
     files = [path for folder in ("src", "tests", "scripts", "configs", "validation")
              for path in (root / folder).rglob("*")
@@ -67,7 +72,7 @@ def _require_passing_tests() -> None:
     with log.open("w") as stream:
         result = subprocess.run(["uv", "run", "--no-sync", "pytest"], cwd=PROJECT_ROOT,
                                 env=environment, stdout=stream, stderr=subprocess.STDOUT,
-                                timeout=300, check=False)
+                                timeout=FULL_TEST_TIMEOUT_SECONDS, check=False)
     if result.returncode != 0:
         raise RuntimeError(f"Full pytest failed (exit {result.returncode}); live API blocked. See {log}")
     if source_fingerprint(PROJECT_ROOT) != current:

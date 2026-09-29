@@ -180,6 +180,9 @@ class AgenticVerdict(FrozenModel):
     votes: tuple[AgentExpertVote, ...]
     task_executions: tuple[ValidationTaskExecution, ...] = ()
     blocked_tasks: tuple[BlockedValidationTask, ...] = ()
+    material_votes_sharing_validator_observation: int = Field(default=0, ge=0)
+    # Distinct original producer observations, not statistical independence.
+    independent_validator_observations: int = Field(default=0, ge=0)
     model_calls: int = Field(ge=1)
     tool_calls: int = Field(ge=1)
     usage: ModelUsage

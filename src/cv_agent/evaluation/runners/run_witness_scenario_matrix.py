@@ -67,18 +67,19 @@ class ScenarioMatrixConfig(FrozenModel):
     output_token_limit: int = Field(ge=1)
     framing_token_allowance: int = Field(ge=1)
     continue_on_cell_failure: bool = False
+    response_mode: Literal["full", "compact"] = "full"
     resource_profile: str
     read_grants: str
     advisory_text: str = Field(min_length=1)
     advisory_text_origin: Literal["dataset_advisory_summary"]
     advisory_text_note: str = Field(min_length=1)
     dataset_scenario: WitnessScenarioHypothesis | None = None
-    cases: tuple[ScenarioCase, ...] = Field(min_length=2, max_length=2)
+    cases: tuple[ScenarioCase, ...] = Field(min_length=2, max_length=4)
 
     @model_validator(mode="after")
     def unique_cases(self):
-        if len({case.case_id for case in self.cases}) != 2:
-            raise ValueError("The 2x2 comparison requires two distinct snapshots")
+        if len({case.case_id for case in self.cases}) != len(self.cases):
+            raise ValueError("The scenario experiment requires distinct snapshots")
         if not self.origins or len(set(self.origins)) != len(self.origins):
             raise ValueError("Scenario origins must be a nonempty unique sequence")
         if "dataset_provided" in self.origins and self.dataset_scenario is None:
@@ -123,8 +124,14 @@ def prepare_cells(root: Path, config: ScenarioMatrixConfig, *,
             raise ValueError("The current bounded witness supports command-execution")
         require_clean_checkout(root / case.checkout, case.commit)
         selected.append((pair, case, setting))
-    if len({pair.pair_id for pair, _, _ in selected}) != 1:
-        raise ValueError("The two snapshots must belong to the same advisory pair")
+    pairs = {}
+    for pair, case, setting in selected:
+        pairs.setdefault(pair.pair_id, []).append(case)
+    for cases in pairs.values():
+        if len(cases) != 2:
+            raise ValueError("Exactly two snapshots must be selected for each advisory pair")
+        if {case.revision_role for case in cases} != {"vulnerable", "fixed"}:
+            raise ValueError("Each selected pair requires vulnerable and fixed revision roles")
     cells = []
     for origin in config.origins:
         for pair, case, setting in selected:
@@ -148,6 +155,7 @@ def prepare_cells(root: Path, config: ScenarioMatrixConfig, *,
                 import_root=pair.python_import_root or ".", resource_profile=resources,
                 read_grants=grants, runtime_root=runtime_root,
                 dataset_scenario=config.dataset_scenario if origin == "dataset_provided" else None,
+                response_mode=config.response_mode,
             )
             registered = tuple(full_agent_tools(index,
                 witness_contexts={candidate.repository_id: context},
@@ -165,6 +173,7 @@ def preparation_record(root: Path, config: ScenarioMatrixConfig,
         "system": config.system, "max_requests": config.max_requests,
         "max_seconds": config.max_seconds, "live_model_requests": 0,
         "phase_id": config.phase_id, "origins": config.origins,
+        "response_mode": config.response_mode,
         "expected_returned_model": config.expected_returned_model,
         "cumulative_request_limit": config.cumulative_request_limit,
         "cumulative_token_limit": config.cumulative_token_limit,
@@ -182,7 +191,7 @@ def preparation_record(root: Path, config: ScenarioMatrixConfig,
         "resource_profile": cells[0].context.resource_profile.model_dump(mode="json"),
         "read_policy_sha256": hashlib.sha256((root / config.read_grants).read_bytes()).hexdigest(),
         "request_preflight": preflight_cells(cells, config),
-        "note": "Four development cells compare supplied scenarios with model discovery. "
+        "note": "Development snapshots are compared within each advisory pair and declared scenario origin. "
                 "Advisory and entry hints remain supplied; this is not repository-only held-out discovery.",
     }
 

@@ -14,7 +14,7 @@ import tempfile
 import tokenize
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import field_validator, model_validator
 
@@ -23,6 +23,7 @@ from cv_agent.domain.types import FrozenModel
 from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.runtime.witness_resources import WitnessResourceProfile
+from cv_agent.runtime.witness_entry import source_entry
 from cv_agent.tools.identity import repository_source_digest
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
     from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
 
 _NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9]*\Z")
-_SPAN = re.compile(r"(.+)::([A-Za-z_][A-Za-z_0-9]*\.[A-Za-z_][A-Za-z_0-9]*)@([0-9]+)-([0-9]+)\Z")
+_SPAN = re.compile(r"(.+)::([A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)?)@([0-9]+)-([0-9]+)\Z")
 _UNKNOWN = object()
 _RESERVED = frozenset({
     "label", "labels", "status", "raw_status", "verdict", "vulnerable", "ground_truth", "truth",
@@ -123,6 +124,11 @@ class WitnessExecutionContext:
     read_grants: tuple[IsolationReadGrant, ...] = ()
     runtime_root: Path = field(default_factory=lambda: Path(tempfile.gettempdir()) / "cv-agent-witness")
     dataset_scenario: WitnessScenarioHypothesis | None = None
+    response_mode: Literal["full", "compact"] = "full"
+
+    def __post_init__(self) -> None:
+        if type(self.response_mode) is not str or self.response_mode not in {"full", "compact"}:
+            raise ValueError("witness response_mode must be full or compact")
 
 
 @dataclass(frozen=True)
@@ -313,10 +319,10 @@ def _literal_constant(expression: ast.AST, entry_tree: ast.Module, entry_module:
     return _literal(direct_assignments[0].value)
 
 
-def _signature(function: ast.FunctionDef, *, constructor: bool):
+def _signature(function: ast.FunctionDef, *, constructor: bool, receiver: bool = True):
     positional = [*function.args.posonlyargs, *function.args.args]
     names = positional + list(function.args.kwonlyargs)
-    if not positional or positional[0].arg != "self":
+    if receiver and (not positional or positional[0].arg != "self"):
         return [], {}, set(), ["constructor_instance_signature_unsupported" if constructor else "entry_instance_signature_unsupported"]
     defaults = dict(zip((arg.arg for arg in positional[-len(function.args.defaults):]), function.args.defaults)) if function.args.defaults else {}
     defaults.update({arg.arg: value for arg, value in zip(function.args.kwonlyargs, function.args.kw_defaults) if value is not None})
@@ -327,7 +333,8 @@ def _signature(function: ast.FunctionDef, *, constructor: bool):
         key = function.args.kwarg.arg
         if any(isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name) and node.value.id == key for node in ast.walk(function)):
             gaps.append("constructor_variadic_required_unsupported" if constructor else "entry_variadic_required_unsupported")
-    return [arg.arg for arg in names[1:]], defaults, {arg.arg for arg in function.args.posonlyargs[1:]}, gaps
+    offset = 1 if receiver else 0
+    return [arg.arg for arg in names[offset:]], defaults, {arg.arg for arg in function.args.posonlyargs[offset:]}, gaps
 
 
 def _constructor_recipe(constructor: ast.FunctionDef, method: ast.FunctionDef, tree: ast.Module,
@@ -433,21 +440,23 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
     if gaps:
         return ManifestDraft(None, (), tuple(gaps), generated)
     tree = trees[module]
-    class_name, method_name = qualified.split(".")
-    classes = [node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == class_name]
-    methods = [node for node in classes[0].body if isinstance(node, ast.FunctionDef) and node.name == method_name] if len(classes) == 1 else []
-    if len(methods) != 1 or methods[0].lineno != first or methods[0].end_lineno != last:
+    try:
+        entry = source_entry(tree, qualified)
+    except ValueError as error:
+        return ManifestDraft(None, (), (str(error),), generated)
+    cls, method = entry.class_node, entry.function
+    class_name, method_name = (cls.name if cls is not None else None), method.name
+    if entry.first_line != first or entry.last_line != last:
         gaps.append("entry_ast_span_mismatch")
-    elif methods[0].decorator_list or classes[0].decorator_list:
-        gaps.append("entry_decorator_unsupported")
     elif document.text != ''.join(texts[relative].splitlines(keepends=True)[first - 1:last]):
         gaps.append("entry_index_text_mismatch")
     if gaps:
         return ManifestDraft(None, (), tuple(gaps), generated)
-    cls, method = classes[0], methods[0]
     generated.update(entry_qualified=True, entry={"module_name": module, "class_name": class_name,
-                     "method_name": method_name, "relative_path": relative, "first_line": first})
-    call_names, call_defaults, call_positional, call_gaps = _signature(method, constructor=False)
+                     "method_name": method_name, "relative_path": relative, "first_line": first,
+                     "invocation": entry.invocation})
+    call_names, call_defaults, call_positional, call_gaps = _signature(
+        method, constructor=False, receiver=cls is not None)
     gaps.extend(call_gaps)
     if len(subject.input_parameters) != 1 or subject.input_parameters[0] not in call_names:
         gaps.append("probe_input_parameter_not_unique")
@@ -473,7 +482,7 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
     for name in call_names:
         if name != probe and name not in call_values and name not in call_defaults:
             gaps.append(f"entry_argument_missing:{name}")
-    constructor_nodes = [node for node in cls.body if isinstance(node, ast.FunctionDef) and node.name == "__init__"]
+    constructor_nodes = [node for node in cls.body if isinstance(node, ast.FunctionDef) and node.name == "__init__"] if cls is not None else []
     ctor_names: list[str] = []
     ctor_defaults: dict[str, ast.AST] = {}
     ctor_positional: set[str] = set()
@@ -488,7 +497,7 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
         if constructor.decorator_list:
             gaps.append("constructor_decorator_unsupported")
         ctor_values, recipes = _constructor_recipe(constructor, method, tree, module, trees, subject, ctor_names, ctor_defaults)
-    elif cls.bases:
+    elif cls is not None and cls.bases:
         gaps.append("inherited_constructor_unsupported")
     missing = tuple(name for name in ctor_names if name not in ctor_values and name not in ctor_defaults)
     scenario_constructor = scenario.values("constructor_parameters") if scenario_origin == "model_proposed" else {}
@@ -511,7 +520,7 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
                      constructor_recipes=recipes, missing_constructor_parameters=list(missing))
     entry_binding = next(binding for binding in bindings if binding.module_name == module)
     bound = {"subject": subject, "checkout_root": context.checkout_root.resolve(), "module_name": module,
-             "class_name": class_name, "method_name": method_name, "entry_relative_path": relative,
+             "class_name": class_name, "method_name": method_name, "entry_invocation": entry.invocation, "entry_relative_path": relative,
              "entry_file_sha256": entry_binding.sha256, "entry_first_line": first, "source_modules": bindings,
              "import_root": context.import_root,
              "python_executable": context.python_executable, "resource_profile": context.resource_profile,

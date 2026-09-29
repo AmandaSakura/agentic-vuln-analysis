@@ -44,6 +44,7 @@ def _json_tool(
     validation_statuses: tuple[ValidationStatus, ...] = (),
     fixture_capabilities: tuple[FixtureCapability, ...] = (),
     candidate_witness_supports: Callable[[ValidationSubject], bool] | None = None,
+    response_token_limit: Callable[[ToolExecutionScope], int | None] | None = None,
 ) -> AgentTool:
     return AgentTool(
         name=name,
@@ -55,6 +56,7 @@ def _json_tool(
         validation_statuses=validation_statuses,
         fixture_capabilities=fixture_capabilities,
         candidate_witness_supports=candidate_witness_supports,
+        response_token_limit=response_token_limit,
     )
 
 
@@ -122,6 +124,7 @@ def validation_tools(
              'with any CONFIRMED result. Remote reachability remains unestablished.'),
             WitnessSupplement,
             witness_service.handle,
+            response_token_limit=witness_service.response_token_limit,
             available=bool(witness_contexts),
             validation_statuses=(ValidationStatus.CONFIRMED,),
             candidate_witness_supports=witness_service.supports,

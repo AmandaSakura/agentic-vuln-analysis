@@ -219,7 +219,7 @@ class ValueAssumptionObserver:
                 safe_globals = type(globals_dictionary) is dict and all(type(key) is str for key in globals_dictionary)
                 module_name = globals_dictionary.get("__name__") if safe_globals else None
                 bound = (Path(frame.f_code.co_filename).resolve() == expected_path
-                         and frame.f_code.co_qualname == f"{self.manifest.class_name}.{self.manifest.method_name}"
+                         and frame.f_code.co_qualname == self.manifest.entry_qualified_name
                          and frame.f_code.co_firstlineno == self.manifest.entry_first_line
                          and type(module_name) is str and module_name == self.manifest.module_name
                          and hashlib.sha256(expected_path.read_bytes()).hexdigest() == self.manifest.entry_file_sha256)

@@ -109,10 +109,17 @@ def _supervisor_identity() -> dict[str, Any]:
 
 
 def measure_import(checkout_root: Path, python_executable: Path, module_name: str,
-                   output_prefix: Path) -> dict[str, Any]:
+                   output_prefix: Path, *, worker_command: list[str] | None = None,
+                   worker_identity_path: Path | None = None) -> dict[str, Any]:
     """Save one real import baseline using new, absolute artifact paths."""
     if not _DOTTED_NAME.fullmatch(module_name):
         raise ValueError("module_name must be a dotted Python name")
+    if (worker_command is None) != (worker_identity_path is None):
+        raise ValueError("restricted measurement requires command and identity artifact")
+    if worker_command is not None and (not worker_command or
+            any(type(value) is not str or not value for value in worker_command)
+            or not worker_identity_path.is_absolute()):
+        raise ValueError("restricted measurement command must be explicit argv")
     if not all(path.is_absolute() for path in (checkout_root, python_executable, output_prefix)):
         raise ValueError("checkout, interpreter, and output prefix must be absolute paths")
     checkout = checkout_root.resolve(strict=True)
@@ -142,9 +149,10 @@ def measure_import(checkout_root: Path, python_executable: Path, module_name: st
         "PYTHONPATH": str(checkout), "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONPYCACHEPREFIX": str(cache),
     }
-    command = ["/usr/bin/time", "-v", "-o", str(paths["time"]),
-               str(python_executable), "-X", "importtime", "-c", _IMPORT_CODE,
-               module_name, str(checkout)]
+    target_command = (worker_command if worker_command is not None else
+                      [str(python_executable), "-X", "importtime", "-c", _IMPORT_CODE,
+                       module_name, str(checkout)])
+    command = ["/usr/bin/time", "-v", "-o", str(paths["time"]), *target_command]
     sampler: ProcessResourceSampler | None = None
     process: subprocess.Popen | None = None
     timed_out = False
@@ -176,6 +184,11 @@ def measure_import(checkout_root: Path, python_executable: Path, module_name: st
         for line in paths["stdout"].read_text(errors="replace").splitlines():
             if line.startswith(_IDENTITY_PREFIX):
                 identity = json.loads(line[len(_IDENTITY_PREFIX):])
+        restricted = None
+        if worker_identity_path is not None and worker_identity_path.is_file():
+            restricted = json.loads(worker_identity_path.read_text())
+            if restricted.get("target_import_ready"):
+                identity = restricted["import_identity"]
         measured = _time_measurements(paths["time"])
         gaps = []
         if identity is None:
@@ -200,6 +213,8 @@ def measure_import(checkout_root: Path, python_executable: Path, module_name: st
             "logs": {name: {"path": str(path), "sha256": _sha256(path),
                             "size_bytes": path.stat().st_size}
                      for name, path in paths.items() if name != "record"},
+            **({"target_isolation": restricted, "measurement_mode": "restricted_worker"}
+               if worker_command is not None else {}),
         }
         with os.fdopen(descriptors.pop("record"), "w") as stream:
             json.dump(record, stream, ensure_ascii=False, indent=2)
@@ -219,9 +234,17 @@ def main() -> None:
     parser.add_argument("python_executable", type=Path)
     parser.add_argument("module_name")
     parser.add_argument("output_prefix", type=Path)
+    parser.add_argument("--worker-configuration", type=Path)
     args = parser.parse_args()
+    options = {}
+    if args.worker_configuration is not None:
+        config = json.loads(args.worker_configuration.read_text())
+        worker = Path(__file__).resolve().parents[1] / "preparation/witness_import_worker.py"
+        options = {"worker_command": [str(args.python_executable), "-I", "-S", str(worker),
+                                       str(args.worker_configuration)],
+                   "worker_identity_path": Path(config["result"])}
     record = measure_import(args.checkout_root, args.python_executable,
-                            args.module_name, args.output_prefix)
+                            args.module_name, args.output_prefix, **options)
     print(json.dumps({"returncode": record["returncode"], "gaps": record["gaps"],
                       "record": str(_paths(args.output_prefix)["record"])}, sort_keys=True))
     if record["returncode"] != 0:

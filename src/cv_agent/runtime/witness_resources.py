@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import Field, model_validator
 
@@ -30,7 +30,8 @@ class WitnessResourceProfile(FrozenModel):
     Wall time is enforced by the launcher, not by ``resource.setrlimit``.
     """
 
-    name: Literal["fixture_default", "cpu_diagnostic", "heavy_target"] = "fixture_default"
+    name: str = Field(default="fixture_default", strict=True, min_length=1, max_length=80,
+                      pattern=r"^[A-Za-z][A-Za-z0-9_]*$")
     cpu_soft_seconds: int = Field(default=5, strict=True, gt=0, le=sys.maxsize)
     cpu_hard_seconds: int = Field(default=5, strict=True, gt=0, le=sys.maxsize)
     address_space_bytes: int = Field(default=1_500_000_000, strict=True, gt=0, le=sys.maxsize)

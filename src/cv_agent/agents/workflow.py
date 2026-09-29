@@ -17,6 +17,7 @@ from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemH
 from cv_agent.runtime.model import ChatModel, OpenAICompatibleChatModel, trusted_runtime_mode
 from cv_agent.agents.react import ReActEngine, run_expert, run_planner
 from cv_agent.agents.evidence_policy import validator_observation_completed
+from cv_agent.agents.validator_accounting import account_validator_observations
 from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count, fit_text_to_serialized_context
 from cv_agent.domain.types import Candidate, Evidence, ExpertVote, FrozenModel
 
@@ -871,6 +872,10 @@ class AgenticPipeline:
             verdict_type = RoutedApplicableAgenticVerdict if routing is not None else ApplicableAgenticVerdict
         else:
             verdict_type = RoutedAgenticVerdict if routing is not None else AgenticVerdict
+        proof_accounting = account_validator_observations(
+            state["votes"], state["task_executions"],
+            candidate_subject(self.index, state["candidate"]), self._active_plan(state),
+        )
         return verdict_type(
             runtime_mode=self.runtime_mode,
             label=label,
@@ -883,6 +888,8 @@ class AgenticPipeline:
             votes=tuple(state["votes"]),
             task_executions=tuple(state["task_executions"]),
             blocked_tasks=self._blocked_tasks(state),
+            material_votes_sharing_validator_observation=proof_accounting.material_votes_sharing_validator_observation,
+            independent_validator_observations=proof_accounting.independent_validator_observations,
             model_calls=model_calls,
             tool_calls=tool_calls,
             usage=usage,

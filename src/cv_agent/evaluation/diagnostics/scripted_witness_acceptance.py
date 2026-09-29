@@ -35,8 +35,29 @@ def _observed(messages) -> dict[str, Any]:
 def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *,
                            constructor_parameters: dict[str, Any],
                            precondition_files: dict[str, str], nonce: str,
-                           scenario_hypothesis: dict[str, Any] | None = None) -> dict[str, Any]:
+                           scenario_hypothesis: dict[str, Any] | None = None,
+                           hypothesis_sequence: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Never inspect a truth label; final script reads delivered typed evidence."""
+    normalized_sequence = None
+    if hypothesis_sequence is not None:
+        if scenario_hypothesis is not None:
+            raise ValueError('scripted hypothesis sequence and singular scenario are mutually exclusive')
+        if constructor_parameters or precondition_files:
+            raise ValueError('scripted hypothesis sequence cannot mix unclassified outer data')
+        # ReAct reserves its final two steps for conclusions. No extra model
+        # steps, defaults or guessed scene values are introduced by this script.
+        if not 1 <= len(hypothesis_sequence) <= FULL_SYSTEM_HARNESS.react_loop.max_steps - 2:
+            raise ValueError('scripted hypothesis sequence must fit the original tool-step budget')
+        normalized_sequence = [WitnessScenarioHypothesis.model_validate(scene) for scene in hypothesis_sequence]
+        semantics = []
+        for scene in normalized_sequence:
+            data = scene.model_dump(mode='json')
+            values = {'input_parameter': data['input_parameter']['value'],
+                      **{field: {name: premise['value'] for name, premise in premises.items()}
+                         for field, premises in data.items() if field != 'input_parameter'}}
+            semantics.append(json.dumps(values, sort_keys=True, separators=(',', ':'), allow_nan=False))
+        if len(set(semantics)) != len(semantics):
+            raise ValueError('scripted scenes must change semantic values, not only classifications or rationales')
     empty = ModelReply(model_id='offline-witness-script', tool_calls=(ModelToolCall(
         call_id='discover-missing-data', name=TOOL,
         arguments={'constructor_parameters': {}, 'precondition_files': {}},
@@ -44,6 +65,8 @@ def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *
 
     def fill_missing(messages, tools):
         observed = _observed(messages)
+        if observed.get('status') != 'ok':
+            raise ValueError('scripted witness preparation was not delivered: ' + str(observed.get('content')))
         payload = json.loads(observed['content'])
         missing = payload.get('missing_constructor_parameters', [])
         if not missing and payload.get('artifact_path'):
@@ -77,7 +100,28 @@ def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *
         return ModelReply(model_id='offline-witness-script', content=json.dumps(result),
                           usage=ModelUsage(input_tokens=0, output_tokens=0, total_tokens=0))
 
-    model = ScriptedChatModel((empty, fill_missing, *([conclude] * (FULL_SYSTEM_HARNESS.react_loop.max_steps - 2))))
+    if normalized_sequence is None:
+        replies = (empty, fill_missing, *([conclude] * (FULL_SYSTEM_HARNESS.react_loop.max_steps - 2)))
+    else:
+        position = 0
+        def scene_reply(scene, number):
+            return ModelReply(model_id='offline-witness-script', tool_calls=(ModelToolCall(
+                call_id=f'explicit-scene-{number}', name=TOOL, arguments={
+                    'constructor_parameters': {}, 'precondition_files': {},
+                    'scenario_hypothesis': scene.model_dump(mode='json'),
+                }),), usage=ModelUsage(input_tokens=0, output_tokens=0, total_tokens=0))
+        def advance(messages, tools):
+            nonlocal position
+            observed = _observed(messages)
+            if observed.get('status') != 'ok':
+                raise ValueError('scripted scene response was not delivered: ' + str(observed.get('content')))
+            if observed.get('validation_status') == 'CONFIRMED' or position + 1 == len(normalized_sequence):
+                return conclude(messages, tools)
+            position += 1
+            return scene_reply(normalized_sequence[position], position)
+        replies = (scene_reply(normalized_sequence[0], 0), *([advance] * len(normalized_sequence)),
+                   *([conclude] * (FULL_SYSTEM_HARNESS.react_loop.max_steps - len(normalized_sequence) - 1)))
+    model = ScriptedChatModel(replies)
     registry = ToolRegistry(full_agent_tools(
         index, witness_contexts={candidate.repository_id: context},
         witness_nonce_factory=lambda: nonce,
@@ -92,19 +136,35 @@ def run_scripted_candidate(index, candidate, context: WitnessExecutionContext, *
             payload = (json.loads(step.observation.content)
                        if step.observation.status == 'ok' else
                        {'detail': step.observation.content})
+            full_payload = step.observation.metadata.get('witness_full_response', payload)
+            reference = payload.get('classified_scenario_ref')
+            reference_matches_call = None
+            if reference is not None:
+                proposal = step.tool_call.arguments.get('scenario_hypothesis')
+                reference_matches_call = (
+                    proposal is not None and reference.get('arguments') == '/scenario_hypothesis'
+                    and WitnessScenarioHypothesis.model_validate(proposal).digest() == reference.get('sha256')
+                    and full_payload.get('scenario_sha256') == reference.get('sha256')
+                )
             witness_attempts.append({
                 'validation_status': step.observation.validation_status,
                 'tool_status': step.observation.status,
                 'witness_attempted': step.observation.metadata.get('witness_attempted', False),
-                **{key: payload[key] for key in (
+                'delivered_payload': payload,
+                'observation_token_count': step.observation.metadata.get('observation_token_count', 0),
+                'observation_truncated': step.observation.metadata.get('observation_truncated', False),
+                'classified_scenario_ref_matches_call': reference_matches_call,
+                **{key: full_payload[key] for key in (
                     'raw_status', 'gaps', 'scenario_origin', 'scenario_sha256', 'premises', 'scope_note',
                     'original_subject', 'execution_subject', 'scenario_verification', 'artifact_path', 'detail',
-                ) if key in payload},
+                    'classification_status', 'entry_adapter',
+                ) if key in full_payload},
             })
     return {
         'verdict':verdict.model_dump(mode='json'), 'live_model_requests':0,
         'scripted_model_calls':len(model.requests), 'claim_eligible':False,
         'witness_attempts': witness_attempts,
+        'semantic_hypothesis_count': len(normalized_sequence) if normalized_sequence is not None else None,
         'requests':[{'messages':[message.model_dump(mode='json') for message in messages],
                      'tools':list(tools)} for messages, tools in model.requests],
     }
@@ -124,10 +184,13 @@ def run_pair(root: Path, configuration: Path, output: Path) -> Path:
     nonce = uuid4().hex
     rows = []
     scenario_hypothesis = settings.get('scenario_hypothesis')
+    hypothesis_sequence = settings.get('hypothesis_sequence')
     scenario_mode = settings.get('scenario_mode', 'dataset_provided')
     if scenario_mode not in {'dataset_provided', 'model_proposed'}:
         raise ValueError('offline scenario mode must name its actual provenance')
-    if (scenario_mode == 'model_proposed') != (scenario_hypothesis is not None):
+    if scenario_hypothesis is not None and hypothesis_sequence is not None:
+        raise ValueError('offline profile cannot specify both singular and sequence hypotheses')
+    if (scenario_mode == 'model_proposed') != (scenario_hypothesis is not None or hypothesis_sequence is not None):
         raise ValueError('model-proposed offline controls require an explicit scripted hypothesis')
     for selected in settings['cases']:
         matches = [(pair,case) for pair in config.pairs for case in pair.cases
@@ -152,16 +215,24 @@ def run_pair(root: Path, configuration: Path, output: Path) -> Path:
             python_executable=root/selected['python_executable'],
             import_root=pair.python_import_root or '.', resource_profile=resources,
             read_grants=grants, runtime_root=(output/'shared-runtime').resolve(),
+            response_mode=settings.get('response_mode', 'full'),
             dataset_scenario=(WitnessScenarioHypothesis.model_validate(settings['dataset_scenario'])
                               if scenario_mode == 'dataset_provided' and 'dataset_scenario' in settings
                               else None),
         )
-        result = run_scripted_candidate(index,candidate,context,
-            constructor_parameters=settings['constructor_parameters'],
-            precondition_files=settings['precondition_files'], nonce=nonce,
-            scenario_hypothesis=scenario_hypothesis)
+        try:
+            result = run_scripted_candidate(index,candidate,context,
+                constructor_parameters=settings['constructor_parameters'],
+                precondition_files=settings['precondition_files'], nonce=nonce,
+                scenario_hypothesis=scenario_hypothesis, hypothesis_sequence=hypothesis_sequence)
+        except Exception as error:
+            (output/(selected['case_id']+'-error.json')).write_text(json.dumps({
+                'evaluation_case_id': selected['case_id'], 'live_model_requests': 0, 'claim_eligible': False,
+                'error_type': type(error).__name__, 'error': str(error),
+            }, indent=2)+'\n')
+            raise
         row = {'evaluation_case_id':selected['case_id'], 'scenario_origin':scenario_mode,
-               'scenario_proposer':'offline_script' if scenario_hypothesis is not None else 'dataset',
+               'scenario_proposer':'offline_script' if scenario_hypothesis is not None or hypothesis_sequence is not None else 'dataset',
                **result}
         rows.append(row)
         (output/(selected['case_id']+'.json')).write_text(json.dumps(row,indent=2)+'\n')
@@ -169,7 +240,7 @@ def run_pair(root: Path, configuration: Path, output: Path) -> Path:
                'read_policy_sha256':hashlib.sha256(grant_bytes).hexdigest(),
                'resource_profile':resources.model_dump(mode='json'),
                'scenario_origin':scenario_mode,
-               'scenario_proposer':'offline_script' if scenario_hypothesis is not None else 'dataset',
+               'scenario_proposer':'offline_script' if scenario_hypothesis is not None or hypothesis_sequence is not None else 'dataset',
                'autonomous_scenario_discovery_measured':False,
                'manifest_origin':'system_ast',
                'model_supplement_fields':['constructor_parameters','precondition_files','scenario_hypothesis']}

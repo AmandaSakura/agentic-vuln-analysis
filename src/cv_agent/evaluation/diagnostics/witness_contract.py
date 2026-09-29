@@ -21,6 +21,7 @@ from cv_agent.evaluation.diagnostics.bounded_execution_witness import (
     run_witness,
 )
 from cv_agent.retrieval import RepositoryIndex
+from cv_agent.runtime.witness_entry import source_entry
 from cv_agent.tools.identity import candidate_subject, repository_source_digest
 from cv_agent.tools.validation.models import FixtureCase, FixtureOutcome
 
@@ -123,11 +124,12 @@ def validate_witness_manifest(
         raise ValueError("witness subject differs from the indexed source digest")
     span = re.fullmatch(r"(.+)::([^@]+)@(\d+)-(\d+)", subject.entry_path)
     if span is None:
-        raise ValueError("witness candidate needs an indexed Python method span")
+        raise ValueError("witness candidate needs an indexed Python entry span")
     entry_path, symbol, start_text, end_text = span.groups()
     if (manifest.entry_relative_path != entry_path
-            or symbol != f"{manifest.class_name}.{manifest.method_name}"):
-        raise ValueError("witness entry method does not match the candidate span")
+            or symbol != manifest.entry_qualified_name):
+        kind = "method" if manifest.entry_invocation == "instance_method" else "function/callback"
+        raise ValueError(f"witness entry {kind} does not match the candidate span")
     document = index.document(subject.entry_path)
     if document is None or document.repository_id != subject.repository_id:
         raise ValueError("witness candidate entry is absent from the source index")
@@ -148,22 +150,12 @@ def validate_witness_manifest(
     if document.text != indexed_text:
         raise ValueError("witness entry span differs from the indexed source")
     tree = ast.parse(text, filename=str(entry_file))
-    classes = [node for node in tree.body if isinstance(node, ast.ClassDef)
-               and node.name == manifest.class_name]
-    if len(classes) != 1:
-        raise ValueError("witness entry class is not unique in the source")
-    methods = [node for node in classes[0].body if isinstance(node, ast.FunctionDef)
-               and node.name == manifest.method_name]
-    if len(methods) != 1:
-        raise ValueError("witness entry method is not unique in the source")
-    method = methods[0]
-    method_start = min((item.lineno for item in method.decorator_list), default=method.lineno)
-    if (method_start != first or method.end_lineno != last
-            or method.lineno != manifest.entry_first_line
-            or subject.entry_line is None or not first <= subject.entry_line <= last):
-        raise ValueError("witness entry method location differs from the candidate span")
-    if subject.entry_line != method.lineno or method.decorator_list:
-        raise ValueError("bounded witness supports undecorated whole-method header candidates only")
+    entry = source_entry(tree, symbol)
+    if (entry.first_line != first or entry.last_line != last
+            or entry.first_line != manifest.entry_first_line
+            or entry.invocation != manifest.entry_invocation
+            or subject.entry_line != first):
+        raise ValueError("witness entry location differs from the candidate span")
     indexed_modules: dict[str, list] = {}
     for path, module_doc in index.documents.items():
         if module_doc.repository_id == subject.repository_id:

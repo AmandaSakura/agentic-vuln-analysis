@@ -109,8 +109,14 @@ def _entry_marker_matches(text: str, marker: str) -> bool:
     definitions = [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
     if len(definitions) != 1:
         return False
-    header = "".join(text.splitlines(keepends=True)[definitions[0].lineno - 1:])
-    return bool(marker.strip()) and header.lstrip().startswith(marker.lstrip())
+    entry = definitions[0]
+    starts = {entry.lineno}
+    if entry.decorator_list:
+        starts.add(min(decorator.lineno for decorator in entry.decorator_list))
+    lines = text.splitlines(keepends=True)
+    return bool(marker.strip()) and any(
+        "".join(lines[start - 1:]).lstrip().startswith(marker.lstrip()) for start in starts
+    )
 
 
 def inspect_initial_request(
@@ -195,6 +201,37 @@ def preflight_cells(cells, config) -> dict[str, Any]:
         raise WitnessPreflightError("preflight requires declared unique supported scenario origins")
     if "dataset_provided" in origins and config.dataset_scenario is None:
         raise WitnessPreflightError("dataset condition requires its classified reference scenario")
+    declared_cases = {case.case_id for case in config.cases}
+    if (len(declared_cases) != len(config.cases) or not 2 <= len(declared_cases) <= 4
+            or len(cells) != len(declared_cases) * len(origins)):
+        raise WitnessPreflightError("preflight requires all declared distinct snapshots and origins")
+    keys = [(cell.scenario_origin, cell.evaluation_case_id) for cell in cells]
+    if len(set(keys)) != len(keys):
+        raise WitnessPreflightError("duplicate or reused scenario cell")
+    paired_cells = {}
+    for cell in cells:
+        pair_id = cell.identity.get("pair_id")
+        role = cell.identity.get("revision_role")
+        if (not isinstance(pair_id, str) or not pair_id
+                or cell.identity.get("case_id") != cell.evaluation_case_id
+                or role not in {"vulnerable", "fixed"}
+                or cell.fixed != (role == "fixed")):
+            raise WitnessPreflightError("private pair identity or revision role is inconsistent")
+        if cell.scenario_origin not in origins or cell.evaluation_case_id not in declared_cases:
+            raise WitnessPreflightError("scenario cell is outside the declared experiment")
+        paired_cells.setdefault((cell.scenario_origin, pair_id), []).append(cell)
+    for origin in origins:
+        selected = [cell for cell in cells if cell.scenario_origin == origin]
+        if {cell.evaluation_case_id for cell in selected} != declared_cases:
+            raise WitnessPreflightError("each origin must include every declared snapshot exactly once")
+        for (group_origin, pair_id), group in paired_cells.items():
+            if group_origin == origin and (len(group) != 2 or
+                    {cell.identity["revision_role"] for cell in group} != {"vulnerable", "fixed"}):
+                raise WitnessPreflightError("each advisory pair requires two snapshots, vulnerable and fixed")
+    memberships = [{(cell.evaluation_case_id, cell.identity["pair_id"], cell.identity["revision_role"])
+                    for cell in cells if cell.scenario_origin == origin} for origin in origins]
+    if any(group != memberships[0] for group in memberships[1:]):
+        raise WitnessPreflightError("origins disagree on private snapshot pair membership")
     records = []
     for cell in cells:
         private = [cell.evaluation_case_id, str(cell.context.checkout_root)]
@@ -211,18 +248,21 @@ def preflight_cells(cells, config) -> dict[str, Any]:
             scenario=config.dataset_scenario, scenario_empty=cell.scenario_origin == "model_proposed",
             private_markers=private)
         records.append({"evaluation_case_id": cell.evaluation_case_id,
-                        "scenario_origin": cell.scenario_origin, "query": cell.candidate.query, **inspected})
-    if (len(records) != 2 * len(origins)
-            or {item["scenario_origin"] for item in records} != set(origins)
+                        "scenario_origin": cell.scenario_origin,
+                        "pair_id": cell.identity["pair_id"],
+                        "revision_role": cell.identity["revision_role"],
+                        "query": cell.candidate.query, **inspected})
+    if ({item["scenario_origin"] for item in records} != set(origins)
             or len({item["tool_definitions_sha256"] for item in records}) != 1):
         raise WitnessPreflightError("declared cells must share identical allowed tool definitions")
     controls = {}
     for origin in origins:
         selected = [item for item in records if item["scenario_origin"] == origin]
-        selected_cells = [cell for cell in cells if cell.scenario_origin == origin]
-        if len(selected) != 2:
-            raise WitnessPreflightError("each condition requires two snapshots")
-        for left, right in zip(selected_cells, selected_cells[1:]):
+        pair_controls = {}
+        for (group_origin, pair_id), group in paired_cells.items():
+            if group_origin != origin:
+                continue
+            left, right = group
             if (left.candidate.query != right.candidate.query
                     or left.candidate.analysis_scope != right.candidate.analysis_scope
                     or left.candidate.input_parameters != right.candidate.input_parameters
@@ -232,11 +272,19 @@ def preflight_cells(cells, config) -> dict[str, Any]:
                     or left.context.runtime_root != right.context.runtime_root
                     or left.context.resource_profile != right.context.resource_profile
                     or left.context.read_grants != right.context.read_grants
-                    or left.context.import_root != right.context.import_root):
+                    or left.context.import_root != right.context.import_root
+                    or left.context.response_mode != right.context.response_mode):
                 raise WitnessPreflightError("paired snapshots differ in supplied input or runtime policy")
+            pair_records = [item for item in selected if item["pair_id"] == pair_id]
+            pair_controls[pair_id] = {"evaluation_case_ids": [cell.evaluation_case_id for cell in group],
+                "same_supplied_inputs": True,
+                "source_characters": [sum(s["characters"] for s in item["source_records"])
+                                      for item in pair_records],
+                "same_initial_request": pair_records[0]["initial_request_sha256"] == pair_records[1]["initial_request_sha256"]}
         controls[origin] = {"same_supplied_inputs": True,
                             "source_characters": [sum(s["characters"] for s in item["source_records"]) for item in selected],
-                            "same_initial_request": selected[0]["initial_request_sha256"] == selected[1]["initial_request_sha256"]}
+                            "same_initial_request": all(pair["same_initial_request"] for pair in pair_controls.values()),
+                            "pairs": pair_controls}
     return {"passed": True, "live_model_requests": 0, "tool_calls": 0, "worker_executions": 0,
             "origins": origins, "cells": records, "controls": controls,
             "note": "Source code may differ by snapshot. A/B metadata can consume different source context; "

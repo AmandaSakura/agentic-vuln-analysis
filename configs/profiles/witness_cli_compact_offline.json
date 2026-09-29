@@ -1,0 +1,82 @@
+{
+  "dataset": "configs/datasets/advisory_pairs_v6.json",
+  "selection_profile": "configs/profiles/advisory_scenario_iteration.json",
+  "resource_profile": "artifacts/bounded_execution_witness_resource_diagnostics/profile_heavy_target.json",
+  "read_grants": "artifacts/bounded_execution_witness_stage2_read_admission/read_grants_final.json",
+  "scenario_mode": "model_proposed",
+  "advisory_text": "MLflow model serving may allow shell command injection. Assess the declared entry in this exact source snapshot.",
+  "advisory_text_origin": "Dataset advisory title summarized without the editorial branch annotation; this is a development control, not the original advisory body.",
+  "constructor_parameters": {},
+  "precondition_files": {},
+  "scenario_hypothesis": {
+    "input_parameter": {
+      "value": "model_uri",
+      "classification": "attacker_controlled_input",
+      "rationale": "Caller provides an existing path and its real model metadata; only this local input authority is assumed."
+    },
+    "entry_boolean_arguments": {
+      "enable_mlserver": {
+        "value": true,
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      },
+      "no_conda": {
+        "value": false,
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      },
+      "install_mlflow": {
+        "value": false,
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      }
+    },
+    "entry_condition_assumptions": {},
+    "entry_value_assumptions": {
+      "port": {
+        "value": 5000,
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      },
+      "host": {
+        "value": "127.0.0.1",
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      },
+      "timeout": {
+        "value": null,
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      },
+      "workers": {
+        "value": 1,
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      },
+      "env_manager": {
+        "value": "local",
+        "classification": "deployment_configuration",
+        "rationale": "Caller-selected configuration for this developer scripted capacity control; runtime must measure the value."
+      }
+    },
+    "constructor_parameters": {},
+    "precondition_files": {
+      "MLmodel": {
+        "value": "flavors:\n  python_function:\n    loader_module: mlflow.pyfunc.model\n    python_version: 3.12.0\n",
+        "classification": "attacker_controlled_input",
+        "rationale": "Caller supplies real minimal MLmodel YAML in the input directory; no model or environment implementation is replaced."
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "hp004_a",
+      "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"
+    },
+    {
+      "case_id": "hp004_b",
+      "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"
+    }
+  ],
+  "response_mode": "compact"
+}

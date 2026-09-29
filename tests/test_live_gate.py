@@ -159,6 +159,25 @@ def test_pytest_timeout_does_not_grant_approval(gate, monkeypatch):
     assert gate._approved_fingerprint is None
 
 
+def test_full_suite_deadline_covers_measured_regression_runtime(gate, monkeypatch):
+    # The complete offline witness suite took 392.47s; a 300s deadline
+    # could never admit its unchanged passing snapshot. No tests are skipped.
+    calls = []
+
+    def measured_suite(command, **kwargs):
+        calls.append(command)
+        assert command == ["uv", "run", "--no-sync", "pytest"]
+        assert kwargs["timeout"] <= 900
+        if kwargs["timeout"] < 393:
+            raise gate.subprocess.TimeoutExpired(command, kwargs["timeout"])
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(gate.subprocess, "run", measured_suite)
+    gate.require_passing_tests()
+    assert gate._approved_fingerprint == gate.source_fingerprint(gate.PROJECT_ROOT)
+    assert len(calls) == 1
+
+
 def test_gate_isolates_provider_selection_without_changing_parent(gate, monkeypatch):
     import os
     names = {'CV_AGENT_PROVIDER': 'deepseek', 'DEEPSEEK_MODEL': 'offline-model',

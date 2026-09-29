@@ -1,0 +1,464 @@
+{
+  "live_model_requests": 0,
+  "claim_eligible": false,
+  "scenario_origin": "model_proposed",
+  "scenario_proposer": "offline_script",
+  "autonomous_scenario_discovery_measured": false,
+  "observation_budget": 8192,
+  "model_step_limit": 8,
+  "response_limit": 1000,
+  "meter": "unchanged_utf8_byte_token_upper_bound_of_full_serialized_model_payload",
+  "cases": [
+    {
+      "case": "hp003_a",
+      "final_label": "VULNERABLE",
+      "scripted_model_calls": 3,
+      "witness_attempts": [
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 968,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "recorder_prefix_not_established"
+          ],
+          "scenario_sha256": "206bfbba45028327d89b10c7fca26bd7b4a0684a2351005da308f248beb83989",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/config",
+              "value": {}
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": false
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5000
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/shared-runtime-witness-artifact-5hyn9txj/witness-result.json"
+        },
+        {
+          "validation_status": "CONFIRMED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 935,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "EXPANDED_OBSERVED",
+          "gaps": [],
+          "scenario_sha256": "24aa1685f121f923d512be2edeaca4350a4aacdee71fdef300a2d6c133a73c38",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/config",
+              "value": {}
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": true
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5000
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/shared-runtime-witness-artifact-ruv1vmmg/witness-result.json"
+        }
+      ],
+      "total_observation_charge": 1903,
+      "summary_path": "artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/summary.json",
+      "summary_sha256": "8b78b2ec5423d2aefe3fafccb8bd41f1e7633b50a907b1623fc534b16ed95f50"
+    },
+    {
+      "case": "hp003_b",
+      "final_label": "ABSTAIN",
+      "scripted_model_calls": 4,
+      "witness_attempts": [
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 968,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "recorder_prefix_not_established"
+          ],
+          "scenario_sha256": "206bfbba45028327d89b10c7fca26bd7b4a0684a2351005da308f248beb83989",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/config",
+              "value": {}
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": false
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5000
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/shared-runtime-witness-artifact-b3wg01it/witness-result.json"
+        },
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 935,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "LITERAL_OBSERVED",
+          "gaps": [],
+          "scenario_sha256": "24aa1685f121f923d512be2edeaca4350a4aacdee71fdef300a2d6c133a73c38",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/config",
+              "value": {}
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": true
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5000
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/shared-runtime-witness-artifact-3hjlcofe/witness-result.json"
+        },
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 935,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "LITERAL_OBSERVED",
+          "gaps": [],
+          "scenario_sha256": "57c8967ff8326627b4e9d8f7bf11c26ddaadea6454898b3048bb99e7825d4b7f",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/config",
+              "value": {}
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/constructor_parameters/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": true
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5001
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/shared-runtime-witness-artifact-j_9v106s/witness-result.json"
+        }
+      ],
+      "total_observation_charge": 2838,
+      "summary_path": "artifacts/remaining_work_20260929/eiter_hp003_scripted_completed/summary.json",
+      "summary_sha256": "8b78b2ec5423d2aefe3fafccb8bd41f1e7633b50a907b1623fc534b16ed95f50"
+    },
+    {
+      "case": "hp004_a",
+      "final_label": "ABSTAIN",
+      "scripted_model_calls": 3,
+      "witness_attempts": [
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": false,
+          "observation_token_count": 552,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": null,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "probe_input_parameter_not_unique"
+          ],
+          "scenario_sha256": null,
+          "premises": [],
+          "artifact_path": null
+        },
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 892,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "target_or_isolation_error"
+          ],
+          "scenario_sha256": "8bc5b53d2ac9bfeb16af07f4fcc3519dd46f9c0df4b4f6ecce4cf9d4f1bc34fd",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": true
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/install_mlflow",
+              "value": false
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/no_conda",
+              "value": false
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5000
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/workers",
+              "value": 1
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/precondition_files/MLmodel",
+              "value": "flavors:\n  python_function:\n    loader_module: mlflow.pyfunc.model\n    python_version: 3.12.0\n"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_cli_scripted/shared-runtime-witness-artifact-rlj4jiic/witness-result.json"
+        }
+      ],
+      "total_observation_charge": 1444,
+      "summary_path": "artifacts/remaining_work_20260929/eiter_cli_scripted/summary.json",
+      "summary_sha256": "95b35157eeff1c59f8873d705d3829c017eebd522c9f33ad78b7ef3963d7d623"
+    },
+    {
+      "case": "hp004_b",
+      "final_label": "ABSTAIN",
+      "scripted_model_calls": 3,
+      "witness_attempts": [
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": false,
+          "observation_token_count": 552,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": null,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "probe_input_parameter_not_unique"
+          ],
+          "scenario_sha256": null,
+          "premises": [],
+          "artifact_path": null
+        },
+        {
+          "validation_status": "UNRESOLVED",
+          "tool_status": "ok",
+          "witness_attempted": true,
+          "observation_token_count": 892,
+          "observation_truncated": false,
+          "classified_scenario_ref_matches_call": true,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "target_or_isolation_error"
+          ],
+          "scenario_sha256": "8bc5b53d2ac9bfeb16af07f4fcc3519dd46f9c0df4b4f6ecce4cf9d4f1bc34fd",
+          "premises": [
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/enable_mlserver",
+              "value": true
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/install_mlflow",
+              "value": false
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_boolean_arguments/no_conda",
+              "value": false
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/env_manager",
+              "value": "local"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/host",
+              "value": "127.0.0.1"
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/port",
+              "value": 5000
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/timeout",
+              "value": null
+            },
+            {
+              "classification": "deployment_configuration",
+              "name": "/entry_value_assumptions/workers",
+              "value": 1
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/input_parameter",
+              "value": "model_uri"
+            },
+            {
+              "classification": "attacker_controlled_input",
+              "name": "/precondition_files/MLmodel",
+              "value": "flavors:\n  python_function:\n    loader_module: mlflow.pyfunc.model\n    python_version: 3.12.0\n"
+            }
+          ],
+          "artifact_path": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/remaining_work_20260929/eiter_cli_scripted/shared-runtime-witness-artifact-p6s9as1s/witness-result.json"
+        }
+      ],
+      "total_observation_charge": 1444,
+      "summary_path": "artifacts/remaining_work_20260929/eiter_cli_scripted/summary.json",
+      "summary_sha256": "95b35157eeff1c59f8873d705d3829c017eebd522c9f33ad78b7ef3963d7d623"
+    }
+  ]
+}

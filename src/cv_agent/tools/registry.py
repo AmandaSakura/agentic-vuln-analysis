@@ -80,6 +80,7 @@ class AgentTool:
     validation_statuses: tuple[ValidationStatus, ...] = ()
     fixture_capabilities: tuple[FixtureCapability, ...] = ()
     candidate_witness_supports: Callable[[ValidationSubject], bool] | None = None
+    response_token_limit: Callable[[ToolExecutionScope], int | None] | None = None
 
     def definition(self) -> dict[str, Any]:
         return {
@@ -226,7 +227,15 @@ class ToolRegistry:
         *,
         content_type: Literal["text", "json"] = "text",
         citation_id: str | None = None,
+        response_token_limit: int | None = None,
     ) -> ToolObservation:
+        if response_token_limit is None:
+            registered = self._tools.get(observation.tool)
+            if registered is not None and registered.response_token_limit is not None:
+                response_token_limit = registered.response_token_limit(scope)
+        if response_token_limit is not None and response_token_limit < 1:
+            raise ValueError("tool response token limit must be positive")
+        available_tokens = min(scope.remaining_tokens, response_token_limit) if response_token_limit is not None else scope.remaining_tokens
         observation = observation.model_copy(update={"citation_id": citation_id})
         effective_content_type = (
             content_type if observation.status == "ok" else "text"
@@ -260,7 +269,7 @@ class ToolRegistry:
                 bounded,
                 content=bounded.content,
             )
-            if context_text_token_count(payload) <= scope.remaining_tokens:
+            if context_text_token_count(payload) <= available_tokens:
                 fitted = (
                     bounded.content,
                     payload,
@@ -284,13 +293,13 @@ class ToolRegistry:
                 structural_truncation = True
                 fitted = (
                     (marker, marker_payload, marker_tokens)
-                    if marker_tokens <= scope.remaining_tokens
+                    if marker_tokens <= available_tokens
                     else None
                 )
         else:
             fitted = fit_text_to_serialized_context(
                 bounded.content,
-                token_budget=scope.remaining_tokens,
+                token_budget=available_tokens,
                 render=lambda content: self._render_prompt_payload(
                     bounded,
                     content=content,
@@ -315,6 +324,7 @@ class ToolRegistry:
                         "observation_token_count": 0,
                         "observation_truncated": True,
                         "model_payload_suppressed": False,
+                    **({"response_token_limit": response_token_limit} if response_token_limit is not None else {}),
                         "budget_exhausted": True,
                     },
                 }
@@ -350,6 +360,7 @@ class ToolRegistry:
                     "observation_token_count": token_count,
                     "observation_truncated": truncated,
                     "model_payload_suppressed": False,
+                    **({"response_token_limit": response_token_limit} if response_token_limit is not None else {}),
                 },
             }
         )
@@ -487,7 +498,7 @@ class ToolRegistry:
             raise ValueError(
                 f"tool handler returned observation for {observation.tool}, expected {call.name}"
             )
-        if observation.status == "ok":
+        if observation.status == "ok" or observation.metadata.get("producer_completed") is True:
             scope.answered_calls[requested] = citation_id
         return self._finalize(
             observation,

@@ -97,12 +97,14 @@ def test_scripts_root_contains_only_documented_shell_commands():
         "jev_v3_comparison.sh",
         "witness_scenario_phase1.sh",
         "witness_scenario_phase2.sh",
+        "witness_scenario_E_iter.sh",
     }
 
 
 @pytest.mark.parametrize("phase,configuration,archived", [
     ("phase1", None, True),
     ("phase2", "configs/experiments/witness_scenario_phase2.json", True),
+    ("E_iter", "configs/experiments/witness_scenario_E_iter.json", False),
 ])
 def test_scenario_launcher_selects_approved_provider_without_real_credentials(tmp_path, phase, configuration, archived):
     project = tmp_path/'project with spaces'

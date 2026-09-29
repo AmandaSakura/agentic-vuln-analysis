@@ -17,7 +17,10 @@ dependencies = [
 cv-agent = "cv_agent.cli:main"
 
 [dependency-groups]
-dev = ["pytest"]
+dev = [
+    "click==8.2.1",
+    "pytest",
+]
 
 [build-system]
 requires = ["hatchling"]

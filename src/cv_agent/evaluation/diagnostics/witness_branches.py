@@ -18,6 +18,10 @@ from pathlib import Path
 from types import CodeType, FrameType, MethodWrapperType, WrapperDescriptorType
 from typing import Any, Callable
 
+from cv_agent.runtime.witness_entry import (
+    compiler_constants as _compiler_constants, identical_code as _identical_code,
+)
+
 
 _TOOL_ID = 4
 _TOOL_NAME = "cv_agent.bounded-witness-conditions"
@@ -53,33 +57,6 @@ def _codes(code: CodeType):
 
 def _code_key(code: CodeType) -> tuple[str, str, int]:
     return code.co_filename, code.co_qualname, code.co_firstlineno
-
-
-def _compiler_constants(code: CodeType) -> bool:
-    """Reject injected constants before CodeType equality or hashing."""
-    def immutable(value: Any, depth: int) -> bool:
-        if depth > 64:
-            return False
-        kind = type(value)
-        if any(kind is builtin for builtin in (
-                type(None), bool, int, float, complex, str, bytes, type(Ellipsis))):
-            return True
-        if kind is tuple or kind is frozenset:
-            return all(immutable(item, depth + 1) for item in value)
-        if kind is CodeType:
-            return all(immutable(item, depth + 1) for item in value.co_consts)
-        return False
-
-    return type(code) is CodeType and all(immutable(item, 0) for item in code.co_consts)
-
-
-def _identical_code(actual: CodeType, expected: CodeType) -> bool:
-    # Code objects compare code/constant/name tables. Explicit location tables
-    # prevent a copy with another source span borrowing a compiled branch map.
-    return (_compiler_constants(actual) and _compiler_constants(expected)
-            and actual == expected and actual.co_filename == expected.co_filename
-            and actual.co_linetable == expected.co_linetable
-            and actual.co_exceptiontable == expected.co_exceptiontable)
 
 
 @dataclass

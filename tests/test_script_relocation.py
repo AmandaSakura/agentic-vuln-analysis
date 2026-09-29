@@ -131,6 +131,7 @@ def test_shell_commands_have_valid_syntax():
         'jev_pilot.sh', 'hp003_jev_active.sh', 'jev_v3_comparison.sh',
         'witness_scenario_phase1.sh',
         'witness_scenario_phase2.sh',
+        'witness_scenario_E_iter.sh',
     }
     for path in paths:
         shell = '/bin/sh' if path.read_text().startswith('#!/bin/sh') else '/bin/bash'

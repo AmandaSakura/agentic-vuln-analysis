@@ -145,6 +145,60 @@ def test_source_derived_entry_marker_is_verified_before_being_allowed(tmp_path):
                                 scenario=scenario, scenario_empty=True)
 
 
+def _decorated_inputs(tmp_path, *, asynchronous=False):
+    _, original, context, _, scenario = _inputs(tmp_path)
+    header = "async def" if asynchronous else "def"
+    entry = ("@commands.command(\"serve\")\n"
+             "@click.option(\"--engaged\")\n"
+             f"{header} call(location, engaged=False):\n"
+             "    return location\n")
+    unrelated = "def unrelated(engaged=True):\n    return engaged\n\n"
+    source = unrelated + entry
+    (context.checkout_root / "entry.py").write_text(source)
+    span = "entry.py::call@4-7"
+    digest = hashlib.sha256(source.encode()).hexdigest()
+    index = RepositoryIndex((
+        CodeDocument(repository_id="neutral-entry", path=span, language="python",
+                     adapter_tier="ast", text=entry, source_sha256=digest),
+        CodeDocument(repository_id="neutral-entry", path="entry.py::<module>@1-7",
+                     language="python", adapter_tier="ast", text=source, source_sha256=digest),
+    ))
+    candidate = original.model_copy(update={"path": span, "line": 4})
+    tools = tuple(full_agent_tools(index, witness_contexts={candidate.repository_id: context}))
+    return index, candidate, tools, scenario
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("start", ["decorator", "header"])
+def test_decorated_entry_markers_are_exact_bound_source_prefixes(tmp_path, asynchronous, start):
+    index, candidate, tools, scenario = _decorated_inputs(tmp_path, asynchronous=asynchronous)
+    marker = ('@commands.command("serve")' if start == "decorator" else
+              ("async def" if asynchronous else "def") + " call(location, engaged=False):")
+    candidate = candidate.model_copy(update={"analysis_scope":
+        f"Declared entry code marker: {marker}. Inspect the disclosed advisory."})
+    request = capture_initial_request(index, candidate, tools)
+    report = inspect_initial_request(request, index, candidate, scenario=scenario, scenario_empty=True)
+    assert report["passed"] is True
+    assert report["outside_source_marker_counts"]["engaged"] == 0
+    assert report["live_model_requests"] == report["tool_calls"] == report["worker_executions"] == 0
+
+
+@pytest.mark.parametrize("marker", [
+    '@commands.command("other")',
+    '@click.option("--engaged")',
+    'def unrelated(engaged=True):',
+    'def call(location, engaged=True):',
+    'return location',
+])
+def test_decorated_entry_marker_cannot_mask_forged_or_unrelated_source(tmp_path, marker):
+    index, candidate, tools, scenario = _decorated_inputs(tmp_path)
+    candidate = candidate.model_copy(update={"analysis_scope":
+        f"Declared entry code marker: {marker}. Inspect the disclosed advisory."})
+    with pytest.raises(WitnessPreflightError, match="entry marker"):
+        inspect_initial_request(capture_initial_request(index, candidate, tools), index, candidate,
+                                scenario=scenario, scenario_empty=True)
+
+
 def test_preflight_reports_paired_input_controls_without_demanding_identical_source(tmp_path):
     index, base, context, _, scenario = _inputs(tmp_path)
     supplied = base.model_copy(update={
@@ -154,13 +208,17 @@ def test_preflight_reports_paired_input_controls_without_demanding_identical_sou
     })
     cells = []
     for origin, candidate in (("dataset_provided", supplied), ("model_proposed", base)):
-        for case in ("private-first", "private-second"):
+        for index_in_pair, case in enumerate(("private-first", "private-second")):
             supplied_context = replace(context, dataset_scenario=scenario if origin == "dataset_provided" else None)
             tools = tuple(full_agent_tools(index, witness_contexts={candidate.repository_id: supplied_context}))
             cells.append(SimpleNamespace(evaluation_case_id=case, scenario_origin=origin, index=index,
                 candidate=candidate, context=supplied_context, registered_tools=tools,
-                identity={"case_id": case, "commit": "12345678abcdef", "configured_commit": "12345678abcdef"}))
-    config = SimpleNamespace(dataset_scenario=scenario, origins=("dataset_provided", "model_proposed"))
+                fixed=index_in_pair == 1,
+                identity={"case_id": case, "pair_id": "private-pair",
+                          "revision_role": "fixed" if index_in_pair == 1 else "vulnerable",
+                          "commit": "12345678abcdef", "configured_commit": "12345678abcdef"}))
+    config = SimpleNamespace(dataset_scenario=scenario, origins=("dataset_provided", "model_proposed"),
+        cases=tuple(SimpleNamespace(case_id=case) for case in ("private-first", "private-second")))
     report = preflight_cells(tuple(cells), config)
     assert len(report["cells"]) == 4
     assert all(control["same_supplied_inputs"] for control in report["controls"].values())
@@ -175,9 +233,12 @@ def test_preflight_reports_paired_input_controls_without_demanding_identical_sou
 def test_b_only_preflight_requires_no_reference_scene_and_runs_only_declared_cells(tmp_path):
     index, candidate, context, tools, _ = _inputs(tmp_path)
     cells = tuple(SimpleNamespace(evaluation_case_id=case, scenario_origin="model_proposed", index=index,
-        candidate=candidate, context=context, registered_tools=tools, identity={"case_id": case})
-        for case in ("private-first", "private-second"))
-    report = preflight_cells(cells, SimpleNamespace(origins=("model_proposed",), dataset_scenario=None))
+        candidate=candidate, context=context, registered_tools=tools, fixed=index_in_pair == 1,
+        identity={"case_id": case, "pair_id": "private-pair",
+                  "revision_role": "fixed" if index_in_pair == 1 else "vulnerable"})
+        for index_in_pair, case in enumerate(("private-first", "private-second")))
+    report = preflight_cells(cells, SimpleNamespace(origins=("model_proposed",), dataset_scenario=None,
+        cases=tuple(SimpleNamespace(case_id=case) for case in ("private-first", "private-second"))))
     assert report["origins"] == ("model_proposed",)
     assert len(report["cells"]) == 2
     assert all(cell["scenario_reference_provided"] is False for cell in report["cells"])

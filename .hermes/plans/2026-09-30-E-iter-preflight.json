@@ -1,0 +1,142 @@
+{
+  "live_model_requests": 0,
+  "claim_eligible": false,
+  "phase_id": "E_iter",
+  "response_mode": "compact",
+  "controls": {
+    "model_proposed": {
+      "same_supplied_inputs": true,
+      "source_characters": [
+        3113,
+        3113,
+        3148,
+        3148
+      ],
+      "same_initial_request": true,
+      "pairs": {
+        "hp003_entry_00389_ghsa_rvhj_8chj_8v3c": {
+          "evaluation_case_ids": [
+            "hp003_a",
+            "hp003_b"
+          ],
+          "same_supplied_inputs": true,
+          "source_characters": [
+            3113,
+            3113
+          ],
+          "same_initial_request": true
+        },
+        "hp004_entry_00390_ghsa_rvhj_8chj_8v3c": {
+          "evaluation_case_ids": [
+            "hp004_a",
+            "hp004_b"
+          ],
+          "same_supplied_inputs": true,
+          "source_characters": [
+            3148,
+            3148
+          ],
+          "same_initial_request": true
+        }
+      }
+    }
+  },
+  "cells": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "pair_id": "hp003_entry_00389_ghsa_rvhj_8chj_8v3c",
+      "revision_role": "vulnerable",
+      "query": "MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py     def serve(\n        self,\n        model_uri,",
+      "passed": true,
+      "live_model_requests": 0,
+      "tool_calls": 0,
+      "worker_executions": 0,
+      "scenario_reference_provided": false,
+      "source_records": [
+        {
+          "path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "characters": 3113,
+          "text_sha256": "9e926fa346f241f2aa581e12e48a339ce3d3fc0bac4eaf1445e0d2098cd56d5f"
+        }
+      ],
+      "outside_source_marker_counts": {},
+      "tool_definitions_sha256": "3a1bf3b6ba2b8f21650db8cdd9043dc98a5717fb455db14593677b131c19f477",
+      "masked_context_sha256": "8a4b7982819ae586e31b92e644868b6b40e012ba70da9b9f64346aadca272fc8",
+      "initial_request_sha256": "b8cc6a56e0a924cca9c872e04387696fc1f1575bcbc6530858b072c0fff0306b",
+      "initial_request_identical_to_phase2": true
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "pair_id": "hp003_entry_00389_ghsa_rvhj_8chj_8v3c",
+      "revision_role": "fixed",
+      "query": "MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py     def serve(\n        self,\n        model_uri,",
+      "passed": true,
+      "live_model_requests": 0,
+      "tool_calls": 0,
+      "worker_executions": 0,
+      "scenario_reference_provided": false,
+      "source_records": [
+        {
+          "path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "characters": 3113,
+          "text_sha256": "9e926fa346f241f2aa581e12e48a339ce3d3fc0bac4eaf1445e0d2098cd56d5f"
+        }
+      ],
+      "outside_source_marker_counts": {},
+      "tool_definitions_sha256": "3a1bf3b6ba2b8f21650db8cdd9043dc98a5717fb455db14593677b131c19f477",
+      "masked_context_sha256": "8a4b7982819ae586e31b92e644868b6b40e012ba70da9b9f64346aadca272fc8",
+      "initial_request_sha256": "b8cc6a56e0a924cca9c872e04387696fc1f1575bcbc6530858b072c0fff0306b",
+      "initial_request_identical_to_phase2": true
+    },
+    {
+      "evaluation_case_id": "hp004_a",
+      "scenario_origin": "model_proposed",
+      "pair_id": "hp004_entry_00390_ghsa_rvhj_8chj_8v3c",
+      "revision_role": "vulnerable",
+      "query": "MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py @commands.command(\"serve\")",
+      "passed": true,
+      "live_model_requests": 0,
+      "tool_calls": 0,
+      "worker_executions": 0,
+      "scenario_reference_provided": false,
+      "source_records": [
+        {
+          "path": "mlflow/models/cli.py::serve@24-106",
+          "characters": 3148,
+          "text_sha256": "65e864f9c07daa723c7c74fbb83674ab841017011ea416d32ddd658cfa891551"
+        }
+      ],
+      "outside_source_marker_counts": {},
+      "tool_definitions_sha256": "3a1bf3b6ba2b8f21650db8cdd9043dc98a5717fb455db14593677b131c19f477",
+      "masked_context_sha256": "13a2a249b5244c0a206bf5e3621b9951fe92809f0fcf61eb500e3c636bb54fba",
+      "initial_request_sha256": "9a6ad7fb05c2c700de3d2304c06f89662bf99a12498563cc732c8b30a43534c8"
+    },
+    {
+      "evaluation_case_id": "hp004_b",
+      "scenario_origin": "model_proposed",
+      "pair_id": "hp004_entry_00390_ghsa_rvhj_8chj_8v3c",
+      "revision_role": "fixed",
+      "query": "MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py @commands.command(\"serve\")",
+      "passed": true,
+      "live_model_requests": 0,
+      "tool_calls": 0,
+      "worker_executions": 0,
+      "scenario_reference_provided": false,
+      "source_records": [
+        {
+          "path": "mlflow/models/cli.py::serve@24-106",
+          "characters": 3148,
+          "text_sha256": "65e864f9c07daa723c7c74fbb83674ab841017011ea416d32ddd658cfa891551"
+        }
+      ],
+      "outside_source_marker_counts": {},
+      "tool_definitions_sha256": "3a1bf3b6ba2b8f21650db8cdd9043dc98a5717fb455db14593677b131c19f477",
+      "masked_context_sha256": "13a2a249b5244c0a206bf5e3621b9951fe92809f0fcf61eb500e3c636bb54fba",
+      "initial_request_sha256": "9a6ad7fb05c2c700de3d2304c06f89662bf99a12498563cc732c8b30a43534c8"
+    }
+  ],
+  "artifact": "artifacts/remaining_work_20260929/eiter_preflight_completed.json",
+  "sha256": "7c23265d203f7a92d531c85bdcfc5c4af53eba0c7b0ad7dab5acc6a543b759c5"
+}

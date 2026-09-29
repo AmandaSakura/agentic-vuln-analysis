@@ -1,0 +1,45 @@
+{
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "dataset": "configs/datasets/advisory_pairs_v6.json",
+  "selection_profile": "configs/profiles/advisory_scenario_iteration.json",
+  "model_config": "configs/models/deepseek_flash.json",
+  "system": "E1",
+  "max_requests": 40,
+  "max_seconds": 3600,
+  "phase_id": "E_iter",
+  "origins": [
+    "model_proposed"
+  ],
+  "expected_returned_model": "deepseek-flash",
+  "authorization_ledger": "artifacts/remaining_work_20260929/authorization_ledger.json",
+  "cumulative_request_limit": 210,
+  "cumulative_token_limit": 2500000,
+  "output_token_limit": 6000,
+  "framing_token_allowance": 4096,
+  "continue_on_cell_failure": true,
+  "resource_profile": "artifacts/bounded_execution_witness_resource_diagnostics/profile_heavy_target.json",
+  "read_grants": "artifacts/bounded_execution_witness_stage2_read_admission/read_grants_final.json",
+  "advisory_text": "MLflow model serving \u547d\u4ee4\u6ce8\u5165\u6f0f\u6d1e CVE-2026-0596 - mlserver.py",
+  "advisory_text_origin": "dataset_advisory_summary",
+  "advisory_text_note": "Exploratory iteration after observing M0 failures. Four model-proposed cells receive the same advisory title and their source entry; no scenario assumptions are supplied. One workflow per cell, unchanged E1steps/8192 observation budget, compact responses capped at1000 serialized budget units. Results cannot alter G-A or establish held-out generalization.",
+  "cases": [
+    {
+      "case_id": "hp003_a",
+      "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"
+    },
+    {
+      "case_id": "hp003_b",
+      "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"
+    },
+    {
+      "case_id": "hp004_a",
+      "python_executable": "data/diagnostics/hp003-stage2-a-py312/venv/bin/python"
+    },
+    {
+      "case_id": "hp004_b",
+      "python_executable": "data/diagnostics/hp003-stage2-b-py312/venv/bin/python"
+    }
+  ],
+  "response_mode": "compact"
+}
