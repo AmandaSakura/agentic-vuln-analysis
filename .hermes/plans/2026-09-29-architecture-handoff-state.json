@@ -1,0 +1,75 @@
+{
+  "audit_type": "read_only_architecture_handoff",
+  "date": "2026-09-29",
+  "audited_head": "aea5dc4",
+  "documents": [
+    ".hermes/plans/2026-09-29-remaining-work-plan.md",
+    ".hermes/plans/2026-09-29-remaining-architecture.md"
+  ],
+  "code_changes_this_audit": 0,
+  "project_module_imports_this_audit": 0,
+  "tests_run_this_audit": 0,
+  "model_requests_this_audit": 0,
+  "network_requests_this_audit": 0,
+  "protected_input_or_label_content_reads_this_audit": 0,
+  "phase1": {
+    "status": "completed",
+    "requests": 32,
+    "reported_tokens": 191177,
+    "returned_model_ids": ["deepseek-flash"],
+    "cell_count": 4,
+    "abstained_cell_count": 4,
+    "confirmed_cell_count": 0,
+    "B_a_reviewed_primary_failure": "F1",
+    "B_a_contributing_failure": "F6_local_observation_and_finalization_budget"
+  },
+  "authorization": {
+    "offline_milestones_authorized": ["K1", "K2", "K3", "K4"],
+    "offline_milestones_conditionally_authorized": {"K5": "requires_G_A"},
+    "network_environment_preparation": "M0_G5_only",
+    "extra_live_budget_not_granted": ["K4", "K6", "K7"],
+    "K8_freeze_signoff": "pending",
+    "mechanical_protected_config_hash_or_copy_exception": "not_granted",
+    "S4": "unresolved",
+    "ledger_reset": false
+  },
+  "G_A": {
+    "status": "pending_not_assessed",
+    "criteria_retained": true,
+    "requires": ["autonomous_B_a_success", "at_least_one_external_phase3b_pair_success"],
+    "developer_scripted_acceptance_qualifies": false,
+    "phase3a_same_advisory_transfer_qualifies_as_external": false,
+    "generalization_claim_established_if_gate_passes": false
+  },
+  "core_to_evaluation_direct_imports": {
+    "method": "isolated_stdlib_AST_source_scan_including_delayed_and_type_checking_imports",
+    "count": 7,
+    "files": [
+      "src/cv_agent/tools/validation/bounded_witness.py",
+      "src/cv_agent/tools/validation/witness_manifest.py"
+    ],
+    "additional_kernel_dependency_to_move": {
+      "module": "cv_agent.evaluation.diagnostics.isolation_read_diagnostics",
+      "functions": ["trace_command", "summarize_trace"]
+    }
+  },
+  "evaluation_aggregate_disclosure": {
+    "source": "user_disclosed_in_architecture_K8_and_conversation",
+    "independently_verified": false,
+    "entries": 361,
+    "typescript_entries": 295,
+    "python_entries": 36,
+    "python_command_injection_max_entries": 1,
+    "denominator_is_repository_commit_inputs": false,
+    "use": "design_provenance_disclosure_only",
+    "detector_use_authorized": false
+  },
+  "required_interpretations": [
+    "preparation_must_not_assert_executed_input_or_verified_premises",
+    "any_fixed_version_confirmation_stops_under_M0_S1",
+    "canonical_producer_observations_not_citation_aliases_or_manifest_digest",
+    "read_grant_proposals_do_not_automatically_become_effective",
+    "K1_output_hygiene_does_not_expand_probe_input_domain",
+    "K2_source_binding_equality_is_per_snapshot_before_and_after"
+  ]
+}
