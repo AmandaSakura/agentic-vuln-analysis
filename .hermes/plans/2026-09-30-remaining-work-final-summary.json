@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-09-29T17:07:01.180890+00:00",
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "heldout_evaluation_performed": false,
+  "source_report": "2026-09-30-remaining-work-final-report.md",
+  "historical_stop_report_preserved": "2026-09-29-remaining-work-final-report.md",
+  "original_m0": {
+    "phase0": {
+      "model_requests": 0,
+      "preflight_complete": true
+    },
+    "phase1": {
+      "run_id": "90428b956f2b44e885c6e4461958dab5",
+      "requests": 32,
+      "reported_tokens": 191177,
+      "cells": [
+        {
+          "case": "hp003_a",
+          "condition": "A",
+          "scenario_origin": "dataset_provided",
+          "physical_witness_executions": 0,
+          "raw_status": "preparation_UNRESOLVED",
+          "admitted_label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "requests": 8,
+          "reported_tokens": 48350
+        },
+        {
+          "case": "hp003_b",
+          "condition": "A",
+          "scenario_origin": "dataset_provided",
+          "physical_witness_executions": 0,
+          "raw_status": "preparation_UNRESOLVED",
+          "admitted_label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "requests": 8,
+          "reported_tokens": 48202
+        },
+        {
+          "case": "hp003_a",
+          "condition": "B",
+          "scenario_origin": "model_proposed",
+          "physical_witness_executions": 0,
+          "raw_status": "preparation_UNRESOLVED",
+          "admitted_label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "requests": 8,
+          "reported_tokens": 46712
+        },
+        {
+          "case": "hp003_b",
+          "condition": "B",
+          "scenario_origin": "model_proposed",
+          "physical_witness_executions": 2,
+          "raw_status": "LITERAL_OBSERVED_twice_clipped",
+          "admitted_label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "requests": 8,
+          "reported_tokens": 47913
+        }
+      ],
+      "reviewed_B_a_failure": "F1_with_local_F6",
+      "producer_confirmed": 0
+    },
+    "phase2": {
+      "run_id": "d735d835e8af451cbd8b260de12e2f4c",
+      "requests": 14,
+      "reported_tokens": 90153,
+      "cells": [
+        {
+          "case": "hp003_a",
+          "condition": "B",
+          "scenario_origin": "model_proposed",
+          "physical_witness_executions": 1,
+          "complete_delivered_runtime_observations": 1,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "recorder_prefix_not_established"
+          ],
+          "admitted_label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "requests": 8,
+          "reported_tokens": 51842
+        },
+        {
+          "case": "hp003_b",
+          "condition": "B",
+          "scenario_origin": "model_proposed",
+          "physical_witness_executions": 1,
+          "complete_delivered_runtime_observations": 1,
+          "raw_status": "UNRESOLVED",
+          "gaps": [
+            "recorder_prefix_not_established"
+          ],
+          "admitted_label": "ABSTAIN",
+          "validation_status": "UNRESOLVED",
+          "requests": 6,
+          "reported_tokens": 38311
+        }
+      ],
+      "reviewed_B_a_failure": "F3_with_local_F6",
+      "producer_confirmed": 0,
+      "one_permitted_confirmatory_rerun_consumed": true
+    },
+    "phase3a": {
+      "mode": "offline_developer_scripted_only",
+      "entry": "entry-00390",
+      "physical_witness_attempts": 2,
+      "raw_status": "UNRESOLVED",
+      "gap": "target_or_isolation_error",
+      "reached_process_creation_boundary": false,
+      "live_model_requests": 0,
+      "reported_tokens": 0,
+      "public_cli_parser_executed": false
+    },
+    "phase3b": {
+      "frozen_first_advisories_inspected": 15,
+      "source_qualified_provisional_pairs": 1,
+      "fully_qualified_pairs": 0,
+      "environment_gap": "PIL._imaging unavailable for exact source import in current metadata-only K3 preparation",
+      "v7_appended": false,
+      "physical_witness_executions": 0,
+      "live_model_requests": 0,
+      "reported_tokens": 0,
+      "selection_report": "2026-09-30-phase3b-selection-audit.json"
+    },
+    "B_a_success": false
+  },
+  "supplemental_E_iter": {
+    "role": "exploratory_only_not_original_M0_rerun_or_G_A_rescue",
+    "run": "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c",
+    "source_commit": "8f05292dbcbe42014f77bf8c42ca6a456b953cdc",
+    "requests": 26,
+    "reported_tokens": 166482,
+    "all_returned_model_ids": [
+      "deepseek-flash"
+    ],
+    "all_raw_usage_exact": true,
+    "all_responses_parsed": true,
+    "hard_stop": null,
+    "producer_confirmed": 0,
+    "rejected_raw_vulnerable_unresolved_proposals": 2,
+    "hypothesis_iteration_after_runtime_U": false,
+    "cells": [
+      {
+        "case": "hp003_a",
+        "condition": "B",
+        "scenario_origin": "model_proposed",
+        "experiment_role": "supplemental_exploratory",
+        "physical_witness_executions": 1,
+        "actual_witness_observation_charge": 968,
+        "raw_status": "UNRESOLVED",
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "admitted_label": "ABSTAIN",
+        "validation_status": "UNRESOLVED",
+        "requests": 6,
+        "reported_tokens": 36234
+      },
+      {
+        "case": "hp003_b",
+        "condition": "B",
+        "scenario_origin": "model_proposed",
+        "experiment_role": "supplemental_exploratory",
+        "physical_witness_executions": 1,
+        "actual_witness_observation_charge": 968,
+        "raw_status": "UNRESOLVED",
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "admitted_label": "ABSTAIN",
+        "validation_status": "UNRESOLVED",
+        "requests": 7,
+        "reported_tokens": 44985
+      },
+      {
+        "case": "hp004_a",
+        "condition": "B",
+        "scenario_origin": "model_proposed",
+        "experiment_role": "supplemental_exploratory",
+        "physical_witness_executions": 1,
+        "actual_witness_observation_charge": 861,
+        "raw_status": "UNRESOLVED",
+        "gaps": [
+          "target_or_isolation_error"
+        ],
+        "admitted_label": "ABSTAIN",
+        "validation_status": "UNRESOLVED",
+        "requests": 7,
+        "reported_tokens": 45465
+      },
+      {
+        "case": "hp004_b",
+        "condition": "B",
+        "scenario_origin": "model_proposed",
+        "experiment_role": "supplemental_exploratory",
+        "physical_witness_executions": 1,
+        "actual_witness_observation_charge": 861,
+        "raw_status": "UNRESOLVED",
+        "gaps": [
+          "target_or_isolation_error"
+        ],
+        "admitted_label": "ABSTAIN",
+        "validation_status": "UNRESOLVED",
+        "requests": 6,
+        "reported_tokens": 39798
+      }
+    ],
+    "independent_audit": "artifacts/remaining_work_20260929/E_iter_independent_audit.json"
+  },
+  "cumulative_authorization": {
+    "requests": 72,
+    "request_limit": 210,
+    "reported_tokens": 447812,
+    "token_limit": 2500000,
+    "remaining_requests": 138,
+    "remaining_reported_tokens": 2052188,
+    "all_actual_model_ids": [
+      "deepseek-flash"
+    ],
+    "live_gate_pre_E_iter": {
+      "passed": 2556,
+      "seconds": 390.51,
+      "source_commit": "8f05292dbcbe42014f77bf8c42ca6a456b953cdc"
+    },
+    "manual_complete_suite_pre_E_iter": {
+      "passed": 2556,
+      "seconds": 407.96
+    },
+    "harness_pre_E_iter": "PASS",
+    "running_hard_stop": null
+  },
+  "offline_milestones": {
+    "K1": {
+      "complete": true,
+      "scripted_a": "CONFIRMED_EXPANDED_OBSERVED",
+      "scripted_b": "UNRESOLVED_LITERAL_OBSERVED",
+      "source_bindings_per_snapshot": 977,
+      "full_pytest_passed": 2438,
+      "harness": "PASS"
+    },
+    "K2": {
+      "complete": false,
+      "formal_G_A_awaits_completion": true
+    },
+    "K3": {
+      "complete_for_hp003_pair": true,
+      "environments": 2,
+      "package_versions_each": 141,
+      "source_bindings_each": 977,
+      "accepted_original_leaf_grants": 4,
+      "new_leaf_grants_accepted": 0,
+      "scripted_a": "CONFIRMED_EXPANDED_OBSERVED",
+      "scripted_b": "UNRESOLVED_LITERAL_OBSERVED"
+    },
+    "K4": {
+      "offline_complete": true,
+      "a_material_votes_sharing_validator_observation": 2,
+      "a_independent_validator_observations": 1,
+      "b_material_votes": 0,
+      "E5_counterfactual_replay_only": true,
+      "actual_E5_witness_executions": 0
+    },
+    "K5_to_K8_started": false
+  },
+  "G_A": {
+    "formal_status": "pending_K2",
+    "predicted_result": "NO",
+    "original_M0_B_a_autonomous_confirmed": false,
+    "phase3b_migrated_qualified_pair_count": 0,
+    "conjunction_met": false,
+    "E_iter_can_change_original_gate": false
+  },
+  "S4_incident": {
+    "content_search_incident_report": "2026-09-29-STOP-S4-content-search.md",
+    "protected_commit_fields_exposed_by_unintended_search": 4,
+    "protected_labels_or_scenarios_exposed": false,
+    "used_in_reasoning_code_selection_detector_or_prompt": false,
+    "user_authorized_resumption": true,
+    "prior_mechanical_hash_copy_resolution": "2026-09-29-S4-resolution.md"
+  },
+  "heldout_scope": {
+    "heldout_claim": false,
+    "user_provided_unverified_aggregate": {
+      "entries": 361,
+      "typescript": 295,
+      "python": 36,
+      "python_command_at_most": 1
+    },
+    "separate_repository_commit_input_count_user_provided": 146,
+    "denominators_not_equated": true,
+    "protected_contents_not_reopened_for_report": true
+  },
+  "source_documents": [
+    "2026-09-29-phase1-results.md",
+    "2026-09-29-phase2-results.md",
+    "2026-09-30-phase3a-offline-results.md",
+    "2026-09-29-phase3b-results.md",
+    "2026-09-29-k1-results.md",
+    "2026-09-30-K3-results.md",
+    "2026-09-30-K4-results.md"
+  ]
+}

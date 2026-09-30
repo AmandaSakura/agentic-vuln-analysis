@@ -1,0 +1,75 @@
+{
+  "gate": "G_A",
+  "date": "2026-09-30",
+  "status": "NO",
+  "criteria_retained": true,
+  "criteria_source": ".hermes/plans/2026-09-29-remaining-architecture.md#4",
+  "decided_after": {
+    "m0_phase4_report": ".hermes/plans/2026-09-30-remaining-work-final-report.md",
+    "k2_commit": "af7024d",
+    "k2_results": ".hermes/plans/2026-09-30-K2-results.md"
+  },
+  "requires": [
+    "autonomous_B_a_success",
+    "at_least_one_external_phase3b_pair_success"
+  ],
+  "results": {
+    "autonomous_B_a_success": {
+      "satisfied": false,
+      "phase1": {
+        "failure_class": "F1",
+        "physical_witness_executions": 0,
+        "final": "ABSTAIN/UNRESOLVED"
+      },
+      "phase2_only_permitted_retry": {
+        "failure_class": "F3",
+        "physical_witness_executions": 1,
+        "selected_branch": "enable_mlserver=false (scoring_server)",
+        "gap": "recorder_prefix_not_established",
+        "final": "ABSTAIN/UNRESOLVED"
+      }
+    },
+    "at_least_one_external_phase3b_pair_success": {
+      "satisfied": false,
+      "frozen_advisories_checked": 15,
+      "fully_eligible_pairs": 0,
+      "sole_source_eligible_candidate": "Pillow GHSA-4x4j-2g7c-83w6 (native _imaging unavailable under metadata-only preparation)"
+    }
+  },
+  "excluded_from_gate": {
+    "developer_scripted_acceptance": "tool capability under a supplied scenario; not autonomous success",
+    "phase3a_entry_00390": "same advisory as hp003 (not external); both cells F4 at TempDir creation",
+    "E_iter": "user-authorized exploratory run registered as not changing G_A; four cells ABSTAIN/UNRESOLVED"
+  },
+  "consequences": {
+    "K5": "not_started",
+    "K6": "not_started",
+    "K7": "not_started",
+    "K8": "not_started",
+    "positioning_report": ".hermes/plans/2026-09-30-positioning-report.md",
+    "claim_eligible": false
+  },
+  "live_model_usage": {
+    "requests": 72,
+    "reported_tokens": 447812,
+    "by_scope": {
+      "m0_phase1": [
+        32,
+        191177
+      ],
+      "m0_phase2": [
+        14,
+        90153
+      ],
+      "E_iter": [
+        26,
+        166482
+      ]
+    },
+    "authorized_limits": {
+      "requests": 210,
+      "reported_tokens": 2500000
+    }
+  },
+  "generalization_claim_established": false
+}

@@ -1,0 +1,171 @@
+{
+  "milestone": "K2",
+  "date": "2026-09-30",
+  "code_commit": "af7024d",
+  "model_requests": 0,
+  "network_requests": 0,
+  "new_read_grants": 0,
+  "claim_eligible": false,
+  "module_moves": {
+    "evaluation/diagnostics/bounded_execution_witness.py": "runtime/witness/kernel.py",
+    "evaluation/diagnostics/witness_contract.py": "runtime/witness/contract.py",
+    "evaluation/diagnostics/isolation_read_policy.py": "runtime/witness/isolation_policy.py",
+    "evaluation/diagnostics/isolation_read_diagnostics.py": "runtime/witness/tracer.py",
+    "evaluation/diagnostics/process_resource_accounting.py": "runtime/witness/accounting.py",
+    "evaluation/diagnostics/witness_scenario_runtime.py": "runtime/witness/scenario_runtime.py",
+    "evaluation/diagnostics/witness_values.py": "runtime/witness/obligations/values.py",
+    "evaluation/diagnostics/witness_branches.py": "runtime/witness/obligations/branches.py",
+    "evaluation/diagnostics/witness_preexec.py": "runtime/witness/obligations/preexec.py"
+  },
+  "static_review": ".hermes/plans/2026-09-30-K2-review.md",
+  "old_context_rejection": [
+    {
+      "case": "a",
+      "context": "artifacts/witness_environment_rebuild/cached_ready/prepared_a/witness_context.json",
+      "rejected": true,
+      "error_type": "FileNotFoundError",
+      "reason": "[Errno 2] No such file or directory: '/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/isolation_read_policy.py'"
+    },
+    {
+      "case": "b",
+      "context": "artifacts/witness_environment_rebuild/cached_ready/prepared_b/witness_context.json",
+      "rejected": true,
+      "error_type": "FileNotFoundError",
+      "reason": "[Errno 2] No such file or directory: '/home/joker/AAA_NUS_SEM3/cv_agent/src/cv_agent/evaluation/diagnostics/isolation_read_policy.py'"
+    }
+  ],
+  "post_move_contexts": {
+    "a": {
+      "path": "artifacts/witness_environment_rebuild/k2_post_move/prepared_a/witness_context.json",
+      "sha256": "7a0de13305e1b099f01bf9272a11f3d4a93deafa6b0eefadefa8a7c8ccdd93ef",
+      "environment_status": "environment_ready",
+      "kernel_bootstrap_ready": true,
+      "allow_network": false,
+      "network_urls": [],
+      "gaps": [],
+      "accepted_grants": 4
+    },
+    "b": {
+      "path": "artifacts/witness_environment_rebuild/k2_post_move/prepared_b/witness_context.json",
+      "sha256": "7d415de46ca262efe83dab5197b8358932d3e2d232a8b0c9d643fefd594eed52",
+      "environment_status": "environment_ready",
+      "kernel_bootstrap_ready": true,
+      "allow_network": false,
+      "network_urls": [],
+      "gaps": [],
+      "accepted_grants": 4
+    }
+  },
+  "pair_driver": "artifacts/witness_environment_rebuild/k2_post_move/run_context_pair_post_move.py",
+  "pair_driver_differs_from_K3_driver_only_in": [
+    "docstring",
+    "base directory",
+    "output directory"
+  ],
+  "pair_output": "artifacts/witness_environment_rebuild/k2_post_move/scripted_pair_post_move",
+  "binding_hash_method": "sha256 over json.dumps(value, sort_keys=True, separators=(\",\", \":\")); method reproduces every hash in K2_pre_move_binding.json from its recorded pre-move artifacts",
+  "pre_move_record": {
+    "rows": [
+      {
+        "case": "a",
+        "artifact_path": "artifacts/witness_environment_rebuild/cached_ready/scripted_pair_from_context_retry1/shared-runtime-witness-artifact-xltizprn/witness-result.json",
+        "artifact_sha256": "86e389ad15e05fd2e0ad7717f352806cb2c60538a7aec23cb46c4d56349f558f",
+        "checkout_commit": "d1312edfca36c7acae0d064ef6a094eded88e14f",
+        "entry_relative_path": "mlflow/pyfunc/backend.py",
+        "entry_file_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+        "source_module_count": 977,
+        "source_modules_sha256": "23114cdfe2f4e538a11c3550c3e6daa7ed381b91e32cde17998d43b121c11f50",
+        "original_subject_sha256": "1211e8e8372304e6bcd9398f43ff1e7d2763cbdec0e3c64b6820b7cb66131c1c",
+        "execution_subject_sha256": "fc9b2adbfd5f127aa459ab0681be7956f2532b5c550627b4d76fc6bbd1693b5c",
+        "status": "CONFIRMED",
+        "raw_status": "EXPANDED_OBSERVED"
+      },
+      {
+        "case": "b",
+        "artifact_path": "artifacts/witness_environment_rebuild/cached_ready/scripted_pair_from_context_retry1/shared-runtime-witness-artifact-vvrfbcno/witness-result.json",
+        "artifact_sha256": "b49e85e5e66da8a00b9c802c6a069ad4eacdd6cd40e60ca0f2931d424b091ef2",
+        "checkout_commit": "202fac4c83ccc8544c087c142b80196d0e60695c",
+        "entry_relative_path": "mlflow/pyfunc/backend.py",
+        "entry_file_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+        "source_module_count": 977,
+        "source_modules_sha256": "e97a50631cd65337320c46a385544f8a07a653687228221461686ca5c3ed9f28",
+        "original_subject_sha256": "df0ff1933a5d9d537d7d02ada36b829d7ae2856b51d84c90b308e29add88339e",
+        "execution_subject_sha256": "ea1ca0711235cc710eaa3767af185d9f7d0414c79efe877e2cc1d0e6dac0dd23",
+        "status": "UNRESOLVED",
+        "raw_status": "LITERAL_OBSERVED"
+      }
+    ]
+  },
+  "post_move_comparison": [
+    {
+      "case": "a",
+      "post": {
+        "artifact_path": "artifacts/witness_environment_rebuild/k2_post_move/scripted_pair_post_move/shared-runtime-witness-artifact-xj1nbs7k/witness-result.json",
+        "artifact_sha256": "3c91c599d576413d5f330d47393a7fbd4ec894f788b7d1b94382d39b2ac7de50",
+        "checkout_commit": "d1312edfca36c7acae0d064ef6a094eded88e14f",
+        "entry_relative_path": "mlflow/pyfunc/backend.py",
+        "entry_file_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+        "source_module_count": 977,
+        "source_modules_sha256": "23114cdfe2f4e538a11c3550c3e6daa7ed381b91e32cde17998d43b121c11f50",
+        "original_subject_sha256": "1211e8e8372304e6bcd9398f43ff1e7d2763cbdec0e3c64b6820b7cb66131c1c",
+        "execution_subject_sha256": "fc9b2adbfd5f127aa459ab0681be7956f2532b5c550627b4d76fc6bbd1693b5c",
+        "status": "CONFIRMED",
+        "raw_status": "EXPANDED_OBSERVED"
+      },
+      "equal_to_pre_move": {
+        "checkout_commit": true,
+        "entry_file_sha256": true,
+        "source_module_count": true,
+        "source_modules_sha256": true,
+        "original_subject_sha256": true,
+        "execution_subject_sha256": true,
+        "status": true,
+        "raw_status": true
+      },
+      "manifest_fields_changed": [
+        "python_executable"
+      ],
+      "result_gaps": [],
+      "verdict_label": "VULNERABLE"
+    },
+    {
+      "case": "b",
+      "post": {
+        "artifact_path": "artifacts/witness_environment_rebuild/k2_post_move/scripted_pair_post_move/shared-runtime-witness-artifact-yhmelu3w/witness-result.json",
+        "artifact_sha256": "b5dc7bb5352701188cb55a9b83fb3d637d2e51ad2b42b779c8a8bdfeb3604b0b",
+        "checkout_commit": "202fac4c83ccc8544c087c142b80196d0e60695c",
+        "entry_relative_path": "mlflow/pyfunc/backend.py",
+        "entry_file_sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065",
+        "source_module_count": 977,
+        "source_modules_sha256": "e97a50631cd65337320c46a385544f8a07a653687228221461686ca5c3ed9f28",
+        "original_subject_sha256": "df0ff1933a5d9d537d7d02ada36b829d7ae2856b51d84c90b308e29add88339e",
+        "execution_subject_sha256": "ea1ca0711235cc710eaa3767af185d9f7d0414c79efe877e2cc1d0e6dac0dd23",
+        "status": "UNRESOLVED",
+        "raw_status": "LITERAL_OBSERVED"
+      },
+      "equal_to_pre_move": {
+        "checkout_commit": true,
+        "entry_file_sha256": true,
+        "source_module_count": true,
+        "source_modules_sha256": true,
+        "original_subject_sha256": true,
+        "execution_subject_sha256": true,
+        "status": true,
+        "raw_status": true
+      },
+      "manifest_fields_changed": [
+        "python_executable"
+      ],
+      "result_gaps": [],
+      "verdict_label": "ABSTAIN"
+    }
+  ],
+  "tests": {
+    "full_pytest": "2562 passed in 433.32s",
+    "full_pytest_log": "artifacts/remaining_work_20260929/k2_full_pytest.log",
+    "full_pytest_log_sha256": "20cda3e29f28e640a8d08653a3b3e58ef73cdd8e7041156bb8eb04d910f80f95",
+    "harness_check": "PASS",
+    "harness_check_log": "artifacts/remaining_work_20260929/k2_harness_check.json",
+    "git_diff_check": "clean"
+  }
+}

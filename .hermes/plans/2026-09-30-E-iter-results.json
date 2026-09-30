@@ -1,0 +1,3835 @@
+{
+  "phase": "E_iter",
+  "dataset_role": "development",
+  "claim_eligible": false,
+  "exploratory": true,
+  "source_commit": "8f05292dbcbe42014f77bf8c42ca6a456b953cdc",
+  "run_directory": "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c",
+  "gate": {
+    "full_pytest_passed": 2556,
+    "elapsed_seconds": 390.51,
+    "log": "artifacts/pytest_gate/d2d3653e8fdf4aeaa2cb4750602ca7ca/pytest.log"
+  },
+  "provider": "deepseek",
+  "returned_model_id": "deepseek-flash",
+  "system": "E1_LOCAL_SINGLE",
+  "response_mode": "compact",
+  "model_steps_per_cell": 8,
+  "observation_limit_per_cell": 8192,
+  "witness_response_limit": 1000,
+  "phase_request_limit": 40,
+  "cumulative_request_limit": 210,
+  "cumulative_token_limit": 2500000,
+  "hard_stop": null,
+  "request_count": 26,
+  "reported_total_tokens": 166482,
+  "accounted_total_tokens": 166482,
+  "cumulative_requests": 72,
+  "cumulative_reported_tokens": 447812,
+  "cumulative_accounted_tokens": 447812,
+  "raw_model_ids": [
+    "deepseek-flash"
+  ],
+  "failed_response_parses": 0,
+  "usage_conflicts": 0,
+  "requests_without_reported_usage": 0,
+  "preflight": [
+    {
+      "case": "hp003_a",
+      "origin": "model_proposed",
+      "scene_reference_provided": false,
+      "initial_request_sha256": "b8cc6a56e0a924cca9c872e04387696fc1f1575bcbc6530858b072c0fff0306b",
+      "masked_context_sha256": "8a4b7982819ae586e31b92e644868b6b40e012ba70da9b9f64346aadca272fc8",
+      "source_records": [
+        {
+          "path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "characters": 3113,
+          "text_sha256": "9e926fa346f241f2aa581e12e48a339ce3d3fc0bac4eaf1445e0d2098cd56d5f"
+        }
+      ],
+      "phase2_identical": true
+    },
+    {
+      "case": "hp003_b",
+      "origin": "model_proposed",
+      "scene_reference_provided": false,
+      "initial_request_sha256": "b8cc6a56e0a924cca9c872e04387696fc1f1575bcbc6530858b072c0fff0306b",
+      "masked_context_sha256": "8a4b7982819ae586e31b92e644868b6b40e012ba70da9b9f64346aadca272fc8",
+      "source_records": [
+        {
+          "path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "characters": 3113,
+          "text_sha256": "9e926fa346f241f2aa581e12e48a339ce3d3fc0bac4eaf1445e0d2098cd56d5f"
+        }
+      ],
+      "phase2_identical": true
+    },
+    {
+      "case": "hp004_a",
+      "origin": "model_proposed",
+      "scene_reference_provided": false,
+      "initial_request_sha256": "9a6ad7fb05c2c700de3d2304c06f89662bf99a12498563cc732c8b30a43534c8",
+      "masked_context_sha256": "13a2a249b5244c0a206bf5e3621b9951fe92809f0fcf61eb500e3c636bb54fba",
+      "source_records": [
+        {
+          "path": "mlflow/models/cli.py::serve@24-106",
+          "characters": 3148,
+          "text_sha256": "65e864f9c07daa723c7c74fbb83674ab841017011ea416d32ddd658cfa891551"
+        }
+      ],
+      "phase2_identical": null
+    },
+    {
+      "case": "hp004_b",
+      "origin": "model_proposed",
+      "scene_reference_provided": false,
+      "initial_request_sha256": "9a6ad7fb05c2c700de3d2304c06f89662bf99a12498563cc732c8b30a43534c8",
+      "masked_context_sha256": "13a2a249b5244c0a206bf5e3621b9951fe92809f0fcf61eb500e3c636bb54fba",
+      "source_records": [
+        {
+          "path": "mlflow/models/cli.py::serve@24-106",
+          "characters": 3148,
+          "text_sha256": "65e864f9c07daa723c7c74fbb83674ab841017011ea416d32ddd658cfa891551"
+        }
+      ],
+      "phase2_identical": null
+    }
+  ],
+  "cells": [
+    {
+      "case": "hp003_a",
+      "revision_role": "vulnerable",
+      "status": "abstained",
+      "admitted_label": "ABSTAIN",
+      "admitted_votes": [
+        {
+          "expert": "scan",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED"
+        }
+      ],
+      "model_calls": 6,
+      "tool_calls": 6,
+      "elapsed_seconds": 29.318,
+      "observation_units": 8128,
+      "reported_total_tokens": 36234,
+      "witness_tool_calls": 3,
+      "preparation_responses": 2,
+      "schema_rejections": 0,
+      "physical_witness_attempts": 1,
+      "automatic_diagnostics": {
+        "qualified_success": false,
+        "primary": "F3",
+        "contributors": [
+          "F3",
+          "F6"
+        ],
+        "delivered_confirmation": false,
+        "producer_confirmation": false,
+        "witness_tool_calls": 3,
+        "executed_witness_attempts": 1,
+        "preparation_responses": 2,
+        "runtime_unresolved_observations": 1,
+        "schema_rejections": 0,
+        "gaps": [
+          "probe_input_parameter_not_unique",
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:enable_mlserver",
+          "constructor_parameter_missing:config",
+          "constructor_parameter_missing:env_manager",
+          "recorder_prefix_not_established"
+        ],
+        "infrastructure_gaps": [],
+        "note": "Failure codes summarize recorded facts and can overlap. Accepting scenario preparation does not establish runtime scenario failure. Unsupported or wrong premises are not classified as resource failures. The phase report must review these facts before authorizing a repair."
+      },
+      "tool_sequence": [
+        "run_bounded_execution_witness",
+        "inspect_command_construction",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "search_symbols",
+        "search_symbols"
+      ]
+    },
+    {
+      "case": "hp003_b",
+      "revision_role": "fixed",
+      "status": "abstained",
+      "admitted_label": "ABSTAIN",
+      "admitted_votes": [
+        {
+          "expert": "scan",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED"
+        }
+      ],
+      "model_calls": 7,
+      "tool_calls": 7,
+      "elapsed_seconds": 31.338,
+      "observation_units": 8192,
+      "reported_total_tokens": 44985,
+      "witness_tool_calls": 4,
+      "preparation_responses": 2,
+      "schema_rejections": 1,
+      "physical_witness_attempts": 1,
+      "automatic_diagnostics": {
+        "qualified_success": false,
+        "primary": "F3",
+        "contributors": [
+          "F3",
+          "F6"
+        ],
+        "delivered_confirmation": false,
+        "producer_confirmation": false,
+        "witness_tool_calls": 4,
+        "executed_witness_attempts": 1,
+        "preparation_responses": 2,
+        "runtime_unresolved_observations": 1,
+        "schema_rejections": 1,
+        "gaps": [
+          "probe_input_parameter_not_unique",
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:enable_mlserver",
+          "constructor_parameter_missing:config",
+          "constructor_parameter_missing:env_manager",
+          "recorder_prefix_not_established"
+        ],
+        "infrastructure_gaps": [],
+        "note": "Failure codes summarize recorded facts and can overlap. Accepting scenario preparation does not establish runtime scenario failure. Unsupported or wrong premises are not classified as resource failures. The phase report must review these facts before authorizing a repair."
+      },
+      "tool_sequence": [
+        "run_bounded_execution_witness",
+        "inspect_command_construction",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "read_span",
+        "search_symbols"
+      ]
+    },
+    {
+      "case": "hp004_a",
+      "revision_role": "vulnerable",
+      "status": "abstained",
+      "admitted_label": "ABSTAIN",
+      "admitted_votes": [
+        {
+          "expert": "scan",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED"
+        }
+      ],
+      "model_calls": 7,
+      "tool_calls": 10,
+      "elapsed_seconds": 28.354,
+      "observation_units": 8192,
+      "reported_total_tokens": 45465,
+      "witness_tool_calls": 3,
+      "preparation_responses": 2,
+      "schema_rejections": 0,
+      "physical_witness_attempts": 1,
+      "automatic_diagnostics": {
+        "qualified_success": false,
+        "primary": "F3",
+        "contributors": [
+          "F3"
+        ],
+        "delivered_confirmation": false,
+        "producer_confirmation": false,
+        "witness_tool_calls": 3,
+        "executed_witness_attempts": 1,
+        "preparation_responses": 2,
+        "runtime_unresolved_observations": 1,
+        "schema_rejections": 0,
+        "gaps": [
+          "probe_input_parameter_not_unique",
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:workers",
+          "target_or_isolation_error"
+        ],
+        "infrastructure_gaps": [],
+        "note": "Failure codes summarize recorded facts and can overlap. Accepting scenario preparation does not establish runtime scenario failure. Unsupported or wrong premises are not classified as resource failures. The phase report must review these facts before authorizing a repair."
+      },
+      "tool_sequence": [
+        "run_bounded_execution_witness",
+        "inspect_command_construction",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "run_static_check",
+        "get_callees",
+        "search_symbols",
+        "find_references",
+        "read_span",
+        "search_symbols"
+      ]
+    },
+    {
+      "case": "hp004_b",
+      "revision_role": "fixed",
+      "status": "abstained",
+      "admitted_label": "ABSTAIN",
+      "admitted_votes": [
+        {
+          "expert": "scan",
+          "label": "ABSTAIN",
+          "validation_status": "UNRESOLVED"
+        }
+      ],
+      "model_calls": 6,
+      "tool_calls": 7,
+      "elapsed_seconds": 27.195,
+      "observation_units": 8192,
+      "reported_total_tokens": 39798,
+      "witness_tool_calls": 3,
+      "preparation_responses": 2,
+      "schema_rejections": 0,
+      "physical_witness_attempts": 1,
+      "automatic_diagnostics": {
+        "qualified_success": false,
+        "primary": "F3",
+        "contributors": [
+          "F3",
+          "F6"
+        ],
+        "delivered_confirmation": false,
+        "producer_confirmation": false,
+        "witness_tool_calls": 3,
+        "executed_witness_attempts": 1,
+        "preparation_responses": 2,
+        "runtime_unresolved_observations": 1,
+        "schema_rejections": 0,
+        "gaps": [
+          "probe_input_parameter_not_unique",
+          "entry_argument_missing:port",
+          "entry_argument_missing:host",
+          "entry_argument_missing:timeout",
+          "entry_argument_missing:workers",
+          "target_or_isolation_error"
+        ],
+        "infrastructure_gaps": [],
+        "note": "Failure codes summarize recorded facts and can overlap. Accepting scenario preparation does not establish runtime scenario failure. Unsupported or wrong premises are not classified as resource failures. The phase report must review these facts before authorizing a repair."
+      },
+      "tool_sequence": [
+        "read_span",
+        "inspect_command_construction",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "run_bounded_execution_witness",
+        "search_symbols",
+        "get_callees"
+      ]
+    }
+  ],
+  "ordered_requests": [
+    {
+      "sequence": 1,
+      "case": "hp003_a",
+      "request_id": "6286425b7bc64e639dcbb3f969094b55",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:21.268017+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 4712,
+          "completion_tokens": 139,
+          "total_tokens": 4851,
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          },
+          "prompt_cache_hit_tokens": 4480,
+          "prompt_cache_miss_tokens": 232
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "60c002f3-edfb-45b1-9fef-a0df68c12b43",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 4712,
+            "completion_tokens": 139,
+            "total_tokens": 4851,
+            "prompt_tokens_details": {
+              "cached_tokens": 4480
+            },
+            "prompt_cache_hit_tokens": 4480,
+            "prompt_cache_miss_tokens": 232
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 51962,
+      "ledger_accounted_tokens": 4851,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 139,
+          "prompt_cache_hit_tokens": 4480,
+          "prompt_cache_miss_tokens": 232,
+          "prompt_tokens": 4712,
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          },
+          "total_tokens": 4851
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 6,
+          "result_event_index": 7
+        },
+        {
+          "name": "inspect_command_construction",
+          "start_event_index": 8,
+          "result_event_index": 9
+        }
+      ]
+    },
+    {
+      "sequence": 2,
+      "case": "hp003_a",
+      "request_id": "c388539607574ce9ae3aca729e192557",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:26.035950+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 5474,
+          "completion_tokens": 154,
+          "total_tokens": 5628,
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          },
+          "prompt_cache_hit_tokens": 4736,
+          "prompt_cache_miss_tokens": 738
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "705bcb76-5031-48cb-aba9-044b1538635c",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 5474,
+            "completion_tokens": 154,
+            "total_tokens": 5628,
+            "prompt_tokens_details": {
+              "cached_tokens": 4736
+            },
+            "prompt_cache_hit_tokens": 4736,
+            "prompt_cache_miss_tokens": 738
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 58934,
+      "ledger_accounted_tokens": 5628,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 154,
+          "prompt_cache_hit_tokens": 4736,
+          "prompt_cache_miss_tokens": 738,
+          "prompt_tokens": 5474,
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          },
+          "total_tokens": 5628
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 13,
+          "result_event_index": 14
+        }
+      ]
+    },
+    {
+      "sequence": 3,
+      "case": "hp003_a",
+      "request_id": "63fc90cedb2a4587b1b42b1aa9d7096c",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:30.721481+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6113,
+          "completion_tokens": 386,
+          "total_tokens": 6499,
+          "prompt_tokens_details": {
+            "cached_tokens": 5504
+          },
+          "prompt_cache_hit_tokens": 5504,
+          "prompt_cache_miss_tokens": 609
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "49b8e4ba-d491-4fe8-adb5-afa64b61d22e",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6113,
+            "completion_tokens": 386,
+            "total_tokens": 6499,
+            "prompt_tokens_details": {
+              "cached_tokens": 5504
+            },
+            "prompt_cache_hit_tokens": 5504,
+            "prompt_cache_miss_tokens": 609
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 65052,
+      "ledger_accounted_tokens": 6499,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 386,
+          "prompt_cache_hit_tokens": 5504,
+          "prompt_cache_miss_tokens": 609,
+          "prompt_tokens": 6113,
+          "prompt_tokens_details": {
+            "cached_tokens": 5504
+          },
+          "total_tokens": 6499
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 18,
+          "result_event_index": 19
+        }
+      ]
+    },
+    {
+      "sequence": 4,
+      "case": "hp003_a",
+      "request_id": "f7c509777b92470e8382b1c825a15247",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:41.695187+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6845,
+          "completion_tokens": 111,
+          "total_tokens": 6956,
+          "prompt_tokens_details": {
+            "cached_tokens": 6400
+          },
+          "prompt_cache_hit_tokens": 6400,
+          "prompt_cache_miss_tokens": 445
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "b93dee7d-88b1-44d2-8584-7100d6b2e14d",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6845,
+            "completion_tokens": 111,
+            "total_tokens": 6956,
+            "prompt_tokens_details": {
+              "cached_tokens": 6400
+            },
+            "prompt_cache_hit_tokens": 6400,
+            "prompt_cache_miss_tokens": 445
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 70778,
+      "ledger_accounted_tokens": 6956,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 111,
+          "prompt_cache_hit_tokens": 6400,
+          "prompt_cache_miss_tokens": 445,
+          "prompt_tokens": 6845,
+          "prompt_tokens_details": {
+            "cached_tokens": 6400
+          },
+          "total_tokens": 6956
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "search_symbols",
+          "start_event_index": 23,
+          "result_event_index": 24
+        },
+        {
+          "name": "search_symbols",
+          "start_event_index": 25,
+          "result_event_index": 26
+        }
+      ]
+    },
+    {
+      "sequence": 5,
+      "case": "hp003_a",
+      "request_id": "a928cf97be784a328693a3fea36c0d0f",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:42.765995+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 5796,
+          "completion_tokens": 177,
+          "total_tokens": 5973,
+          "prompt_tokens_details": {
+            "cached_tokens": 2304
+          },
+          "prompt_cache_hit_tokens": 2304,
+          "prompt_cache_miss_tokens": 3492
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "3d1f382c-9a7a-4461-be17-9e36b0ade5fc",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 5796,
+            "completion_tokens": 177,
+            "total_tokens": 5973,
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            },
+            "prompt_cache_hit_tokens": 2304,
+            "prompt_cache_miss_tokens": 3492
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 64172,
+      "ledger_accounted_tokens": 5973,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 177,
+          "prompt_cache_hit_tokens": 2304,
+          "prompt_cache_miss_tokens": 3492,
+          "prompt_tokens": 5796,
+          "prompt_tokens_details": {
+            "cached_tokens": 2304
+          },
+          "total_tokens": 5973
+        }
+      ],
+      "tool_outcomes": []
+    },
+    {
+      "sequence": 6,
+      "case": "hp003_a",
+      "request_id": "b4d87190423d4a398ec448d06757789c",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:44.331721+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6157,
+          "completion_tokens": 170,
+          "total_tokens": 6327,
+          "prompt_tokens_details": {
+            "cached_tokens": 5888
+          },
+          "prompt_cache_hit_tokens": 5888,
+          "prompt_cache_miss_tokens": 269
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "fabb53e2-55a2-4a49-894c-c4bc4c66e1cb",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6157,
+            "completion_tokens": 170,
+            "total_tokens": 6327,
+            "prompt_tokens_details": {
+              "cached_tokens": 5888
+            },
+            "prompt_cache_hit_tokens": 5888,
+            "prompt_cache_miss_tokens": 269
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 67926,
+      "ledger_accounted_tokens": 6327,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 170,
+          "prompt_cache_hit_tokens": 5888,
+          "prompt_cache_miss_tokens": 269,
+          "prompt_tokens": 6157,
+          "prompt_tokens_details": {
+            "cached_tokens": 5888
+          },
+          "total_tokens": 6327
+        }
+      ],
+      "tool_outcomes": []
+    },
+    {
+      "sequence": 7,
+      "case": "hp003_b",
+      "request_id": "9a253c6f73ec4570bf8fecab871dc746",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:50.783663+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 4712,
+          "completion_tokens": 139,
+          "total_tokens": 4851,
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          },
+          "prompt_cache_hit_tokens": 4480,
+          "prompt_cache_miss_tokens": 232
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "ab83b1ca-ff7a-4d7e-9228-4fb3b82b34a1",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 4712,
+            "completion_tokens": 139,
+            "total_tokens": 4851,
+            "prompt_tokens_details": {
+              "cached_tokens": 4480
+            },
+            "prompt_cache_hit_tokens": 4480,
+            "prompt_cache_miss_tokens": 232
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 51962,
+      "ledger_accounted_tokens": 4851,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 139,
+          "prompt_cache_hit_tokens": 4480,
+          "prompt_cache_miss_tokens": 232,
+          "prompt_tokens": 4712,
+          "prompt_tokens_details": {
+            "cached_tokens": 4480
+          },
+          "total_tokens": 4851
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 39,
+          "result_event_index": 40
+        },
+        {
+          "name": "inspect_command_construction",
+          "start_event_index": 41,
+          "result_event_index": 42
+        }
+      ]
+    },
+    {
+      "sequence": 8,
+      "case": "hp003_b",
+      "request_id": "c7116178ce714eaa806754ccfb24111f",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:55.448995+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 5474,
+          "completion_tokens": 145,
+          "total_tokens": 5619,
+          "prompt_tokens_details": {
+            "cached_tokens": 5248
+          },
+          "prompt_cache_hit_tokens": 5248,
+          "prompt_cache_miss_tokens": 226
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "409ce9f4-78e8-4af1-abd4-fe95d277780a",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 5474,
+            "completion_tokens": 145,
+            "total_tokens": 5619,
+            "prompt_tokens_details": {
+              "cached_tokens": 5248
+            },
+            "prompt_cache_hit_tokens": 5248,
+            "prompt_cache_miss_tokens": 226
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 58934,
+      "ledger_accounted_tokens": 5619,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 145,
+          "prompt_cache_hit_tokens": 5248,
+          "prompt_cache_miss_tokens": 226,
+          "prompt_tokens": 5474,
+          "prompt_tokens_details": {
+            "cached_tokens": 5248
+          },
+          "total_tokens": 5619
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 46,
+          "result_event_index": 47
+        }
+      ]
+    },
+    {
+      "sequence": 9,
+      "case": "hp003_b",
+      "request_id": "9f38c4823d4e4954920eaa905dd0f8c5",
+      "role": "scan",
+      "start_time": "2026-09-29T16:54:59.664434+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6104,
+          "completion_tokens": 469,
+          "total_tokens": 6573,
+          "prompt_tokens_details": {
+            "cached_tokens": 5504
+          },
+          "prompt_cache_hit_tokens": 5504,
+          "prompt_cache_miss_tokens": 600
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "f4845a27-a59f-4256-a474-581fd374bffd",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6104,
+            "completion_tokens": 469,
+            "total_tokens": 6573,
+            "prompt_tokens_details": {
+              "cached_tokens": 5504
+            },
+            "prompt_cache_hit_tokens": 5504,
+            "prompt_cache_miss_tokens": 600
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 65000,
+      "ledger_accounted_tokens": 6573,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 469,
+          "prompt_cache_hit_tokens": 5504,
+          "prompt_cache_miss_tokens": 600,
+          "prompt_tokens": 6104,
+          "prompt_tokens_details": {
+            "cached_tokens": 5504
+          },
+          "total_tokens": 6573
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 51,
+          "result_event_index": 52
+        }
+      ]
+    },
+    {
+      "sequence": 10,
+      "case": "hp003_b",
+      "request_id": "9741452d2e14472aaf95d54d8a7fe987",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:01.987331+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6687,
+          "completion_tokens": 385,
+          "total_tokens": 7072,
+          "prompt_tokens_details": {
+            "cached_tokens": 6528
+          },
+          "prompt_cache_hit_tokens": 6528,
+          "prompt_cache_miss_tokens": 159
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "fd9afd3c-5bcf-4bfa-b19f-07797dbd4dac",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6687,
+            "completion_tokens": 385,
+            "total_tokens": 7072,
+            "prompt_tokens_details": {
+              "cached_tokens": 6528
+            },
+            "prompt_cache_hit_tokens": 6528,
+            "prompt_cache_miss_tokens": 159
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 70160,
+      "ledger_accounted_tokens": 7072,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 385,
+          "prompt_cache_hit_tokens": 6528,
+          "prompt_cache_miss_tokens": 159,
+          "prompt_tokens": 6687,
+          "prompt_tokens_details": {
+            "cached_tokens": 6528
+          },
+          "total_tokens": 7072
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 56,
+          "result_event_index": 57
+        }
+      ]
+    },
+    {
+      "sequence": 11,
+      "case": "hp003_b",
+      "request_id": "de132d5109f041158dc254249fbc4540",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:13.074122+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 7425,
+          "completion_tokens": 107,
+          "total_tokens": 7532,
+          "prompt_tokens_details": {
+            "cached_tokens": 7040
+          },
+          "prompt_cache_hit_tokens": 7040,
+          "prompt_cache_miss_tokens": 385
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "c689529b-1fd9-447f-a6a9-3a67be25e06c",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 7425,
+            "completion_tokens": 107,
+            "total_tokens": 7532,
+            "prompt_tokens_details": {
+              "cached_tokens": 7040
+            },
+            "prompt_cache_hit_tokens": 7040,
+            "prompt_cache_miss_tokens": 385
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 75882,
+      "ledger_accounted_tokens": 7532,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 107,
+          "prompt_cache_hit_tokens": 7040,
+          "prompt_cache_miss_tokens": 385,
+          "prompt_tokens": 7425,
+          "prompt_tokens_details": {
+            "cached_tokens": 7040
+          },
+          "total_tokens": 7532
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "read_span",
+          "start_event_index": 61,
+          "result_event_index": 62
+        },
+        {
+          "name": "search_symbols",
+          "start_event_index": 63,
+          "result_event_index": 64
+        }
+      ]
+    },
+    {
+      "sequence": 12,
+      "case": "hp003_b",
+      "request_id": "76266eff00ee4d5ab3ae86f14c30be5f",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:14.325710+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6282,
+          "completion_tokens": 177,
+          "total_tokens": 6459,
+          "prompt_tokens_details": {
+            "cached_tokens": 3072
+          },
+          "prompt_cache_hit_tokens": 3072,
+          "prompt_cache_miss_tokens": 3210
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "e314ea62-7438-498a-8476-783f5948a787",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6282,
+            "completion_tokens": 177,
+            "total_tokens": 6459,
+            "prompt_tokens_details": {
+              "cached_tokens": 3072
+            },
+            "prompt_cache_hit_tokens": 3072,
+            "prompt_cache_miss_tokens": 3210
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 68520,
+      "ledger_accounted_tokens": 6459,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 177,
+          "prompt_cache_hit_tokens": 3072,
+          "prompt_cache_miss_tokens": 3210,
+          "prompt_tokens": 6282,
+          "prompt_tokens_details": {
+            "cached_tokens": 3072
+          },
+          "total_tokens": 6459
+        }
+      ],
+      "tool_outcomes": []
+    },
+    {
+      "sequence": 13,
+      "case": "hp003_b",
+      "request_id": "d6f7df92a4214567ae276399ab64e33e",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:15.876762+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6724,
+          "completion_tokens": 155,
+          "total_tokens": 6879,
+          "prompt_tokens_details": {
+            "cached_tokens": 6400
+          },
+          "prompt_cache_hit_tokens": 6400,
+          "prompt_cache_miss_tokens": 324
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "d04293d7-bc4b-4ead-bef4-db9352f235a7",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6724,
+            "completion_tokens": 155,
+            "total_tokens": 6879,
+            "prompt_tokens_details": {
+              "cached_tokens": 6400
+            },
+            "prompt_cache_hit_tokens": 6400,
+            "prompt_cache_miss_tokens": 324
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 73180,
+      "ledger_accounted_tokens": 6879,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 155,
+          "prompt_cache_hit_tokens": 6400,
+          "prompt_cache_miss_tokens": 324,
+          "prompt_tokens": 6724,
+          "prompt_tokens_details": {
+            "cached_tokens": 6400
+          },
+          "total_tokens": 6879
+        }
+      ],
+      "tool_outcomes": []
+    },
+    {
+      "sequence": 14,
+      "case": "hp004_a",
+      "request_id": "fbce6c1db8744fe28fb0ac22e94c1b61",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:21.845879+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 4897,
+          "completion_tokens": 132,
+          "total_tokens": 5029,
+          "prompt_tokens_details": {
+            "cached_tokens": 3072
+          },
+          "prompt_cache_hit_tokens": 3072,
+          "prompt_cache_miss_tokens": 1825
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "97862105-2de1-4f52-8132-5ae087314c45",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 4897,
+            "completion_tokens": 132,
+            "total_tokens": 5029,
+            "prompt_tokens_details": {
+              "cached_tokens": 3072
+            },
+            "prompt_cache_hit_tokens": 3072,
+            "prompt_cache_miss_tokens": 1825
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 52114,
+      "ledger_accounted_tokens": 5029,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 132,
+          "prompt_cache_hit_tokens": 3072,
+          "prompt_cache_miss_tokens": 1825,
+          "prompt_tokens": 4897,
+          "prompt_tokens_details": {
+            "cached_tokens": 3072
+          },
+          "total_tokens": 5029
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 77,
+          "result_event_index": 78
+        },
+        {
+          "name": "inspect_command_construction",
+          "start_event_index": 79,
+          "result_event_index": 80
+        }
+      ]
+    },
+    {
+      "sequence": 15,
+      "case": "hp004_a",
+      "request_id": "a7c7d821d9e04b7b86ba814bd3b6f84e",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:26.826356+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 5529,
+          "completion_tokens": 139,
+          "total_tokens": 5668,
+          "prompt_tokens_details": {
+            "cached_tokens": 4864
+          },
+          "prompt_cache_hit_tokens": 4864,
+          "prompt_cache_miss_tokens": 665
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "aa6f0e15-ec4a-462f-b6c6-6dc2838e6d35",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 5529,
+            "completion_tokens": 139,
+            "total_tokens": 5668,
+            "prompt_tokens_details": {
+              "cached_tokens": 4864
+            },
+            "prompt_cache_hit_tokens": 4864,
+            "prompt_cache_miss_tokens": 665
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 58106,
+      "ledger_accounted_tokens": 5668,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 139,
+          "prompt_cache_hit_tokens": 4864,
+          "prompt_cache_miss_tokens": 665,
+          "prompt_tokens": 5529,
+          "prompt_tokens_details": {
+            "cached_tokens": 4864
+          },
+          "total_tokens": 5668
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 84,
+          "result_event_index": 85
+        }
+      ]
+    },
+    {
+      "sequence": 16,
+      "case": "hp004_a",
+      "request_id": "b173df4e574c403c8337d0ae7213c00f",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:31.354673+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6051,
+          "completion_tokens": 295,
+          "total_tokens": 6346,
+          "prompt_tokens_details": {
+            "cached_tokens": 5504
+          },
+          "prompt_cache_hit_tokens": 5504,
+          "prompt_cache_miss_tokens": 547
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "3e772e28-d634-476e-bef0-ad0c967b5945",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6051,
+            "completion_tokens": 295,
+            "total_tokens": 6346,
+            "prompt_tokens_details": {
+              "cached_tokens": 5504
+            },
+            "prompt_cache_hit_tokens": 5504,
+            "prompt_cache_miss_tokens": 547
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 63170,
+      "ledger_accounted_tokens": 6346,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 295,
+          "prompt_cache_hit_tokens": 5504,
+          "prompt_cache_miss_tokens": 547,
+          "prompt_tokens": 6051,
+          "prompt_tokens_details": {
+            "cached_tokens": 5504
+          },
+          "total_tokens": 6346
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 89,
+          "result_event_index": 90
+        }
+      ]
+    },
+    {
+      "sequence": 17,
+      "case": "hp004_a",
+      "request_id": "e5189be7b97143869cb1812062048ee8",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:40.786788+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6636,
+          "completion_tokens": 121,
+          "total_tokens": 6757,
+          "prompt_tokens_details": {
+            "cached_tokens": 6016
+          },
+          "prompt_cache_hit_tokens": 6016,
+          "prompt_cache_miss_tokens": 620
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "298bce2e-364e-4e88-bf6e-011f02b75a73",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6636,
+            "completion_tokens": 121,
+            "total_tokens": 6757,
+            "prompt_tokens_details": {
+              "cached_tokens": 6016
+            },
+            "prompt_cache_hit_tokens": 6016,
+            "prompt_cache_miss_tokens": 620
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 67680,
+      "ledger_accounted_tokens": 6757,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 121,
+          "prompt_cache_hit_tokens": 6016,
+          "prompt_cache_miss_tokens": 620,
+          "prompt_tokens": 6636,
+          "prompt_tokens_details": {
+            "cached_tokens": 6016
+          },
+          "total_tokens": 6757
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_static_check",
+          "start_event_index": 94,
+          "result_event_index": 95
+        },
+        {
+          "name": "get_callees",
+          "start_event_index": 96,
+          "result_event_index": 97
+        }
+      ]
+    },
+    {
+      "sequence": 18,
+      "case": "hp004_a",
+      "request_id": "29884c0acd0843449d3912794666a130",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:42.079953+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6867,
+          "completion_tokens": 95,
+          "total_tokens": 6962,
+          "prompt_tokens_details": {
+            "cached_tokens": 6656
+          },
+          "prompt_cache_hit_tokens": 6656,
+          "prompt_cache_miss_tokens": 211
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "68e36064-715a-4f56-83ae-f78e33204e8c",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6867,
+            "completion_tokens": 95,
+            "total_tokens": 6962,
+            "prompt_tokens_details": {
+              "cached_tokens": 6656
+            },
+            "prompt_cache_hit_tokens": 6656,
+            "prompt_cache_miss_tokens": 211
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 69934,
+      "ledger_accounted_tokens": 6962,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 95,
+          "prompt_cache_hit_tokens": 6656,
+          "prompt_cache_miss_tokens": 211,
+          "prompt_tokens": 6867,
+          "prompt_tokens_details": {
+            "cached_tokens": 6656
+          },
+          "total_tokens": 6962
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "search_symbols",
+          "start_event_index": 101,
+          "result_event_index": 102
+        },
+        {
+          "name": "find_references",
+          "start_event_index": 103,
+          "result_event_index": 104
+        }
+      ]
+    },
+    {
+      "sequence": 19,
+      "case": "hp004_a",
+      "request_id": "8a0be46406cc474699c86aea1dd7bf61",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:43.036394+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 8100,
+          "completion_tokens": 105,
+          "total_tokens": 8205,
+          "prompt_tokens_details": {
+            "cached_tokens": 6912
+          },
+          "prompt_cache_hit_tokens": 6912,
+          "prompt_cache_miss_tokens": 1188
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "3e944d32-074f-4850-a819-82497afafea9",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 8100,
+            "completion_tokens": 105,
+            "total_tokens": 8205,
+            "prompt_tokens_details": {
+              "cached_tokens": 6912
+            },
+            "prompt_cache_hit_tokens": 6912,
+            "prompt_cache_miss_tokens": 1188
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 79288,
+      "ledger_accounted_tokens": 8205,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 105,
+          "prompt_cache_hit_tokens": 6912,
+          "prompt_cache_miss_tokens": 1188,
+          "prompt_tokens": 8100,
+          "prompt_tokens_details": {
+            "cached_tokens": 6912
+          },
+          "total_tokens": 8205
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "read_span",
+          "start_event_index": 108,
+          "result_event_index": 109
+        },
+        {
+          "name": "search_symbols",
+          "start_event_index": 110,
+          "result_event_index": 111
+        }
+      ]
+    },
+    {
+      "sequence": 20,
+      "case": "hp004_a",
+      "request_id": "ec5db7b28a52496ca6f964dfd85b1441",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:44.058257+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6304,
+          "completion_tokens": 194,
+          "total_tokens": 6498,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 5536
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "84005189-c6c0-409b-b228-87856874192c",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6304,
+            "completion_tokens": 194,
+            "total_tokens": 6498,
+            "prompt_tokens_details": {
+              "cached_tokens": 768
+            },
+            "prompt_cache_hit_tokens": 768,
+            "prompt_cache_miss_tokens": 5536
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 65516,
+      "ledger_accounted_tokens": 6498,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 194,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 5536,
+          "prompt_tokens": 6304,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 6498
+        }
+      ],
+      "tool_outcomes": []
+    },
+    {
+      "sequence": 21,
+      "case": "hp004_b",
+      "request_id": "1c407179260c4591b4b60c1d1c71ad42",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:50.481155+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 4897,
+          "completion_tokens": 122,
+          "total_tokens": 5019,
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          },
+          "prompt_cache_hit_tokens": 4736,
+          "prompt_cache_miss_tokens": 161
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "fea4668b-eb4d-4998-8901-8c04d828dd4a",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 4897,
+            "completion_tokens": 122,
+            "total_tokens": 5019,
+            "prompt_tokens_details": {
+              "cached_tokens": 4736
+            },
+            "prompt_cache_hit_tokens": 4736,
+            "prompt_cache_miss_tokens": 161
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 52114,
+      "ledger_accounted_tokens": 5019,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 122,
+          "prompt_cache_hit_tokens": 4736,
+          "prompt_cache_miss_tokens": 161,
+          "prompt_tokens": 4897,
+          "prompt_tokens_details": {
+            "cached_tokens": 4736
+          },
+          "total_tokens": 5019
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "read_span",
+          "start_event_index": 121,
+          "result_event_index": 122
+        },
+        {
+          "name": "inspect_command_construction",
+          "start_event_index": 123,
+          "result_event_index": 124
+        }
+      ]
+    },
+    {
+      "sequence": 22,
+      "case": "hp004_b",
+      "request_id": "a6a7ca98bfae40eeb03689dc28dc94d0",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:52.124578+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6264,
+          "completion_tokens": 67,
+          "total_tokens": 6331,
+          "prompt_tokens_details": {
+            "cached_tokens": 4864
+          },
+          "prompt_cache_hit_tokens": 4864,
+          "prompt_cache_miss_tokens": 1400
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "7ba1f0e4-c42d-4f5f-bb67-88b692389ff5",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6264,
+            "completion_tokens": 67,
+            "total_tokens": 6331,
+            "prompt_tokens_details": {
+              "cached_tokens": 4864
+            },
+            "prompt_cache_hit_tokens": 4864,
+            "prompt_cache_miss_tokens": 1400
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 62640,
+      "ledger_accounted_tokens": 6331,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 67,
+          "prompt_cache_hit_tokens": 4864,
+          "prompt_cache_miss_tokens": 1400,
+          "prompt_tokens": 6264,
+          "prompt_tokens_details": {
+            "cached_tokens": 4864
+          },
+          "total_tokens": 6331
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 128,
+          "result_event_index": 129
+        }
+      ]
+    },
+    {
+      "sequence": 23,
+      "case": "hp004_b",
+      "request_id": "b5187fd0e970448a889aab57757409da",
+      "role": "scan",
+      "start_time": "2026-09-29T16:55:56.534130+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6609,
+          "completion_tokens": 145,
+          "total_tokens": 6754,
+          "prompt_tokens_details": {
+            "cached_tokens": 6272
+          },
+          "prompt_cache_hit_tokens": 6272,
+          "prompt_cache_miss_tokens": 337
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "146e211a-58b8-4769-95e0-eb1446338f6b",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6609,
+            "completion_tokens": 145,
+            "total_tokens": 6754,
+            "prompt_tokens_details": {
+              "cached_tokens": 6272
+            },
+            "prompt_cache_hit_tokens": 6272,
+            "prompt_cache_miss_tokens": 337
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 66228,
+      "ledger_accounted_tokens": 6754,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 145,
+          "prompt_cache_hit_tokens": 6272,
+          "prompt_cache_miss_tokens": 337,
+          "prompt_tokens": 6609,
+          "prompt_tokens_details": {
+            "cached_tokens": 6272
+          },
+          "total_tokens": 6754
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 133,
+          "result_event_index": 134
+        }
+      ]
+    },
+    {
+      "sequence": 24,
+      "case": "hp004_b",
+      "request_id": "c583c665749e47ec8022cf0a000d9e77",
+      "role": "scan",
+      "start_time": "2026-09-29T16:56:00.683281+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 7137,
+          "completion_tokens": 315,
+          "total_tokens": 7452,
+          "prompt_tokens_details": {
+            "cached_tokens": 6656
+          },
+          "prompt_cache_hit_tokens": 6656,
+          "prompt_cache_miss_tokens": 481
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "0598fe79-15d0-446a-8c30-4b2d063b5629",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 7137,
+            "completion_tokens": 315,
+            "total_tokens": 7452,
+            "prompt_tokens_details": {
+              "cached_tokens": 6656
+            },
+            "prompt_cache_hit_tokens": 6656,
+            "prompt_cache_miss_tokens": 481
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 71340,
+      "ledger_accounted_tokens": 7452,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 315,
+          "prompt_cache_hit_tokens": 6656,
+          "prompt_cache_miss_tokens": 481,
+          "prompt_tokens": 7137,
+          "prompt_tokens_details": {
+            "cached_tokens": 6656
+          },
+          "total_tokens": 7452
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "run_bounded_execution_witness",
+          "start_event_index": 138,
+          "result_event_index": 139
+        }
+      ]
+    },
+    {
+      "sequence": 25,
+      "case": "hp004_b",
+      "request_id": "4cd344d9db284b40bdff3f3f67ecfac2",
+      "role": "scan",
+      "start_time": "2026-09-29T16:56:10.171901+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 7748,
+          "completion_tokens": 133,
+          "total_tokens": 7881,
+          "prompt_tokens_details": {
+            "cached_tokens": 7040
+          },
+          "prompt_cache_hit_tokens": 7040,
+          "prompt_cache_miss_tokens": 708
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "b5fb6631-ca7c-4c59-8275-7294f36a41e8",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 7748,
+            "completion_tokens": 133,
+            "total_tokens": 7881,
+            "prompt_tokens_details": {
+              "cached_tokens": 7040
+            },
+            "prompt_cache_hit_tokens": 7040,
+            "prompt_cache_miss_tokens": 708
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 76016,
+      "ledger_accounted_tokens": 7881,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 133,
+          "prompt_cache_hit_tokens": 7040,
+          "prompt_cache_miss_tokens": 708,
+          "prompt_tokens": 7748,
+          "prompt_tokens_details": {
+            "cached_tokens": 7040
+          },
+          "total_tokens": 7881
+        }
+      ],
+      "tool_outcomes": [
+        {
+          "name": "search_symbols",
+          "start_event_index": 143,
+          "result_event_index": 144
+        },
+        {
+          "name": "get_callees",
+          "start_event_index": 145,
+          "result_event_index": 146
+        }
+      ]
+    },
+    {
+      "sequence": 26,
+      "case": "hp004_b",
+      "request_id": "6d814e94b5e648649702a4207aafb15c",
+      "role": "scan",
+      "start_time": "2026-09-29T16:56:11.426754+00:00",
+      "returned_model_ids": [
+        "deepseek-flash"
+      ],
+      "reported_usage_raw": [
+        {
+          "prompt_tokens": 6181,
+          "completion_tokens": 180,
+          "total_tokens": 6361,
+          "prompt_tokens_details": {
+            "cached_tokens": 2432
+          },
+          "prompt_cache_hit_tokens": 2432,
+          "prompt_cache_miss_tokens": 3749
+        }
+      ],
+      "response_metadata_raw": [
+        {
+          "id": "28d5e6c3-0239-4d61-b5cb-607c1919eeb5",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 6181,
+            "completion_tokens": 180,
+            "total_tokens": 6361,
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            },
+            "prompt_cache_hit_tokens": 2432,
+            "prompt_cache_miss_tokens": 3749
+          }
+        }
+      ],
+      "response_received": true,
+      "parsed_reply": true,
+      "invalid_response": false,
+      "errors": [],
+      "ledger_token_reservation": 64306,
+      "ledger_accounted_tokens": 6361,
+      "ledger_usage_history": [
+        {
+          "completion_tokens": 180,
+          "prompt_cache_hit_tokens": 2432,
+          "prompt_cache_miss_tokens": 3749,
+          "prompt_tokens": 6181,
+          "prompt_tokens_details": {
+            "cached_tokens": 2432
+          },
+          "total_tokens": 6361
+        }
+      ],
+      "tool_outcomes": []
+    }
+  ],
+  "raw_scenario_proposals": [
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "c388539607574ce9ae3aca729e192557",
+      "event_index": 13,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "value": "model_uri",
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() receives model_uri from the caller (e.g. CLI/API model serving request) and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command."
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "63fc90cedb2a4587b1b42b1aa9d7096c",
+      "event_index": 18,
+      "scenario_hypothesis": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn/uvicorn options) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server startup timeout; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() receives model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command.",
+          "value": "model_uri"
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "c7116178ce714eaa806754ccfb24111f",
+      "event_index": 46,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "value": "model_uri",
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line."
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "9f38c4823d4e4954920eaa905dd0f8c5",
+      "event_index": 51,
+      "scenario_hypothesis": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn opts) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server timeout value; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+          "value": "model_uri"
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp003_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "9741452d2e14472aaf95d54d8a7fe987",
+      "event_index": 56,
+      "scenario_hypothesis": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn opts) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server timeout value; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+          "value": "model_uri"
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp004_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "a7c7d821d9e04b7b86ba814bd3b6f84e",
+      "event_index": 84,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "value": "model_uri",
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI argument passed to get_flavor_backend(...).serve(...); a crafted model URI could reach command construction in the serving backend."
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp004_a",
+      "scenario_origin": "model_proposed",
+      "request_id": "b173df4e574c403c8337d0ae7213c00f",
+      "event_index": 89,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI argument passed to get_flavor_backend(...).serve(...); a crafted model URI could reach command construction in the serving backend.",
+          "value": "model_uri"
+        },
+        "entry_value_assumptions": {
+          "port": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --port value supplied by the invoking user.",
+            "value": "5000"
+          },
+          "host": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --host value supplied by the invoking user.",
+            "value": "127.0.0.1"
+          },
+          "timeout": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --timeout value supplied by the invoking user.",
+            "value": "60"
+          },
+          "workers": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --workers value supplied by the invoking user.",
+            "value": "1"
+          }
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp004_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "b5187fd0e970448a889aab57757409da",
+      "event_index": 133,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "value": "model_uri",
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI MODEL_URI argument passed into get_flavor_backend(...).serve(...), which builds the serving command; a crafted model URI is the candidate injection vector."
+        }
+      }
+    },
+    {
+      "evaluation_case_id": "hp004_b",
+      "scenario_origin": "model_proposed",
+      "request_id": "c583c665749e47ec8022cf0a000d9e77",
+      "event_index": 138,
+      "scenario_hypothesis": {
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI MODEL_URI argument passed into get_flavor_backend(...).serve(...), which builds the serving command; a crafted model URI is the candidate injection vector.",
+          "value": "model_uri"
+        },
+        "entry_value_assumptions": {
+          "port": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --port value forwarded to the flavor backend serve() call.",
+            "value": "5000"
+          },
+          "host": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --host value forwarded to the flavor backend serve() call.",
+            "value": "127.0.0.1"
+          },
+          "timeout": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --timeout value forwarded to the flavor backend serve() call.",
+            "value": "60"
+          },
+          "workers": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --workers value forwarded to get_flavor_backend and serve().",
+            "value": "1"
+          }
+        }
+      }
+    }
+  ],
+  "physical_witnesses": [
+    {
+      "case": "hp003_a",
+      "request_id": "63fc90cedb2a4587b1b42b1aa9d7096c",
+      "artifact": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-qdpfwjv5/witness-result.json",
+      "artifact_sha256": "0456ee1ece38bfe944ac2bce9064fd57eb52f11db71bac65c5ff7b34edf13dcf",
+      "raw_model_scene": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn/uvicorn options) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server startup timeout; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() receives model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command.",
+          "value": "model_uri"
+        }
+      },
+      "normalized_classified_scene": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn/uvicorn options) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server startup timeout; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() receives model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the shell command.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "scenario_origin": "model_proposed",
+      "scenario_sha256": "d8c2b61a2a909fda500d066b17599350be88a3f8c1c6393f9147f80d6dd346db",
+      "classified_premises": [
+        {
+          "classification": "deployment_configuration",
+          "name": "/constructor_parameters/config",
+          "value": "{}"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/constructor_parameters/env_manager",
+          "value": "local"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/enable_mlserver",
+          "value": false
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/host",
+          "value": "127.0.0.1"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/port",
+          "value": "5000"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/timeout",
+          "value": "60"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/input_parameter",
+          "value": "model_uri"
+        }
+      ],
+      "original_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {},
+        "input_parameters": [],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "execution_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {
+          "enable_mlserver": false,
+          "host": "127.0.0.1",
+          "port": "5000",
+          "timeout": "60"
+        },
+        "input_parameters": [
+          "model_uri"
+        ],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "manifest_sha256": "255a24580839e5aab8b6465a07954fffc24b31ce14e1383794eb6e7cbe2043e8",
+      "source_module_count": 977,
+      "entry_invocation": "instance_method",
+      "tool_status": "ok",
+      "validation_status": "UNRESOLVED",
+      "raw_status": "UNRESOLVED",
+      "gaps": [
+        "recorder_prefix_not_established"
+      ],
+      "observation_token_count": 968,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "response_token_limit": 1000,
+      "delivered_payload": {
+        "classified_scenario_ref": {
+          "arguments": "/scenario_hypothesis",
+          "sha256": "d8c2b61a2a909fda500d066b17599350be88a3f8c1c6393f9147f80d6dd346db"
+        },
+        "command_prefix": "exec uvicorn --host ",
+        "command_sha256": "9faf55477678b09775cf1f2e4a92a8359b004e67c8f93729426544e8186ca7f8",
+        "emitter": "PyFuncBackend.serve",
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "manifest_sha256": "255a24580839e5aab8b6465a07954fffc24b31ce14e1383794eb6e7cbe2043e8",
+        "premises_verified": false,
+        "raw_status": "UNRESOLVED",
+        "remote_authority_established": false,
+        "scenario_origin": "model_proposed",
+        "scope_note": "Candidate observed; premises not all verified."
+      },
+      "probe_event": {
+        "event": "subprocess.Popen",
+        "gap": null,
+        "error": null,
+        "argv": [
+          "bash",
+          "-c",
+          "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+        ],
+        "candidate_frame": {
+          "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/d1312edfca36c7acae0d064ef6a094eded88e14f/mlflow/pyfunc/backend.py",
+          "first_line": 229,
+          "in_checkout": true,
+          "line": 311,
+          "module_name": "mlflow.pyfunc.backend",
+          "qualname": "PyFuncBackend.serve",
+          "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+        }
+      },
+      "control_event": {
+        "event": null,
+        "gap": null,
+        "error": null,
+        "argv": null,
+        "candidate_frame": null
+      },
+      "probe_replay": null,
+      "control_replay": null,
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "probe": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": "{}",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            },
+            "env_manager": {
+              "actual": "local",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {},
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime/model$(printf c229c984579846f7a31c8a2bd030e65a)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "enable_mlserver": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": "5000",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": "60",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "enable_mlserver",
+              "host",
+              "port",
+              "timeout"
+            ]
+          }
+        },
+        "remote_authority_established": false
+      },
+      "elapsed_seconds": 8.899644
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "9741452d2e14472aaf95d54d8a7fe987",
+      "artifact": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-xhqk17uh/witness-result.json",
+      "artifact_sha256": "37fa0d7e121de538e0970ac6948e02ba38fec421cf1d9bea65ecc1e1acc0d16c",
+      "raw_model_scene": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn opts) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server timeout value; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+          "value": "model_uri"
+        }
+      },
+      "normalized_classified_scene": {
+        "constructor_parameters": {
+          "config": {
+            "classification": "deployment_configuration",
+            "rationale": "PyFuncBackend constructor config (e.g. gunicorn opts) is deployment-supplied, not attacker input.",
+            "value": "{}"
+          },
+          "env_manager": {
+            "classification": "deployment_configuration",
+            "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+            "value": "local"
+          }
+        },
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_value_assumptions": {
+          "enable_mlserver": {
+            "classification": "deployment_configuration",
+            "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+            "value": false
+          },
+          "host": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind host for the local scoring server; deployment configuration.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "deployment_configuration",
+            "rationale": "Bind port for the local scoring server; deployment configuration.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "deployment_configuration",
+            "rationale": "Server timeout value; deployment configuration.",
+            "value": "60"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "scenario_origin": "model_proposed",
+      "scenario_sha256": "95f9e2a5b66ae7df9e401f2ff47eae1bab7f80956f03ca93d4e4bf1afc40d92e",
+      "classified_premises": [
+        {
+          "classification": "deployment_configuration",
+          "name": "/constructor_parameters/config",
+          "value": "{}"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/constructor_parameters/env_manager",
+          "value": "local"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/enable_mlserver",
+          "value": false
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/host",
+          "value": "127.0.0.1"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/port",
+          "value": "5000"
+        },
+        {
+          "classification": "deployment_configuration",
+          "name": "/entry_value_assumptions/timeout",
+          "value": "60"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/input_parameter",
+          "value": "model_uri"
+        }
+      ],
+      "original_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {},
+        "input_parameters": [],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "execution_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker:     def serve(\n        self,\n        model_uri,. Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 229,
+        "entry_path": "mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+        "entry_value_assumptions": {
+          "enable_mlserver": false,
+          "host": "127.0.0.1",
+          "port": "5000",
+          "timeout": "60"
+        },
+        "input_parameters": [
+          "model_uri"
+        ],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "manifest_sha256": "0c0b8bf5134a187ccb71e4282ada949a1b56d11a98eb7b99d617df697d3f3b4f",
+      "source_module_count": 977,
+      "entry_invocation": "instance_method",
+      "tool_status": "ok",
+      "validation_status": "UNRESOLVED",
+      "raw_status": "UNRESOLVED",
+      "gaps": [
+        "recorder_prefix_not_established"
+      ],
+      "observation_token_count": 968,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "response_token_limit": 1000,
+      "delivered_payload": {
+        "classified_scenario_ref": {
+          "arguments": "/scenario_hypothesis",
+          "sha256": "95f9e2a5b66ae7df9e401f2ff47eae1bab7f80956f03ca93d4e4bf1afc40d92e"
+        },
+        "command_prefix": "exec uvicorn --host ",
+        "command_sha256": "9faf55477678b09775cf1f2e4a92a8359b004e67c8f93729426544e8186ca7f8",
+        "emitter": "PyFuncBackend.serve",
+        "gaps": [
+          "recorder_prefix_not_established"
+        ],
+        "manifest_sha256": "0c0b8bf5134a187ccb71e4282ada949a1b56d11a98eb7b99d617df697d3f3b4f",
+        "premises_verified": false,
+        "raw_status": "UNRESOLVED",
+        "remote_authority_established": false,
+        "scenario_origin": "model_proposed",
+        "scope_note": "Candidate observed; premises not all verified."
+      },
+      "probe_event": {
+        "event": "subprocess.Popen",
+        "gap": null,
+        "error": null,
+        "argv": [
+          "bash",
+          "-c",
+          "exec uvicorn --host 127.0.0.1 --port 5000 --workers 1 mlflow.pyfunc.scoring_server.app:app"
+        ],
+        "candidate_frame": {
+          "file": "/home/joker/AAA_NUS_SEM3/cv_agent/data/heldout-pair-subjects/mlflow__mlflow/202fac4c83ccc8544c087c142b80196d0e60695c/mlflow/pyfunc/backend.py",
+          "first_line": 229,
+          "in_checkout": true,
+          "line": 311,
+          "module_name": "mlflow.pyfunc.backend",
+          "qualname": "PyFuncBackend.serve",
+          "sha256": "709861cdbfcc51f27f8e377d65babc058d17fff368af0c29d3dd93c7e2927065"
+        }
+      },
+      "control_event": {
+        "event": null,
+        "gap": null,
+        "error": null,
+        "argv": null,
+        "candidate_frame": null
+      },
+      "probe_replay": null,
+      "control_replay": null,
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "probe": {
+          "authority_scope": "local_caller_hypothesis",
+          "conditions": {
+            "expression_match": "canonical_ast_with_whole_test_not",
+            "gaps": [],
+            "observations": [],
+            "tool_id": 4
+          },
+          "constructor_parameters": {
+            "config": {
+              "actual": "{}",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            },
+            "env_manager": {
+              "actual": "local",
+              "matched": true,
+              "point": "constructor_call_boundary",
+              "supported_value": true
+            }
+          },
+          "enabled": true,
+          "entry_boolean_arguments": {},
+          "gaps": [],
+          "input_parameter": {
+            "actual": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime/model$(printf c229c984579846f7a31c8a2bd030e65a)",
+            "matched": true,
+            "parameter": "model_uri",
+            "point": "candidate_entry_frame",
+            "supported_value": true
+          },
+          "ok": true,
+          "precondition_files": {},
+          "remote_authority_established": false,
+          "values": {
+            "gaps": [],
+            "observations": {
+              "enable_mlserver": [
+                {
+                  "actual": false,
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "host": [
+                {
+                  "actual": "127.0.0.1",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "port": [
+                {
+                  "actual": "5000",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ],
+              "timeout": [
+                {
+                  "actual": "60",
+                  "matched": true,
+                  "point": "call_manifest",
+                  "supported_value": true
+                }
+              ]
+            },
+            "verified": [
+              "enable_mlserver",
+              "host",
+              "port",
+              "timeout"
+            ]
+          }
+        },
+        "remote_authority_established": false
+      },
+      "elapsed_seconds": 9.125291
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "b173df4e574c403c8337d0ae7213c00f",
+      "artifact": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-k66ymg5u/witness-result.json",
+      "artifact_sha256": "90c9a3684dd156afa6593853ed0b6698eae2924b8bc71565fc346ffd18a73c34",
+      "raw_model_scene": {
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI argument passed to get_flavor_backend(...).serve(...); a crafted model URI could reach command construction in the serving backend.",
+          "value": "model_uri"
+        },
+        "entry_value_assumptions": {
+          "port": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --port value supplied by the invoking user.",
+            "value": "5000"
+          },
+          "host": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --host value supplied by the invoking user.",
+            "value": "127.0.0.1"
+          },
+          "timeout": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --timeout value supplied by the invoking user.",
+            "value": "60"
+          },
+          "workers": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --workers value supplied by the invoking user.",
+            "value": "1"
+          }
+        }
+      },
+      "normalized_classified_scene": {
+        "constructor_parameters": {},
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_value_assumptions": {
+          "host": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --host value supplied by the invoking user.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --port value supplied by the invoking user.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --timeout value supplied by the invoking user.",
+            "value": "60"
+          },
+          "workers": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --workers value supplied by the invoking user.",
+            "value": "1"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI argument passed to get_flavor_backend(...).serve(...); a crafted model URI could reach command construction in the serving backend.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "scenario_origin": "model_proposed",
+      "scenario_sha256": "e829c7e6101d1f623de62ca192df191e1f0cf9b3e9ce4e2a5f01cf5bf1fe0aca",
+      "classified_premises": [
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/host",
+          "value": "127.0.0.1"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/port",
+          "value": "5000"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/timeout",
+          "value": "60"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/workers",
+          "value": "1"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/input_parameter",
+          "value": "model_uri"
+        }
+      ],
+      "original_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker: @commands.command(\"serve\"). Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 24,
+        "entry_path": "mlflow/models/cli.py::serve@24-106",
+        "entry_value_assumptions": {},
+        "input_parameters": [],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "execution_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker: @commands.command(\"serve\"). Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 24,
+        "entry_path": "mlflow/models/cli.py::serve@24-106",
+        "entry_value_assumptions": {
+          "host": "127.0.0.1",
+          "port": "5000",
+          "timeout": "60",
+          "workers": "1"
+        },
+        "input_parameters": [
+          "model_uri"
+        ],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "445a0df6c4445537927ae4db05575d7663878117d5f394b7f14f6ac5615b60aa"
+      },
+      "manifest_sha256": "e81b0cc895570482dab987121ae82bc02208df922acc68edd464454ed368c9f9",
+      "source_module_count": 977,
+      "entry_invocation": "click_callback",
+      "tool_status": "ok",
+      "validation_status": "UNRESOLVED",
+      "raw_status": "UNRESOLVED",
+      "gaps": [
+        "target_or_isolation_error"
+      ],
+      "observation_token_count": 861,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "response_token_limit": 1000,
+      "delivered_payload": {
+        "classified_scenario_ref": {
+          "arguments": "/scenario_hypothesis",
+          "sha256": "e829c7e6101d1f623de62ca192df191e1f0cf9b3e9ce4e2a5f01cf5bf1fe0aca"
+        },
+        "command_prefix": null,
+        "command_sha256": null,
+        "emitter": null,
+        "gaps": [
+          "target_or_isolation_error"
+        ],
+        "manifest_sha256": "e81b0cc895570482dab987121ae82bc02208df922acc68edd464454ed368c9f9",
+        "premises_verified": false,
+        "raw_status": "UNRESOLVED",
+        "remote_authority_established": false,
+        "scenario_origin": "model_proposed",
+        "scope_note": "Attempted; candidate and premises unestablished."
+      },
+      "probe_event": {
+        "event": null,
+        "gap": "target_or_isolation_error",
+        "error": "FileNotFoundError: [Errno 2] No usable temporary directory found in ['/tmp', '/var/tmp', '/usr/tmp', '/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime']",
+        "argv": null,
+        "candidate_frame": null
+      },
+      "control_event": {
+        "event": null,
+        "gap": null,
+        "error": null,
+        "argv": null,
+        "candidate_frame": null
+      },
+      "probe_replay": null,
+      "control_replay": null,
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "probe": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "remote_authority_established": false
+      },
+      "elapsed_seconds": 7.774952
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "c583c665749e47ec8022cf0a000d9e77",
+      "artifact": "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-7azynbgo/witness-result.json",
+      "artifact_sha256": "87d41f9901f7f6badd50a9f8ed5cc416754b527156c42a199eb30e133666940b",
+      "raw_model_scene": {
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI MODEL_URI argument passed into get_flavor_backend(...).serve(...), which builds the serving command; a crafted model URI is the candidate injection vector.",
+          "value": "model_uri"
+        },
+        "entry_value_assumptions": {
+          "port": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --port value forwarded to the flavor backend serve() call.",
+            "value": "5000"
+          },
+          "host": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --host value forwarded to the flavor backend serve() call.",
+            "value": "127.0.0.1"
+          },
+          "timeout": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --timeout value forwarded to the flavor backend serve() call.",
+            "value": "60"
+          },
+          "workers": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --workers value forwarded to get_flavor_backend and serve().",
+            "value": "1"
+          }
+        }
+      },
+      "normalized_classified_scene": {
+        "constructor_parameters": {},
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_value_assumptions": {
+          "host": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --host value forwarded to the flavor backend serve() call.",
+            "value": "127.0.0.1"
+          },
+          "port": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --port value forwarded to the flavor backend serve() call.",
+            "value": "5000"
+          },
+          "timeout": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --timeout value forwarded to the flavor backend serve() call.",
+            "value": "60"
+          },
+          "workers": {
+            "classification": "attacker_controlled_input",
+            "rationale": "CLI --workers value forwarded to get_flavor_backend and serve().",
+            "value": "1"
+          }
+        },
+        "input_parameter": {
+          "classification": "attacker_controlled_input",
+          "rationale": "model_uri is the CLI MODEL_URI argument passed into get_flavor_backend(...).serve(...), which builds the serving command; a crafted model URI is the candidate injection vector.",
+          "value": "model_uri"
+        },
+        "precondition_files": {}
+      },
+      "scenario_origin": "model_proposed",
+      "scenario_sha256": "f4372f915a5d744d7c094c5be0ba113e0557b7716d8f5e09d49d5e731c34f59d",
+      "classified_premises": [
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/host",
+          "value": "127.0.0.1"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/port",
+          "value": "5000"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/timeout",
+          "value": "60"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/entry_value_assumptions/workers",
+          "value": "1"
+        },
+        {
+          "classification": "attacker_controlled_input",
+          "name": "/input_parameter",
+          "value": "model_uri"
+        }
+      ],
+      "original_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker: @commands.command(\"serve\"). Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 24,
+        "entry_path": "mlflow/models/cli.py::serve@24-106",
+        "entry_value_assumptions": {},
+        "input_parameters": [],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "execution_subject": {
+        "analysis_scope": "Assess only this exact source snapshot and candidate span. Use the candidate.path and retrieved_code.path values as the only exact tool-readable paths. Declared entry code marker: @commands.command(\"serve\"). Use repository evidence for checks, transformations and data/control flow; do not infer the answer from case identity or commit ordering. Advisory summary: MLflow model serving 命令注入漏洞 CVE-2026-0596 - mlserver.py",
+        "candidate_id": "neutral-entry",
+        "entry_boolean_arguments": {},
+        "entry_condition_assumptions": {},
+        "entry_line": 24,
+        "entry_path": "mlflow/models/cli.py::serve@24-106",
+        "entry_value_assumptions": {
+          "host": "127.0.0.1",
+          "port": "5000",
+          "timeout": "60",
+          "workers": "1"
+        },
+        "input_parameters": [
+          "model_uri"
+        ],
+        "property_id": "command-execution",
+        "repository_id": "neutral-entry",
+        "source_digest": "cc22b7c313ed4b4ad310826168ebd693559b286adf4a54b73e4de1b29d9ff4bd"
+      },
+      "manifest_sha256": "fdf86db388fcf6a4002942a6992b6bc063faf0915e22fea40f61ff2765a50671",
+      "source_module_count": 977,
+      "entry_invocation": "click_callback",
+      "tool_status": "ok",
+      "validation_status": "UNRESOLVED",
+      "raw_status": "UNRESOLVED",
+      "gaps": [
+        "target_or_isolation_error"
+      ],
+      "observation_token_count": 861,
+      "observation_truncated": false,
+      "model_payload_suppressed": false,
+      "response_token_limit": 1000,
+      "delivered_payload": {
+        "classified_scenario_ref": {
+          "arguments": "/scenario_hypothesis",
+          "sha256": "f4372f915a5d744d7c094c5be0ba113e0557b7716d8f5e09d49d5e731c34f59d"
+        },
+        "command_prefix": null,
+        "command_sha256": null,
+        "emitter": null,
+        "gaps": [
+          "target_or_isolation_error"
+        ],
+        "manifest_sha256": "fdf86db388fcf6a4002942a6992b6bc063faf0915e22fea40f61ff2765a50671",
+        "premises_verified": false,
+        "raw_status": "UNRESOLVED",
+        "remote_authority_established": false,
+        "scenario_origin": "model_proposed",
+        "scope_note": "Attempted; candidate and premises unestablished."
+      },
+      "probe_event": {
+        "event": null,
+        "gap": "target_or_isolation_error",
+        "error": "FileNotFoundError: [Errno 2] No usable temporary directory found in ['/tmp', '/var/tmp', '/usr/tmp', '/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime']",
+        "argv": null,
+        "candidate_frame": null
+      },
+      "control_event": {
+        "event": null,
+        "gap": null,
+        "error": null,
+        "argv": null,
+        "candidate_frame": null
+      },
+      "probe_replay": null,
+      "control_replay": null,
+      "scenario_verification": {
+        "authority_scope": "local_caller_hypothesis",
+        "control": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "probe": {
+          "conditions": {},
+          "gaps": [],
+          "ok": false,
+          "values": {}
+        },
+        "remote_authority_established": false
+      },
+      "elapsed_seconds": 7.985784
+    }
+  ],
+  "raw_rejected_material_proposals": [
+    {
+      "case": "hp003_a",
+      "request_id": "a928cf97be784a328693a3fea36c0d0f",
+      "proposal": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.45,
+        "validation_status": "UNRESOLVED",
+        "rationale": "serve() builds a shell command from model_uri-derived local_path and runs it via bash -c; witness reached command prefix but premises unverified, so no typed confirmation.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3",
+          "scan/tool:4",
+          "scan/tool:5"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:4",
+          "scan/tool:5"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:1",
+          "scan/tool:2",
+          "scan/tool:3"
+        ]
+      },
+      "admitted": false
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "76266eff00ee4d5ab3ae86f14c30be5f",
+      "proposal": {
+        "expert": "scan",
+        "label": "VULNERABLE",
+        "confidence": 0.45,
+        "validation_status": "UNRESOLVED",
+        "rationale": "serve() builds a shell command from model_uri-derived local_path via get_cmd, then runs it through bash -c / subprocess.Popen; command construction inspector was UNAVAILABLE and the witness never executed, so injection is predicted but unconfirmed.",
+        "evidence_ids": [
+          "local:mlflow/pyfunc/backend.py::PyFuncBackend.serve@229-327",
+          "scan/tool:2",
+          "scan/tool:5",
+          "scan/tool:6"
+        ],
+        "supporting_observation_ids": [
+          "scan/tool:6",
+          "scan/tool:5"
+        ],
+        "counter_observation_ids": [],
+        "unresolved_observation_ids": [
+          "scan/tool:2",
+          "scan/tool:5"
+        ]
+      },
+      "admitted": false
+    }
+  ],
+  "raw_tool_audit_path": "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/request_audit.json",
+  "raw_event_journal_path": "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/events.jsonl",
+  "artifact_sha256": {
+    "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/metadata.json": "96ca121b3ba11c2c37d5c1d1f0b200eebab41bb82b6a05753bbd2c81f7562471",
+    "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/events.jsonl": "441fe5bfbd9ad5105c4dbf0f7fe255332a542c0510749e83e926056f612705af",
+    "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/results.json": "5de88909c35dfcdd2f32ee833ed056cf50823fcba5fdece589af84690be36cf7",
+    "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/summary.json": "50cefb23005afdae9b9e54c4d66e3052d920253822cc19383d1891d7de129cc9",
+    "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/usage.json": "87bc73a9a80e3edc4a6b9d9cf2c95e6807508d4f5f58558bedf9352a5604b862",
+    "artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/request_audit.json": "d0b7238a342fa8ff86d88f67445506ff69c3a77ed7ba827a1334406642a9ce21",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-qdpfwjv5/witness-result.json": "0456ee1ece38bfe944ac2bce9064fd57eb52f11db71bac65c5ff7b34edf13dcf",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-xhqk17uh/witness-result.json": "37fa0d7e121de538e0970ac6948e02ba38fec421cf1d9bea65ecc1e1acc0d16c",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-k66ymg5u/witness-result.json": "90c9a3684dd156afa6593853ed0b6698eae2924b8bc71565fc346ffd18a73c34",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/artifacts/witness_scenario_matrix/61ccd871658f48988e78ee038816292c/shared-runtime-witness-artifact-7azynbgo/witness-result.json": "87d41f9901f7f6badd50a9f8ed5cc416754b527156c42a199eb30e133666940b",
+    "artifacts/remaining_work_20260929/E_iter_live_console.log": "6ec8ba304d2423a8f55102dac00c2295dac907d2ed68f4f89139f725afae4223",
+    "artifacts/pytest_gate/d2d3653e8fdf4aeaa2cb4750602ca7ca/pytest.log": "bf2335da2280ba7ec358689e2ebda1df6ba6bab278b9b9af04088d90f3a7bf9e",
+    "artifacts/remaining_work_20260929/authorization_ledger.json": "a6c31be3824815decdf5e138e914c10fc8c4976f6376a648e880fa978dc7a3af"
+  },
+  "reviewed_diagnostics": {
+    "hp003_a": "F3 wrong scoring_server branch; string config value and local F6 budget are additional facts.",
+    "hp003_b": "Fixed-side admitted ABSTAIN expected; scoring_server branch and local F6 descriptive only.",
+    "hp004_a": "F4 infrastructure: FileNotFoundError for usable temp directory before candidate frame or Popen. Automatic F3 retained as provisional raw diagnostic.",
+    "hp004_b": "F4 infrastructure: same pre-candidate temp failure. Automatic F3/F6 retained as provisional raw diagnostics."
+  },
+  "interpretation": "One physical scene per cell, no model-driven physical scene iteration; developer-scripted offline capacity is not autonomous discovery. No G-A rescue or held-out claim.",
+  "tool_timeline": [
+    {
+      "case": "hp003_a",
+      "request_id": "6286425b7bc64e639dcbb3f969094b55",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 552,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 2.902879,
+      "start_event_index": 6,
+      "result_event_index": 7
+    },
+    {
+      "case": "hp003_a",
+      "request_id": "6286425b7bc64e639dcbb3f969094b55",
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": null,
+      "observation_token_count": 1173,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.486327,
+      "start_event_index": 8,
+      "result_event_index": 9
+    },
+    {
+      "case": "hp003_a",
+      "request_id": "c388539607574ce9ae3aca729e192557",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 989,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 3.320346,
+      "start_event_index": 13,
+      "result_event_index": 14
+    },
+    {
+      "case": "hp003_a",
+      "request_id": "63fc90cedb2a4587b1b42b1aa9d7096c",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": true,
+      "observation_token_count": 968,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 8.899644,
+      "start_event_index": 18,
+      "result_event_index": 19
+    },
+    {
+      "case": "hp003_a",
+      "request_id": "f7c509777b92470e8382b1c825a15247",
+      "tool": "search_symbols",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 4446,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.015928,
+      "start_event_index": 23,
+      "result_event_index": 24
+    },
+    {
+      "case": "hp003_a",
+      "request_id": "f7c509777b92470e8382b1c825a15247",
+      "tool": "search_symbols",
+      "status": "blocked",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 0,
+      "observation_truncated": true,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.012849,
+      "start_event_index": 25,
+      "result_event_index": 26
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "9a253c6f73ec4570bf8fecab871dc746",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 552,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 2.807723,
+      "start_event_index": 39,
+      "result_event_index": 40
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "9a253c6f73ec4570bf8fecab871dc746",
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": null,
+      "observation_token_count": 1173,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.673281,
+      "start_event_index": 41,
+      "result_event_index": 42
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "c7116178ce714eaa806754ccfb24111f",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 989,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 2.972397,
+      "start_event_index": 46,
+      "result_event_index": 47
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "9f38c4823d4e4954920eaa905dd0f8c5",
+      "tool": "run_bounded_execution_witness",
+      "status": "error",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 434,
+      "observation_truncated": false,
+      "schema_rejected": true,
+      "elapsed_seconds": 0.004384,
+      "start_event_index": 51,
+      "result_event_index": 52
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "9741452d2e14472aaf95d54d8a7fe987",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": true,
+      "observation_token_count": 968,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 9.125291,
+      "start_event_index": 56,
+      "result_event_index": 57
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "de132d5109f041158dc254249fbc4540",
+      "tool": "read_span",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 4076,
+      "observation_truncated": true,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.004466,
+      "start_event_index": 61,
+      "result_event_index": 62
+    },
+    {
+      "case": "hp003_b",
+      "request_id": "de132d5109f041158dc254249fbc4540",
+      "tool": "search_symbols",
+      "status": "blocked",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 0,
+      "observation_truncated": true,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.0041,
+      "start_event_index": 63,
+      "result_event_index": 64
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "fbce6c1db8744fe28fb0ac22e94c1b61",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 552,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 3.203873,
+      "start_event_index": 77,
+      "result_event_index": 78
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "fbce6c1db8744fe28fb0ac22e94c1b61",
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": null,
+      "observation_token_count": 750,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.470912,
+      "start_event_index": 79,
+      "result_event_index": 80
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "a7c7d821d9e04b7b86ba814bd3b6f84e",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 736,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 3.104473,
+      "start_event_index": 84,
+      "result_event_index": 85
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "b173df4e574c403c8337d0ae7213c00f",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": true,
+      "observation_token_count": 861,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 7.774952,
+      "start_event_index": 89,
+      "result_event_index": 90
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "e5189be7b97143869cb1812062048ee8",
+      "tool": "run_static_check",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": null,
+      "observation_token_count": 200,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.00446,
+      "start_event_index": 94,
+      "result_event_index": 95
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "e5189be7b97143869cb1812062048ee8",
+      "tool": "get_callees",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 96,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.004195,
+      "start_event_index": 96,
+      "result_event_index": 97
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "29884c0acd0843449d3912794666a130",
+      "tool": "search_symbols",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 3514,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.016924,
+      "start_event_index": 101,
+      "result_event_index": 102
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "29884c0acd0843449d3912794666a130",
+      "tool": "find_references",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 271,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.004057,
+      "start_event_index": 103,
+      "result_event_index": 104
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "8a0be46406cc474699c86aea1dd7bf61",
+      "tool": "read_span",
+      "status": "blocked",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 172,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.004241,
+      "start_event_index": 108,
+      "result_event_index": 109
+    },
+    {
+      "case": "hp004_a",
+      "request_id": "8a0be46406cc474699c86aea1dd7bf61",
+      "tool": "search_symbols",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 1040,
+      "observation_truncated": true,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.019653,
+      "start_event_index": 110,
+      "result_event_index": 111
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "1c407179260c4591b4b60c1d1c71ad42",
+      "tool": "read_span",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 3457,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.004131,
+      "start_event_index": 121,
+      "result_event_index": 122
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "1c407179260c4591b4b60c1d1c71ad42",
+      "tool": "inspect_command_construction",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": null,
+      "observation_token_count": 750,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.465062,
+      "start_event_index": 123,
+      "result_event_index": 124
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "a6a7ca98bfae40eeb03689dc28dc94d0",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 552,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 3.285721,
+      "start_event_index": 128,
+      "result_event_index": 129
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "b5187fd0e970448a889aab57757409da",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": false,
+      "observation_token_count": 736,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 2.66022,
+      "start_event_index": 133,
+      "result_event_index": 134
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "c583c665749e47ec8022cf0a000d9e77",
+      "tool": "run_bounded_execution_witness",
+      "status": "ok",
+      "validation_status": "UNRESOLVED",
+      "witness_attempted": true,
+      "observation_token_count": 861,
+      "observation_truncated": false,
+      "schema_rejected": false,
+      "elapsed_seconds": 7.985784,
+      "start_event_index": 138,
+      "result_event_index": 139
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "4cd344d9db284b40bdff3f3f67ecfac2",
+      "tool": "search_symbols",
+      "status": "ok",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 1836,
+      "observation_truncated": true,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.017065,
+      "start_event_index": 143,
+      "result_event_index": 144
+    },
+    {
+      "case": "hp004_b",
+      "request_id": "4cd344d9db284b40bdff3f3f67ecfac2",
+      "tool": "get_callees",
+      "status": "blocked",
+      "validation_status": null,
+      "witness_attempted": null,
+      "observation_token_count": 0,
+      "observation_truncated": true,
+      "schema_rejected": false,
+      "elapsed_seconds": 0.004036,
+      "start_event_index": 145,
+      "result_event_index": 146
+    }
+  ],
+  "schema_rejections": [
+    {
+      "case": "hp003_b",
+      "request_id": "9f38c4823d4e4954920eaa905dd0f8c5",
+      "call": {
+        "call_id": "call_00_F1ADl5oTlzHooHZTVRhX9143",
+        "name": "run_bounded_execution_witness",
+        "arguments": {
+          "constructor_parameters": {
+            "config": {
+              "classification": "deployment_configuration",
+              "rationale": "PyFuncBackend constructor config (e.g. gunicorn opts) is deployment-supplied, not attacker input.",
+              "value": "{}"
+            },
+            "env_manager": {
+              "classification": "deployment_configuration",
+              "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+              "value": "local"
+            }
+          },
+          "precondition_files": {},
+          "scenario_hypothesis": {
+            "constructor_parameters": {
+              "config": {
+                "classification": "deployment_configuration",
+                "rationale": "PyFuncBackend constructor config (e.g. gunicorn opts) is deployment-supplied, not attacker input.",
+                "value": "{}"
+              },
+              "env_manager": {
+                "classification": "deployment_configuration",
+                "rationale": "env_manager selects the environment manager for the backend; deployment configuration.",
+                "value": "local"
+              }
+            },
+            "entry_value_assumptions": {
+              "enable_mlserver": {
+                "classification": "deployment_configuration",
+                "rationale": "Flag selecting mlserver vs scoring_server implementation; deployment choice.",
+                "value": false
+              },
+              "host": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind host for the local scoring server; deployment configuration.",
+                "value": "127.0.0.1"
+              },
+              "port": {
+                "classification": "deployment_configuration",
+                "rationale": "Bind port for the local scoring server; deployment configuration.",
+                "value": "5000"
+              },
+              "timeout": {
+                "classification": "deployment_configuration",
+                "rationale": "Server timeout value; deployment configuration.",
+                "value": "60"
+              }
+            },
+            "input_parameter": {
+              "classification": "attacker_controlled_input",
+              "rationale": "serve() takes model_uri from the caller and passes it to _download_artifact_from_uri and then into server_implementation.get_cmd, which builds the scoring-server command line.",
+              "value": "model_uri"
+            }
+          }
+        }
+      },
+      "error_content": "invalid tool arguments: 1 validation error for WitnessSupplement\n  Value error, model scenarios cannot mix unclassified constructor or file supplements [type=value_error, input_value={'constructor_parameters'... 'value': 'model_uri'}}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
+      "observation_token_count": 434
+    }
+  ]
+}

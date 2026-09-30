@@ -1,6 +1,14 @@
 # 当前状态（2026-09-30）
 
-## 追加探索 E-iter：离线验收完成，真实运行待启动
+## 收尾：K2 完成，G-A 正式判定为 NO
+
+- **E-iter 已运行一次**：四格最终均为 ABSTAIN / UNRESOLVED，共 26 次请求、166,482 reported tokens，返回的模型 ID 全部为 `deepseek-flash`。hp003 两格又一次选了 `enable_mlserver=false`（F3）；entry-00390 两格止于隔离下的临时目录创建（F4）。模型拿到 UNRESOLVED 之后没有换场景再试。详见 [E-iter 结果](../.hermes/plans/2026-09-30-E-iter-results.md)。
+- **K2 已完成（`af7024d`）**：见证运行时迁到 `runtime/witness/`，核心包不再导入 evaluation 层。迁移后两个真实快照的脚本化配对与迁移前逐项相同：a 为 `CONFIRMED / EXPANDED_OBSERVED`，b 为 `UNRESOLVED / LITERAL_OBSERVED`，manifest 中只有 `python_executable` 变化。完整测试 **2562 passed**，harness **PASS**。详见 [K2 结果](../.hermes/plans/2026-09-30-K2-results.md)。
+- **G-A = NO**：B-a 在 M0 阶段 1（F1）和唯一一次重跑阶段 2（F3）中都没有成功，3b 合格的外部样本对为 0。K5–K8 不启动。现有见证定位为对少量已选定候选做有界确认的工具。详见 [G-A 判定](../.hermes/plans/2026-09-30-G-A-decision.md) 和 [定位报告](../.hermes/plans/2026-09-30-positioning-report.md)。
+- **用量**：真实模型累计 72 次请求、447,812 reported tokens，上限为 210 次请求、250 万 tokens。所有结果 `claim_eligible=false`。
+- **数据治理**：架构方补记了自己对 held-out 评测侧元数据的查看；VulnGym v4 在命令注入相关结论等方面不再视为盲测，见 [架构方披露](../.hermes/plans/2026-09-30-architect-exposure-disclosure.md)。仓库根目录新增 `.ignore`，ripgrep 默认搜索跳过 held-out 输入文件及其快照副本。
+
+## 追加探索 E-iter：离线验收完成（运行前状态，保留历史）
 
 用户追加授权 E-iter ≤40 请求后已恢复实施，保留此前 S4 内容搜索事件披露；继续禁止任何进一步 held-out 内容使用。K1 已提交 **d93a7d2**。紧凑投递、四格 runner、严格 Click callback 适配及 K3/K4 离线部分已经验收；最终完整套件 **2556 passed in 407.96s**，harness PASS，实际四格预检通过且 hp003 初始请求与阶段 2 逐字相同。E-iter 尚未发真实请求，累计仍为 **46 请求 / 281,330 tokens**。本次探索的结果只补充定位，不改变 M0 原重跑或 G-A。
 

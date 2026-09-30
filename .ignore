@@ -1,0 +1,7 @@
+# Search-tool exclusions (ripgrep and tools built on it read this file; git does not).
+# Protected held-out inputs must not appear in ad-hoc search output. The files stay
+# tracked and remain covered by the live-gate fingerprint and source archives, which
+# read bytes mechanically and do not use this file. Bypass only with an explicit
+# --no-ignore and a recorded reason; never search evaluator-side labels.
+configs/datasets/vulngym_heldout_inputs*.json
+**/source/configs/datasets/vulngym_heldout_inputs*.json

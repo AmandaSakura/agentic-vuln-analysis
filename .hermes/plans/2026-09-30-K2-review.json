@@ -1,0 +1,249 @@
+{
+  "kind": "K2_read_only_relocation_review",
+  "date": "2026-09-30",
+  "base_commit": "8f05292dbcbe42014f77bf8c42ca6a456b953cdc",
+  "acceptance_status": "partial_review_only",
+  "implementation_changed_by_reviewer": false,
+  "model_requests_by_reviewer": 0,
+  "network_requests_by_reviewer": 0,
+  "real_target_witness_runs_by_reviewer": 0,
+  "moved_modules": [
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/bounded_execution_witness.py",
+      "new_path": "src/cv_agent/runtime/witness/kernel.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "8faad4e2fd580cb228c4c854f63da0df1c6abc9dcf6acf2cd29c158a61486b51",
+      "after_sha256": "4defb5e84c48f6e3798f2413305a94cddf0fffb2240ac9813da00e0aa90823ad"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/witness_contract.py",
+      "new_path": "src/cv_agent/runtime/witness/contract.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "6ec98b36c64f346adeeaa9b79b5df6d9b66ae73bf5bb04cae088a68125e7dda4",
+      "after_sha256": "9467dead06a94846515f54f527dba4dbe63085ae6e8d3f4224261decc4a48d69"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/witness_values.py",
+      "new_path": "src/cv_agent/runtime/witness/obligations/values.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "6b38cbced0c987beee6640a98d3d1c92be7a167c5e6ef2313e3bc2ee3eb488e5",
+      "after_sha256": "633bc427318f3ff96420f87ec9e61b8d848dac60cb3d85649e66bcb8b9c4a9b6"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/witness_branches.py",
+      "new_path": "src/cv_agent/runtime/witness/obligations/branches.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "f2854c06f51531503d2633e621b6c54bc9fa31186b20ffaa9a01ad65184ccf41",
+      "after_sha256": "f2854c06f51531503d2633e621b6c54bc9fa31186b20ffaa9a01ad65184ccf41"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/witness_preexec.py",
+      "new_path": "src/cv_agent/runtime/witness/obligations/preexec.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "6f3c5a2287db98b9bdda4ccef4c81ec764b45fb6c3ec595e26c8603cc27048b4",
+      "after_sha256": "6f3c5a2287db98b9bdda4ccef4c81ec764b45fb6c3ec595e26c8603cc27048b4"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/witness_scenario_runtime.py",
+      "new_path": "src/cv_agent/runtime/witness/scenario_runtime.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "0b923f334b4b3f9ceea44ff6d6d876d9f3b895db27ac4d7655382488fdbf50b2",
+      "after_sha256": "1abafaa7c43ab71f38e1f6bb613184d99c976b008d0357bab594727778b6a0ee"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/isolation_read_policy.py",
+      "new_path": "src/cv_agent/runtime/witness/isolation_policy.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "e1c2bed86f7f0a06db1f90019716dcd6bbf887bdfe2cf8fbd483e10b5590e849",
+      "after_sha256": "e1c2bed86f7f0a06db1f90019716dcd6bbf887bdfe2cf8fbd483e10b5590e849"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/process_resource_accounting.py",
+      "new_path": "src/cv_agent/runtime/witness/accounting.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "8f32e4bfc7807d8b3c11315eefc033202a9f71d265ce413ba00c09315513c0db",
+      "after_sha256": "8f32e4bfc7807d8b3c11315eefc033202a9f71d265ce413ba00c09315513c0db"
+    },
+    {
+      "old_path": "src/cv_agent/evaluation/diagnostics/isolation_read_diagnostics.py",
+      "new_path": "src/cv_agent/runtime/witness/tracer.py",
+      "only_mapped_import_changes": true,
+      "ast_equivalent_after_import_mapping": true,
+      "retired_file_absent": true,
+      "before_sha256": "40af248784a7bf07122cd8708004ee905de0c6cedd8cc9ad3ef49e702e2b0583",
+      "after_sha256": "40af248784a7bf07122cd8708004ee905de0c6cedd8cc9ad3ef49e702e2b0583"
+    }
+  ],
+  "existing_changed_tests": [
+    {
+      "path": "tests/test_bounded_execution_witness.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_admission.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_contract.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_diagnostic.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_interpreter.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_read_diagnostics.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_resources.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_stacks.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_verification.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_bounded_witness_verification_review.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_isolation_read_diagnostics.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_operational_entrypoints.py",
+      "non_import_ast_unchanged": false,
+      "separate_eiter_archive_change": true
+    },
+    {
+      "path": "tests/test_prepare_witness_environment.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_process_resource_accounting.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_branches.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_compact_response.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_entry_adapters.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_preexec.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_preexec_review.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_recorder_derivation.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_scenario_preflight.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_values.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    },
+    {
+      "path": "tests/test_witness_worker_cleanup.py",
+      "non_import_ast_unchanged": true,
+      "separate_eiter_archive_change": false
+    }
+  ],
+  "harmless_unit_command": "uv run --no-sync pytest -q tests/test_witness_runtime_boundary.py tests/test_isolation_read_diagnostics.py",
+  "harmless_unit_exit_code": 0,
+  "harmless_unit_cases": 35,
+  "harmless_unit_output": "35 dots, [100%], no failures; pytest quiet settings suppress aggregate line",
+  "diff_check_exit_code": 0,
+  "kernel_parents_3_resolves_to": "/home/joker/AAA_NUS_SEM3/cv_agent/src",
+  "post_move_environment_receipts_read": [
+    {
+      "side": "a",
+      "path": "artifacts/witness_environment_rebuild/k2_post_move/prepared_a/witness_context.json",
+      "environment_status": "environment_ready",
+      "target_import_ready": true,
+      "kernel_bootstrap_ready": true,
+      "allow_network": false,
+      "network_urls": [],
+      "gaps": [],
+      "context_sha256": "7a0de13305e1b099f01bf9272a11f3d4a93deafa6b0eefadefa8a7c8ccdd93ef"
+    },
+    {
+      "side": "b",
+      "path": "artifacts/witness_environment_rebuild/k2_post_move/prepared_b/witness_context.json",
+      "environment_status": "environment_ready",
+      "target_import_ready": true,
+      "kernel_bootstrap_ready": true,
+      "allow_network": false,
+      "network_urls": [],
+      "gaps": [],
+      "context_sha256": "7d415de46ca262efe83dab5197b8358932d3e2d232a8b0c9d643fefd594eed52"
+    }
+  ],
+  "old_context_rejection_receipt": "artifacts/witness_environment_rebuild/K2_old_context_rejection.json",
+  "focused_k2_test_log_found_in_searched_artifact_paths": false,
+  "unperformed_by_reviewer": [
+    "complete pytest suite after K2",
+    "harness-check after K2",
+    "per-snapshot 977 target source tuple comparison against pre-move artifact",
+    "new-module worker/probe/control/replay execution receipts for real target pair"
+  ],
+  "claim_eligible": false
+}
