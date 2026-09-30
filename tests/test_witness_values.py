@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding
+from cv_agent.runtime.witness.kernel import SourceFileBinding
 from test_bounded_execution_witness import _manifest
 
 
@@ -23,7 +23,7 @@ def _load(path: Path, module_name: str, monkeypatch: pytest.MonkeyPatch):
 
 
 def _setup(tmp_path: Path, source: str, assumptions: dict, monkeypatch: pytest.MonkeyPatch):
-    from cv_agent.evaluation.diagnostics.witness_values import ValueAssumptionObserver
+    from cv_agent.runtime.witness.obligations.values import ValueAssumptionObserver
 
     manifest = _manifest(tmp_path, source)
     manifest = manifest.model_copy(update={
@@ -134,7 +134,7 @@ class Service:
     'SETTING: str = "literal"\n',
 ])
 def test_same_name_in_another_admitted_module_is_nonunique(tmp_path, monkeypatch, second_source):
-    from cv_agent.evaluation.diagnostics.witness_values import ValueAssumptionObserver
+    from cv_agent.runtime.witness.obligations.values import ValueAssumptionObserver
 
     manifest, _, module = _setup(tmp_path, SOURCE, {"SETTING": "literal"}, monkeypatch)
     other = tmp_path / "other.py"
@@ -241,7 +241,7 @@ def test_entry_value_records_entry_before_later_mutation(tmp_path, monkeypatch):
 
 
 def test_call_kwargs_only_verify_exact_json_values(tmp_path, monkeypatch):
-    from cv_agent.evaluation.diagnostics.witness_values import ValueAssumptionObserver
+    from cv_agent.runtime.witness.obligations.values import ValueAssumptionObserver
 
     manifest, _, _ = _setup(tmp_path, SOURCE, {"timeout": None, "enabled": True}, monkeypatch)
     observer = ValueAssumptionObserver(manifest.model_copy(update={"call_kwargs": {"timeout": None, "enabled": 1}}))

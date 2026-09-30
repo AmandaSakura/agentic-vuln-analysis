@@ -190,7 +190,7 @@ class BoundedWitnessService:
         if draft.generated.get("entry_qualified") is not True:
             return False
         if draft.manifest is not None:
-            from cv_agent.evaluation.diagnostics.witness_contract import validate_witness_manifest
+            from cv_agent.runtime.witness.contract import validate_witness_manifest
             try:
                 validate_witness_manifest(self.index, subject, draft.manifest)
             except (OSError, ValueError):
@@ -323,8 +323,8 @@ class BoundedWitnessService:
                    for name, value in supplement.constructor_parameters.items()):
                 return self._unresolved(subject, ["dataset_scenario_constructor_supplement_mismatch"],
                                         provenance=provenance)
-        from cv_agent.evaluation.diagnostics.bounded_execution_witness import run_witness
-        from cv_agent.evaluation.diagnostics.witness_contract import (
+        from cv_agent.runtime.witness.kernel import run_witness
+        from cv_agent.runtime.witness.contract import (
             PositiveOnlyWitnessProofScope, validate_witness_manifest,
         )
         try:

@@ -12,7 +12,7 @@ import time
 import pytest
 
 from cv_agent.domain.evidence import ValidationStatus
-from cv_agent.evaluation.diagnostics.witness_preexec import verify_preexec
+from cv_agent.runtime.witness.obligations.preexec import verify_preexec
 from cv_agent.tools.validation.fixtures import _run_fixture_case
 from cv_agent.tools.validation.models import FixtureCase, FixtureOutcome
 

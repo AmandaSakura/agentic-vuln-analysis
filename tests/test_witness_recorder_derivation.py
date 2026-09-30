@@ -3,7 +3,7 @@
 import pytest
 
 from cv_agent.domain.evidence import ValidationStatus
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import run_witness
+from cv_agent.runtime.witness.kernel import run_witness
 from test_bounded_execution_witness import NONCE, _manifest
 
 

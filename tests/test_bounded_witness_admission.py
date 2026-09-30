@@ -20,8 +20,8 @@ from cv_agent.domain.types import Candidate, CodeDocument
 from cv_agent.tools.identity import candidate_subject
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 from test_witness_scope_notes import reported_scenario, scenario_projection
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
-from cv_agent.evaluation.diagnostics.witness_contract import bounded_witness_fixture_case
+from cv_agent.runtime.witness.kernel import SourceFileBinding, WitnessManifest
+from cv_agent.runtime.witness.contract import bounded_witness_fixture_case
 
 
 SUBJECT = ValidationSubject(

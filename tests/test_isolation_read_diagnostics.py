@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import (
+from cv_agent.runtime.witness.tracer import (
     summarize_trace,
     trace_command,
 )

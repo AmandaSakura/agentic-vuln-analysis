@@ -15,7 +15,7 @@ from typing import Literal
 
 from cv_agent.domain.evidence import FixtureProofScope, ValidationStatus, ValidationSubject
 from cv_agent.domain.types import Candidate
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import (
+from cv_agent.runtime.witness.kernel import (
     WitnessManifest,
     WitnessResult,
     run_witness,

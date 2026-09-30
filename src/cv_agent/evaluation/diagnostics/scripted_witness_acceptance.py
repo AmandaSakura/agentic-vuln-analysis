@@ -13,7 +13,7 @@ from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.domain.chat import ModelReply, ModelToolCall, ModelUsage
 from cv_agent.evaluation.datasets.advisory_source import build_pair_input, require_clean_checkout
 from cv_agent.evaluation.datasets.composition import load_advisory_config
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.harness import AgentSystemVersion, FULL_SYSTEM_HARNESS
 from cv_agent.runtime.model import ScriptedChatModel
 from cv_agent.runtime.paths import PROJECT_ROOT

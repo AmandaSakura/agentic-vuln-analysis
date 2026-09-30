@@ -17,8 +17,8 @@ from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.domain.chat import ModelReply, ModelToolCall
 from cv_agent.domain.evidence import ValidationStatus
 from cv_agent.domain.types import Candidate, CodeDocument
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import _capture_event
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, run_witness
+from cv_agent.runtime.witness.kernel import _capture_event
+from cv_agent.runtime.witness.kernel import SourceFileBinding, run_witness
 from cv_agent.harness import AgentSystemVersion, FULL_SYSTEM_HARNESS
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.runtime.model import ScriptedChatModel

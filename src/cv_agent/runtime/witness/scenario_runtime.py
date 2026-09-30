@@ -7,10 +7,10 @@ from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any
 
-from cv_agent.evaluation.diagnostics.witness_values import _json_value, _same_json
+from cv_agent.runtime.witness.obligations.values import _json_value, _same_json
 
 if TYPE_CHECKING:
-    from cv_agent.evaluation.diagnostics.bounded_execution_witness import WitnessManifest
+    from cv_agent.runtime.witness.kernel import WitnessManifest
 
 
 class ScenarioDataObserver:

@@ -10,7 +10,7 @@ import pytest
 from pydantic import ValidationError
 
 from cv_agent.domain.evidence import ValidationStatus
-from cv_agent.evaluation.diagnostics import bounded_execution_witness as witness
+from cv_agent.runtime.witness import kernel as witness
 
 from test_bounded_execution_witness import DIRECT, NONCE, _manifest
 

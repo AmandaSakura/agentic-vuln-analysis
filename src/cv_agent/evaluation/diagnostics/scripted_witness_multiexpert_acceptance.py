@@ -14,7 +14,7 @@ from cv_agent.domain.chat import ModelReply, ModelToolCall
 from cv_agent.domain.review import ValidationPlan, ValidationSubtask
 from cv_agent.evaluation.datasets.advisory_source import build_pair_input, require_clean_checkout
 from cv_agent.evaluation.datasets.composition import load_advisory_config
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.evaluation.metrics import replay_fast_prefix
 from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentSystemVersion
 from cv_agent.runtime.model import ScriptedChatModel

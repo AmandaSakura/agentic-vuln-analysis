@@ -9,7 +9,7 @@ import resource
 import time
 from pathlib import Path
 
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import (
+from cv_agent.runtime.witness.kernel import (
     WitnessManifest,
     IsolationReadGrant,
     run_witness,

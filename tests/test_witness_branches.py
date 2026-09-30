@@ -10,7 +10,7 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
-from cv_agent.evaluation.diagnostics.witness_branches import BranchAssumptionObserver
+from cv_agent.runtime.witness.obligations.branches import BranchAssumptionObserver
 
 
 def _module(root: Path, source: str, conditions: dict[str, bool], *, name: str = "sample"):

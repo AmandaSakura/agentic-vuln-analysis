@@ -118,7 +118,7 @@ def test_direct_callback_projection_cannot_claim_public_parser_was_executed():
 def test_wrong_branch_prefix_gap_keeps_all_facts_under_serialized_wrapper_limit():
     from cv_agent.domain.evidence import ToolObservation, ValidationStatus
     from cv_agent.tools.registry import ToolRegistry
-    from cv_agent.evaluation.diagnostics.witness_contract import PositiveOnlyWitnessProofScope
+    from cv_agent.runtime.witness.contract import PositiveOnlyWitnessProofScope
     full = prototype()
     full.update(status="UNRESOLVED", raw_status="UNRESOLVED", gaps=["recorder_prefix_not_established"])
     full["scenario_verification"]["control"]["ok"] = False
@@ -380,7 +380,7 @@ def test_scripted_sequence_rejects_invalid_whole_plan_before_worker(tmp_path, in
 def test_projection_error_keeps_physical_receipt_and_does_not_authorize_repeat(tmp_path, monkeypatch, failure):
     from dataclasses import replace
     from cv_agent.domain.chat import ModelToolCall
-    from cv_agent.evaluation.diagnostics import bounded_execution_witness as kernel
+    from cv_agent.runtime.witness import kernel
     from cv_agent.tools.validation import bounded_witness
     from test_witness_protocol_continuation import _complete, _scope
     index, candidate, context = _physical_inputs(tmp_path)

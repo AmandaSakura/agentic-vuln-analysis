@@ -16,7 +16,7 @@ from cv_agent.evaluation.datasets.advisory_source import (
     build_pair_input, case_identity, require_clean_checkout,
 )
 from cv_agent.evaluation.datasets.composition import load_advisory_config
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.evaluation.diagnostics.witness_scenario_preflight import preflight_cells
 from cv_agent.evaluation.diagnostics.audit_witness_scenario_requests import audit as audit_requests
 from cv_agent.evaluation.execution import run_candidate

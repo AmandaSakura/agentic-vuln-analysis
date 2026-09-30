@@ -9,8 +9,8 @@ from pydantic import ValidationError
 
 from cv_agent.domain.evidence import ValidationStatus
 from cv_agent.domain.types import Candidate, CodeDocument
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
-from cv_agent.evaluation.diagnostics import witness_contract
+from cv_agent.runtime.witness.kernel import SourceFileBinding, WitnessManifest
+from cv_agent.runtime.witness import contract as witness_contract
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.tools.identity import candidate_subject
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis

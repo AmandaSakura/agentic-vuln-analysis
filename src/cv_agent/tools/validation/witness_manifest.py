@@ -20,7 +20,7 @@ from pydantic import field_validator, model_validator
 
 from cv_agent.domain.evidence import ValidationSubject
 from cv_agent.domain.types import FrozenModel
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.runtime.witness_resources import WitnessResourceProfile
 from cv_agent.runtime.witness_entry import source_entry
@@ -28,7 +28,7 @@ from cv_agent.tools.identity import repository_source_digest
 from cv_agent.tools.validation.witness_scenario import WitnessScenarioHypothesis
 
 if TYPE_CHECKING:
-    from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding, WitnessManifest
+    from cv_agent.runtime.witness.kernel import SourceFileBinding, WitnessManifest
 
 _NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9]*\Z")
 _SPAN = re.compile(r"(.+)::([A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)?)@([0-9]+)-([0-9]+)\Z")
@@ -182,7 +182,7 @@ def _same(a: Any, b: Any) -> bool:
 
 
 def _inventory(index: RepositoryIndex, subject: ValidationSubject, context: WitnessExecutionContext):
-    from cv_agent.evaluation.diagnostics.bounded_execution_witness import SourceFileBinding
+    from cv_agent.runtime.witness.kernel import SourceFileBinding
     root = context.checkout_root.resolve()
     groups: dict[str, list[Any]] = {}
     for document in index.documents.values():
@@ -414,7 +414,7 @@ def build_witness_manifest(index: RepositoryIndex, subject: ValidationSubject,
                            scenario: WitnessScenarioHypothesis | None = None,
                            scenario_origin: str | None = None,
                            original_subject: ValidationSubject | None = None) -> ManifestDraft:
-    from cv_agent.evaluation.diagnostics.bounded_execution_witness import WitnessManifest
+    from cv_agent.runtime.witness.kernel import WitnessManifest
     WitnessSupplement.model_validate(supplement.model_dump())
     generated: dict[str, Any] = {"entry_qualified": False, "input_profile": "existing_local_directory"}
     gaps: list[str] = []

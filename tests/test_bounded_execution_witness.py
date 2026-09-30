@@ -11,7 +11,7 @@ import pytest
 from pydantic import ValidationError
 
 from cv_agent.domain.evidence import ValidationStatus, ValidationSubject
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import (
+from cv_agent.runtime.witness.kernel import (
     SourceFileBinding,
     WitnessManifest,
     WitnessResult,
@@ -357,7 +357,7 @@ class Service:
 
 
 def test_selftest_and_source_failures_are_unresolved(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    import cv_agent.evaluation.diagnostics.bounded_execution_witness as witness
+    import cv_agent.runtime.witness.kernel as witness
 
     manifest = _manifest(tmp_path, DIRECT)
     original = witness._run_worker

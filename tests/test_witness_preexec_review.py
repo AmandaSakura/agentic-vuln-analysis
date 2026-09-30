@@ -126,7 +126,7 @@ def test_direct_preexec_measurement_has_no_observer_exception(fn, expected_ok):
 @pytest.mark.parametrize("condition, should_confirm", [("is None", False), ("is not None", True)])
 def test_bounded_preexec_measurement_does_not_inherit_capture_exception(tmp_path, condition, should_confirm):
     from cv_agent.domain.evidence import ValidationStatus
-    from cv_agent.evaluation.diagnostics.bounded_execution_witness import run_witness
+    from cv_agent.runtime.witness.kernel import run_witness
     from test_bounded_execution_witness import NONCE, _manifest
 
     manifest = _manifest(tmp_path, f'''

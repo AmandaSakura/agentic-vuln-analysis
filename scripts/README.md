@@ -8,7 +8,7 @@
 | `bash scripts/heldout_matrix.sh` | 30 项矩阵，会调用真实模型 |
 | `scripts/witness_scenario_phase1.sh` | 已完成的一次 A/B 四格，执行命令已注释，保留运行身份和历史记录 |
 | `scripts/witness_scenario_phase2.sh` | 已完成的一次 B 两格重跑，执行命令已注释，保留运行身份和历史记录 |
-| `bash scripts/witness_scenario_E_iter.sh` | 已追加授权的探索性场景迭代，固定 DeepSeek Flash、E1，最多 40 请求；先离线验收和登记，不改变 G-A |
+| `scripts/witness_scenario_E_iter.sh` | 已完成的一次探索性四格运行，执行命令已注释；26 次请求，不改变 G-A |
 | `bash scripts/jev_pilot.sh` | 6 项 E3/E4/E4_JEV 开发对照，会调用真实模型；需填写 `JEV_API_KEY` |
 | `bash scripts/hp003_jev_active.sh` | 已完成的 hp003 四项 active 对照批次；调用命令已注释保留，重新执行前明确取消一条命令的注释 |
 | `bash scripts/jev_v3_comparison.sh` | 6 项 hp003 E4_JEV_V3 / E4_RULE_V1 / E4 有界三臂对照，会调用真实模型；需填写 `JEV_API_KEY` |

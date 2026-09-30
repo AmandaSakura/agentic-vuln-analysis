@@ -12,7 +12,7 @@ from pathlib import Path
 
 from cv_agent.evaluation.datasets.advisory_source import build_pair_input
 from cv_agent.evaluation.datasets.composition import load_advisory_config
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import WitnessManifest
+from cv_agent.runtime.witness.kernel import WitnessManifest
 from cv_agent.runtime.paths import PROJECT_ROOT
 from cv_agent.tools.identity import candidate_subject
 

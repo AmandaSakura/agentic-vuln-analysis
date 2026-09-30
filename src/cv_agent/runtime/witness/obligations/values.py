@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from cv_agent.evaluation.diagnostics.bounded_execution_witness import WitnessManifest
+    from cv_agent.runtime.witness.kernel import WitnessManifest
 
 _SIMPLE_NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9]*\Z")
 _MISSING = object()

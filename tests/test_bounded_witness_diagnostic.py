@@ -10,7 +10,7 @@ import time
 import pytest
 
 from cv_agent.domain.evidence import ValidationStatus
-from cv_agent.evaluation.diagnostics.bounded_execution_witness import (
+from cv_agent.runtime.witness.kernel import (
     SourceFileBinding,
     run_witness,
 )

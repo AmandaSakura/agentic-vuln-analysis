@@ -21,7 +21,7 @@ import tempfile
 import time
 from typing import Any
 
-from cv_agent.evaluation.diagnostics.process_resource_accounting import ProcessResourceSampler
+from cv_agent.runtime.witness.accounting import ProcessResourceSampler
 
 
 _DEADLINE_SECONDS = 60.0

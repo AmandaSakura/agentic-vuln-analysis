@@ -60,7 +60,7 @@ def test_actual_initial_capture_uses_no_credentials_transport_workers_or_tools(t
     def forbidden(*args, **kwargs):
         raise AssertionError("preflight must not invoke credentials, model transport, tool or worker")
     from cv_agent.runtime import provider, model
-    from cv_agent.evaluation.diagnostics import bounded_execution_witness
+    from cv_agent.runtime.witness import kernel as bounded_execution_witness
     monkeypatch.setattr(provider, "load_experiment_model", forbidden)
     monkeypatch.setattr(model.OpenAICompatibleChatModel, "complete", forbidden)
     monkeypatch.setattr(bounded_execution_witness, "run_witness", forbidden)

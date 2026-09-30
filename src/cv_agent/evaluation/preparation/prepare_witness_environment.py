@@ -21,8 +21,8 @@ from urllib.parse import urlsplit
 from pydantic import Field, model_validator
 
 from cv_agent.domain.types import FrozenModel
-from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import summarize_trace, trace_command
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.runtime.witness.tracer import summarize_trace, trace_command
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.runtime.provenance import git_identity
 from cv_agent.runtime.witness_resources import WitnessResourceProfile
 
@@ -278,12 +278,12 @@ def prepare_environment(spec: WitnessEnvironmentSpec) -> dict:
             Path(sys.base_prefix), _SOURCE,
             Path("/lib"), Path("/lib64"), Path("/usr/lib"), Path("/etc/ld.so.cache"),
             *(grant.path for grant in grants)) if path.exists()))
-        kernel_file = _SOURCE / "cv_agent/evaluation/diagnostics/bounded_execution_witness.py"
+        kernel_file = _SOURCE / "cv_agent/runtime/witness/kernel.py"
         common = {"checkout": str(spec.checkout_root), "import_root": str(import_root),
             "module_name": spec.target_module, "site": str(site), "read_roots": [str(path) for path in roots],
             "syscalls": str(_SOURCE / "cv_agent/runtime/fixture_syscalls.py"),
             "filesystem": str(_SOURCE / "cv_agent/runtime/fixture_isolation.py"),
-            "harness_source": str(_SOURCE), "kernel_module": "cv_agent.evaluation.diagnostics.bounded_execution_witness",
+            "harness_source": str(_SOURCE), "kernel_module": "cv_agent.runtime.witness.kernel",
             "kernel_file": str(kernel_file)}
         baseline_config = output / "baseline-configuration.json"
         _json(baseline_config, {**common, "result": str(output / "baseline-import-identity.json"),

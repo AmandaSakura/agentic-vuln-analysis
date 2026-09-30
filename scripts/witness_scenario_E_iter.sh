@@ -9,4 +9,5 @@ export CV_AGENT_PROVIDER=deepseek
 export DEEPSEEK_MODEL=deepseek-flash
 export PYTHONUNBUFFERED=1
 
-uv run --no-sync python -m cv_agent.evaluation.runners.run_witness_scenario_matrix --live --configuration configs/experiments/witness_scenario_E_iter.json
+# Completed once: 61ccd871658f48988e78ee038816292c, 26 requests, 166482 reported tokens.
+# uv run --no-sync python -m cv_agent.evaluation.runners.run_witness_scenario_matrix --live --configuration configs/experiments/witness_scenario_E_iter.json

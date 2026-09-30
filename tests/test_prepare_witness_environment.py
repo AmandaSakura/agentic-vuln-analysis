@@ -11,7 +11,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.evaluation.preparation.prepare_witness_environment import (
     HashBoundRequirements, WitnessEnvironmentSpec, accepted_grants, derive_profile,
     load_execution_context, prepare_environment,

@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from cv_agent.evaluation.diagnostics import process_resource_accounting as accounting
+from cv_agent.runtime.witness import accounting
 
 
 def _fake_process(root: Path, *, pid: int = 123, start: int = 42,

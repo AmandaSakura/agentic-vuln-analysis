@@ -38,8 +38,8 @@ from cv_agent.runtime.witness_entry import (
     EntryInvocation, bound_instance_method, class_dictionary, click_callback,
     module_dictionary, qualified_function, source_entry_code,
 )
-from cv_agent.evaluation.diagnostics.isolation_read_policy import IsolationReadGrant
-from cv_agent.evaluation.diagnostics.process_resource_accounting import (
+from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
+from cv_agent.runtime.witness.accounting import (
     ProcessResourceSampler,
     self_usage,
 )
@@ -475,9 +475,9 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             return
         checkout = manifest.checkout_root.resolve(strict=True)
         if verify_obligations:
-            from cv_agent.evaluation.diagnostics.witness_values import ValueAssumptionObserver
-            from cv_agent.evaluation.diagnostics.witness_branches import BranchAssumptionObserver
-            from cv_agent.evaluation.diagnostics.witness_scenario_runtime import ScenarioDataObserver
+            from cv_agent.runtime.witness.obligations.values import ValueAssumptionObserver
+            from cv_agent.runtime.witness.obligations.branches import BranchAssumptionObserver
+            from cv_agent.runtime.witness.scenario_runtime import ScenarioDataObserver
             values = ValueAssumptionObserver(manifest)
             branches = BranchAssumptionObserver(manifest)
             scenario_data = ScenarioDataObserver(manifest, probe_path)
@@ -734,7 +734,7 @@ def _worker(manifest: WitnessManifest, result_fd: int, runtime: Path,
             if pending_command is None:
                 emit({'kind': 'error', 'gap': 'command_capture_missing', 'phase': phase})
             else:
-                from cv_agent.evaluation.diagnostics.witness_preexec import verify_preexec
+                from cv_agent.runtime.witness.obligations.preexec import verify_preexec
                 verifier_active = True
                 try:
                     if (pending_command['authentic_subprocess_popen'] and len(pending_preexec) == 2
@@ -896,7 +896,7 @@ def _run_worker(manifest: WitnessManifest, runtime: Path, probe_path: Path,
         command = [str(python), "-m", __name__, "--worker", str(write_fd),
                    str(runtime), str(probe_path), str(manifest_path), manifest_digest]
         if trace_path is not None:
-            from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import trace_command
+            from cv_agent.runtime.witness.tracer import trace_command
             command = trace_command(command, trace_path)
         environment = {"PATH": _worker_path(manifest.python_executable),
                        "LC_ALL": "C", "LANG": "C",
@@ -1503,7 +1503,7 @@ def run_witness(
             details["strace_enabled"] = diagnostic_trace_path is not None
             details["stack_capture_enabled"] = diagnostic_stack_capture
         if diagnostic_trace_path is not None:
-            from cv_agent.evaluation.diagnostics.isolation_read_diagnostics import summarize_trace
+            from cv_agent.runtime.witness.tracer import summarize_trace
             roots = tuple(Path(path) for path in event.get("isolation_read_roots", []))
             summary = (summarize_trace(diagnostic_trace_path, roots)
                        if event.get("gap") != "worker_launch_error" else {
