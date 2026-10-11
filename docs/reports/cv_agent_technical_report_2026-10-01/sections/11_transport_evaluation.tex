@@ -1,0 +1,117 @@
+\section{传输、恢复审计与评价生命周期}
+\subsection{所有真实模型调用的唯一准入链}
+live 模型经 \code{OpenAICompatibleChatModel.complete} 进入测试门禁，然后生成 request ID、记录 model start、发出请求、记录原始响应与 usage、解析 reply 并记录成功或错误。scripted 模型用于确定性离线机制检查，运行 provenance 由实际模型类型核验，不能通过文字字段伪装为 live。
+
+同一进程首次真实请求前自动运行完整 \cmd{uv run --no-sync pytest}。指纹覆盖 src、tests、scripts、configs、validation 以及依赖声明、AGENTS 和测试契约。当前完整门禁有 900 秒有限截止时间。进程启动后、测试期间或准入后源码指纹变化，都阻止继续请求。
+
+通过状态只保存在该进程内存；本地 gate log 是审计产物，不是可重复使用的 pass stamp。测试失败后该进程不按剩余 trial 自动重复尝试准入。发请求需要实际配置中的实验授权，测试通过本身不授权新增预算、provider fallback 或重跑。
+\loc{runtime/model.py; runtime/admission.py}
+
+\subsection{测试隔离与凭据处理}
+门禁子进程清除 API key、token、secret、password 等凭据环境项，禁用自动 pytest plugin 加载，并移除会改变测试选择或 provider 的部分环境设置。pytest 使用 scripted 模型、mock HTTP 及项目拥有的 loopback 夹具。
+
+真实模型的 endpoint、model、temperature、超时及输出上限由显式运行配置与提供商组装获得，凭据在运行入口加载。模型响应和传输错误的公开文本与事件对当前配置的 API 密钥值脱敏；源码归档和技术报告不保存凭据。模型 ID 使用实际返回值校核，不能仅凭请求配置名字认定上游实际模型。
+\loc{runtime/provider.py; runtime/model.py::_record_response}
+
+\subsection{先记录 usage，再验证响应内容}
+模型原始响应中的 usage 在 content、tool JSON 或最终 reply schema 校验前写入日志。因此，格式错误且具有 reported usage 的响应仍计入成本。请求数在 model start 计数；无响应、解析失败和中断都不被解释为零请求。
+
+事件按 request ID 对账，检查重复 start、孤立响应、usage 冲突、缺失 reported usage 和无效响应。未知 usage 与未配置价格不等于数值零；只有所有相关分量已知时，才能给出完整总和。报告使用 provider reported tokens，而文本字节预算单独报告。
+
+HTTP 错误、空 choices、非法工具 JSON 和超时显式失败，不作为 SAFE 票。当前传输不会因这种失败自动换 provider 或执行静默重试；若协议允许的纠正循环再发请求，该请求必须重新进入预算与记账链。
+
+\subsection{耐久事件与全局停止}
+Journal 按 JSONL 追加事件，flush 并 fsync 后才继续操作。并发实验使用锁保护日志和预算，单个 trial 保存模型、工具、角色、调用参数、允许工具与准入路径等。结果同时保留原始轨迹和纯汇总，异常不会抹去此前请求。
+
+通用 Budget 约束请求数和 wall-time，LockedBudget 约束共享并发。场景实验另有累计 token 账本、阶段上限、保守 reservation 和硬停止条件。实验取消阻止后续请求进入；线程任务的实际已发生操作仍须入账。
+
+源码快照、配置、provider 参数、gate log、事件、结果、usage、summary 和验收形成可审计产物链。fingerprint 与归档按已授权边界机械读取文件，不能被当作检测语义访问或用来恢复模型可见标签。
+\loc{runtime/journal.py; runtime/budget.py; runtime/snapshots.py; evaluation/experiment_guard.py}
+
+\subsection{配置与实验组织}
+评价层声明数据角色、实验配置和产物生命周期，与核心运行时分开。
+\subsubsection{配置按职责组合}
+配置目录按 models、datasets、profiles、experiments、preparation、diagnostics 与 history 分类。dataset 声明样本、角色、来源和前提；profile 声明系统、预算、检索、选择格子和预登记弃权；model 配置声明模型默认参数。专项实验维持自身明确的类型化配置。
+
+advisory 数据与运行 profile 经 \code{compose_advisory_config} 组装成既有类型化协议，字段不能任意交叉覆盖，缺失或无效配置直接报错。解析后的完整配置进入 metadata。文件名中的历史模型名不能替代实际返回模型 ID；含 heldout 字样的旧路径也不能恢复数据盲测资格。
+
+旧配置和历史产物被保留用于版本比较。迁移等价性测试核对明确路径替换与新增字段，不能通过覆盖旧结果来制造一致。准备程序具有修改数据的行为；查看项目架构不授权重建数据或开启实验。
+\loc{evaluation/datasets/composition.py; evaluation/datasets/advisory_config.py; runtime/provider.py}
+
+\subsubsection{候选执行与结果状态}
+\code{run_candidate} 组装 index、candidate、系统、模型、记录工具和预算，调用 \code{AgenticPipeline.run}。结果为实质判决时记为 completed，为合法弃权时记为 abstained；传输、schema、内部异常或超时有明确 failed/interrupted/not-run 状态。
+
+尚未发送模型请求就被预算阻止，可以记为 not-run；已经发生请求后失败，仍保存请求和工具尝试计数。中断会记录当前结果与时长再传播，不能在汇总中当作没有运行。所有实际执行任务包含在最终模型和工具成本中。
+\loc{evaluation/execution.py; evaluation/results.py}
+
+\subsubsection{实验生命周期}
+advisory 生命周期先校验配置、模型和数据准备，创建独立 run 目录、源码与配置快照及耐久事件，再按预登记的格子顺序或显式并发执行任务。每格结果增量保留，结束或停止后由纯汇总逻辑输出 usage、summary、acceptance 等文件。
+
+不同 protocol 按各自样本前提检查验收：开发门禁可声明有意弃权；配对检查良性功能保留及预期拒绝；场景实验分别审计 dataset、model 和 developer-scripted 来源。通用测试通过不意味着这些专项前置条件已经满足。
+
+源码发现 runner 的 checkpoint 保存清单身份、源码分析指纹、已完成提交和解析错误。恢复需要相同 detector manifest、数据身份和代码指纹；不兼容状态拒绝恢复。临时 worktree 用于减少同时保存大量完整 checkout 的空间压力，原始候选清单和哈希继续保留。
+\loc{evaluation/lifecycle.py; evaluation/runners/run_vulngym_discovery.py; evaluation/repository.py}
+
+\subsubsection{检测输入与评价标签分离}
+一般仓库输入可以只包含 repository URL 和 commit；候选定位及性质应由检测流程产生。评价侧 reference 含标签、关键位置和人工核验信息，只有在候选或 findings 已产生后才参与匹配与计分。oracle-diagnostic 使用已知入口作为 seed 时，必须明确其角色，不能报告端到端发现召回。
+
+当前源码发现 evaluator 按规范化仓库、commit、路径和行号精确匹配 critical-operation 位置。旧目标规格中出现的其他行号容忍窗口，不自动成为该实际计分器规则。没有核验负例的正例参考集不能估计 FPR；未匹配的 VULNERABLE finding 也不能仅凭参考表缺项判为假阳性。
+
+开发样本、已暴露的公告路径或 oracle-seeded 数据保持 \code{claim_eligible=false}。架构方披露已查询部分 held-out 评价侧元数据，VulnGym v4 的命令注入相关结论、Python 类别组成和语言组成不再视为盲测。技术报告仅引用已归档披露，不重新读取受保护输入或 evaluator 标签。\cite{disclosure}
+
+根目录 \code{.ignore} 使 ripgrep 默认搜索跳过受保护输入及其源码快照副本；它是默认导航的预防措施，门禁指纹和源码归档继续按独立规则机械读取。搜索排除规则不应被误写成文件本身已经删除或无法被显式访问。
+
+\subsubsection{运行完整性与研究 claim readiness}
+\code{assess_run_readiness} 对 acceptance、metadata、summary、usage 及结果/事件中的 fixture 使用作交叉核对。它不只读取一个存储的 passed 布尔。
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{L{37mm}Y}
+\toprule 关口 & 实际含义\\\midrule
+完整 pytest & 当前代码可进入受门禁约束的实验；未证明检测效果。\\
+专项 acceptance & 本次 run 满足其预登记的具体验收标准；未自动满足独立研究条件。\\
+\code{operational_ready} & 运行产物和请求记录足够完整且专项验收没有运行阻断。\\
+\code{claim_ready} & 在 operational ready 之上，还需合格 final 角色、显式 claim eligible、干净记账和独立评价前提。\\
+\bottomrule
+\end{tabularx}
+\caption{主要验收关口。不同层级分别记录与报告。}
+\end{table}
+
+有 trusted fixture 替代独立评价、数据角色非 final、usage 冲突或缺失、解析错误等情况会影响对应关口。当前开发门禁即使全部通过，也不会把 \code{claim_eligible=false} 自动改为 true。
+\loc{evaluation/protocols/readiness.py; harness/validation.py}
+
+\subsection{评价指标与成本定义}
+三值结果保留弃权及失败分母，成本分别按上下文、模型和执行报告。
+\subsubsection{保留完整分母}
+设全部评价项数为 $N$，实际正例与负例数为 $N_+,N_-$。实质判断的混淆计数分别为 $TP$、$FP$、$TN$ 和 $FN$。弃权、失败、中断和未运行作为独立计数保留，而不伪装成正常 SAFE 或从总体分母删除。当前主要指标为
+\begin{align}
+\mathrm{Coverage}&=\frac{TP+FP+TN+FN}{N},\\
+\mathrm{StrictRecall}&=\frac{TP}{N_+},\qquad
+\mathrm{CoveredRecall}=\frac{TP}{TP+FN},\\
+\mathrm{Precision}&=\frac{TP}{TP+FP},\\
+\mathrm{PopulationFPR}&=\frac{FP}{N_-},\qquad
+\mathrm{CoveredFPR}=\frac{FP}{FP+TN},\\
+\mathrm{ConservativeFPR}&=\frac{N_--TN}{N_-},\\
+\mathrm{Accuracy}_{\mathrm{all}}&=\frac{TP+TN}{N}.
+\end{align}
+分母为零时返回未定义值。严格召回和全量 accuracy 保留未覆盖项影响；covered 指标回答已经形成实质结论的子集表现。保守 FPR 将所有未证成真阴性的负例计入保守记分，应与真实观测 FP 分开解释。
+
+部分源码发现计分只具有正例参考，因此 FPR 明确为未定义。配对的真假标签判断、关键位置发现命中、advisory 召回、具备匹配 validator 的票数，以及实际执行见证次数，都有不同分母，不能互相替换。
+\loc{evaluation/metrics.py; evaluation/discovery.py; harness/results.py}
+
+\subsubsection{区间与配对比较}
+metrics 模块提供描述性的 Wilson 二项区间，并明确它不是跨仓库泛化区间。缺失项、中断或未完成的 provisional 结果保留标识，不能通过只挑完整格子来制造确定性结论。
+
+配对统计按 case 与 system 对齐，记录左赢、右赢、相同、不可用及标签分歧。案例和同仓库多个入口具有相关性；单轮开发对照没有自动获得重复实验或仓库级独立样本的解释权。显著成本或召回改进需要另行冻结重复次数、统计单位和分析规则。
+
+\subsubsection{成本的三个维度}
+\textbf{上下文成本}记录检索和观察的序列化文本上界；\textbf{模型成本}记录实际请求与 provider reported usage；\textbf{执行成本}记录工具尝试、物理 witness、资源和墙钟。三者在结果中共存，而不是把一个工具观察单位换算成一个 provider token。
+
+E5 固定票回放可计算哪些后续任务会被跳过，但该值是反事实节省，未测量新调度下模型回复、工具耗时或总 wall-time。Jev 也需要将 routing 请求、source read 和 scoped planner 成本计入总额；最终标签正确不单独证明 routing 已采用或节省了请求。
+
+
+\subsection{新的只读 journal 恢复审计}
+\code{audit_journal} 对现存 JSONL 事件进行只读审计，区分完整事件、缺少换行的末行、损坏 JSON、未知或未完成请求、usage 冲突及尚无确定用量的 reservation。每个有问题的行记录行号和原始 bytes 摘要，避免将可疑内容直接回显。unknown usage 保留 unknown，不记为零；审计不退款、不补造响应、不自动重发。它给操作者一个保守的恢复清单，不提供事务式自动续跑保证。
+
+新增控制还覆盖六个并发最后名额竞争者、畸形 model content 的 usage 保留、取消后不启动后续调用，以及已知 fake key 出现在 URL/HTTP 异常中的脱敏。错误类别、阶段和私有引用进入诊断；这不构成对任意未知秘密格式的完全识别。产品默认不加载 API 凭据，gate/model 阶段为零。\citep{acceptance}
+\loc{runtime/journal.py::audit_journal; runtime/model.py; runtime/redaction.py}

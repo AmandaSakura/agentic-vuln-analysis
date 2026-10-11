@@ -6,16 +6,44 @@ import io
 import re
 import subprocess
 import tokenize
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from typing import Annotated, Literal
+
+from pydantic import Field, model_validator
 
 from cv_agent.code_adapters.python import parse_python_source
 from cv_agent.evaluation.datasets.advisory_config import PythonHeldoutPair, PythonHeldoutPairCase, is_supported_heldout_source_path
 from cv_agent.retrieval import RepositoryIndex
 from cv_agent.code_adapters.source_files import read_source_bytes
-from cv_agent.domain.types import Candidate, CodeDocument
+from cv_agent.domain.types import Candidate, CodeDocument, FrozenModel
 
 SPAN_RE = re.compile(r"^(.+)::(.+)@([0-9]+)-([0-9]+)(?:#[0-9]+-[0-9]+)?$")
 MAX_FALLBACK_SOURCE_BYTES = 64_000
+
+
+class NeutralDetectorSourceCase(FrozenModel):
+    """Validated source-selection view with no revision label or private ID."""
+
+    case_id: Literal["neutral-entry"] = "neutral-entry"
+    commit: Annotated[str, Field(pattern=r"^[a-f0-9]{40}$")]
+    checkout: str
+    file_path: str
+    line_hint: Annotated[int, Field(ge=1)]
+
+    @model_validator(mode="after")
+    def validate_source_paths(self):
+        for value in (self.checkout, self.file_path):
+            path = PurePosixPath(value)
+            if not value or path.is_absolute() or ".." in path.parts:
+                raise ValueError("Neutral source paths must remain relative to the project root")
+        if not is_supported_heldout_source_path(self.file_path):
+            raise ValueError("Neutral source case requires a supported source file")
+        return self
+
+    @classmethod
+    def from_case(cls, case: PythonHeldoutPairCase):
+        return cls(commit=case.commit, checkout=case.checkout,
+                   file_path=case.file_path, line_hint=case.line_hint)
 
 
 def git_commit(checkout: Path) -> str:
@@ -48,7 +76,7 @@ def require_clean_checkout(checkout: Path, expected_commit: str) -> None:
 def build_package_index(
     root: Path,
     pair: PythonHeldoutPair,
-    case: PythonHeldoutPairCase,
+    case: PythonHeldoutPairCase | NeutralDetectorSourceCase,
 ) -> tuple[RepositoryIndex, dict[str, str]]:
     checkout = root / case.checkout
     source_root = checkout / pair.source_root
@@ -204,7 +232,7 @@ def model_visible_analysis_scope(pair: PythonHeldoutPair, *, include_scoped_oper
 def build_pair_input(
     root: Path,
     pair: PythonHeldoutPair,
-    case: PythonHeldoutPairCase,
+    case: PythonHeldoutPairCase | NeutralDetectorSourceCase,
     *,
     preferred_symbol: str | None = None,
     include_scenario_assumptions: bool = True,

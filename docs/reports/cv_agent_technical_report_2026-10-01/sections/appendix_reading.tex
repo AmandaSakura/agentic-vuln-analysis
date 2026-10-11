@@ -1,0 +1,70 @@
+\section{核心模块阅读索引}
+表中路径以 \code{src/cv_agent/} 为基准；同一行的短文件名或子目录沿用首项显示的所属包。
+\begin{longtable}{L{66mm}L{83mm}}
+\caption{源码定位与理解顺序。所有路径均以 \code{src/cv_agent/} 为前缀。}\\
+\toprule 位置 & 应阅读的逻辑\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 位置 & 应阅读的逻辑\\\midrule\endhead
+\code{domain/types.py}, \code{evidence.py}, \code{review.py}, \code{chat.py} & 候选、subject、观察、任务与票，以及 provider-neutral 消息和 usage。\\
+\code{domain/validation_protocol.py} & 准备状态、缺字段 destination、dataset/model 模式及继续动作。\\
+\code{code_adapters/python.py}, \code{java.py}, \code{javascript.py}, \code{go.py} & 多语言切片、定义、调用与元数据的生成。\\
+\code{code_adapters/source_files.py}, \code{fallback.py}, \code{repository.py} & 安全读取、fallback 层级及仓库文档组装。\\
+\code{agents/discovery.py}, \code{scanner.py} & 标签无关的 Python 源码清单与有限候选规则。\\
+\code{retrieval/index.py}, \code{context.py}, \code{dependencies.py}, \code{tokens.py} & 图绑定、文本/图/hybrid 排序、局部窗口、预算和序列化拟合。\\
+\code{retrieval/bm25.py} & 独立 BM25 元数据诊断。\\
+\code{agents/workflow.py} & LangGraph 状态、依赖调度、累积票与最终结果。\\
+\code{agents/planning.py}, \code{plan_policy.py} & 计划提示、schema、必要任务与政策组合。\\
+\code{agents/react.py} & 模型/工具循环、纠正、final-only 阶段及用量累计。\\
+\code{agents/evidence_policy.py} & 性质与范围准入、相关反证、冲突、投递及必需验证完成。\\
+\code{agents/routing.py}, \code{applicability.py} & 可选 Jev 分流及独立专家适用性政策。\\
+\code{agents/voting.py}, \code{validator_accounting.py} & 单票/quorum、早停与原始观察共享计数。\\
+\code{tools/registry.py}, \code{repository.py}, \code{identity.py} & 工具 schema 与作用域、源码查询、重复记忆及 subject 构造。\\
+\code{tools/analysis/commands.py}, \code{python_flow.py}, \code{python_probe.py} & 有界命令、数据流和 AST 输入探针。\\
+\code{tools/validation/permissions.py}, \code{authorization.py}, \code{commands.py} & 对应性质的观察封装与语义边界。\\
+\code{tools/validation/fixtures.py}, \code{comparison.py} & 注册夹具、loopback 案例与源码差分。\\
+\code{tools/validation/bounded_witness.py}, \code{witness_manifest.py}, \code{witness_scenario.py}, \code{witness_response.py} & 见证服务、系统清单、分类场景和 compact 投递。\\
+\code{runtime/witness/kernel.py}, \code{contract.py}, \code{scenario_runtime.py} & 源码绑定 worker、正向 proof contract 与场景执行。\\
+\code{runtime/witness/obligations/values.py}, \code{branches.py}, \code{preexec.py} & 真实值、分支和 preexec 义务。\\
+\code{runtime/witness/accounting.py}, \code{tracer.py}, \code{isolation_policy.py} & 执行资源、读取追踪与身份绑定准入。\\
+\code{runtime/model.py}, \code{provider.py}, \code{admission.py}, \code{jev.py} & 传输、provider 组装、完整 pytest 门禁和 choice 协议。\\
+\code{runtime/budget.py}, \code{journal.py}, \code{snapshots.py}, \code{provenance.py} & 预算、耐久事件、源码快照及 Git 身份。\\
+\code{harness/models.py}, \code{defaults.py}, \code{validation.py} & 不可变实验声明、E/V 默认系统和约束核对。\\
+\code{evaluation/execution.py}, \code{lifecycle.py}, \code{results.py}, \code{metrics.py} & 候选执行、实验组织、输出、三值指标和配对比较。\\
+\code{evaluation/datasets/}, \code{protocols/}, \code{discovery.py} & 数据角色、输入/标签分离、专项验收与发现计分。\\
+\code{evaluation/preparation/prepare_witness_environment.py}, \code{witness_import_worker.py}, \code{witness_metadata.py} & 锁定环境、metadata-only 目标安装、受限导入与上下文产物。\\
+\code{evaluation/runners/}, \code{diagnostics/} & 显式实验入口、审计、预检和已完成运行复核；不能仅凭名字认定调用离线。\\
+\code{baselines/}, \code{cli.py} & 确定性历史对照与命令派发。\\
+\code{application/preflight.py}, \code{service.py}, \code{diagnostics.py} & 独立产品能力声明、分析编排和结构化诊断。\\
+\code{application/identity.py}, \code{context.py} & 字节与分析身份、行区间准入及事务性扩展。\\
+\code{application/evidence.py}, \code{delivery.py}, \code{controller.py} & 全局归并、完整证书预算与独立任务控制。\\
+\code{domain/product_result.py}, \code{presentation/report.py} & 版本化结果契约和只读渲染。\\
+\code{runtime/redaction.py}, \code{journal.py::audit_journal} & 展示脱敏、已知密钥保护与保守只读恢复审计。\\
+\bottomrule
+\end{longtable}
+
+\section{工具目录与输出解释}
+\begin{longtable}{L{61mm}L{88mm}}
+\caption{当前注册工具族。工具是否可用及可支持的证明状态由本次运行的能力声明决定。}\\
+\toprule 工具 & 职责和主要限制\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 工具 & 职责和主要限制\\\midrule\endhead
+\code{search_symbols} & 在准入文档中搜索符号，不扩展检索路径。\\
+\code{read_span} & 读取已准入切片或范围，完整响应按序列化预算计数。\\
+\code{get_callers}, \code{get_callees} & 提供已建立图边与有限邻居，图事实不直接证明动态可达。\\
+\code{find_references} & 在准入源码中查找引用，保留缺失和绑定限制。\\
+\code{run_static_check} & 发现有限模式与操作类型，保持静态观察范围。\\
+\code{find_sources}, \code{find_sinks}, \code{find_sanitizers} & 定位来源、消费和处理候选；存在名称不是完整证明。\\
+\code{trace_dataflow} & 有界 may-flow、参数绑定和缺边记录；保持 UNRESOLVED。\\
+\code{inspect_command_construction} & 命令来源、转换、路径、消费上下文和执行效果检查。\\
+\code{probe_python_eval} & 有界 AST 输入控制探针，匹配动态求值性质。\\
+\code{validate_permission_mode} & 特定权限 mode 性质的静态验证，不能证明目录竞态。\\
+\code{get_routes}, \code{get_guards} & 路由与守卫事实；没有匹配不表示绕过成立。\\
+\code{inspect_principal}, \code{inspect_resource_scope} & 主体及对象/租户范围的有界提取。\\
+\code{compare_route_and_service_guard} & 已准入路由及服务调用链的守卫对照。\\
+\code{run_fixture_test} & 运行注册项目夹具，必须匹配 subject、性质和充分 proof scope。\\
+\code{run_loopback_http_case} & 项目自有 loopback 的授权行为对照；不替代其他性质证明。\\
+\code{compare_vulnerable_and_fixed} & 显式配对的源码与行为上下文，diff 自身不构成漏洞确认。\\
+\code{run_bounded_execution_witness} & 系统清单、分类场景与受限真实入口的正向确认；字面量和失败均未决。\\
+\bottomrule
+\end{longtable}
+\loc{tools/repository.py; tools/validation/registry.py; tools/validation/models.py}

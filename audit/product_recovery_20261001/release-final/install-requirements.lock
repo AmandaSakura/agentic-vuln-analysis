@@ -1,0 +1,11 @@
+pydantic==2.13.5 --hash=sha256:941f1299caad71420720214020e2da0fcd12cd03bfe29836cb04bf30e586b73b
+pydantic-core==2.46.5 --hash=sha256:541f84f2d65ded0282918d16d5573a585d7bf484e40ee7f7373e67ad9a9ac1ed
+annotated-types==0.8.0 --hash=sha256:7bdecf588b2784578f9483df565306c33186d6d9398e01ada5cf97142f91e901
+typing-extensions==4.16.0 --hash=sha256:a7927f60ee1a96e2f7fe0a8b1e262015cbe89eece22809aa8a76c30db9f50296
+typing-inspection==0.4.4 --hash=sha256:76ab09aa3754beeef7a50d85f06cd59411665d66bd010d41390234e96df386b3
+tree-sitter==0.25.2 --hash=sha256:dd1d592695d74fa011b8a8fb0e8bafc175a72cdc2ccd2508da8eb821965e036c
+tree-sitter-go==0.25.0 --hash=sha256:a5856141d566d9fb8ec0eb0477a6c537c9ebec2c2ac70be3506f8dc9164b0e72
+tree-sitter-java==0.23.5 --hash=sha256:97c45a2a2eda7a27891c506d54aa14ed05ad598ba116d5222b712d8c584d041b
+tree-sitter-javascript==0.25.0 --hash=sha256:a7b93a1e1d109a5eec5cd43fc77c59a06c450caedfb190c041e0ef1d59e08ab1
+tree-sitter-typescript==0.23.2 --hash=sha256:4a3012d01ee8eb0ed9e5a49f0325df05971bb648fd9eb639e19dd011da99aaed
+cv-agent==0.1.0+recovery.20261001 --hash=sha256:820687521f31409a0b46edeea2138bd2c546719176719b0c72305bfdea3b16d0

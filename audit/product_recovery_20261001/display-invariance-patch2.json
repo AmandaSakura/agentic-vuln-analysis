@@ -1,0 +1,22 @@
+{
+  "schema": "recovery-display-order-check-v1",
+  "scope": "Owned 3-function literal positive/negative/unknown control",
+  "review_state": "COMPLETED",
+  "output": "/home/joker/AAA_NUS_SEM3/cv_agent/audit/product_recovery_20261001/display-invariance-run-patch2",
+  "candidate_count": 3,
+  "property_states": [
+    "SUPPORTED",
+    "REFUTED",
+    "UNKNOWN"
+  ],
+  "actual_input_order_reversed": true,
+  "source_engine_view_delivery_identity_unchanged": true,
+  "property_facts_counts_and_refs_unchanged": true,
+  "priority_report_byte_identical": true,
+  "report_sha256": "b384906c57034b2493d290f7a89b06f8ec002d8755b5fb5a798d0b853d1ca235",
+  "share_one_byte_not_verifiable": true,
+  "local_conclusions_survive_share": true,
+  "real_model_requests": 0,
+  "target_executions": 0,
+  "human_task_measured": false
+}

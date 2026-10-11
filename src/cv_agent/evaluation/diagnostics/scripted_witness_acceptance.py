@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.domain.chat import ModelReply, ModelToolCall, ModelUsage
-from cv_agent.evaluation.datasets.advisory_source import build_pair_input, require_clean_checkout
+from cv_agent.evaluation.datasets.advisory_source import NeutralDetectorSourceCase, build_pair_input, require_clean_checkout
 from cv_agent.evaluation.datasets.composition import load_advisory_config
 from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.harness import AgentSystemVersion, FULL_SYSTEM_HARNESS
@@ -202,7 +202,7 @@ def run_pair(root: Path, configuration: Path, output: Path) -> Path:
             raise ValueError('offline witness accepts only declared command candidates')
         require_clean_checkout(root/case.checkout, case.commit)
         # Both detector identities are neutral. Labels remain evaluation-private.
-        neutral = case.model_copy(update={'case_id':'neutral-entry'})
+        neutral = NeutralDetectorSourceCase.from_case(case)
         # Remove both subject premises and editorial retrieval hints. The
         # supplied script remains an oracle control of the execution contract.
         index, candidate, _ = build_pair_input(

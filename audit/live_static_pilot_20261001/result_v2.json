@@ -1,0 +1,83 @@
+{
+  "schema": "live-reference-repair-acceptance-v1",
+  "status": "REPAIR_AND_BOUNDED_V2_PILOT_PASS",
+  "repair": {
+    "prompt": "Explicitly cite only available_evidence_refs/observation_ref",
+    "model_view": "Internal citation_id/evidence_ids omitted from the model projection; full private originals retained",
+    "validator": "Exact candidate and reference membership retained; explicit reason codes and rejected proposals logged",
+    "new_offline_regressions": 7,
+    "old_second_reply_still_rejected": true
+  },
+  "gate": {
+    "passed": 2948,
+    "seconds": 426.61,
+    "actual_experiment_process": true,
+    "log": "artifacts/pytest_gate/fedab56484ee498494fa84b553b2d533/pytest.log",
+    "sha256": "4eb3dd4d0380b8ac2e21f07bfd22eb346106694d952f823eb82e3745f3933864",
+    "saved_stamp_used": false
+  },
+  "v1": {
+    "status": "STOPPED_REFERENCE_NAMESPACE_MISMATCH",
+    "requests": 2,
+    "reported_tokens": 3759,
+    "accepted": 1,
+    "protocol_rejected": 1,
+    "history_unchanged": true,
+    "run": "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c"
+  },
+  "v2": {
+    "status": "COMPLETED",
+    "original_samples": [
+      3,
+      4,
+      5
+    ],
+    "requests": 3,
+    "reported_tokens": 5726,
+    "accepted": 3,
+    "proposed_states": [
+      "UNKNOWN",
+      "SUPPORTED",
+      "REFUTED"
+    ],
+    "exact_state_matches": 3,
+    "reference_errors": 0,
+    "wrong_strong_assertions": 0,
+    "run": "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0"
+  },
+  "combined": {
+    "requests": 5,
+    "reported_tokens": 9485,
+    "request_cap": 5,
+    "reported_token_cap": 30000,
+    "within_budget": true
+  },
+  "limits": {
+    "same_failed_input_live_retry_performed": false,
+    "all_five_under_one_unchanged_protocol_pass": false,
+    "controlled_causal_improvement_claim": false,
+    "heldout_claim_eligible": false,
+    "independent_project_quality_measured": false,
+    "human_benefit_measured": false,
+    "target_executions": 0,
+    "production_R17_enabled": false,
+    "G_A_changed": false
+  },
+  "source_and_test_fingerprint": "efbcf737fe044b324b27df1d60b210f40234f5ccb0369ce3996896e41c741a5d",
+  "evidence_sha256": {
+    "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0/metadata.json": "344635a9c28f2af4536708e5c0807469b090ce699677325e485ff72dd0373267",
+    "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0/private-input-manifest.json": "0fb76f1a93fb1306591ed9ee53309adf98d6ce5b4d53969316a46beeed8a6370",
+    "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0/frozen-prompts.json": "1bd6f44b2cda124c5abbf9f08391f82e8f3a563303c408c5dc7ad1521ccd4db9",
+    "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0/events.jsonl": "8c792b4d17f16fff83c2f6c90ab1ab2250f0e7ab204881ae91d152fe4d9f58cf",
+    "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0/summary.json": "ae2f816b6cd135e9dc520d69810e752163f218fd82079488b2f57eb00b23a943",
+    "artifacts/live_static_pilot_v2_20261001/6a087adb63084f3cad384c2f3a0c43e0/gate-receipt.json": "dee18aefaf37e87f4dcc7b6212f925b38f128ab5e5680e81a9f5c25f56854c86"
+  },
+  "old_evidence_sha256": {
+    "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c/metadata.json": "5b7fccb246c763bfdecfa76c577ea968dff20de361e2cfc707afa59638c7d22b",
+    "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c/frozen-prompts.json": "f09ef3597dc2d8329aad1038e3acd9df152cfd63ef37e50939b4d9a1a5bb818f",
+    "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c/private-input-manifest.json": "be2c66faaab66287918e2e09072ab41cb1a68785a15ebd70665e0ba4a5141e79",
+    "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c/events.jsonl": "a040848a8d62d3a13b9c481c1d028c165825eebe2bc5f7fe4f55ab18ee970e3a",
+    "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c/summary.json": "6affdf249134b767db8e1935a04842922026a4c86f73076a91cec4805b60f6ed",
+    "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c/gate-receipt.json": "d7661b7b67f5c382f7272f1f58fb2572ed322604b8169d80ef8cd8d6c83ecde3"
+  }
+}

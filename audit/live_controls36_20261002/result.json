@@ -1,0 +1,263 @@
+{
+  "schema": "owned-controls36-live-reconciliation-v1",
+  "status": "COMPLETED",
+  "run": "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f",
+  "stop_reason": null,
+  "scope": "Existing owned development controls; bounded static observation consumption only",
+  "planned": 36,
+  "requests": 36,
+  "validated_replies": 36,
+  "protocol_rejections": [],
+  "usage": {
+    "requests": 36,
+    "responses": 36,
+    "invalid_responses": 0,
+    "requests_without_reported_usage": 0,
+    "reported_total_tokens": 42267,
+    "returned_model_ids": [
+      "deepseek-flash"
+    ],
+    "monetary_cost": null,
+    "note": "Token subtotal includes malformed responses with reported usage; unknown usage and pricing are not zero.",
+    "usage_conflicts": 0,
+    "orphaned_responses": 0,
+    "duplicate_request_starts": 0
+  },
+  "ledger_audit": {
+    "schema_version": "event-audit-v1",
+    "requests_started": 36,
+    "responses_received": 36,
+    "uncertain_request_ids": [],
+    "known_reported_tokens": 42267,
+    "reported_tokens": 42267,
+    "reported_totals": {
+      "ec16827bd23f48798933b98c26cf0cc4": [
+        1114
+      ],
+      "0bf86add930443d1a8a0481f3e790a33": [
+        1123
+      ],
+      "f2fe6b3c969e4f1e874ce06b1ff6262a": [
+        1118
+      ],
+      "e1d8254c0a074afab0f0eb96704dc33f": [
+        1336
+      ],
+      "06188fde760143b48e95a30dc422dd10": [
+        1094
+      ],
+      "c309eeb840a64a3abdf525dc0669057f": [
+        1123
+      ],
+      "f27469863e7a4929b9e0a36954ee5806": [
+        1333
+      ],
+      "0d309f9ec84442c0bfc0f85a50cee4a5": [
+        1128
+      ],
+      "bffcfc8b53ba4e018614603e4755c009": [
+        1121
+      ],
+      "af20a5e87a5848f195cf598055bc380f": [
+        1325
+      ],
+      "3fdd0b00393c419d9536b0d43729d1af": [
+        1336
+      ],
+      "f56b582513a0491586d79e51d83e97e6": [
+        1103
+      ],
+      "b98a8d666c524d7d9c3388810399487e": [
+        1100
+      ],
+      "178b37a4240c4dec80583179019f8f54": [
+        1316
+      ],
+      "99411710931a45cbafe16e2d2f2780df": [
+        1100
+      ],
+      "e9ac07379e1940cab21fced705a5022f": [
+        1105
+      ],
+      "d4ed8c9d0d6b4cdeb011bc15bffb1913": [
+        1120
+      ],
+      "62f35c979db54dc6bde5843187f6dc2b": [
+        1064
+      ],
+      "314dcfa74f124e3a8c2ced6eaf5bdf5f": [
+        1094
+      ],
+      "44019d4e78384b2a8e9106e0270d96d9": [
+        1108
+      ],
+      "b8ff73270f3e4a498ef6467262645ee7": [
+        1137
+      ],
+      "dca0251c5b0f48ee960b2a24fb8934cf": [
+        1122
+      ],
+      "82ebaa72cb2c46eaafd711b240fc2356": [
+        1320
+      ],
+      "1846fd3c2da94c098e1842db9876fd52": [
+        1324
+      ],
+      "5096a09bf3214a9cbe9a98f72f5cd6e5": [
+        1153
+      ],
+      "3e53a5036431462ba937512538842d2b": [
+        1104
+      ],
+      "6149efde75b2435c9e4f6a1d1dddf377": [
+        1322
+      ],
+      "c5bf10ae20ec4870a6ca423824ccffc5": [
+        1080
+      ],
+      "ab1adc74a5bf4676bf4cf30e227002f2": [
+        1132
+      ],
+      "9b604012767f49d180a0865055f1613c": [
+        1149
+      ],
+      "ff7d38dcb00445dd9ca96946f675735d": [
+        1144
+      ],
+      "8088ce3483334a8eadc19ac6572ba419": [
+        1356
+      ],
+      "af732719a08049a49f1f3162936b37f6": [
+        1125
+      ],
+      "e0129e031a7e4e21ad9b6940de331196": [
+        1116
+      ],
+      "d4e8381e8877496fa028b0b219c35efd": [
+        1317
+      ],
+      "ccbccb5d11364133b70eaf1c9aa24a8b": [
+        1105
+      ]
+    },
+    "issues": [],
+    "automatic_retry_allowed": false,
+    "recovery_policy": "Manual reconciliation required; this audit never releases reservations or sends requests."
+  },
+  "not_requested": 0,
+  "gate": {
+    "actual_in_process_gate_passed": true,
+    "seconds": 434.61111041202093,
+    "source_fingerprint": "efbcf737fe044b324b27df1d60b210f40234f5ccb0369ce3996896e41c741a5d",
+    "saved_stamp_used": false,
+    "credential_loaded_before_gate": false,
+    "passed": 2948,
+    "pytest_seconds": 433.63,
+    "log": "artifacts/pytest_gate/bbeed1c4de2a43c9b529276449de2526/pytest.log"
+  },
+  "current_source_fingerprint_matches_gate": true,
+  "model_vs_canonical": {
+    "denominator": 36,
+    "exact_matches": 36,
+    "wrong_strong_proposals": 0,
+    "confusion": [
+      {
+        "expected": "REFUTED",
+        "actual": "REFUTED",
+        "count": 5
+      },
+      {
+        "expected": "SUPPORTED",
+        "actual": "SUPPORTED",
+        "count": 5
+      },
+      {
+        "expected": "UNKNOWN",
+        "actual": "UNKNOWN",
+        "count": 26
+      }
+    ]
+  },
+  "static_vs_development_reference": {
+    "denominator": 36,
+    "exact_matches": 22,
+    "confusion": [
+      {
+        "expected": "REFUTED",
+        "actual": "REFUTED",
+        "count": 5
+      },
+      {
+        "expected": "REFUTED",
+        "actual": "UNKNOWN",
+        "count": 7
+      },
+      {
+        "expected": "SUPPORTED",
+        "actual": "SUPPORTED",
+        "count": 5
+      },
+      {
+        "expected": "SUPPORTED",
+        "actual": "UNKNOWN",
+        "count": 7
+      },
+      {
+        "expected": "UNKNOWN",
+        "actual": "UNKNOWN",
+        "count": 12
+      }
+    ]
+  },
+  "model_vs_development_reference": {
+    "denominator": 36,
+    "exact_matches": 22,
+    "confusion": [
+      {
+        "expected": "REFUTED",
+        "actual": "REFUTED",
+        "count": 5
+      },
+      {
+        "expected": "REFUTED",
+        "actual": "UNKNOWN",
+        "count": 7
+      },
+      {
+        "expected": "SUPPORTED",
+        "actual": "SUPPORTED",
+        "count": 5
+      },
+      {
+        "expected": "SUPPORTED",
+        "actual": "UNKNOWN",
+        "count": 7
+      },
+      {
+        "expected": "UNKNOWN",
+        "actual": "UNKNOWN",
+        "count": 12
+      }
+    ]
+  },
+  "reference_sha256": "3fa07e5df67035177de13f88ad7e5bfe2261f6603cb6f461ab7e4b1eaecabe3a",
+  "limits": {
+    "heldout_claim_eligible": false,
+    "human_independent": false,
+    "human_benefit_measured": false,
+    "target_executions": 0,
+    "production_R17_enabled": false,
+    "G_A_changed": false
+  },
+  "evidence_sha256": {
+    "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f/metadata.json": "50fbcb3b04cc6410968c7406c6365f6fe516b85d5d14ca5bc56d84ebffa235da",
+    "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f/private-input-manifest.json": "999cbc80d4c47c5311552dabb7616aef4e7e8018aa86047675c77e3566bdfbb6",
+    "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f/frozen-prompts.json": "9c40ca2a32326d7911eb877c7d0dba769684d3662e607e7cb2c393f312f925d6",
+    "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f/events.jsonl": "368c4d1fd6ff99cbcddeac4d605c4f913307d9a355a2dc53d3999d9f4fe50078",
+    "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f/summary.json": "ee79e48ca9fcbbd882628995008034d9f22e135e601146fae7966517466dfbcb",
+    "artifacts/live_controls36_20261002/d41fc419b14946deae44646d2840aa6f/gate-receipt.json": "6e621ac7152e8a87e29850beb12cf2d8297c60ba89357b1680124290aaa7f553"
+  },
+  "gate_log_sha256": {
+    "artifacts/pytest_gate/bbeed1c4de2a43c9b529276449de2526/pytest.log": "e3ead21b02125ae5f49082dd439054dcac1fa70f084d7888b5d6888f69ab3b48"
+  }
+}

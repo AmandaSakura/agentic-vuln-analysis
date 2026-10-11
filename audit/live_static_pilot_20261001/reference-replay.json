@@ -1,0 +1,22 @@
+{
+  "schema": "reference-repair-offline-replay-v1",
+  "outcomes": [
+    {
+      "accepted": true,
+      "state": "UNKNOWN"
+    },
+    {
+      "accepted": false,
+      "reason_code": "wrong_reference_namespace",
+      "invalid_refs": [
+        "permission_mode:product_boundary.py::run_bounded_review@128-216"
+      ]
+    }
+  ],
+  "private_original_records_unchanged": true,
+  "all_five_model_views_projected": true,
+  "original_protocol_rejection_preserved": true,
+  "no_weak_reference_admission": true,
+  "real_model_requests": 0,
+  "helper_sha256": "19c29c056ca1eac1bd75c7ed055742a224777d815515e70064b2cec4c2c277e0"
+}

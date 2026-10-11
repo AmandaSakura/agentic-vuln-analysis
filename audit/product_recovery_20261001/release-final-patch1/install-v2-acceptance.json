@@ -1,0 +1,338 @@
+{
+  "schema": "product-release-v2-acceptance-v1",
+  "wheel_sha256": "72119c195fbfe9e7f56ccbf06c6092e08f13f0a046333166c5566c8a891ae79c",
+  "installed_cli": "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+  "network": false,
+  "model_requests": 0,
+  "target_executions": 0,
+  "software_fixture_controls": true,
+  "human_independent_product_quality": "NOT_MEASURED",
+  "commands": [
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "review",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/0",
+        "--output",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/0",
+        "--profile",
+        "product_triage_v2"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"accounting\": {\n    \"analysis_tool_attempts\": 1,\n    \"model_requests\": 0,\n    \"phase_seconds\": {\n      \"analysis_persistence_seconds\": 0.026322263991460204,\n      \"source_index_seconds\": 0.0016862509946804494\n    },\n    \"record_bytes\": 3048,\n    \"source_bytes\": 115,\n    \"target_executions\": 0,\n    \"tool_calls\": 2,\n    \"total_seconds\": 0.03585422202013433,\n    \"verification_tool_attempts\": 1\n  },\n  \"artifacts\": {\n    \"private_manifest\": \".private/material_manifest.json\",\n    \"report\": \"report.md\",\n    \"result\": \"result.json\",\n    \"share\": \"share.json\"\n  },\n  \"counts\": {\n    \"analysis_blocked\": 0,\n    \"analysis_completed\": 1,\n    \"analysis_failed\": 0,\n    \"analysis_not_started\": 0,\n    \"candidate_total\": 1,\n    \"conflict\": 0,\n    \"evidence_persisted_candidates\": 1,\n    \"has_sufficient_evidence\": 1,\n    \"inventory_complete\": true,\n    \"parse_errors\": 0,\n    \"parsed_files\": 1,\n    \"refuted\": 0,\n    \"resolved_without_conflict\": 1,\n    \"source_files_enumerated\": 1,\n    \"source_files_read\": 1,\n    \"supported\": 1,\n    \"unknown\": 0\n  },\n  \"diagnoses\": [],\n  \"findings\": [\n    {\n      \"analysis_state\": \"COMPLETED\",\n      \"application_security\": \"NOT_ASSESSED\",\n      \"assumptions\": [],\n      \"candidate_id\": \"operation-e562bbbec1dc2b8262080c51558b6f07\",\n      \"contract\": {\n        \"input_domain\": [\n          \"selected-statement\",\n          \"resolved-mode\",\n          \"declared-path-conditions\"\n        ],\n        \"not_covered\": [\n          \"whole-application-security\",\n          \"remote-authority\",\n          \"public-entry-reachability\"\n        ],\n        \"predicate\": \"The selected chmod mode contains the others-write bit under the declared inputs.\",\n        \"property_id\": \"chmod-mode-others-write\",\n        \"quantifier\": \"bounded\",\n        \"scope_kind\": \"declared-candidate\",\n        \"supported_methods\": [\n          \"complete_static_analysis\",\n          \"bounded_execution\"\n        ],\n        \"version\": \"property-contract-v1\"\n      },\n      \"display_class\": \"BOUNDED_PROPERTY\",\n      \"evidence_refs\": [\n        \"observation-4056a2c6671ed7b09106e57e4efe740dfc18d583683f9ea9ab7e0294a9c799c4\"\n      ],\n      \"facts\": [\n        \"validate_permission_mode: ok; original validation status CONFIRMED; candidate scope.\",\n        \"Final bounded mode has others-write bit: True.\",\n        \"Collected literal chmod calls in the bounded slice: 1.\"\n      ],\n      \"local_verification\": \"VERIFIED\",\n      \"missing_obligations\": [],\n      \"next_steps\": [\n        \"Assess application policy, public reachability and remote authority separately.\"\n      ],\n      \"operation_locator\": {\n        \"end_col_utf8\": 25,\n        \"end_line\": 3,\n        \"file_sha256\": \"c3a8c098827008d6f0cd8872874bdb02b546d8e093a9a5f2d0382f2f0f1b3e84\",\n        \"node_kind\": \"Call\",\n        \"rule_version\": \"static-operation-rules-v2\",\n        \"source_digest\": \"9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2\",\n        \"source_path\": \"entry.py\",\n        \"start_col_utf8\": 4,\n        \"start_line\": 3\n      },\n      \"persistence_state\": \"COMPLETE\",\n      \"producer_ids\": [\n        \"review-v2-a740e59466eb411c8b6dd781b7721225/static/1\"\n      ],\n      \"property_state\": \"SUPPORTED\",\n      \"public_entry_evaluated\": false,\n      \"record_refs\": [\n        \"4056a2c6671ed7b09106e57e4efe740dfc18d583683f9ea9ab7e0294a9c799c4.json\"\n      ],\n      \"remote_authority_evaluated\": false,\n      \"review_action\": {\n        \"done_condition\": \"\u7ef4\u62a4\u8005\u8bb0\u5f55\u6709\u9650\u6027\u8d28\u7684\u5904\u7406\u51b3\u5b9a\uff1b\u5e94\u7528\u5b89\u5168\u3001\u516c\u5f00\u53ef\u8fbe\u6027\u548c\u8fdc\u7a0b\u6743\u9650\u53e6\u884c\u8bc4\u4f30\u3002\",\n        \"kind\": \"review-property\",\n        \"owner\": \"project-maintainer\",\n        \"reanalysis\": \"\u6e90\u7801\u6216\u5206\u6790\u524d\u63d0\u6539\u53d8\u65f6\uff0c\u5efa\u7acb\u65b0\u5feb\u7167\u518d\u5206\u6790\uff1b\u4e0d\u81ea\u52a8\u5e94\u7528\u8865\u4e01\u3002\",\n        \"required_input\": [\n          \"\u6838\u5bf9\u672c\u5730\u5b8c\u6574\u8bc1\u636e\u3001\u58f0\u660e\u6027\u8d28\u4e0e\u9879\u76ee\u653f\u7b56\u662f\u5426\u9002\u7528\u3002\"\n        ]\n      },\n      \"subject\": {\n        \"analysis_scope\": \"Assess only whether the bounded literal os.chmod mode at this location grants others-write permission; this does not establish exploitability or a race.\",\n        \"candidate_id\": \"operation-e562bbbec1dc2b8262080c51558b6f07\",\n        \"entry_boolean_arguments\": {},\n        \"entry_condition_assumptions\": {},\n        \"entry_line\": 3,\n        \"entry_path\": \"entry.py::inspect@2-3\",\n        \"entry_value_assumptions\": {},\n        \"input_parameters\": [],\n        \"property_id\": \"chmod-mode-others-write\",\n        \"repository_id\": \"authorized-local-source\",\n        \"source_digest\": \"b1a922db661849f38ef223a937768956c7fe34531c81af92bd8b05127ff6382a\"\n      }\n    }\n  ],\n  \"identity\": {\n    \"delivery_policy_digest\": \"1471bb8adcf034dda927c4ad1f98cb2e9dc53fcaf8c5c37a10329a361382fc3b\",\n    \"execution_digest\": null,\n    \"retrieval_view_revision\": \"deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e\",\n    \"semantic_engine_digest\": \"60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d\",\n    \"source_digest\": \"9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2\",\n    \"version\": \"product-identity-v2\"\n  },\n  \"local_verification_scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"profile_id\": \"product_triage_v2\",\n  \"resource_limits\": {\n    \"cpu_seconds\": 120,\n    \"max_ast_nodes\": 200000,\n    \"max_candidates\": 1000,\n    \"max_files\": 1000,\n    \"max_record_bytes\": 67108864,\n    \"max_source_bytes\": 10485760,\n    \"memory_bytes\": 1073741824,\n    \"version\": \"product-resource-limits-v2\",\n    \"wall_seconds\": 120.0\n  },\n  \"run_id\": \"review-v2-a740e59466eb411c8b6dd781b7721225\",\n  \"run_state\": \"COMPLETED\",\n  \"schema_version\": \"product-review-v2\",\n  \"scope_admissions\": [\n    {\n      \"admission_id\": \"scope/1\",\n      \"delivered_bytes\": 0,\n      \"end_line\": 4,\n      \"path\": \"entry.py\",\n      \"reason\": \"explicit authorized root\",\n      \"reason_code\": \"explicit_source_grant\",\n      \"start_line\": 1,\n      \"state\": \"ADMITTED\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "verify",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/0"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"valid\": true,\n  \"run_id\": \"review-v2-a740e59466eb411c8b6dd781b7721225\",\n  \"run_state\": \"COMPLETED\",\n  \"scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"external_origin_authenticated\": false,\n  \"model_requests\": 0,\n  \"target_executions\": 0\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "view",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/0",
+        "--candidate-id",
+        "operation-e562bbbec1dc2b8262080c51558b6f07",
+        "--source-root",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/0"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"candidate_id\": \"operation-e562bbbec1dc2b8262080c51558b6f07\",\n  \"source\": \"os.chmod(path, 0o772)\",\n  \"operation_locator\": {\n    \"end_col_utf8\": 25,\n    \"end_line\": 3,\n    \"file_sha256\": \"c3a8c098827008d6f0cd8872874bdb02b546d8e093a9a5f2d0382f2f0f1b3e84\",\n    \"node_kind\": \"Call\",\n    \"rule_version\": \"static-operation-rules-v2\",\n    \"source_digest\": \"9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2\",\n    \"source_path\": \"entry.py\",\n    \"start_col_utf8\": 4,\n    \"start_line\": 3\n  },\n  \"source_digest\": \"9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2\",\n  \"view_scope\": \"LOCAL_ONLY\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "review",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/1",
+        "--output",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/1",
+        "--profile",
+        "product_triage_v2"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"accounting\": {\n    \"analysis_tool_attempts\": 1,\n    \"model_requests\": 0,\n    \"phase_seconds\": {\n      \"analysis_persistence_seconds\": 0.02905402798205614,\n      \"source_index_seconds\": 0.0017325830121990293\n    },\n    \"record_bytes\": 3051,\n    \"source_bytes\": 115,\n    \"target_executions\": 0,\n    \"tool_calls\": 2,\n    \"total_seconds\": 0.038506649987539276,\n    \"verification_tool_attempts\": 1\n  },\n  \"artifacts\": {\n    \"private_manifest\": \".private/material_manifest.json\",\n    \"report\": \"report.md\",\n    \"result\": \"result.json\",\n    \"share\": \"share.json\"\n  },\n  \"counts\": {\n    \"analysis_blocked\": 0,\n    \"analysis_completed\": 1,\n    \"analysis_failed\": 0,\n    \"analysis_not_started\": 0,\n    \"candidate_total\": 1,\n    \"conflict\": 0,\n    \"evidence_persisted_candidates\": 1,\n    \"has_sufficient_evidence\": 1,\n    \"inventory_complete\": true,\n    \"parse_errors\": 0,\n    \"parsed_files\": 1,\n    \"refuted\": 1,\n    \"resolved_without_conflict\": 1,\n    \"source_files_enumerated\": 1,\n    \"source_files_read\": 1,\n    \"supported\": 0,\n    \"unknown\": 0\n  },\n  \"diagnoses\": [],\n  \"findings\": [\n    {\n      \"analysis_state\": \"COMPLETED\",\n      \"application_security\": \"NOT_ASSESSED\",\n      \"assumptions\": [],\n      \"candidate_id\": \"operation-318419d1043f9daa679bd2345b3a7001\",\n      \"contract\": {\n        \"input_domain\": [\n          \"selected-statement\",\n          \"resolved-mode\",\n          \"declared-path-conditions\"\n        ],\n        \"not_covered\": [\n          \"whole-application-security\",\n          \"remote-authority\",\n          \"public-entry-reachability\"\n        ],\n        \"predicate\": \"The selected chmod mode contains the others-write bit under the declared inputs.\",\n        \"property_id\": \"chmod-mode-others-write\",\n        \"quantifier\": \"bounded\",\n        \"scope_kind\": \"declared-candidate\",\n        \"supported_methods\": [\n          \"complete_static_analysis\",\n          \"bounded_execution\"\n        ],\n        \"version\": \"property-contract-v1\"\n      },\n      \"display_class\": \"BOUNDED_PROPERTY\",\n      \"evidence_refs\": [\n        \"observation-0bd6af6bad13452cc7bb96f0d18b8b1e30cda5de132da07a3a3d210b2b3163f4\"\n      ],\n      \"facts\": [\n        \"validate_permission_mode: ok; original validation status REFUTED; candidate scope.\",\n        \"Final bounded mode has others-write bit: False.\",\n        \"Collected literal chmod calls in the bounded slice: 1.\"\n      ],\n      \"local_verification\": \"VERIFIED\",\n      \"missing_obligations\": [],\n      \"next_steps\": [\n        \"Assess application policy, public reachability and remote authority separately.\"\n      ],\n      \"operation_locator\": {\n        \"end_col_utf8\": 25,\n        \"end_line\": 3,\n        \"file_sha256\": \"7fe634c27e100a6ce10e83fa6e36f048af0457f894475b93ad7a5d76019e746f\",\n        \"node_kind\": \"Call\",\n        \"rule_version\": \"static-operation-rules-v2\",\n        \"source_digest\": \"e901604f894cefc0dae64e53bc18b72424687f9fafcc38b3e13a3add9b2af8d0\",\n        \"source_path\": \"entry.py\",\n        \"start_col_utf8\": 4,\n        \"start_line\": 3\n      },\n      \"persistence_state\": \"COMPLETE\",\n      \"producer_ids\": [\n        \"review-v2-c99514823ec34051a9f93304de34804a/static/1\"\n      ],\n      \"property_state\": \"REFUTED\",\n      \"public_entry_evaluated\": false,\n      \"record_refs\": [\n        \"0bd6af6bad13452cc7bb96f0d18b8b1e30cda5de132da07a3a3d210b2b3163f4.json\"\n      ],\n      \"remote_authority_evaluated\": false,\n      \"review_action\": {\n        \"done_condition\": \"\u7ef4\u62a4\u8005\u8bb0\u5f55\u6709\u9650\u6027\u8d28\u7684\u5904\u7406\u51b3\u5b9a\uff1b\u5e94\u7528\u5b89\u5168\u3001\u516c\u5f00\u53ef\u8fbe\u6027\u548c\u8fdc\u7a0b\u6743\u9650\u53e6\u884c\u8bc4\u4f30\u3002\",\n        \"kind\": \"review-property\",\n        \"owner\": \"project-maintainer\",\n        \"reanalysis\": \"\u6e90\u7801\u6216\u5206\u6790\u524d\u63d0\u6539\u53d8\u65f6\uff0c\u5efa\u7acb\u65b0\u5feb\u7167\u518d\u5206\u6790\uff1b\u4e0d\u81ea\u52a8\u5e94\u7528\u8865\u4e01\u3002\",\n        \"required_input\": [\n          \"\u6838\u5bf9\u672c\u5730\u5b8c\u6574\u8bc1\u636e\u3001\u58f0\u660e\u6027\u8d28\u4e0e\u9879\u76ee\u653f\u7b56\u662f\u5426\u9002\u7528\u3002\"\n        ]\n      },\n      \"subject\": {\n        \"analysis_scope\": \"Assess only whether the bounded literal os.chmod mode at this location grants others-write permission; this does not establish exploitability or a race.\",\n        \"candidate_id\": \"operation-318419d1043f9daa679bd2345b3a7001\",\n        \"entry_boolean_arguments\": {},\n        \"entry_condition_assumptions\": {},\n        \"entry_line\": 3,\n        \"entry_path\": \"entry.py::inspect@2-3\",\n        \"entry_value_assumptions\": {},\n        \"input_parameters\": [],\n        \"property_id\": \"chmod-mode-others-write\",\n        \"repository_id\": \"authorized-local-source\",\n        \"source_digest\": \"3bbf37235ec69876093aca1c3757ceaf2a2518a3a89de1ca3ceed29ebbffc49e\"\n      }\n    }\n  ],\n  \"identity\": {\n    \"delivery_policy_digest\": \"1471bb8adcf034dda927c4ad1f98cb2e9dc53fcaf8c5c37a10329a361382fc3b\",\n    \"execution_digest\": null,\n    \"retrieval_view_revision\": \"deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e\",\n    \"semantic_engine_digest\": \"60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d\",\n    \"source_digest\": \"e901604f894cefc0dae64e53bc18b72424687f9fafcc38b3e13a3add9b2af8d0\",\n    \"version\": \"product-identity-v2\"\n  },\n  \"local_verification_scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"profile_id\": \"product_triage_v2\",\n  \"resource_limits\": {\n    \"cpu_seconds\": 120,\n    \"max_ast_nodes\": 200000,\n    \"max_candidates\": 1000,\n    \"max_files\": 1000,\n    \"max_record_bytes\": 67108864,\n    \"max_source_bytes\": 10485760,\n    \"memory_bytes\": 1073741824,\n    \"version\": \"product-resource-limits-v2\",\n    \"wall_seconds\": 120.0\n  },\n  \"run_id\": \"review-v2-c99514823ec34051a9f93304de34804a\",\n  \"run_state\": \"COMPLETED\",\n  \"schema_version\": \"product-review-v2\",\n  \"scope_admissions\": [\n    {\n      \"admission_id\": \"scope/1\",\n      \"delivered_bytes\": 0,\n      \"end_line\": 4,\n      \"path\": \"entry.py\",\n      \"reason\": \"explicit authorized root\",\n      \"reason_code\": \"explicit_source_grant\",\n      \"start_line\": 1,\n      \"state\": \"ADMITTED\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "verify",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/1"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"valid\": true,\n  \"run_id\": \"review-v2-c99514823ec34051a9f93304de34804a\",\n  \"run_state\": \"COMPLETED\",\n  \"scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"external_origin_authenticated\": false,\n  \"model_requests\": 0,\n  \"target_executions\": 0\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "view",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/1",
+        "--candidate-id",
+        "operation-318419d1043f9daa679bd2345b3a7001",
+        "--source-root",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/1"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"candidate_id\": \"operation-318419d1043f9daa679bd2345b3a7001\",\n  \"source\": \"os.chmod(path, 0o750)\",\n  \"operation_locator\": {\n    \"end_col_utf8\": 25,\n    \"end_line\": 3,\n    \"file_sha256\": \"7fe634c27e100a6ce10e83fa6e36f048af0457f894475b93ad7a5d76019e746f\",\n    \"node_kind\": \"Call\",\n    \"rule_version\": \"static-operation-rules-v2\",\n    \"source_digest\": \"e901604f894cefc0dae64e53bc18b72424687f9fafcc38b3e13a3add9b2af8d0\",\n    \"source_path\": \"entry.py\",\n    \"start_col_utf8\": 4,\n    \"start_line\": 3\n  },\n  \"source_digest\": \"e901604f894cefc0dae64e53bc18b72424687f9fafcc38b3e13a3add9b2af8d0\",\n  \"view_scope\": \"LOCAL_ONLY\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "review",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/2",
+        "--output",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/2",
+        "--profile",
+        "product_triage_v2"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"accounting\": {\n    \"analysis_tool_attempts\": 1,\n    \"model_requests\": 0,\n    \"phase_seconds\": {\n      \"analysis_persistence_seconds\": 0.024232368014054373,\n      \"source_index_seconds\": 0.0016056500026024878\n    },\n    \"record_bytes\": 2280,\n    \"source_bytes\": 114,\n    \"target_executions\": 0,\n    \"tool_calls\": 2,\n    \"total_seconds\": 0.033436141995480284,\n    \"verification_tool_attempts\": 1\n  },\n  \"artifacts\": {\n    \"private_manifest\": \".private/material_manifest.json\",\n    \"report\": \"report.md\",\n    \"result\": \"result.json\",\n    \"share\": \"share.json\"\n  },\n  \"counts\": {\n    \"analysis_blocked\": 0,\n    \"analysis_completed\": 1,\n    \"analysis_failed\": 0,\n    \"analysis_not_started\": 0,\n    \"candidate_total\": 1,\n    \"conflict\": 0,\n    \"evidence_persisted_candidates\": 1,\n    \"has_sufficient_evidence\": 0,\n    \"inventory_complete\": true,\n    \"parse_errors\": 0,\n    \"parsed_files\": 1,\n    \"refuted\": 0,\n    \"resolved_without_conflict\": 0,\n    \"source_files_enumerated\": 1,\n    \"source_files_read\": 1,\n    \"supported\": 0,\n    \"unknown\": 1\n  },\n  \"diagnoses\": [],\n  \"findings\": [\n    {\n      \"analysis_state\": \"COMPLETED\",\n      \"application_security\": \"NOT_ASSESSED\",\n      \"assumptions\": [],\n      \"candidate_id\": \"operation-903f0fc5f1d1d880af588b3ca31bac66\",\n      \"contract\": {\n        \"input_domain\": [\n          \"selected-statement\",\n          \"resolved-mode\",\n          \"declared-path-conditions\"\n        ],\n        \"not_covered\": [\n          \"whole-application-security\",\n          \"remote-authority\",\n          \"public-entry-reachability\"\n        ],\n        \"predicate\": \"The selected chmod mode contains the others-write bit under the declared inputs.\",\n        \"property_id\": \"chmod-mode-others-write\",\n        \"quantifier\": \"bounded\",\n        \"scope_kind\": \"declared-candidate\",\n        \"supported_methods\": [\n          \"complete_static_analysis\",\n          \"bounded_execution\"\n        ],\n        \"version\": \"property-contract-v1\"\n      },\n      \"display_class\": \"NEEDS_INPUT\",\n      \"evidence_refs\": [\n        \"observation-9a02cb1e07cb2bd02b66a8bc310da6797afeba9ea1b589d89ada8ee3b56b0591\"\n      ],\n      \"facts\": [\n        \"validate_permission_mode: ok; original validation status UNRESOLVED; local scope.\",\n        \"Collected literal chmod calls in the bounded slice: 1.\"\n      ],\n      \"local_verification\": \"VERIFIED\",\n      \"missing_obligations\": [\n        \"observation-9a02cb1e07cb2bd02b66a8bc310da6797afeba9ea1b589d89ada8ee3b56b0591: no complete matching property proof was delivered.\",\n        \"Permission interpretation has uncovered constructs; inspect the private observation for details.\"\n      ],\n      \"next_steps\": [\n        \"Review the declared source location and the unmet property obligations.\"\n      ],\n      \"operation_locator\": {\n        \"end_col_utf8\": 24,\n        \"end_line\": 3,\n        \"file_sha256\": \"88317e6c9284ffe844185a007019a2896219649409a44ea4687fd59e2203b472\",\n        \"node_kind\": \"Call\",\n        \"rule_version\": \"static-operation-rules-v2\",\n        \"source_digest\": \"53dcb8c286f97cc0c87b7f37cd937494adf64b7f461f0cf55e14d35c3569b0d6\",\n        \"source_path\": \"entry.py\",\n        \"start_col_utf8\": 4,\n        \"start_line\": 3\n      },\n      \"persistence_state\": \"COMPLETE\",\n      \"producer_ids\": [\n        \"review-v2-2ec3e0abf9af4b36ab1ea91a8704e995/static/1\"\n      ],\n      \"property_state\": \"UNKNOWN\",\n      \"public_entry_evaluated\": false,\n      \"record_refs\": [\n        \"9a02cb1e07cb2bd02b66a8bc310da6797afeba9ea1b589d89ada8ee3b56b0591.json\"\n      ],\n      \"remote_authority_evaluated\": false,\n      \"review_action\": {\n        \"done_condition\": \"\u5f97\u5230\u5339\u914d\u7684\u6709\u754c\u4f9d\u636e\uff0c\u6216\u8bb0\u5f55\u4ecd\u672a\u652f\u6301\u7684\u6784\u9020/\u52a8\u6001\u524d\u63d0\u5e76\u4fdd\u6301 UNKNOWN\u3002\",\n        \"kind\": \"supply-input\",\n        \"owner\": \"project-maintainer\",\n        \"reanalysis\": \"\u663e\u5f0f\u6388\u6743\u7f3a\u5931\u4e0a\u4e0b\u6587\u540e\uff0c\u5bf9\u540c\u4e00\u5feb\u7167\u548c\u7cbe\u786e\u64cd\u4f5c\u91cd\u65b0\u8fd0\u884c\u76f8\u5e94\u9759\u6001\u68c0\u67e5\u3002\",\n        \"required_input\": [\n          \"\u6838\u5bf9\u8be5 chmod \u7684 mode \u8d4b\u503c\u4f4d\u7f6e\u3001\u6574\u6570\u5141\u8bb8\u53d6\u503c\u548c\u76f8\u5173\u7ed1\u5b9a\uff1b\u52a8\u6001\u503c\u4e0d\u5f97\u731c\u6d4b\u4e3a\u5e38\u91cf\u3002\"\n        ]\n      },\n      \"subject\": {\n        \"analysis_scope\": \"Assess only whether the bounded literal os.chmod mode at this location grants others-write permission; this does not establish exploitability or a race.\",\n        \"candidate_id\": \"operation-903f0fc5f1d1d880af588b3ca31bac66\",\n        \"entry_boolean_arguments\": {},\n        \"entry_condition_assumptions\": {},\n        \"entry_line\": 3,\n        \"entry_path\": \"entry.py::inspect@2-3\",\n        \"entry_value_assumptions\": {},\n        \"input_parameters\": [],\n        \"property_id\": \"chmod-mode-others-write\",\n        \"repository_id\": \"authorized-local-source\",\n        \"source_digest\": \"8070a4e31a8075adae8cfd02113161333496d37ccf17b1172cd937feaeecb320\"\n      }\n    }\n  ],\n  \"identity\": {\n    \"delivery_policy_digest\": \"1471bb8adcf034dda927c4ad1f98cb2e9dc53fcaf8c5c37a10329a361382fc3b\",\n    \"execution_digest\": null,\n    \"retrieval_view_revision\": \"deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e\",\n    \"semantic_engine_digest\": \"60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d\",\n    \"source_digest\": \"53dcb8c286f97cc0c87b7f37cd937494adf64b7f461f0cf55e14d35c3569b0d6\",\n    \"version\": \"product-identity-v2\"\n  },\n  \"local_verification_scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"profile_id\": \"product_triage_v2\",\n  \"resource_limits\": {\n    \"cpu_seconds\": 120,\n    \"max_ast_nodes\": 200000,\n    \"max_candidates\": 1000,\n    \"max_files\": 1000,\n    \"max_record_bytes\": 67108864,\n    \"max_source_bytes\": 10485760,\n    \"memory_bytes\": 1073741824,\n    \"version\": \"product-resource-limits-v2\",\n    \"wall_seconds\": 120.0\n  },\n  \"run_id\": \"review-v2-2ec3e0abf9af4b36ab1ea91a8704e995\",\n  \"run_state\": \"COMPLETED\",\n  \"schema_version\": \"product-review-v2\",\n  \"scope_admissions\": [\n    {\n      \"admission_id\": \"scope/1\",\n      \"delivered_bytes\": 0,\n      \"end_line\": 4,\n      \"path\": \"entry.py\",\n      \"reason\": \"explicit authorized root\",\n      \"reason_code\": \"explicit_source_grant\",\n      \"start_line\": 1,\n      \"state\": \"ADMITTED\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "verify",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/2"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"valid\": true,\n  \"run_id\": \"review-v2-2ec3e0abf9af4b36ab1ea91a8704e995\",\n  \"run_state\": \"COMPLETED\",\n  \"scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"external_origin_authenticated\": false,\n  \"model_requests\": 0,\n  \"target_executions\": 0\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "view",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/2",
+        "--candidate-id",
+        "operation-903f0fc5f1d1d880af588b3ca31bac66",
+        "--source-root",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/2"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"candidate_id\": \"operation-903f0fc5f1d1d880af588b3ca31bac66\",\n  \"source\": \"os.chmod(path, mode)\",\n  \"operation_locator\": {\n    \"end_col_utf8\": 24,\n    \"end_line\": 3,\n    \"file_sha256\": \"88317e6c9284ffe844185a007019a2896219649409a44ea4687fd59e2203b472\",\n    \"node_kind\": \"Call\",\n    \"rule_version\": \"static-operation-rules-v2\",\n    \"source_digest\": \"53dcb8c286f97cc0c87b7f37cd937494adf64b7f461f0cf55e14d35c3569b0d6\",\n    \"source_path\": \"entry.py\",\n    \"start_col_utf8\": 4,\n    \"start_line\": 3\n  },\n  \"source_digest\": \"53dcb8c286f97cc0c87b7f37cd937494adf64b7f461f0cf55e14d35c3569b0d6\",\n  \"view_scope\": \"LOCAL_ONLY\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "review",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/0",
+        "--output",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/summary-one",
+        "--profile",
+        "product_triage_v2",
+        "--summary-bytes",
+        "1"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"accounting\": {\n    \"analysis_tool_attempts\": 1,\n    \"model_requests\": 0,\n    \"phase_seconds\": {\n      \"analysis_persistence_seconds\": 0.02787490899208933,\n      \"source_index_seconds\": 0.001763685024343431\n    },\n    \"record_bytes\": 3048,\n    \"source_bytes\": 115,\n    \"target_executions\": 0,\n    \"tool_calls\": 2,\n    \"total_seconds\": 0.037679290981031954,\n    \"verification_tool_attempts\": 1\n  },\n  \"artifacts\": {\n    \"private_manifest\": \".private/material_manifest.json\",\n    \"report\": \"report.md\",\n    \"result\": \"result.json\",\n    \"share\": \"share.json\"\n  },\n  \"counts\": {\n    \"analysis_blocked\": 0,\n    \"analysis_completed\": 1,\n    \"analysis_failed\": 0,\n    \"analysis_not_started\": 0,\n    \"candidate_total\": 1,\n    \"conflict\": 0,\n    \"evidence_persisted_candidates\": 1,\n    \"has_sufficient_evidence\": 1,\n    \"inventory_complete\": true,\n    \"parse_errors\": 0,\n    \"parsed_files\": 1,\n    \"refuted\": 0,\n    \"resolved_without_conflict\": 1,\n    \"source_files_enumerated\": 1,\n    \"source_files_read\": 1,\n    \"supported\": 1,\n    \"unknown\": 0\n  },\n  \"diagnoses\": [],\n  \"findings\": [\n    {\n      \"analysis_state\": \"COMPLETED\",\n      \"application_security\": \"NOT_ASSESSED\",\n      \"assumptions\": [],\n      \"candidate_id\": \"operation-e562bbbec1dc2b8262080c51558b6f07\",\n      \"contract\": {\n        \"input_domain\": [\n          \"selected-statement\",\n          \"resolved-mode\",\n          \"declared-path-conditions\"\n        ],\n        \"not_covered\": [\n          \"whole-application-security\",\n          \"remote-authority\",\n          \"public-entry-reachability\"\n        ],\n        \"predicate\": \"The selected chmod mode contains the others-write bit under the declared inputs.\",\n        \"property_id\": \"chmod-mode-others-write\",\n        \"quantifier\": \"bounded\",\n        \"scope_kind\": \"declared-candidate\",\n        \"supported_methods\": [\n          \"complete_static_analysis\",\n          \"bounded_execution\"\n        ],\n        \"version\": \"property-contract-v1\"\n      },\n      \"display_class\": \"BOUNDED_PROPERTY\",\n      \"evidence_refs\": [\n        \"observation-24efc20ab32a53c14b05a97dfd5e82b0363e86a1c885e567d1f006fea0b8e686\"\n      ],\n      \"facts\": [\n        \"validate_permission_mode: ok; original validation status CONFIRMED; candidate scope.\",\n        \"Final bounded mode has others-write bit: True.\",\n        \"Collected literal chmod calls in the bounded slice: 1.\"\n      ],\n      \"local_verification\": \"VERIFIED\",\n      \"missing_obligations\": [],\n      \"next_steps\": [\n        \"Assess application policy, public reachability and remote authority separately.\"\n      ],\n      \"operation_locator\": {\n        \"end_col_utf8\": 25,\n        \"end_line\": 3,\n        \"file_sha256\": \"c3a8c098827008d6f0cd8872874bdb02b546d8e093a9a5f2d0382f2f0f1b3e84\",\n        \"node_kind\": \"Call\",\n        \"rule_version\": \"static-operation-rules-v2\",\n        \"source_digest\": \"9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2\",\n        \"source_path\": \"entry.py\",\n        \"start_col_utf8\": 4,\n        \"start_line\": 3\n      },\n      \"persistence_state\": \"COMPLETE\",\n      \"producer_ids\": [\n        \"review-v2-384bfb610cc3489ca9822eaf623a16d6/static/1\"\n      ],\n      \"property_state\": \"SUPPORTED\",\n      \"public_entry_evaluated\": false,\n      \"record_refs\": [\n        \"24efc20ab32a53c14b05a97dfd5e82b0363e86a1c885e567d1f006fea0b8e686.json\"\n      ],\n      \"remote_authority_evaluated\": false,\n      \"review_action\": {\n        \"done_condition\": \"\u7ef4\u62a4\u8005\u8bb0\u5f55\u6709\u9650\u6027\u8d28\u7684\u5904\u7406\u51b3\u5b9a\uff1b\u5e94\u7528\u5b89\u5168\u3001\u516c\u5f00\u53ef\u8fbe\u6027\u548c\u8fdc\u7a0b\u6743\u9650\u53e6\u884c\u8bc4\u4f30\u3002\",\n        \"kind\": \"review-property\",\n        \"owner\": \"project-maintainer\",\n        \"reanalysis\": \"\u6e90\u7801\u6216\u5206\u6790\u524d\u63d0\u6539\u53d8\u65f6\uff0c\u5efa\u7acb\u65b0\u5feb\u7167\u518d\u5206\u6790\uff1b\u4e0d\u81ea\u52a8\u5e94\u7528\u8865\u4e01\u3002\",\n        \"required_input\": [\n          \"\u6838\u5bf9\u672c\u5730\u5b8c\u6574\u8bc1\u636e\u3001\u58f0\u660e\u6027\u8d28\u4e0e\u9879\u76ee\u653f\u7b56\u662f\u5426\u9002\u7528\u3002\"\n        ]\n      },\n      \"subject\": {\n        \"analysis_scope\": \"Assess only whether the bounded literal os.chmod mode at this location grants others-write permission; this does not establish exploitability or a race.\",\n        \"candidate_id\": \"operation-e562bbbec1dc2b8262080c51558b6f07\",\n        \"entry_boolean_arguments\": {},\n        \"entry_condition_assumptions\": {},\n        \"entry_line\": 3,\n        \"entry_path\": \"entry.py::inspect@2-3\",\n        \"entry_value_assumptions\": {},\n        \"input_parameters\": [],\n        \"property_id\": \"chmod-mode-others-write\",\n        \"repository_id\": \"authorized-local-source\",\n        \"source_digest\": \"b1a922db661849f38ef223a937768956c7fe34531c81af92bd8b05127ff6382a\"\n      }\n    }\n  ],\n  \"identity\": {\n    \"delivery_policy_digest\": \"71ce0234044572b072740a86eccf3e844078fb894b53ccfb2f1fd5235564b2d5\",\n    \"execution_digest\": null,\n    \"retrieval_view_revision\": \"deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e\",\n    \"semantic_engine_digest\": \"60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d\",\n    \"source_digest\": \"9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2\",\n    \"version\": \"product-identity-v2\"\n  },\n  \"local_verification_scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"profile_id\": \"product_triage_v2\",\n  \"resource_limits\": {\n    \"cpu_seconds\": 120,\n    \"max_ast_nodes\": 200000,\n    \"max_candidates\": 1000,\n    \"max_files\": 1000,\n    \"max_record_bytes\": 67108864,\n    \"max_source_bytes\": 10485760,\n    \"memory_bytes\": 1073741824,\n    \"version\": \"product-resource-limits-v2\",\n    \"wall_seconds\": 120.0\n  },\n  \"run_id\": \"review-v2-384bfb610cc3489ca9822eaf623a16d6\",\n  \"run_state\": \"COMPLETED\",\n  \"schema_version\": \"product-review-v2\",\n  \"scope_admissions\": [\n    {\n      \"admission_id\": \"scope/1\",\n      \"delivered_bytes\": 0,\n      \"end_line\": 4,\n      \"path\": \"entry.py\",\n      \"reason\": \"explicit authorized root\",\n      \"reason_code\": \"explicit_source_grant\",\n      \"start_line\": 1,\n      \"state\": \"ADMITTED\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "verify",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/summary-one"
+      ],
+      "return_code": 0,
+      "stdout": "{\n  \"valid\": true,\n  \"run_id\": \"review-v2-384bfb610cc3489ca9822eaf623a16d6\",\n  \"run_state\": \"COMPLETED\",\n  \"scope\": \"USER_OWNED_SELF_GENERATED_PACKAGE\",\n  \"external_origin_authenticated\": false,\n  \"model_requests\": 0,\n  \"target_executions\": 0\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "view",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/summary-one",
+        "--candidate-id",
+        "operation-e562bbbec1dc2b8262080c51558b6f07",
+        "--source-root",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/owned-v2/0"
+      ],
+      "return_code": 2,
+      "stdout": "{\"valid\": false, \"reason_code\": \"SOURCE_DRIFT: selected source no longer matches\", \"model_requests\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "verify",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/outputs-v2/missing-record"
+      ],
+      "return_code": 2,
+      "stdout": "{\n  \"valid\": false,\n  \"reason_code\": \"local_package_invalid\",\n  \"error_type\": \"FileNotFoundError\",\n  \"model_requests\": 0,\n  \"target_executions\": 0\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/python",
+        "-I",
+        "-m",
+        "cv_agent",
+        "--help"
+      ],
+      "return_code": 0,
+      "stdout": "usage: cv-agent [-h] {review,doctor,verify,view} ...\n\npositional arguments:\n  {review,doctor,verify,view}\n    review              review explicitly selected local Python source offline\n    doctor              check local review capabilities without provider\n                        requests\n    verify              verify a user-owned local v2 package without executing\n                        source\n    view                show an exact authorized local operation after\n                        verifying source identity\n\noptions:\n  -h, --help            show this help message and exit\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-7lgwtad7/environment/bin/cv-agent",
+        "agentic-live-owasp"
+      ],
+      "return_code": 2,
+      "stdout": "",
+      "stderr": "usage: cv-agent [-h] {review,doctor,verify,view} ...\ncv-agent: error: argument command: invalid choice: 'agentic-live-owasp' (choose from review, doctor, verify, view)\n"
+    }
+  ],
+  "accepted": true,
+  "summary_one": {
+    "local_state": "SUPPORTED",
+    "run_state": "COMPLETED",
+    "share": {
+      "candidate_total": 1,
+      "findings": [],
+      "metadata_budget_exempt": true,
+      "notice": "\u5b8c\u6574\u4f9d\u636e\u5728\u7528\u6237\u79c1\u6709\u672c\u5730\u5305\uff1b\u8be5\u5206\u4eab\u4ef6\u4e0d\u63d0\u4f9b\u53ef\u72ec\u7acb\u590d\u6838\u7684\u5f3a\u65ad\u8a00\u3002",
+      "omitted_candidates": 1,
+      "schema_version": "product-share-v2",
+      "summary_body_budget": 1,
+      "summary_body_bytes": 0,
+      "verification_availability": "NOT_VERIFIABLE"
+    },
+    "counts": {
+      "analysis_blocked": 0,
+      "analysis_completed": 1,
+      "analysis_failed": 0,
+      "analysis_not_started": 0,
+      "candidate_total": 1,
+      "conflict": 0,
+      "evidence_persisted_candidates": 1,
+      "has_sufficient_evidence": 1,
+      "inventory_complete": true,
+      "parse_errors": 0,
+      "parsed_files": 1,
+      "refuted": 0,
+      "resolved_without_conflict": 1,
+      "source_files_enumerated": 1,
+      "source_files_read": 1,
+      "supported": 1,
+      "unknown": 0
+    }
+  },
+  "owned_controls": [
+    {
+      "expected": "SUPPORTED",
+      "actual": "SUPPORTED",
+      "source_sha256": "c3a8c098827008d6f0cd8872874bdb02b546d8e093a9a5f2d0382f2f0f1b3e84",
+      "local_verified": true,
+      "exact_source_view": "os.chmod(path, 0o772)",
+      "identity": {
+        "delivery_policy_digest": "1471bb8adcf034dda927c4ad1f98cb2e9dc53fcaf8c5c37a10329a361382fc3b",
+        "execution_digest": null,
+        "retrieval_view_revision": "deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e",
+        "semantic_engine_digest": "60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d",
+        "source_digest": "9dcb33e493f8a2797f2c2fe724ec5567430d3200165a4a2cd4d3c7ea493604e2",
+        "version": "product-identity-v2"
+      },
+      "counts": {
+        "analysis_blocked": 0,
+        "analysis_completed": 1,
+        "analysis_failed": 0,
+        "analysis_not_started": 0,
+        "candidate_total": 1,
+        "conflict": 0,
+        "evidence_persisted_candidates": 1,
+        "has_sufficient_evidence": 1,
+        "inventory_complete": true,
+        "parse_errors": 0,
+        "parsed_files": 1,
+        "refuted": 0,
+        "resolved_without_conflict": 1,
+        "source_files_enumerated": 1,
+        "source_files_read": 1,
+        "supported": 1,
+        "unknown": 0
+      }
+    },
+    {
+      "expected": "REFUTED",
+      "actual": "REFUTED",
+      "source_sha256": "7fe634c27e100a6ce10e83fa6e36f048af0457f894475b93ad7a5d76019e746f",
+      "local_verified": true,
+      "exact_source_view": "os.chmod(path, 0o750)",
+      "identity": {
+        "delivery_policy_digest": "1471bb8adcf034dda927c4ad1f98cb2e9dc53fcaf8c5c37a10329a361382fc3b",
+        "execution_digest": null,
+        "retrieval_view_revision": "deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e",
+        "semantic_engine_digest": "60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d",
+        "source_digest": "e901604f894cefc0dae64e53bc18b72424687f9fafcc38b3e13a3add9b2af8d0",
+        "version": "product-identity-v2"
+      },
+      "counts": {
+        "analysis_blocked": 0,
+        "analysis_completed": 1,
+        "analysis_failed": 0,
+        "analysis_not_started": 0,
+        "candidate_total": 1,
+        "conflict": 0,
+        "evidence_persisted_candidates": 1,
+        "has_sufficient_evidence": 1,
+        "inventory_complete": true,
+        "parse_errors": 0,
+        "parsed_files": 1,
+        "refuted": 1,
+        "resolved_without_conflict": 1,
+        "source_files_enumerated": 1,
+        "source_files_read": 1,
+        "supported": 0,
+        "unknown": 0
+      }
+    },
+    {
+      "expected": "UNKNOWN",
+      "actual": "UNKNOWN",
+      "source_sha256": "88317e6c9284ffe844185a007019a2896219649409a44ea4687fd59e2203b472",
+      "local_verified": true,
+      "exact_source_view": "os.chmod(path, mode)",
+      "identity": {
+        "delivery_policy_digest": "1471bb8adcf034dda927c4ad1f98cb2e9dc53fcaf8c5c37a10329a361382fc3b",
+        "execution_digest": null,
+        "retrieval_view_revision": "deefff55b6c71723b52c5cafd17ecd66d16512aeb9e8c9e636f4854a23af170e",
+        "semantic_engine_digest": "60cbacec9e152cf07ad568751d5996311331e5d3db6cd18d7ec65368d7a4191d",
+        "source_digest": "53dcb8c286f97cc0c87b7f37cd937494adf64b7f461f0cf55e14d35c3569b0d6",
+        "version": "product-identity-v2"
+      },
+      "counts": {
+        "analysis_blocked": 0,
+        "analysis_completed": 1,
+        "analysis_failed": 0,
+        "analysis_not_started": 0,
+        "candidate_total": 1,
+        "conflict": 0,
+        "evidence_persisted_candidates": 1,
+        "has_sufficient_evidence": 0,
+        "inventory_complete": true,
+        "parse_errors": 0,
+        "parsed_files": 1,
+        "refuted": 0,
+        "resolved_without_conflict": 0,
+        "source_files_enumerated": 1,
+        "source_files_read": 1,
+        "supported": 0,
+        "unknown": 1
+      }
+    }
+  ],
+  "source_drift_rejected": true,
+  "missing_evidence_rejected": true
+}

@@ -1,0 +1,25 @@
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Termes}
+\setsansfont{TeX Gyre Heros}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{patterns,positioning,arrows.meta}
+\definecolor{blue}{HTML}{0072B2}
+\definecolor{green}{HTML}{009E73}
+\definecolor{orange}{HTML}{E69F00}
+\definecolor{red}{HTML}{D55E00}
+\definecolor{grey}{HTML}{8D9399}
+\pgfplotsset{every axis/.append style={width=8.1cm,height=5.3cm,
+font=\small,axis lines=left,axis line style={grey},tick align=outside,
+enlarge x limits=.18,ymajorgrids=true,grid style={grey!18},
+tick label style={font=\small},label style={font=\small},
+nodes near coords style={font=\small,/pgf/number format/fixed,/pgf/number format/precision=2,/pgf/number format/1000 sep={,}},clip=false}}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[ybar,xtick={0,1},xticklabels={Request cap,Token cap},ymin=0,ymax=100,ylabel={Authorized cap consumed (\%)},nodes near coords]
+\addplot[fill=blue,draw=none] coordinates {(0,34.29) (1,17.91)};
+
+\end{axis}
+\node[align=left,anchor=west,font=\small] at (9.2cm,2cm) {72 / 210 requests\\447,812 / 2,500,000 tokens\\Unused: 138 requests\\Unused: 2,052,188 tokens\\Unused budget is not authorization};\end{tikzpicture}
+\end{document}

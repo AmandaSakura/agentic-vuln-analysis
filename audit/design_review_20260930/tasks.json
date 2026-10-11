@@ -1,0 +1,746 @@
+{
+  "schema_version": "design-review-task-receipts-v1",
+  "completed_at_utc": "2026-09-30T16:30:30.060482+00:00",
+  "task_count": 15,
+  "tasks": [
+    {
+      "id": "T00",
+      "status": "DONE",
+      "before": "document-only risk hypotheses",
+      "after": "actual matching HEAD/dependencies/source map and failed baseline preserved",
+      "receipt": "audit/design_review_20260930/baseline.json"
+    },
+    {
+      "id": "T01",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "No independent product result contract",
+      "after_behavior": "Versioned properties, statuses, identities, reference/coverage/count validation and no whole-application claims",
+      "actual_files": [
+        "src/cv_agent/domain/product_result.py"
+      ],
+      "tests": [
+        "tests/test_product_contract.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T01_before.log",
+          "exit_code": 2,
+          "sha256": "a300efcd42145c5c5021409ebe7e0451751955febb24dc1f6a8f83f5384e9484",
+          "pytest_tail": [
+            "ERROR tests/test_product_contract.py",
+            "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+            "1 error in 0.14s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T01_constraints_before.log",
+          "exit_code": 1,
+          "sha256": "54a54175cec955ef133eb6fb831360324ed723874b53bf1b032d80630e037846",
+          "pytest_tail": [
+            "FAILED tests/test_product_contract.py::test_unrecognized_proof_version_is_rejected",
+            "FAILED tests/test_product_contract.py::test_completed_review_cannot_hide_required_blocked_capability",
+            "2 failed, 16 deselected in 0.08s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T01_count_before.log",
+          "exit_code": 1,
+          "sha256": "771c617f4320092e6d2538b84060f99321360ec22c7ce6b71c2646390d5df388",
+          "pytest_tail": [
+            "=========================== short test summary info ============================",
+            "FAILED tests/test_product_contract.py::test_result_counters_cannot_invent_processed_or_proved_candidates",
+            "1 failed, 20 passed, 21 deselected in 0.09s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T01_final.log",
+          "exit_code": 0,
+          "sha256": "3d3b06e904ccbdcc983c6f7fab227d3e0682b390e1589534f43be87caad35cea",
+          "pytest_tail": [
+            "..................................................................       [100%]",
+            "66 passed in 2.80s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_product_contract.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T02",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "No task-specific offline product preflight",
+      "after_behavior": "Static capabilities are independent; explicitly owned missing checks block only their capability",
+      "actual_files": [
+        "src/cv_agent/application/preflight.py"
+      ],
+      "tests": [
+        "tests/test_product_preflight.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T02_before.log",
+          "exit_code": 2,
+          "sha256": "cf1189eadfef4fb446b03c422ecd785bb3c4d458709e1870315269569c73381e",
+          "pytest_tail": [
+            "ERROR tests/test_product_preflight.py",
+            "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+            "1 error in 0.14s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T02_after.log",
+          "exit_code": 0,
+          "sha256": "85791c7eeaddbb2859d01bd4b18d540117072f396e319b7b689fbfc17afb8c05",
+          "pytest_tail": [
+            "......................                                                   [100%]",
+            "22 passed in 0.67s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_product_preflight.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T03",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "No local-source-to-review-artifact entrypoint",
+      "after_behavior": "Thin public CLI writes JSON/Markdown, private provenance and preserves partial/cancelled facts without evaluation imports",
+      "actual_files": [
+        "src/cv_agent/application/service.py",
+        "src/cv_agent/presentation/report.py",
+        "src/cv_agent/cli.py"
+      ],
+      "tests": [
+        "tests/test_application_smoke.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T03_before.log",
+          "exit_code": 1,
+          "sha256": "dec3183e01a517294f1c02c942469d900d0b76d8a6b7f20a84e1b61903c515e4",
+          "pytest_tail": [
+            "FAILED tests/test_application_smoke.py::test_budget_exhaustion_preserves_completed_candidate_facts",
+            "FAILED tests/test_application_smoke.py::test_existing_artifacts_are_preserved",
+            "6 failed in 0.37s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T03_T04_T12_final_verified.log",
+          "exit_code": 0,
+          "sha256": "5e9401e1f0c8b39b67ef41ebcd7bc83e193dc1161375914e9b3021c219aa1142",
+          "pytest_tail": [
+            "................................                                         [100%]",
+            "32 passed in 2.96s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_application_smoke.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T04",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Operational failure and future input waits had no product controller view",
+      "after_behavior": "F1-F6 mappings, doctor, explicit missing inputs, finite invalid action limit and approved restoration",
+      "actual_files": [
+        "src/cv_agent/application/diagnostics.py",
+        "src/cv_agent/application/controller.py"
+      ],
+      "tests": [
+        "tests/test_product_diagnostics.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T04_T07_before.log",
+          "exit_code": 2,
+          "sha256": "c6f980e37e7ceb2e473dd13eb6077a301a787bb65a4deb783835c9b6784a1a42",
+          "pytest_tail": [
+            "ERROR tests/test_product_diagnostics.py",
+            "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+            "1 error in 0.44s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T04_resume_before.log",
+          "exit_code": 1,
+          "sha256": "9bd76c5bdafa46eae60e5a84413eb90c080ba3d54b8c0fc6ae1a9ef58babab54",
+          "pytest_tail": [
+            "=========================== short test summary info ============================",
+            "FAILED tests/test_product_diagnostics.py::test_explicit_supplement_also_unlocks_real_data_dependents",
+            "1 failed, 7 deselected in 0.10s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T04_final.log",
+          "exit_code": 0,
+          "sha256": "03d09c8b0b05c6fc02748a34b7801b791f3913cd6843e0083ff3f028c2fa2477",
+          "pytest_tail": [
+            ".........................                                                [100%]",
+            "25 passed in 2.87s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_product_diagnostics.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T05",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Nested authority aliases drifted; no layered product identity",
+      "after_behavior": "Detached public containers, unchanged legacy digest, versioned bytes/analysis/execution/view identities",
+      "actual_files": [
+        "src/cv_agent/domain/types.py",
+        "src/cv_agent/domain/evidence.py",
+        "src/cv_agent/application/identity.py"
+      ],
+      "tests": [
+        "tests/test_identity_snapshot.py",
+        "tests/test_product_identity.py",
+        "tests/test_evidence_subject.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T05_before.log",
+          "exit_code": 1,
+          "sha256": "d613b956cd5c907e071d2f5f7f0498cc1cbab9a6cc36c6a724890f0e3a99389c",
+          "pytest_tail": [
+            "FAILED tests/test_identity_snapshot.py::test_model_copy_seals_updates_without_changing_original_or_json_types",
+            "FAILED tests/test_identity_snapshot.py::test_code_document_alias_cannot_change_index_identity_but_new_version_can",
+            "5 failed in 0.11s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T08_T05_before.log",
+          "exit_code": 2,
+          "sha256": "23d7252bdca99a2f219d66c41382278ffad4420ae114ab32aac4fde3e5ee9c24",
+          "pytest_tail": [
+            "ERROR tests/test_product_identity.py",
+            "!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!",
+            "2 errors in 0.17s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T05_T08_T09_product_verified.log",
+          "exit_code": 0,
+          "sha256": "c76f27099b3234c68c68f8b5d497d763a6d4697813caed71f27629f6a35dfe9e",
+          "pytest_tail": [
+            "..............................................................           [100%]",
+            "62 passed in 2.68s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_identity_snapshot.py tests/test_product_identity.py tests/test_evidence_subject.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T06",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Late concrete contradiction could leave material ballots admitted",
+      "after_behavior": "Global re-admission and product reduction preserve all matching evidence, conflicts, producer identity and helper references",
+      "actual_files": [
+        "src/cv_agent/agents/evidence_policy.py",
+        "src/cv_agent/agents/workflow.py",
+        "src/cv_agent/application/evidence.py"
+      ],
+      "tests": [
+        "tests/test_global_evidence_review.py",
+        "tests/test_product_reducer.py",
+        "tests/test_expert_applicability.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T06_before_verified.log",
+          "exit_code": 1,
+          "sha256": "85087d2833554bba6470dabb39ec325bcd49f54c3d9cb277a5475b69d09f575d",
+          "pytest_tail": [
+            "FAILED tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum[True]",
+            "FAILED tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+            "3 failed, 2 passed in 0.43s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T06_unknown_before.log",
+          "exit_code": 1,
+          "sha256": "394de1a0affb8121c2613550fb7fdaa3cf6b23cac63c80ed5997619eab22732b",
+          "pytest_tail": [
+            "=========================== short test summary info ============================",
+            "FAILED tests/test_product_contract.py::test_final_unknown_cannot_erase_a_delivered_complete_proof",
+            "1 failed, 20 deselected in 0.07s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T06_helper_reference_before.log",
+          "exit_code": 1,
+          "sha256": "cc16d96c6190e643dbf7b7a80f5733f32e4a845120b86e9ad7becd0b6929fba2",
+          "pytest_tail": [
+            "=========================== short test summary info ============================",
+            "FAILED tests/test_product_reducer.py::test_reduction_preserves_producer_owned_helper_references_used_by_shared_admission",
+            "1 failed, 12 deselected in 0.10s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T06_applicability_compatibility.log",
+          "exit_code": 0,
+          "sha256": "2e3d18f894fd3c40662e650469104be391d2baf8fbae61bf3bca0ba40f1df691",
+          "pytest_tail": [
+            "........................................................................ [ 94%]",
+            "....                                                                     [100%]",
+            "76 passed in 1.30s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_global_evidence_review.py tests/test_product_reducer.py tests/test_expert_applicability.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T07",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Existing witness-first research obligations and no explicit business graph limit",
+      "after_behavior": "Independent product tasks use genuine data dependencies; old research obligations retained; maximum legal graph and bounded loop proven at 16",
+      "actual_files": [
+        "src/cv_agent/agents/workflow.py",
+        "src/cv_agent/application/controller.py"
+      ],
+      "tests": [
+        "tests/test_graph_transition_bound.py",
+        "tests/test_product_diagnostics.py",
+        "tests/test_planner_dependencies.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T07_graph_before.log",
+          "exit_code": 1,
+          "sha256": "ca26f6bd8293c998cbe6280631d998cc1ec3b405ae0e5aaad2c89f06c0352b9c",
+          "pytest_tail": [
+            "FAILED tests/test_graph_transition_bound.py::test_maximum_legal_eight_task_plan_has_an_explicit_measured_bound",
+            "FAILED tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+            "2 failed in 0.49s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T04_T07_verified.log",
+          "exit_code": 0,
+          "sha256": "06e55cf6bae43b9011fc10dba316def06b2c0db70e6c4786f818e15734d75e67",
+          "pytest_tail": [
+            "...........................                                              [100%]",
+            "27 passed in 2.47s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_graph_transition_bound.py tests/test_product_diagnostics.py tests/test_planner_dependencies.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T08",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Research tasks retain equal cumulative share; no product certificate delivery service",
+      "after_behavior": "Product shared conserved allocation and byte-billed redelivery; 5500-byte complete certificate counterexample fits 8192",
+      "actual_files": [
+        "src/cv_agent/application/delivery.py",
+        "src/cv_agent/application/service.py"
+      ],
+      "tests": [
+        "tests/test_product_delivery.py",
+        "tests/test_tool_response_budget.py",
+        "tests/test_validator_observation_accounting.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T08_T05_before.log",
+          "exit_code": 2,
+          "sha256": "23d7252bdca99a2f219d66c41382278ffad4420ae114ab32aac4fde3e5ee9c24",
+          "pytest_tail": [
+            "ERROR tests/test_product_identity.py",
+            "!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!",
+            "2 errors in 0.17s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T06_T08_contract_final.log",
+          "exit_code": 0,
+          "sha256": "0a61e878c29383f774f048a8f361d3dffc06ddcab4f19077969c1d571c10cdab",
+          "pytest_tail": [
+            "........................................................                 [100%]",
+            "56 passed in 2.72s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_product_delivery.py tests/test_tool_response_budget.py tests/test_validator_observation_accounting.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T09",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Legacy retrieved documents are billed by admitted path; no product line grants",
+      "after_behavior": "Explicit source span grants, byte identity checks, paid extension admission and rejection without scope growth",
+      "actual_files": [
+        "src/cv_agent/application/context.py",
+        "src/cv_agent/agents/discovery.py"
+      ],
+      "tests": [
+        "tests/test_product_context.py",
+        "tests/test_application_smoke.py",
+        "tests/test_agent_budget_units.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T09_before.log",
+          "exit_code": 2,
+          "sha256": "febc6f0326a63252f39034eda4ca8d770b64173c8113e7835b80c9d7a236fc32",
+          "pytest_tail": [
+            "ERROR tests/test_product_context.py",
+            "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+            "1 error in 0.11s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T05_T08_T09_product_verified.log",
+          "exit_code": 0,
+          "sha256": "c76f27099b3234c68c68f8b5d497d763a6d4697813caed71f27629f6a35dfe9e",
+          "pytest_tail": [
+            "..............................................................           [100%]",
+            "62 passed in 2.68s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_product_context.py tests/test_application_smoke.py tests/test_agent_budget_units.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T10",
+      "status": "CONDITIONAL_NOT_ENABLED",
+      "reason": "No new approved owned-fixture scratch profile selected; static product does not require it.",
+      "acceptance": [
+        "A27",
+        "A28"
+      ]
+    },
+    {
+      "id": "T11",
+      "status": "CONDITIONAL_NOT_ENABLED",
+      "reason": "No trusted native build inputs/toolchain selected; capability explicitly unsupported.",
+      "acceptance": [
+        "A29"
+      ]
+    },
+    {
+      "id": "T12",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "Existing locks/reservations/gate controls; partial journal audit absent and URL error key leak reproduced",
+      "after_behavior": "Conservative durable audit, preserved unknown usage, cancellation controls, phase timings and known-key redaction",
+      "actual_files": [
+        "src/cv_agent/runtime/journal.py",
+        "src/cv_agent/runtime/model.py",
+        "src/cv_agent/runtime/redaction.py"
+      ],
+      "tests": [
+        "tests/test_runtime_recovery_review.py",
+        "tests/test_live_gate.py",
+        "tests/test_model_runtime.py",
+        "tests/test_experiment_guard.py"
+      ],
+      "before_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T12_verified_before_redaction.log",
+          "exit_code": 1,
+          "sha256": "c8d8ba905b86ac7c6c7ee11cc17d9f0a5dc80029f7234372b919f8e3fa10e2df",
+          "pytest_tail": [
+            "=========================== short test summary info ============================",
+            "FAILED tests/test_runtime_recovery_review.py::test_transport_error_redacts_known_fake_key_in_public_error_and_event",
+            "1 failed, 6 passed in 0.16s"
+          ]
+        },
+        {
+          "path": "artifacts/design_review_repair_20260930/T12_product_cancel_before.log",
+          "exit_code": 2,
+          "sha256": "899e930209ca3140fd6881e07067f2f5a4d52de8104c384262f856e4557da56d",
+          "pytest_tail": [
+            "/home/joker/AAA_NUS_SEM3/cv_agent/tests/test_application_smoke.py:228: KeyboardInterrupt",
+            "(to show a full traceback on KeyboardInterrupt use --full-trace)",
+            "11 deselected in 0.32s"
+          ]
+        }
+      ],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T12_after.log",
+          "exit_code": 0,
+          "sha256": "e24bafc318cf757286626ed27cdd39f61ddd45e42bf54b0790ab8bc21eb98763",
+          "pytest_tail": [
+            "........................................................................ [ 98%]",
+            ".                                                                        [100%]",
+            "73 passed in 12.01s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_runtime_recovery_review.py tests/test_live_gate.py tests/test_model_runtime.py tests/test_experiment_guard.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T13",
+      "status": "DONE_FOR_ENABLED_STATIC_PROFILE",
+      "before_behavior": "No independently accepted default product CLI",
+      "after_behavior": "2684 full-suite passes, 126 enabled checks, 7 real CLI cases, zero transport/gate attempts, 31 required matrix items passed",
+      "actual_files": [
+        "audit/design_review_20260930/run_cli_acceptance.py",
+        "audit/design_review_20260930/run_transport_guard.py"
+      ],
+      "tests": [
+        "tests/test_application_smoke.py",
+        "tests/test_documentation_layout.py"
+      ],
+      "before_checks": [],
+      "after_checks": [
+        {
+          "path": "artifacts/design_review_repair_20260930/T13_enabled_capabilities_final.log",
+          "exit_code": 0,
+          "sha256": "a9ae1b92187f1d5e628fcb5b444b25b88b026fc6004257d6516a9623cdee1d0a",
+          "pytest_tail": [
+            "........................................................................ [ 57%]",
+            "......................................................                   [100%]",
+            "126 passed in 3.96s"
+          ]
+        },
+        {
+          "command": "uv run --no-sync pytest",
+          "exit_code": 0,
+          "passed": 2684,
+          "failed": 0,
+          "skipped": 0,
+          "xfailed": 0,
+          "seconds": 414.2,
+          "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+          "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+          "pytest_tail": [
+            "........................................................................ [ 99%]",
+            "....................                                                     [100%]",
+            "2684 passed in 414.20s (0:06:54)"
+          ]
+        }
+      ],
+      "verification_command": "uv run --no-sync pytest tests/test_application_smoke.py tests/test_documentation_layout.py",
+      "test_scope_note": "Per-card local logs include their named controls; final full suite executes every listed file.",
+      "new_real_model_requests": 0,
+      "compatibility": "Original experiments/source-digest algorithm/config budgets retained; verified shared integrity defects corrected.",
+      "conditional_scope": "Default product uses static observations only; no guarantee of complete Python semantics or application security."
+    },
+    {
+      "id": "T14",
+      "status": "PROTOCOL_FROZEN_MEASUREMENT_NOT_RUN",
+      "protocol": ".hermes/plans/2026-09-30-product-increment-preregistration.json",
+      "GP3": "NOT_MEASURED",
+      "GP4": "NOT_MEASURED",
+      "reason": "No authorized fresh sample set, human paired review or separately approved model budget supplied."
+    }
+  ],
+  "enabled_profile_status": "ACCEPTED",
+  "historical_G_A": "NO"
+}

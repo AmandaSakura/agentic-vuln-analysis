@@ -1,0 +1,3058 @@
+{
+  "schema_version": "product-recovery-feedback-acceptance-v1",
+  "status": "ENGINEERING_TRIAL_VALIDATED_PRODUCT_USER_HUMAN_GATES_OPEN",
+  "feedback": "docs/reports/cv_agent_design_review_and_recovery_2026-10-01.pdf",
+  "matrix_totals": {
+    "issues": 22,
+    "tasks": 18,
+    "acceptance_checks": 60
+  },
+  "full_suite": {
+    "status": "PASS",
+    "command": "uv run --no-sync pytest",
+    "first_attempt": {
+      "passed": 2904,
+      "failed": 15,
+      "seconds": 427.9,
+      "log": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log"
+    },
+    "prior_patch1_attempt": {
+      "passed": 2940,
+      "failed": 0,
+      "seconds": 427.22,
+      "log": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt2.log",
+      "current_source_gate": false
+    },
+    "final_attempt": {
+      "passed": 2941,
+      "failed": 0,
+      "skipped": 0,
+      "xfail": 0,
+      "seconds": 422.98,
+      "exit_code": 0,
+      "log": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+    },
+    "receipt": "audit/product_recovery_20261001/final-validation-patch2.json"
+  },
+  "source_freeze": {
+    "source_and_tests_files": 423,
+    "aggregate_sha256": "ddb6e09675dacc8f884ab52f1719b51fe7ad170696406496405b8791a0eae26a",
+    "receipt": "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+    "unchanged_during_final_checks": true
+  },
+  "release": {
+    "scope": "engineering trial only",
+    "receipt": "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+    "zip_sha256": "56732ac312e5fc00ab9a3a971ed09b32d0b215565bbad58d64803afbab84c31e",
+    "zip_bytes": 4719542,
+    "wheel_sha256": "835287e4acc6b2423eb3aaa0d10fb000ce5d2cc8fb6937be041066197336247c",
+    "product_source_files": 104,
+    "two_isolated_bundle_installs": "PASS",
+    "actual_user_environment": "NOT_PROVIDED"
+  },
+  "preservation": {
+    "previous_reports_and_sources_unchanged": true,
+    "report_artifact_files": 45,
+    "config_script_files_unchanged": true,
+    "config_script_files": 73,
+    "receipt": "audit/product_recovery_20261001/final-validation-patch2.json"
+  },
+  "baseline": {
+    "passed": 2684,
+    "seconds": 409.34,
+    "log": "artifacts/design_review_recovery_20261001/baseline_full_pytest.log",
+    "scope": "characterization concurrent with source editing, not immutable source-snapshot admission",
+    "immutable_snapshot_gate": false
+  },
+  "quality_controls": {
+    "case_count": 36,
+    "exact_state_matches": 22,
+    "wrong_strong_states": 0,
+    "named_mode_unsupported": 14,
+    "missing_or_duplicate_locations": 0,
+    "exact_supported": 5,
+    "exact_refuted": 5,
+    "exact_unknown": 12,
+    "human_independent": false,
+    "held_out_claim_eligible": false,
+    "accuracy_or_fpr_claim": false,
+    "receipt": "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+    "release_embedded_receipt": "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json"
+  },
+  "owned_project_control": {
+    "source_kind": "project_owned_application_directory",
+    "source_files": 15,
+    "candidate_count": 3,
+    "analysis_completed": 3,
+    "unknown": 3,
+    "sufficient_evidence": 0,
+    "run_state": "COMPLETED",
+    "fresh_user_quality_claim": false,
+    "receipt": "audit/product_recovery_20261001/owned-application-review-patch2/result.json"
+  },
+  "known_open_product_gates": {
+    "original_user_failure": "BLOCKED_MISSING_INPUT",
+    "V41_new_human_reviewers": "NOT_MEASURED",
+    "V42_human_action_completion": "NOT_MEASURED",
+    "V58_authorized_user_quality": "NOT_PROVIDED",
+    "V59_human_net_benefit": "NOT_MEASURED",
+    "V60_user_environment": "NOT_PROVIDED"
+  },
+  "verification_authority": {
+    "scope": "self-generated user-owned local package consistency, dependency integrity and registered static replay",
+    "external_producer_authentication": false,
+    "hash_is_independent_execution_proof": false,
+    "active_worktree_globally_atomic_snapshot": false,
+    "universal_filesystem_crash_durability": false,
+    "source_or_target_execution": false
+  },
+  "history": {
+    "G_A": "NO",
+    "GP2": "NOT_ENABLED",
+    "GP3": "NOT_MEASURED",
+    "GP4": "NOT_MEASURED",
+    "R17": "CLOSED_NOT_ENABLED",
+    "K5_K8": "NOT_STARTED",
+    "history_redefined": false
+  },
+  "actual_project_model_requests": 0,
+  "matrix_evidence_version": "PATCH2_FINAL_SAME_SOURCE_VERIFIED",
+  "prior_patch1_audit": {
+    "acceptance": "prior-patch1-acceptance.json",
+    "verification": "prior-patch1-verification.md",
+    "current_source_gate": false
+  },
+  "fresh_additional_reviewer": {
+    "status": "NOT_COMPLETED",
+    "independent_review_pass_claim": false,
+    "receipt": "audit/product_recovery_20261001/final-validation-patch2.json"
+  },
+  "additional_reproduced_repairs": [
+    {
+      "id": "RF01",
+      "bug": "v2读取完整证据失败丢弃此前已完成结果包",
+      "before": "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+      "test": "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+      "after": "artifacts/design_review_recovery_20261001/final_v2_controls.log"
+    },
+    {
+      "id": "RF02",
+      "bug": "v2内部异常后继续启动后续分析",
+      "before": "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+      "test": "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+      "after": "artifacts/design_review_recovery_20261001/final_v2_controls.log"
+    },
+    {
+      "id": "RF03",
+      "bug": "presentation阶段失败被误归类为generic worker失败",
+      "before": "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+      "test": "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+      "after": "artifacts/design_review_recovery_20261001/final_v2_controls.log"
+    },
+    {
+      "id": "RF04",
+      "bug": "错误persisted候选计数和不完整verified阶段仍可通过公开模型验证",
+      "before": "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+      "test": "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage",
+      "after": "artifacts/design_review_recovery_20261001/final_v2_controls.log"
+    },
+    {
+      "id": "RF05",
+      "bug": "analysis身份未绑定tools/identity.py和tools/validation/registry.py相关字节",
+      "before": "artifacts/design_review_recovery_20261001/dependency_binding_before.log",
+      "before_failed": 2,
+      "tests": [
+        "tests/test_recovery_dependency_binding.py::test_subject_helper_bytes_are_bound_to_analyzer_identity",
+        "tests/test_recovery_dependency_binding.py::test_static_tool_registration_bytes_are_bound_to_analyzer_identity"
+      ],
+      "after": "artifacts/design_review_recovery_20261001/dependency_cli_layout_after.log",
+      "after_passed": 31,
+      "final_suite_passed": 2941
+    },
+    {
+      "id": "RF06",
+      "bug": "Returned public v2 context billing receipt aliases could rewrite completed scope_admissions in memory",
+      "before": "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+      "before_failed": 1,
+      "after": "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+      "after_passed": 37,
+      "after_seconds": 5.32,
+      "test": "tests/test_recovery_scope_receipt.py::test_public_scope_receipts_cannot_rewrite_completed_context_accounting",
+      "fix": "Existing immutable ScopeAdmission models preserve the serialized JSON shape",
+      "persisted_package_mutation_claim": false,
+      "final_suite_passed": 2941
+    }
+  ],
+  "issues": [
+    {
+      "id": "F01",
+      "title": "发布与原用户阻断",
+      "classification": "DOCUMENTED_RELEASE_GAP",
+      "status": "PARTIAL_USER_FAILURE_UNKNOWN",
+      "evidence_groups": [
+        "BASE",
+        "RELEASE",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/baseline.json",
+        "artifacts/design_review_recovery_20261001/baseline_full_pytest.log",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "已封存并安装工程试用发行物；2684pass前置baseline与源编辑并发，仅特征化而非不可变准入门禁；缺原用户命令/日志/输入/环境，不能宣称其失败已复现或修好。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F02",
+      "title": "本地证据受公开8KiB池限制",
+      "classification": "FEATURE_GAP",
+      "status": "REMEDIATED_IN_EXPLICIT_V2",
+      "evidence_groups": [
+        "V2",
+        "LOCAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+      ],
+      "finding": "v2完整原始记录先保存，summary仅影响分享；v1原预算语义与历史数据保留。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F03",
+      "title": "已知未投递反证可能被隐藏",
+      "classification": "CONTROLLED_CONSUMER_COUNTEREXAMPLE",
+      "status": "FULL_LOCAL_SET_CONTROL_PASS",
+      "evidence_groups": [
+        "LOCAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+      ],
+      "finding": "4000+4000字节控制注入只投递一份时旧子集单边强；完整本地归并为CONFLICT。原v1正常服务每候选一份观察，未复现其正常路径产生两份反证。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F04",
+      "title": "分析完成与交付计数混用",
+      "classification": "ACCOUNTING_DESIGN_GAP",
+      "status": "V2_STAGE_CONTROLS_PASS",
+      "evidence_groups": [
+        "V2",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "v2分离analysis/persistence/property/share；budget1不把已完成分析写成未开始；不悄改v1分母。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F05",
+      "title": "下一步行动是否有用",
+      "classification": "UNMEASURED_HUMAN_VALUE",
+      "status": "NOT_MEASURED",
+      "evidence_groups": [
+        "NAV",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "已有责任方、输入和完成条件；无两名新人工审阅者任务完成或净时间证据。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F06",
+      "title": "候选种类与窄验证范围",
+      "classification": "DOCUMENTED_CAPABILITY_GAP",
+      "status": "PARTIAL_LITERAL_PROFILE",
+      "evidence_groups": [
+        "V2",
+        "QUALITY",
+        "OWNED"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+        "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json",
+        "audit/product_recovery_20261001/quality_reference.json",
+        "audit/product_recovery_20261001/recovery-protocol.json",
+        "audit/product_recovery_20261001/owned-application-review-patch2/result.json"
+      ],
+      "finding": "区分有界性质、线索及不支持范围；命名mode仍未知，自有application15文件3候选全部U。非一般权限、全应用或漏洞检出承诺。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F07",
+      "title": "缺SUPPORTED公开CLI验收",
+      "classification": "MISSING_ACCEPTANCE",
+      "status": "ENGINEERING_E2E_PASS",
+      "evidence_groups": [
+        "V2",
+        "RELEASE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "真实公共CLI及仓库外安装wheel均交付匹配SUPPORTED/REFUTED/UNKNOWN；只证明声明mode性质。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F08",
+      "title": "安装依赖是否牵连研究环境",
+      "classification": "INSTALL_HYPOTHESIS",
+      "status": "CHARACTERIZED_MINIMAL_INSTALL_PASS",
+      "evidence_groups": [
+        "RELEASE",
+        "V06"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "audit/product_recovery_20261001/v06-python-requires-rejection-patch2.json",
+        "tests/test_recovery_commit.py::test_existing_target_is_never_replaced",
+        "tests/test_product_preflight.py::test_missing_validator_does_not_disable_source_index"
+      ],
+      "finding": "无PYTHONPATH、pytest、langgraph、evaluation、provider运行包的独立环境可用；保留所声明tree-sitter等依赖，不称零依赖。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F09",
+      "title": "同一行同规则操作碰撞",
+      "classification": "REPRODUCED_LEGACY_ID_COLLISION",
+      "status": "REPAIRED_EXPLICIT_V2",
+      "evidence_groups": [
+        "OPS",
+        "V2"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion"
+      ],
+      "finding": "旧v1两chmod折成一个候选被实际特征化；v2完整AST span/规则版本身份区分操作，保留历史ID。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F10",
+      "title": "摘要解析后读混版",
+      "classification": "NOT_REPRODUCED_INTRA_DISCOVERY",
+      "status": "SNAPSHOT_EXTENSION_CONTROLS_PASS",
+      "evidence_groups": [
+        "SNAP"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+      ],
+      "finding": "原discovery同一次读取即hash/parse，未复现该处混版；v2封存字节延伸至后读及verify，拒绝SOURCE_DRIFT，不声称活动树全局原子快照。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F11",
+      "title": "公开copy绕过字段合法性",
+      "classification": "REPRODUCED_PUBLIC_UPDATE_BYPASS",
+      "status": "REPAIRED",
+      "evidence_groups": [
+        "COPY",
+        "SCOPE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/r08-before.log",
+        "audit/product_recovery_20261001/r08-final-copy.log",
+        "audit/product_recovery_20261001/r08-alias-after.log",
+        "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+        "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+        "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+        "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema",
+        "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+        "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+        "tests/test_recovery_scope_receipt.py::test_public_scope_receipts_cannot_rewrite_completed_context_accounting"
+      ],
+      "finding": "原公开copy修前10反例失败、3正控通过；RF06另修返回v2上下文回执别名；合法alias和copy正控保持，私有反射不属边界。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F12",
+      "title": "补上下文复用旧缺项缓存",
+      "classification": "NOT_REPRODUCED_CACHE_HYPOTHESIS",
+      "status": "CHARACTERIZATION_PASS",
+      "evidence_groups": [
+        "VIEW"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer"
+      ],
+      "finding": "实际tool新scope在显式paid helper grant后输入/视图改变；同scope重复仍blocked；未另建缓存或篡改冻结专家scope。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F13",
+      "title": "量词范围与前提难消费",
+      "classification": "CONTRACT_PRESENTATION_GAP",
+      "status": "BOUNDED_SHARED_DECISION_PASS",
+      "evidence_groups": [
+        "QUAL",
+        "V2"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion"
+      ],
+      "finding": "复用原PropertyContract和共享准入，保留命题/量词/输入/方法/范围；声明有限支持，不重写解释器或保证任意前提组合。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F14",
+      "title": "强静态投影多处漂移",
+      "classification": "NOT_REPRODUCED_SEMANTIC_DRIFT",
+      "status": "SHARED_WRAPPER_CONTROLS_PASS",
+      "evidence_groups": [
+        "QUAL",
+        "RESEARCH"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property",
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit"
+      ],
+      "finding": "只读AcceptanceDecision委托原_command_status/_matches_validator_subject；产品和研究同方向；原UNRESOLVED不改写。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F15",
+      "title": "rename不能同时保证不覆盖",
+      "classification": "REPRODUCED_EMPTY_TARGET_RACE",
+      "status": "REPAIRED_LOCAL_LINUX",
+      "evidence_groups": [
+        "COMMIT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R11_receipt.json",
+        "artifacts/design_review_recovery_20261001/R11_before.log",
+        "artifacts/design_review_recovery_20261001/R11_after.log",
+        "tests/test_recovery_commit.py::test_raced_empty_output_is_not_replaced",
+        "tests/test_recovery_commit.py::test_target_creation_at_commit_boundary_is_rejected",
+        "tests/test_recovery_commit.py::test_sync_failure_before_commit_never_publishes_output",
+        "tests/test_recovery_commit.py::test_final_parent_sync_error_explicitly_reports_publication",
+        "tests/test_recovery_commit.py::test_v1_completion_failure_does_not_invalidate_committed_result"
+      ],
+      "finding": "修前并发空目录被替换；renameat2NOREPLACE及目录同步序列修复。unsupported显式失败，最终同步失败区分已发布，不保证所有FS断电耐久。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F16",
+      "title": "保密与本地复核闭环",
+      "classification": "FEATURE_AND_HUMAN_GAP",
+      "status": "MACHINE_NAVIGATION_PASS_HUMAN_UNKNOWN",
+      "evidence_groups": [
+        "NAV",
+        "VERIFY"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof"
+      ],
+      "finding": "私有完整记录+显式view/verify，分享件无原文且NOT_VERIFIABLE；人工能否独立完成动作未测。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F17",
+      "title": "消息预算不约束解析资源",
+      "classification": "RESOURCE_BOUNDARY_GAP",
+      "status": "OWNED_BOUNDARY_CONTROLS_PASS",
+      "evidence_groups": [
+        "RESOURCE",
+        "SCALE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json"
+      ],
+      "finding": "文件/字节/AST/候选/记录限及owned worker墙钟CPUAS边界；worker丢失的分母为未知，不能伪造0。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F18",
+      "title": "摘要与深复制规模放大",
+      "classification": "MEASURED_COMPLEXITY_GAP",
+      "status": "DESCRIPTIVE_PROFILED",
+      "evidence_groups": [
+        "DIGEST",
+        "SCALE",
+        "DEEPCOPY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "tests/test_recovery_frozen_index_digest.py::test_cached_digest_serializes_once_for_many_candidate_consumers",
+        "tests/test_recovery_frozen_index_digest.py::test_mutable_legacy_index_edits_recompute_digest",
+        "tests/test_recovery_frozen_index_digest.py::test_arbitrary_index_digest_attribute_is_never_trusted",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/measurement.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/instrumentation_receipt.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/workload-correction.json"
+      ],
+      "finding": "1000消费者旧索引1000000文档序列化，封存索引1000/一次JSON；仅声明观测热点与入口copy计数，不证明整体线性或因果加速。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F19",
+      "title": "共享观察多专家非独立证明",
+      "classification": "DOCUMENTED_RESEARCH_LIMIT",
+      "status": "PRESERVED",
+      "evidence_groups": [
+        "RESEARCH"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit"
+      ],
+      "finding": "引用别名及票数不增加producer独立证据强度；共享事实准入与一专家一票约束保留。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F20",
+      "title": "16图上限不能证明所有8任务",
+      "classification": "NOT_REPRODUCED_LISTED_TOPOLOGIES",
+      "status": "CHARACTERIZATION_PASS_NOT_EXHAUSTIVE",
+      "evidence_groups": [
+        "RESEARCH"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit"
+      ],
+      "finding": "E4/E5共72控制，70个代表合法拓扑，图节点11–14，上限16；无进展有界终止；不宣称穷尽所有DAG或调度后的真实模型响应不变。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F21",
+      "title": "见证基础设施工作负载限制",
+      "classification": "DOCUMENTED_DISABLED_CAPABILITY",
+      "status": "REMAINS_DISABLED",
+      "evidence_groups": [
+        "RESEARCH",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "scratch/native未启用；不重跑第三方见证；G-A仍NO，GP2禁用。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "F22",
+      "title": "真实独立质量及人工净收益",
+      "classification": "UNMEASURED_PRODUCT_VALUE",
+      "status": "NOT_MEASURED_HUMAN_USER",
+      "evidence_groups": [
+        "QUALITY",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+        "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json",
+        "audit/product_recovery_20261001/quality_reference.json",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "仅36个其他agent软件控制22exact/0wrongstrong/14命名mode未知；不是人类、heldout、accuracy或FPR；真实用户任务和人试点未提供。",
+      "kind": "issue",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "R00",
+      "title": "冻结与复现用户阻断",
+      "classification": "DIAGNOSTIC_TASK",
+      "status": "PARTIAL_BLOCKED_MISSING_USER_INPUT",
+      "evidence_groups": [
+        "BASE",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/baseline.json",
+        "artifacts/design_review_recovery_20261001/baseline_full_pytest.log",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "版本/dirty清单已保存；baseline2684pass是在源编辑并发期间的特征化运行，不是不可变原版本准入。原用户失败需脱敏命令/日志/输入/环境，不猜根因。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R01",
+      "title": "最小发行物",
+      "classification": "ENGINEERING_TASK",
+      "status": "RECORDED_CLEAN_INSTALL_PASS",
+      "evidence_groups": [
+        "RELEASE",
+        "V06"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "audit/product_recovery_20261001/v06-python-requires-rejection-patch2.json",
+        "tests/test_recovery_commit.py::test_existing_target_is_never_replaced",
+        "tests/test_product_preflight.py::test_missing_validator_does_not_disable_source_index"
+      ],
+      "finding": "固定wheel/sdist/离线wheelhouse及锁定哈希，仓库外两次解包安装；解释器正负控制齐全，仅限定Linux声明环境。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R02",
+      "title": "有效公开端到端样例",
+      "classification": "ENGINEERING_TASK",
+      "status": "OWNED_E2E_PASS_USER_TASK_NOT_PROVIDED",
+      "evidence_groups": [
+        "V2",
+        "RELEASE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "自有SUPPORTED/REFUTED/UNKNOWN/错绑定/解析路径通过；非用户选定的新鲜实际仓库质量任务。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R03",
+      "title": "统一源码字节快照",
+      "classification": "CHARACTERIZATION_AND_EXTENSION",
+      "status": "LISTED_CONTROLS_PASS",
+      "evidence_groups": [
+        "SNAP"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+      ],
+      "finding": "原hash/parse混版假设未复现；封存每文件字节供后续消费者，漂移拒绝与读取错误账本，不承诺全局原子工作树。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R04",
+      "title": "操作级身份与位置",
+      "classification": "REPAIR_AND_EXPLICIT_MIGRATION",
+      "status": "LISTED_CONTROLS_PASS",
+      "evidence_groups": [
+        "OPS",
+        "V2"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion"
+      ],
+      "finding": "v2新ID和AST UTF8端点；切片去重，编码/缩进恢复；旧ID未改。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R05",
+      "title": "共享性质准入决定",
+      "classification": "EXTRACT_EXISTING_AUTHORITY",
+      "status": "LISTED_CONTROLS_PASS",
+      "evidence_groups": [
+        "QUAL",
+        "VERIFY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof"
+      ],
+      "finding": "不另造语义分析器；共享只读投影，局部/未知/错subject不能升级，原验证状态保留。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R06",
+      "title": "本地记录与摘要解耦",
+      "classification": "EXPLICIT_V2_FEATURE",
+      "status": "LISTED_CONTROLS_PASS",
+      "evidence_groups": [
+        "LOCAL",
+        "V2",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "完整producer记录先落盘，从全部相关完整记录归并；摘要预算不改变本地真值，依赖缺失不独立可验证。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R07",
+      "title": "阶段计数和终态",
+      "classification": "EXPLICIT_V2_CONTRACT",
+      "status": "LISTED_CONTROLS_PASS",
+      "evidence_groups": [
+        "V2",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "analysis/persistence/property/delivery分离；修复额外RF04计数校验，阶段失败与取消保留分母；v1契约保留。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R08",
+      "title": "公开更新反序列化边界",
+      "classification": "REPRODUCED_REPAIR",
+      "status": "LISTED_CONTROLS_PASS",
+      "evidence_groups": [
+        "COPY",
+        "SCOPE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/r08-before.log",
+        "audit/product_recovery_20261001/r08-final-copy.log",
+        "audit/product_recovery_20261001/r08-alias-after.log",
+        "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+        "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+        "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+        "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema",
+        "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+        "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+        "tests/test_recovery_scope_receipt.py::test_public_scope_receipts_cannot_rewrite_completed_context_accounting"
+      ],
+      "finding": "公开copy完整构造验证，非法/跨字段输入拒绝；RF06返回v2回执改用不可变ScopeAdmission，旧JSON形状不变。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R09",
+      "title": "补上下文输入实际生效",
+      "classification": "HYPOTHESIS_CHARACTERIZATION",
+      "status": "NO_STALE_CACHE_REPRODUCED",
+      "evidence_groups": [
+        "VIEW"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer"
+      ],
+      "finding": "付费grant新scope实际tool输入变更；重复投递另计且不重执行；不改变授权范围或冻结scope。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R10",
+      "title": "可完成的finding动作",
+      "classification": "PRESENTATION_FEATURE_AND_HUMAN_TASK",
+      "status": "MACHINE_PASS_HUMAN_NOT_MEASURED",
+      "evidence_groups": [
+        "NAV",
+        "DISPLAY",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "audit/product_recovery_20261001/display-invariance-patch2.json",
+        "audit/product_recovery_20261001/display-invariance-patch2.log",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "机器位置、私有证据、责任/输入/完成条件可核对；两名人工新审阅者独立完成仍未知。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R11",
+      "title": "一致不覆盖产物和验证",
+      "classification": "LOCAL_ENGINEERING_REPAIR",
+      "status": "LISTED_LOCAL_CONTROLS_PASS",
+      "evidence_groups": [
+        "COMMIT",
+        "VERIFY",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R11_receipt.json",
+        "artifacts/design_review_recovery_20261001/R11_before.log",
+        "artifacts/design_review_recovery_20261001/R11_after.log",
+        "tests/test_recovery_commit.py::test_raced_empty_output_is_not_replaced",
+        "tests/test_recovery_commit.py::test_target_creation_at_commit_boundary_is_rejected",
+        "tests/test_recovery_commit.py::test_sync_failure_before_commit_never_publishes_output",
+        "tests/test_recovery_commit.py::test_final_parent_sync_error_explicitly_reports_publication",
+        "tests/test_recovery_commit.py::test_v1_completion_failure_does_not_invalidate_committed_result",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "不替换目标，提交前同步，晚completion非权威；verify完整记录+重建AST/candidate+注册静态重放，非外部身份认证。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R12",
+      "title": "规模画像与真实资源边界",
+      "classification": "OWNED_ENGINEERING_MEASUREMENT",
+      "status": "MEASURED_SCOPE_LIMITED",
+      "evidence_groups": [
+        "RESOURCE",
+        "SCALE",
+        "DIGEST",
+        "DEEPCOPY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json",
+        "tests/test_recovery_frozen_index_digest.py::test_cached_digest_serializes_once_for_many_candidate_consumers",
+        "tests/test_recovery_frozen_index_digest.py::test_mutable_legacy_index_edits_recompute_digest",
+        "tests/test_recovery_frozen_index_digest.py::test_arbitrary_index_digest_attribute_is_never_trusted",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/measurement.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/instrumentation_receipt.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/workload-correction.json"
+      ],
+      "finding": "100/500/1000生成文本完整v2测量；真实CPU/AS自有进程控制；单次两profile及发行准备同机负载，第三suite未重叠，非授权用户仓库或因果benchmark。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R13",
+      "title": "研究边界兼容回归",
+      "classification": "OFFLINE_COMPATIBILITY",
+      "status": "FINAL_FULL_SUITE_PASS",
+      "evidence_groups": [
+        "RESEARCH",
+        "FINAL"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+      ],
+      "finding": "初次15失败已真实修正；最终2941通过；neutral_source边界显式迁移，不弱化公开copy；历史G-A/GP/模型账本未重定义。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R14",
+      "title": "独立静态质量",
+      "classification": "FRESH_AGENT_ENGINEERING_CONTROLS",
+      "status": "PARTIAL_AGENT_ONLY",
+      "evidence_groups": [
+        "QUALITY"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+        "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json",
+        "audit/product_recovery_20261001/quality_reference.json",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "36样本完整保留，22精确状态匹配、0错误强状态、14命名mode不支持；未做人工独立或新鲜授权仓库审查。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R15",
+      "title": "真实人工净收益",
+      "classification": "HUMAN_EVALUATION",
+      "status": "NOT_MEASURED_MISSING_TASKS_REVIEWERS",
+      "evidence_groups": [
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "没有人类A/B、仓库级质量和人工净时间数据，不用机器时延代替。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R16",
+      "title": "发布交接关闭",
+      "classification": "LIMITED_TRIAL_RELEASE",
+      "status": "ENGINEERING_TRIAL_ONLY_PRODUCT_GATES_OPEN",
+      "evidence_groups": [
+        "RELEASE",
+        "FINAL",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "最终同源码发行和suite可核对；因原用户任务、用户环境、人类价值未测，仅工程试用版，不能整体产品恢复PASS。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "R17",
+      "title": "可选模型解释",
+      "classification": "CONDITIONAL_UNAUTHORIZED_TASK",
+      "status": "CLOSED_NOT_ENABLED",
+      "evidence_groups": [
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "未获单独请求/token授权且静态人工收益未成立；不调用真实模型，不恢复G-A/K5–K8。",
+      "kind": "task",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    }
+  ],
+  "acceptance_checks": [
+    {
+      "id": "V01",
+      "title": "实际源码版本与缺材料",
+      "classification": "USER_DIAGNOSTIC",
+      "status": "PARTIAL_USER_FAILURE_UNKNOWN",
+      "evidence_groups": [
+        "BASE",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/baseline.json",
+        "artifacts/design_review_recovery_20261001/baseline_full_pytest.log",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "源码和基线可对应；缺原用户实际版本/失败上下文，不写用户bug已复现。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V02",
+      "title": "用户失败命令及等价自有输入",
+      "classification": "USER_DIAGNOSTIC",
+      "status": "NOT_RUN_USER_INPUT_MISSING",
+      "evidence_groups": [
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "自有故障控制不冒充与用户失败同阶段，原命令/日志未提供。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V03",
+      "title": "固定发行物仓库外安装",
+      "classification": "ENGINEERING_CONTROL",
+      "status": "PASS_RECORDED_RELEASE",
+      "evidence_groups": [
+        "RELEASE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "两次独立解包离线安装及console调用；非用户自己的环境复验。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V04",
+      "title": "无测试研究包静态运行",
+      "classification": "ENGINEERING_CONTROL",
+      "status": "PASS_DECLARED_MINIMAL_PACKAGE",
+      "evidence_groups": [
+        "RELEASE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "pytest/langgraph/evaluation/baselines/provider模块缺席仍doctor/review；11个安装包包含声明解析依赖。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V05",
+      "title": "无密钥无模型网络gate",
+      "classification": "ENGINEERING_CONTROL",
+      "status": "PASS_LISTED_STATIC_CONTROLS",
+      "evidence_groups": [
+        "RELEASE",
+        "RESOURCE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values"
+      ],
+      "finding": "env不继承凭据、产品无provider包；发布及产品review回执模型请求/目标执行/外部网络为0。pytest自有loopback fixture另属离线契约。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V06",
+      "title": "已有输出缺依赖解释器不匹配",
+      "classification": "ENGINEERING_CONTROL",
+      "status": "PASS_LISTED_POSITIVE_NEGATIVE_CONTROLS",
+      "evidence_groups": [
+        "V06",
+        "RELEASE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/v06-python-requires-rejection-patch2.json",
+        "tests/test_recovery_commit.py::test_existing_target_is_never_replaced",
+        "tests/test_product_preflight.py::test_missing_validator_does_not_disable_source_index",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "existing不覆盖；必需能力缺失诊断；已有3.10.12离线同wheel因>=3.12拒绝exit1且未安装，3.13.5正控通过。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V07",
+      "title": "常量权限位支持",
+      "classification": "ENGINEERING_E2E",
+      "status": "PASS_OWNED_LITERAL_MODE",
+      "evidence_groups": [
+        "V2",
+        "RELEASE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "公共CLI完整SUPPORTED仅对应选定mode位，不执行目标。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V08",
+      "title": "对应常量权限位否定",
+      "classification": "ENGINEERING_E2E",
+      "status": "PASS_OWNED_LITERAL_MODE",
+      "evidence_groups": [
+        "V2",
+        "RELEASE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "REFUTED同一有限性质，application仍NOT_ASSESSED。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V09",
+      "title": "动态mode缺信息",
+      "classification": "ENGINEERING_E2E",
+      "status": "PASS_LISTED_UNKNOWN_CONTROLS",
+      "evidence_groups": [
+        "V2",
+        "QUALITY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+        "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json",
+        "audit/product_recovery_20261001/quality_reference.json",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "分析完成但UNKNOWN，缺已解析mode来源；命名mode不支持不伪造强结论。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V10",
+      "title": "同名不同callee绑定",
+      "classification": "ENGINEERING_E2E",
+      "status": "PASS_SHADOWED_BINDING_CONTROL",
+      "evidence_groups": [
+        "V2",
+        "OPS"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof"
+      ],
+      "finding": "shadowed os没有强状态且不执行callee；其他任意动态绑定不由此自动证明。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V11",
+      "title": "零候选与解析失败",
+      "classification": "ENGINEERING_E2E",
+      "status": "PASS_LISTED_RUN_STATE_CONTROLS",
+      "evidence_groups": [
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "zero/invalid文件COMPLETED/PARTIAL区分，分母保留。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V12",
+      "title": "已有事实后取消内部异常",
+      "classification": "ENGINEERING_FAILURE_CONTROL",
+      "status": "PASS_LISTED_V2_FAILURE_CONTROLS",
+      "evidence_groups": [
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "v2证据read失败、内部异常及取消保留此前有效事实，后续tools停止；强制kill另见V46。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V13",
+      "title": "清单读取后解析前改文件",
+      "classification": "ENGINEERING_SNAPSHOT_CONTROL",
+      "status": "PASS_SEALED_BYTES_CONTROL",
+      "evidence_groups": [
+        "SNAP"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+      ],
+      "finding": "解析封存字节或后读SOURCE_DRIFT，不混用版本。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V14",
+      "title": "helper/import改变",
+      "classification": "ENGINEERING_SOURCE_BINDING",
+      "status": "PASS_LISTED_DRIFT_CONTROLS",
+      "evidence_groups": [
+        "SNAP",
+        "VIEW",
+        "VERIFY",
+        "DEPENDENCY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof",
+        "artifacts/design_review_recovery_20261001/dependency_binding_before.log",
+        "artifacts/design_review_recovery_20261001/dependency_cli_layout_after.log",
+        "tests/test_recovery_dependency_binding.py::test_subject_helper_bytes_are_bound_to_analyzer_identity",
+        "tests/test_recovery_dependency_binding.py::test_static_tool_registration_bytes_are_bound_to_analyzer_identity"
+      ],
+      "finding": "旧记录不能静默绑定新源码；RF05补上tools/identity及注册代码的分析身份依赖；非跨文件活动树全局原子性证明。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V15",
+      "title": "读取错误排除目录",
+      "classification": "ENGINEERING_INVENTORY",
+      "status": "PASS_LISTED_ERROR_EXCLUSION_CONTROLS",
+      "evidence_groups": [
+        "SNAP"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+      ],
+      "finding": "错误、编码、符号链接和明确排除均记账；未遍历余量unknown，不宣称全部文件覆盖。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V16",
+      "title": "根外未授权行读取",
+      "classification": "ENGINEERING_SOURCE_BOUNDARY",
+      "status": "PASS_LISTED_ACCESS_CONTROLS",
+      "evidence_groups": [
+        "SNAP",
+        "VIEW"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer"
+      ],
+      "finding": "拒绝symlink/parent traversal/未grant范围；拒绝本身不证明安全。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V17",
+      "title": "同一行同规则两操作",
+      "classification": "ENGINEERING_ID_AND_E2E",
+      "status": "PASS_DISTINCT_OPERATION_CONTROLS",
+      "evidence_groups": [
+        "OPS",
+        "V2"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion"
+      ],
+      "finding": "两个精确ID和独立finding，已知同一行两mode分别R/S。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V18",
+      "title": "模块函数重叠切片",
+      "classification": "ENGINEERING_ID",
+      "status": "PASS_LISTED_DEDUP_CONTROLS",
+      "evidence_groups": [
+        "OPS"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof"
+      ],
+      "finding": "同一AST操作只一次，原端点/snippet保留；不是任意语言去重证明。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V19",
+      "title": "中文tabCRLF非UTF8",
+      "classification": "ENGINEERING_LOCATION",
+      "status": "PASS_LISTED_ENCODING_CONTROLS",
+      "evidence_groups": [
+        "OPS"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof"
+      ],
+      "finding": "UTF8 AST列与原编码字节摘要分离，slice/dedent端点恢复。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V20",
+      "title": "不同列前提性质不互借",
+      "classification": "ENGINEERING_BINDING",
+      "status": "PASS_LISTED_SUBJECT_CONTROLS",
+      "evidence_groups": [
+        "OPS",
+        "COPY",
+        "QUAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof",
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/r08-before.log",
+        "audit/product_recovery_20261001/r08-final-copy.log",
+        "audit/product_recovery_20261001/r08-alias-after.log",
+        "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+        "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+        "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+        "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property"
+      ],
+      "finding": "精确操作、source/property/scenario subject严格匹配；不同操作不能借同一行强证明。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V21",
+      "title": "正向完整路径加无关未知",
+      "classification": "ENGINEERING_REDUCTION",
+      "status": "PASS_SUFFICIENT_POSITIVE_CONTROLS",
+      "evidence_groups": [
+        "QUAL",
+        "LOCAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+      ],
+      "finding": "独立已知充分正向仍支持，正常UNKNOWN记录不擦除它；material记录缺失是不同完整性错误。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V22",
+      "title": "局部否定加范围缺口",
+      "classification": "ENGINEERING_REDUCTION",
+      "status": "PASS_LISTED_SCOPE_CONTROLS",
+      "evidence_groups": [
+        "QUAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property"
+      ],
+      "finding": "局部/窄方法不升级全范围REFUTED或应用SAFE。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V23",
+      "title": "同命令记录产品与研究",
+      "classification": "ENGINEERING_SHARED_QUALIFICATION",
+      "status": "PASS_SHARED_DIRECTION_CONTROLS",
+      "evidence_groups": [
+        "QUAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property"
+      ],
+      "finding": "SANITIZED/UNSANITIZED同方向，原UNRESOLVED不变；两侧不支持对照均拒绝。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V24",
+      "title": "手写强状态缺方法依赖",
+      "classification": "ENGINEERING_ADMISSION",
+      "status": "PASS_LISTED_REJECTION_CONTROLS",
+      "evidence_groups": [
+        "QUAL",
+        "VERIFY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof"
+      ],
+      "finding": "pattern/read/truncated/local/wrongsubject不准入；schema或自报hash不是producer权威。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V25",
+      "title": "只缩小summary预算",
+      "classification": "ENGINEERING_V2_BUDGET",
+      "status": "PASS_LOCAL_TRUTH_INVARIANCE",
+      "evidence_groups": [
+        "V2",
+        "DISPLAY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/display-invariance-patch2.json",
+        "audit/product_recovery_20261001/display-invariance-patch2.log"
+      ],
+      "finding": "1byte分享不影响已完成本地S/R/U，Hengine独立于Hdelivery；metadata额外开销单列。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V26",
+      "title": "正反证仅能投递一份",
+      "classification": "CONTROLLED_CONSUMER_INJECTION",
+      "status": "PASS_FULL_LOCAL_CONFLICT_CONTROL",
+      "evidence_groups": [
+        "LOCAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+      ],
+      "finding": "4000+4000/8192-256池控制仍完整本地CONFLICT；未称原单观察服务默认可达此反例。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V27",
+      "title": "顺序交换无关记录",
+      "classification": "ENGINEERING_REDUCTION",
+      "status": "PASS_LISTED_PERMUTATION_CONTROLS",
+      "evidence_groups": [
+        "LOCAL",
+        "QUAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property"
+      ],
+      "finding": "两个顺序均CONFLICT； unrelated subject不成为此候选证据，但完整inventory先验证。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V28",
+      "title": "producer别名与改变内容",
+      "classification": "ENGINEERING_PROTOCOL",
+      "status": "PASS_ORIGINAL_PRODUCER_CONTROLS",
+      "evidence_groups": [
+        "LOCAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+      ],
+      "finding": "citation alias去重保留原记录；同producer变payload/context明确错误，不按多数票遮盖。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V29",
+      "title": "落盘失败必要记录缺失",
+      "classification": "ENGINEERING_FAILURE_CONTROL",
+      "status": "PASS_LISTED_MATERIAL_FAILURE_CONTROLS",
+      "evidence_groups": [
+        "LOCAL",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "write/fsync/quota/missing记录拒绝完整性；v2已完成前序事实保留，失败候选无强状态。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V30",
+      "title": "摘要分享无完整依据",
+      "classification": "ENGINEERING_SHARE_CONTRACT",
+      "status": "PASS_NOT_VERIFIABLE_CONTROL",
+      "evidence_groups": [
+        "V2",
+        "RELEASE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "share明确NOT_VERIFIABLE且不保留独立强断言；私有包访问需用户授权。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V31",
+      "title": "分析完成summary没交付",
+      "classification": "ENGINEERING_ACCOUNTING",
+      "status": "PASS_STAGE_DENOMINATOR_CONTROL",
+      "evidence_groups": [
+        "V2"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion"
+      ],
+      "finding": "analysis_completed=1、persistence完整，summary1byte不成为analysis_not_started。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V32",
+      "title": "S/R/U/冲突失败守恒",
+      "classification": "ENGINEERING_SCHEMA_AND_CONTROL",
+      "status": "PASS_LISTED_PARTITION_CONTROLS",
+      "evidence_groups": [
+        "FAULT",
+        "LOCAL",
+        "DISPLAY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "audit/product_recovery_20261001/display-invariance-patch2.json",
+        "audit/product_recovery_20261001/display-invariance-patch2.log"
+      ],
+      "finding": "v2阶段计数验证及RF04失败回归；CONFLICT独立于resolved_without_conflict。控制非默认服务多个validator实绩。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V33",
+      "title": "多调用和多候选分母",
+      "classification": "ENGINEERING_ACCOUNTING",
+      "status": "PASS_LISTED_COST_CONTROLS",
+      "evidence_groups": [
+        "SCALE",
+        "LOCAL",
+        "VIEW"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer"
+      ],
+      "finding": "analysis/replay attempts分别记；100/500/1000候选200/1000/2000总调用不是候选数；重复delivery不增producer执行。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V34",
+      "title": "各阶段分别失败",
+      "classification": "ENGINEERING_FAILURE_CONTROL",
+      "status": "PASS_ENUMERATED_STAGE_CONTROLS",
+      "evidence_groups": [
+        "FAULT",
+        "RESOURCE",
+        "SNAP"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage",
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+      ],
+      "finding": "输入/解析/analysis/record/presentation已枚举失败有阶段原因及前序事实；不宣称所有故障组合穷尽。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V35",
+      "title": "公开copy非法更新",
+      "classification": "REPRODUCED_REPAIR_CONTROL",
+      "status": "PASS_VALIDATED_UPDATE_CONTROLS",
+      "evidence_groups": [
+        "COPY"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/r08-before.log",
+        "audit/product_recovery_20261001/r08-final-copy.log",
+        "audit/product_recovery_20261001/r08-alias-after.log",
+        "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+        "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+        "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+        "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema"
+      ],
+      "finding": "非法类型/位置/版本与constructor一致拒绝，跨字段重新验证。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V36",
+      "title": "合法copy往返不可变",
+      "classification": "ENGINEERING_POSITIVE_CONTROL",
+      "status": "PASS_ROUNDTRIP_AND_ALIAS_CONTROLS",
+      "evidence_groups": [
+        "COPY",
+        "SCOPE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/r08-before.log",
+        "audit/product_recovery_20261001/r08-final-copy.log",
+        "audit/product_recovery_20261001/r08-alias-after.log",
+        "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+        "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+        "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+        "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema",
+        "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+        "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+        "tests/test_recovery_scope_receipt.py::test_public_scope_receipts_cannot_rewrite_completed_context_accounting"
+      ],
+      "finding": "合法copy/往返/alias保持；RF06新v2上下文回执别名1failed→37affectedpass→2941全量；未称磁盘包被对象别名改写。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V37",
+      "title": "未知字段派生摘要错subject",
+      "classification": "ENGINEERING_PROTOCOL",
+      "status": "PASS_LISTED_SCHEMA_CONTROLS",
+      "evidence_groups": [
+        "COPY",
+        "VERIFY",
+        "FAULT"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/r08-before.log",
+        "audit/product_recovery_20261001/r08-final-copy.log",
+        "audit/product_recovery_20261001/r08-alias-after.log",
+        "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+        "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+        "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+        "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "未知状态/版本/错subject拒绝；派生计数完整性验证，序列化metadata不能替代重建AST绑定。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V38",
+      "title": "补helper新输入重分析",
+      "classification": "HYPOTHESIS_CHARACTERIZATION",
+      "status": "PASS_NO_STALE_CACHE_FOUND",
+      "evidence_groups": [
+        "VIEW"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer"
+      ],
+      "finding": "实际tool paid grant新scope输入改变；不是同一冻结任务偷偷扩大读取。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V39",
+      "title": "相同记录重复投递",
+      "classification": "ENGINEERING_ACCOUNTING",
+      "status": "PASS_CACHED_REDELIVERY_CONTROL",
+      "evidence_groups": [
+        "VIEW",
+        "LOCAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+      ],
+      "finding": "交付另计，producer保持一次，不物理重执行或重复记独立证据。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V40",
+      "title": "未授权内容元数据影响分析",
+      "classification": "ENGINEERING_SOURCE_BOUNDARY",
+      "status": "PASS_LISTED_VIEW_CONTROLS",
+      "evidence_groups": [
+        "VIEW",
+        "VERIFY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+        "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+        "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof"
+      ],
+      "finding": "admitted paths限制分析/模型视图；verify由完整封存模块重建绑定。默认全根内部索引另列，不等同模型上下文收费。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V41",
+      "title": "新审阅者报告定位",
+      "classification": "MACHINE_AND_HUMAN_ACCEPTANCE",
+      "status": "PARTIAL_MACHINE_PASS_HUMAN_NOT_MEASURED",
+      "evidence_groups": [
+        "NAV",
+        "OPS"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+        "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+        "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+        "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+        "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+        "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+        "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+        "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof"
+      ],
+      "finding": "view机器重核source+精确端点可定位同一操作；两名独立新人工审阅者未测。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V42",
+      "title": "UNKNOWN行动条件",
+      "classification": "PRESENTATION_AND_HUMAN_VALUE",
+      "status": "PARTIAL_STRUCTURED_ACTION_HUMAN_UNKNOWN",
+      "evidence_groups": [
+        "V2",
+        "NAV",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+        "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+        "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+        "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "required_input/owner/done_condition齐全；字段齐全不证明人实际完成任务。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V43",
+      "title": "分享秘密原始异常",
+      "classification": "ENGINEERING_PRIVACY",
+      "status": "PASS_LISTED_PRIVATE_PUBLIC_CONTROLS",
+      "evidence_groups": [
+        "NAV",
+        "LOCAL",
+        "FAULT"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "自有fake secret/异常不入公共正文，完整descriptor/原文留.private0600/0700；不推断任意字符串保密均穷尽。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V44",
+      "title": "旧source陈旧及展示排序",
+      "classification": "ENGINEERING_PRESENTATION",
+      "status": "PASS_LISTED_DRIFT_AND_ORDER_CONTROLS",
+      "evidence_groups": [
+        "NAV",
+        "DISPLAY"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+        "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+        "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets",
+        "audit/product_recovery_20261001/display-invariance-patch2.json",
+        "audit/product_recovery_20261001/display-invariance-patch2.log"
+      ],
+      "finding": "source变更拒绝SOURCE_DRIFT；实际S/R/U结果反转输入优先报告字节一致、身份/按ID事实/refs/计数不变。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V45",
+      "title": "空非空并发目标",
+      "classification": "REPRODUCED_REPAIR_CONTROL",
+      "status": "PASS_ATOMIC_NO_REPLACE_CONTROLS",
+      "evidence_groups": [
+        "COMMIT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R11_receipt.json",
+        "artifacts/design_review_recovery_20261001/R11_before.log",
+        "artifacts/design_review_recovery_20261001/R11_after.log",
+        "tests/test_recovery_commit.py::test_raced_empty_output_is_not_replaced",
+        "tests/test_recovery_commit.py::test_target_creation_at_commit_boundary_is_rejected",
+        "tests/test_recovery_commit.py::test_sync_failure_before_commit_never_publishes_output",
+        "tests/test_recovery_commit.py::test_final_parent_sync_error_explicitly_reports_publication",
+        "tests/test_recovery_commit.py::test_v1_completion_failure_does_not_invalidate_committed_result"
+      ],
+      "finding": "空/非空/file/symlink/raced目录均不替换；真实旧空目录竞态已先失败。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V46",
+      "title": "写盘中止强杀恢复",
+      "classification": "LOCAL_ENGINEERING_FAILURE",
+      "status": "PARTIAL_LISTED_FAILURES_NO_UNIVERSAL_CRASH_CLAIM",
+      "evidence_groups": [
+        "COMMIT",
+        "RESOURCE",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R11_receipt.json",
+        "artifacts/design_review_recovery_20261001/R11_before.log",
+        "artifacts/design_review_recovery_20261001/R11_after.log",
+        "tests/test_recovery_commit.py::test_raced_empty_output_is_not_replaced",
+        "tests/test_recovery_commit.py::test_target_creation_at_commit_boundary_is_rejected",
+        "tests/test_recovery_commit.py::test_sync_failure_before_commit_never_publishes_output",
+        "tests/test_recovery_commit.py::test_final_parent_sync_error_explicitly_reports_publication",
+        "tests/test_recovery_commit.py::test_v1_completion_failure_does_not_invalidate_committed_result",
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "precommit失败不发布完整包，worker死亡不伪造分母，私有progress可保守审计；未做电源崩溃或所有FS恢复实验。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V47",
+      "title": "缺记录改内容subjectmanifest",
+      "classification": "ENGINEERING_LOCAL_VERIFICATION",
+      "status": "PASS_LISTED_INTEGRITY_REPLAY_CONTROLS",
+      "evidence_groups": [
+        "VERIFY",
+        "LOCAL",
+        "RELEASE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+        "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+        "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+        "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof",
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+        "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+        "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+        "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+        "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+        "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "核对全package/material、源码依赖和注册producer静态重放；hash只是本地一致性，非外部认证。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V48",
+      "title": "晚completion私有权限",
+      "classification": "ENGINEERING_COMMIT_AUTHORITY",
+      "status": "PASS_LISTED_COMMIT_CONTROLS",
+      "evidence_groups": [
+        "COMMIT",
+        "RELEASE"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R11_receipt.json",
+        "artifacts/design_review_recovery_20261001/R11_before.log",
+        "artifacts/design_review_recovery_20261001/R11_after.log",
+        "tests/test_recovery_commit.py::test_raced_empty_output_is_not_replaced",
+        "tests/test_recovery_commit.py::test_target_creation_at_commit_boundary_is_rejected",
+        "tests/test_recovery_commit.py::test_sync_failure_before_commit_never_publishes_output",
+        "tests/test_recovery_commit.py::test_final_parent_sync_error_explicitly_reports_publication",
+        "tests/test_recovery_commit.py::test_v1_completion_failure_does_not_invalidate_committed_result",
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+      ],
+      "finding": "completion authoritative=false且不属proof manifest；0600文件0700私有目录；晚写/sync异常不能撤销已提交证明集。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V49",
+      "title": "逐级自有规模",
+      "classification": "OWNED_DESCRIPTIVE_MEASUREMENT",
+      "status": "PASS_100_500_1000_OWNED_RUNS",
+      "evidence_groups": [
+        "SCALE"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json",
+        "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json"
+      ],
+      "finding": "最新完整v2三规模完成R、阶段时延/RSS/字节齐全；仅自有constant750生成文本，单次两profile及发行准备负载，第三suite未重叠。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V50",
+      "title": "文件节点时间内存超限",
+      "classification": "OWNED_RESOURCE_CONTROL",
+      "status": "PASS_LISTED_LIMIT_CONTROLS",
+      "evidence_groups": [
+        "RESOURCE",
+        "SNAP"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+      ],
+      "finding": "有限配置，genuine owned CPU/AS超限和timeout保持resource原因/未知或未处理分母，不普通语义UNKNOWN。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V51",
+      "title": "索引摘要和复制次数",
+      "classification": "OWNED_INSTRUMENTATION",
+      "status": "PASS_DESCRIPTIVE_ENTRIES_NOT_WHOLE_COMPLEXITY",
+      "evidence_groups": [
+        "DIGEST",
+        "DEEPCOPY"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "tests/test_recovery_frozen_index_digest.py::test_cached_digest_serializes_once_for_many_candidate_consumers",
+        "tests/test_recovery_frozen_index_digest.py::test_mutable_legacy_index_edits_recompute_digest",
+        "tests/test_recovery_frozen_index_digest.py::test_arbitrary_index_digest_attribute_is_never_trusted",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/measurement.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/instrumentation_receipt.json",
+        "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/workload-correction.json"
+      ],
+      "finding": "封存摘要一次；copy入口13018/65018/130018（public5614/28014/56014、construct7404/37004/74004）。不计递归/Pydantic/普通集合/bytes，不证明整体线性。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V52",
+      "title": "解析分析取消",
+      "classification": "ENGINEERING_CANCEL_CONTROL",
+      "status": "PASS_LISTED_OWNED_BOUNDARY_CONTROLS",
+      "evidence_groups": [
+        "RESOURCE",
+        "SNAP",
+        "FAULT"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+        "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+        "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+        "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+        "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+        "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+        "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+        "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+        "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+        "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+        "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal",
+        "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+        "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+        "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+        "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+        "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+        "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+        "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+        "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+        "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+        "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+      ],
+      "finding": "快照/空根取消、static已有事实后取消及kill/wait owned worker；不继续新工具/外部操作。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V53",
+      "title": "研究产品同静态事实",
+      "classification": "ENGINEERING_COMPATIBILITY",
+      "status": "PASS_LISTED_SHARED_SEMANTICS_FINAL_SUITE",
+      "evidence_groups": [
+        "QUAL",
+        "RESEARCH",
+        "FINAL"
+      ],
+      "evidence": [
+        "artifacts/design_review_recovery_20261001/R06_receipt.json",
+        "artifacts/design_review_recovery_20261001/R06_after.log",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+        "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+        "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+        "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+        "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property",
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+      ],
+      "finding": "准入方向共享，原status不变；历史配置/账本机械保留，不新跑模型实验。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V54",
+      "title": "晚反证共享引用一专家多task",
+      "classification": "ENGINEERING_COMPATIBILITY",
+      "status": "PASS_PRESERVED_ADMISSION_CONTROLS",
+      "evidence_groups": [
+        "RESEARCH",
+        "FINAL"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+      ],
+      "finding": "原晚到事实重新准入、producer独立数、一专家一票保持，快路径也不能放过已知矛盾。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V55",
+      "title": "合法8任务和无进展",
+      "classification": "ENGINEERING_GRAPH_CHARACTERIZATION",
+      "status": "PASS_REPRESENTATIVE_TOPOLOGIES_NOT_EXHAUSTIVE",
+      "evidence_groups": [
+        "RESEARCH",
+        "FINAL"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+      ],
+      "finding": "72控制/70代表拓扑，16限制不改，节点11–14；no-progress有界；不宣称所有DAG穷尽。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V56",
+      "title": "静态缺研究环境执行禁用",
+      "classification": "ENGINEERING_RELEASE_AND_SCOPE",
+      "status": "PASS_STATIC_SCOPE_REMAINS_DISABLED",
+      "evidence_groups": [
+        "RELEASE",
+        "RESEARCH",
+        "FINAL"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+        "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+        "audit/product_recovery_20261001/r13-graph-paths-final.log",
+        "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+        "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+        "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+        "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+        "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+      ],
+      "finding": "最小wheel没有research/provider仍可静态；scratch/native/model关闭，live gate未旁路。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V57",
+      "title": "非实现者正负未知控制",
+      "classification": "FRESH_AGENT_SOFTWARE_CONTROLS",
+      "status": "PARTIAL_AGENT_CONTROLS_NOT_HUMAN_OR_HELDOUT",
+      "evidence_groups": [
+        "QUALITY"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+        "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json",
+        "audit/product_recovery_20261001/quality_reference.json",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "36全部保留：22精确state、0wrongstrong、14命名mode不支持、0缺重复位置；5S/5R/12U精确。不叫accuracy/FPR或人类独立验收。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V58",
+      "title": "授权仓库无负例参考任务",
+      "classification": "REAL_USER_QUALITY",
+      "status": "NOT_RUN_USER_TASK_NOT_PROVIDED",
+      "evidence_groups": [
+        "OWNED",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/owned-application-review-patch2/result.json",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "自有application源码15文件3候选全U只是工程事实，不是新鲜用户任务或质量参考；不报告FPR/accuracy。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V59",
+      "title": "人类预登记AB试点",
+      "classification": "REAL_HUMAN_VALUE",
+      "status": "NOT_MEASURED",
+      "evidence_groups": [
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "无任务、参考、人reviewer、时间与仓库级净收益；不以agent/CPU墙钟代替。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    },
+    {
+      "id": "V60",
+      "title": "同发行干净和用户环境复验",
+      "classification": "USER_ENVIRONMENT_ACCEPTANCE",
+      "status": "PARTIAL_CLEAN_ENV_PASS_USER_ENV_UNKNOWN",
+      "evidence_groups": [
+        "RELEASE",
+        "FINAL",
+        "UNKNOWN"
+      ],
+      "evidence": [
+        "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+        "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+        "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json",
+        "audit/product_recovery_20261001/final-validation-patch2.json",
+        "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+        "audit/product_recovery_20261001/final-harness-check-patch2.json",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+        "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log",
+        "audit/product_recovery_20261001/recovery-protocol.json"
+      ],
+      "finding": "最终发行干净独立环境重复安装通过、suite同源码；用户环境/实际任务/人工净收益未验，整体产品价值门槛未闭合。",
+      "kind": "acceptance_check",
+      "current_source_binding": "PATCH2_FINAL_SAME_SOURCE_VERIFIED"
+    }
+  ],
+  "evidence_catalog": {
+    "BASE": [
+      "artifacts/design_review_recovery_20261001/baseline.json",
+      "artifacts/design_review_recovery_20261001/baseline_full_pytest.log"
+    ],
+    "FINAL": [
+      "audit/product_recovery_20261001/final-validation-patch2.json",
+      "audit/product_recovery_20261001/final-source-freeze-patch2.json",
+      "audit/product_recovery_20261001/final-harness-check-patch2.json",
+      "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+      "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log"
+    ],
+    "RELEASE": [
+      "audit/product_recovery_20261001/release-final-patch2/build-receipt.json",
+      "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json",
+      "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+      "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json",
+      "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json",
+      "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json"
+    ],
+    "V06": [
+      "audit/product_recovery_20261001/v06-python-requires-rejection-patch2.json",
+      "tests/test_recovery_commit.py::test_existing_target_is_never_replaced",
+      "tests/test_product_preflight.py::test_missing_validator_does_not_disable_source_index"
+    ],
+    "V2": [
+      "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+      "tests/test_recovery_product_v2.py::test_v2_public_static_positive_negative_unknown",
+      "tests/test_recovery_product_v2.py::test_v2_local_proof_survives_small_summary_and_share_has_no_standalone_proof",
+      "tests/test_recovery_product_v2.py::test_v2_same_line_operations_do_not_borrow_proof",
+      "tests/test_recovery_product_v2.py::test_v2_does_not_execute_shadowed_callee_and_counts_analysis_completion"
+    ],
+    "FAULT": [
+      "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+      "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+      "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+      "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+      "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+      "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+      "tests/test_recovery_v2_failures.py::test_record_quota_keeps_all_candidates_and_stops_future_producers",
+      "tests/test_recovery_v2_failures.py::test_cancellation_after_first_fact_stops_later_tools_and_preserves_denominator",
+      "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+      "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage"
+    ],
+    "SNAP": [
+      "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+      "artifacts/design_review_recovery_20261001/snapshot_operations_final.log",
+      "artifacts/design_review_recovery_20261001/fresh_review_before.log",
+      "artifacts/design_review_recovery_20261001/fresh_review_after.log",
+      "tests/test_recovery_snapshot_operations.py::test_snapshot_is_sealed_and_discovery_never_rereads_mutated_source",
+      "tests/test_recovery_snapshot_operations.py::test_live_drift_cannot_change_a_snapshot_bound_read_view",
+      "tests/test_recovery_snapshot_operations.py::test_snapshot_accounts_invalid_encoding_read_errors_and_exclusions",
+      "tests/test_source_boundaries.py::test_source_reader_rejects_symlinked_parent_and_path_traversal"
+    ],
+    "OPS": [
+      "artifacts/design_review_recovery_20261001/R04_permission_receipt.json",
+      "artifacts/design_review_recovery_20261001/R04_permission_before.log",
+      "artifacts/design_review_recovery_20261001/R04_permission_after.log",
+      "tests/test_recovery_snapshot_operations.py::test_same_line_operations_receive_independent_exact_v2_ids",
+      "tests/test_recovery_snapshot_operations.py::test_module_function_and_decorated_spans_do_not_duplicate_operations",
+      "tests/test_recovery_snapshot_operations.py::test_nested_operations_are_distinct_even_when_they_share_a_line",
+      "tests/test_recovery_permission_operations.py::test_two_same_line_operations_receive_distinct_candidate_bound_mode_proofs",
+      "tests/test_recovery_permission_operations.py::test_original_utf8_coordinates_survive_indented_function_slice_and_encoding",
+      "tests/test_recovery_permission_operations.py::test_wrong_exact_locator_cannot_borrow_another_operation_proof"
+    ],
+    "QUAL": [
+      "artifacts/design_review_recovery_20261001/R06_receipt.json",
+      "artifacts/design_review_recovery_20261001/R06_after.log",
+      "tests/test_recovery_local_evidence.py::test_shared_command_qualification_agrees_with_research_and_product",
+      "tests/test_recovery_local_evidence.py::test_shared_command_qualification_rejects_unsupported_controls",
+      "tests/test_product_reducer.py::test_unknown_and_unrelated_observations_cannot_erase_support",
+      "tests/test_product_reducer.py::test_local_counterfact_does_not_cancel_a_complete_supported_property",
+      "tests/test_product_contract.py::test_incomplete_or_pattern_receipt_cannot_support_property"
+    ],
+    "LOCAL": [
+      "artifacts/design_review_recovery_20261001/R06_receipt.json",
+      "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log",
+      "artifacts/design_review_recovery_20261001/R06_after.log",
+      "tests/test_recovery_local_evidence.py::test_full_local_conflict_survives_only_one_model_delivery",
+      "tests/test_recovery_local_evidence.py::test_unverifiable_material_file_blocks_one_sided_strong_projection",
+      "tests/test_recovery_local_evidence.py::test_missing_expected_descriptor_is_a_material_inventory_gap",
+      "tests/test_recovery_local_evidence.py::test_aliases_and_duplicate_descriptors_preserve_one_original_producer",
+      "tests/test_recovery_local_evidence.py::test_same_producer_cannot_change_original_payload_or_context",
+      "tests/test_recovery_local_evidence.py::test_record_write_failure_returns_no_descriptor_and_retains_inventory_gap"
+    ],
+    "COPY": [
+      "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+      "audit/product_recovery_20261001/r08-before.log",
+      "audit/product_recovery_20261001/r08-final-copy.log",
+      "audit/product_recovery_20261001/r08-alias-after.log",
+      "tests/test_recovery_model_copy.py::test_candidate_copy_rejects_invalid_updates_like_construction",
+      "tests/test_recovery_model_copy.py::test_product_copy_revalidates_subject_cross_fields_and_contract_version",
+      "tests/test_recovery_model_copy.py::test_valid_public_copy_roundtrips_and_seals_nested_containers",
+      "tests/test_recovery_model_copy.py::test_result_copy_rejects_external_derived_counts_and_unregistered_schema"
+    ],
+    "VIEW": [
+      "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json",
+      "tests/test_recovery_snapshot_operations.py::test_actual_helper_grant_changes_next_tool_input_without_stale_result_cache",
+      "tests/test_product_context.py::test_non_granted_source_is_absent_from_analysis_paths",
+      "tests/test_product_delivery.py::test_cached_redelivery_is_billed_but_has_one_original_producer"
+    ],
+    "NAV": [
+      "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+      "tests/test_recovery_product_v2.py::test_v2_verify_rejects_missing_record_and_local_view_rejects_source_drift",
+      "tests/test_application_smoke.py::test_public_output_omits_secret_source_and_fake_proof_strings",
+      "tests/test_application_smoke.py::test_public_context_reason_redacts_fake_secrets"
+    ],
+    "DISPLAY": [
+      "audit/product_recovery_20261001/display-invariance-patch2.json",
+      "audit/product_recovery_20261001/display-invariance-patch2.log"
+    ],
+    "COMMIT": [
+      "artifacts/design_review_recovery_20261001/R11_receipt.json",
+      "artifacts/design_review_recovery_20261001/R11_before.log",
+      "artifacts/design_review_recovery_20261001/R11_after.log",
+      "tests/test_recovery_commit.py::test_raced_empty_output_is_not_replaced",
+      "tests/test_recovery_commit.py::test_target_creation_at_commit_boundary_is_rejected",
+      "tests/test_recovery_commit.py::test_sync_failure_before_commit_never_publishes_output",
+      "tests/test_recovery_commit.py::test_final_parent_sync_error_explicitly_reports_publication",
+      "tests/test_recovery_commit.py::test_v1_completion_failure_does_not_invalidate_committed_result"
+    ],
+    "VERIFY": [
+      "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json",
+      "tests/test_recovery_packaged_syntax.py::test_packaged_syntax_is_reparsed_from_bytes_with_binding_metadata",
+      "tests/test_recovery_packaged_syntax.py::test_packaged_operation_inventory_is_derived_from_complete_sealed_module",
+      "tests/test_recovery_local_evidence.py::test_descriptor_mismatch_is_rejected",
+      "tests/test_recovery_local_evidence.py::test_subject_or_context_from_another_analysis_cannot_supply_proof"
+    ],
+    "RESOURCE": [
+      "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+      "artifacts/design_review_recovery_20261001/resource_boundary_final.log",
+      "tests/test_recovery_resource_boundary.py::test_real_owned_worker_memory_limit_reports_resource_failure",
+      "tests/test_recovery_resource_boundary.py::test_real_owned_worker_cpu_limit_terminates_static_work",
+      "tests/test_recovery_resource_boundary.py::test_timeout_kills_only_owned_worker_and_retains_unknown_denominators",
+      "tests/test_recovery_resource_boundary.py::test_cancellation_kills_and_waits_for_owned_worker",
+      "tests/test_recovery_resource_boundary.py::test_worker_environment_drops_credentials_without_reading_their_values"
+    ],
+    "SCALE": [
+      "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json",
+      "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json",
+      "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json"
+    ],
+    "DIGEST": [
+      "artifacts/design_review_recovery_20261001/resource_cache_receipt.json",
+      "tests/test_recovery_frozen_index_digest.py::test_cached_digest_serializes_once_for_many_candidate_consumers",
+      "tests/test_recovery_frozen_index_digest.py::test_mutable_legacy_index_edits_recompute_digest",
+      "tests/test_recovery_frozen_index_digest.py::test_arbitrary_index_digest_attribute_is_never_trusted"
+    ],
+    "DEEPCOPY": [
+      "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/measurement.json",
+      "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/instrumentation_receipt.json",
+      "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/workload-correction.json"
+    ],
+    "SCOPE": [
+      "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+      "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+      "tests/test_recovery_scope_receipt.py::test_public_scope_receipts_cannot_rewrite_completed_context_accounting"
+    ],
+    "RESEARCH": [
+      "audit/product_recovery_20261001/model-copy-graph-acceptance.json",
+      "audit/product_recovery_20261001/strict-copy-research-adaptation.json",
+      "audit/product_recovery_20261001/r13-graph-paths-final.log",
+      "artifacts/design_review_recovery_20261001/final_compatibility_after.log",
+      "tests/test_global_evidence_review.py::test_late_matching_negative_proof_invalidates_earlier_material_quorum",
+      "tests/test_global_evidence_review.py::test_known_conflict_cannot_pass_the_fast_path_either",
+      "tests/test_recovery_graph_paths.py::test_eight_task_topology_finishes_without_enlarging_graph_limit",
+      "tests/test_graph_transition_bound.py::test_injected_no_progress_graph_stops_within_business_limit"
+    ],
+    "DEPENDENCY": [
+      "artifacts/design_review_recovery_20261001/dependency_binding_before.log",
+      "artifacts/design_review_recovery_20261001/dependency_cli_layout_after.log",
+      "tests/test_recovery_dependency_binding.py::test_subject_helper_bytes_are_bound_to_analyzer_identity",
+      "tests/test_recovery_dependency_binding.py::test_static_tool_registration_bytes_are_bound_to_analyzer_identity"
+    ],
+    "OWNED": [
+      "audit/product_recovery_20261001/owned-application-review-patch2/result.json"
+    ],
+    "QUALITY": [
+      "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+      "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json",
+      "audit/product_recovery_20261001/quality_reference.json",
+      "audit/product_recovery_20261001/recovery-protocol.json"
+    ],
+    "UNKNOWN": [
+      "audit/product_recovery_20261001/recovery-protocol.json"
+    ]
+  },
+  "evidence_sha256": {
+    "artifacts/design_review_recovery_20261001/R04_permission_after.log": "5a7883e7fc361be94ae026432a64f7c762eeb3ffa0ae59a72c0b3f7083bd6165",
+    "artifacts/design_review_recovery_20261001/R04_permission_before.log": "5ab5d36a959b5262c7139af5265d8d3523bbaa092ec985dd90610188b2a3163b",
+    "artifacts/design_review_recovery_20261001/R04_permission_receipt.json": "5dcacdd5cd2d372c3eb8078717ae236452da0c9d73c1a9b63fa389bd5ba54e1d",
+    "artifacts/design_review_recovery_20261001/R06_after.log": "d82cbe3a19ec115b9cf760c227362c33d1dd4b1a229537b391ba81e55cb13134",
+    "artifacts/design_review_recovery_20261001/R06_legacy_subset_control.log": "b2f3dbd4567e928b68ec0a6879d818b91248687a4ee92526faaa4641cae4f5e5",
+    "artifacts/design_review_recovery_20261001/R06_receipt.json": "3d541cae114081102455ed1087273f2ebbe873f2f9c34ec8358f6317bde6cda1",
+    "artifacts/design_review_recovery_20261001/R11_after.log": "b61b26162a73c5705d069cc15033503e3245e26e60d49be66c56c6fb98895237",
+    "artifacts/design_review_recovery_20261001/R11_before.log": "3d9653a3744c118ece025028ea76c25fd3427e7b62355807da8b881d749c4244",
+    "artifacts/design_review_recovery_20261001/R11_receipt.json": "70710066b15125d145543c4bd4b01471ad4d301a83345bffeff0d52cd599da2c",
+    "artifacts/design_review_recovery_20261001/baseline.json": "74f7061d07565b17ea1256e65bba4e999960354eb0f2d0d2fcbdaa140d5e590a",
+    "artifacts/design_review_recovery_20261001/baseline_full_pytest.log": "6af5859651fd2fbdce33ec79d4c0a19586428ac8f7f15c4e38a571f126858244",
+    "artifacts/design_review_recovery_20261001/dependency_binding_before.log": "7e4da2d5aef8a696e579014501579b672bb3411dcb4d17930856769eb5bf6925",
+    "artifacts/design_review_recovery_20261001/dependency_cli_layout_after.log": "5417293d010d4fb11d9a3f2ee6b98ebaa1502dff8498629c88ec5546df1a5218",
+    "artifacts/design_review_recovery_20261001/final_compatibility_after.log": "78c2b4780c35d2f18d19a8a8f43e3ac3c6ad32eb1e963f9272df76d2720ebdb9",
+    "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log": "009003c43f3bc81f029c956af1424b87521d3e7d500cf1d581b4cba80d01bdf2",
+    "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log": "8b600238b385583f859e40c99186b75706daf31743d6e00e9c141ef11e9d4d8c",
+    "artifacts/design_review_recovery_20261001/final_v2_controls.log": "928a3a93dd46108b262a422b5d6b19d8e0ea01fb13c51304e04b5a13c9906842",
+    "artifacts/design_review_recovery_20261001/fresh_review_after.log": "ab8ce3af9b6bc3b8c830dc56fdc6b554ae61c43c4b7fc73ddbabb10cbf7096ab",
+    "artifacts/design_review_recovery_20261001/fresh_review_before.log": "f514435a1cc200dbb7dbecc6de28d2e0b762986a4b0674709a0cce2e677f7f69",
+    "artifacts/design_review_recovery_20261001/resource_boundary_final.log": "5fe843fba544d5807438360568ab1fe96966c374c80d13e8fe59a8eb504b25b3",
+    "artifacts/design_review_recovery_20261001/resource_cache_receipt.json": "4320797f0d3438cb2a6e22a73388cc8fd6c6a563fd6af57e76929b4e582ecdde",
+    "artifacts/design_review_recovery_20261001/scope_receipt_after.log": "2451a5fbc77ca9ca22b181fbf42a2ae11ad73cc1cd815938491aebe3eceaeba9",
+    "artifacts/design_review_recovery_20261001/scope_receipt_before.log": "c2716f6b4c65e8c0dae5166919cd743b9d1797b3d69142623d954fdc56bbed47",
+    "artifacts/design_review_recovery_20261001/snapshot_operations_final.log": "ae0c06a5b81af671e294dc72b0fe080135f86c0107cecee0fcf264b495fcb933",
+    "artifacts/design_review_recovery_20261001/snapshot_operations_receipt.json": "66c4e199968884751c441c63d2fe3813dc28bd2b1016eeedef12507d73c915c5",
+    "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log": "754349999b29df65e937e2db4ef17208821b7797bc140c350caf8e2deddc5e0f",
+    "artifacts/design_review_recovery_20261001/v2_stage_count_before.log": "7872a4bbc8b4a2cade015332c3009399d29b29ecd1ebdfbfdf6c81d8522d06b7",
+    "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log": "065d5061e419beb7ed4c958f1e439ddebc61f0bd281e27ca84b70cad1dd557e1",
+    "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/instrumentation_receipt.json": "0815550ee4ff8788fffce78d3d964084d2dbd8efba7c7fa9c04db7a960c5f941",
+    "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/measurement.json": "7f5869e0b0e7bca46d07699ff1d511a8597d0f6675f5f4f18a31426650186bb0",
+    "audit/product_recovery_20261001/copy_runs/20261001T020648Z-c1a8fe7f/workload-correction.json": "2e54529ca0d52c6127e8f2e901808fe3d9799e9349a82a3232119b2cdc23cfd1",
+    "audit/product_recovery_20261001/display-invariance-patch2.json": "cb288d3accfaa4f71c4b6ef695cb674c89e89be8dc275a4b3fe08580a165ee90",
+    "audit/product_recovery_20261001/display-invariance-patch2.log": "c366aaaf366a8fa3825d4931e8013e806df7978f61e35ad1dd276e5af24ee292",
+    "audit/product_recovery_20261001/final-harness-check-patch2.json": "3c01ce4bcb8b42a237acc8cf5daed0e000cb9c38856076809e67adccdcc4a596",
+    "audit/product_recovery_20261001/final-source-freeze-patch2.json": "ca213907cc3d7ebe8aa0d8c43dc1c48e0491684982d4ac157f59974cd464e78e",
+    "audit/product_recovery_20261001/final-validation-patch2.json": "4792aeaae6a93ef73bf8dc3edc25739aaad52d4eb5fd0151536d8536e21ad19b",
+    "audit/product_recovery_20261001/model-copy-graph-acceptance.json": "0de5b30a50eafbe70851aec34b43590584b449c6a8a7f5bdfb1785e55a9d540f",
+    "audit/product_recovery_20261001/owned-application-review-patch2/result.json": "355ae6a727ba82e1e96b88e24e7a5432c45d3344dc4008f8b9e4f2e0d7c3b725",
+    "audit/product_recovery_20261001/quality-final-patch2/summary.json": "e7a684b979ee3a6fed11a7a4b4a138de3078172abb62acdddff98ae97f5c556a",
+    "audit/product_recovery_20261001/quality_reference.json": "3fa07e5df67035177de13f88ad7e5bfe2261f6603cb6f461ab7e4b1eaecabe3a",
+    "audit/product_recovery_20261001/r08-alias-after.log": "b1134639100ea353eab2d183f9f6d05cf45055aaea9c4a41d55acf75b42eadf4",
+    "audit/product_recovery_20261001/r08-before.log": "5acda7962a6365da296962d160742bb4584a4c49d3d1a5fd784d19982cf8cbc8",
+    "audit/product_recovery_20261001/r08-final-copy.log": "db3988c5aa61c1f984246df6ea9d0e2032da7e891357d094b54e240a3ea50fe1",
+    "audit/product_recovery_20261001/r13-graph-paths-final.log": "d6b849d2842689bc8ce0d6e5a3f2baa9e7cd85971c058ee8db2fd76462455e0b",
+    "audit/product_recovery_20261001/recovery-protocol.json": "a6b34ef0f375ce578d95187718e435d9dd46446118a0055400a94683df30d086",
+    "audit/product_recovery_20261001/release-final-patch2/build-receipt.json": "2c541719dc69ab0beb314328f988ea1879623c6efaddfa90364724cf346556c0",
+    "audit/product_recovery_20261001/release-final-patch2/bundle-receipt.json": "a87c9b70e48d56e45f4a4c9da69ece0457d49c7012b069290a26b40ad4d09f83",
+    "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-1.json": "c73b36f9d73fd1373597e7e94363b49fcbdb03e8bd7f68a4314f191083116525",
+    "audit/product_recovery_20261001/release-final-patch2/extracted-bundle-acceptance-2.json": "2b6f5d0adcbb694fd6c161d794d7c33415928d89f83309b3ee17e29b69cd0ee8",
+    "audit/product_recovery_20261001/release-final-patch2/install-acceptance.json": "e1405dbe44ee08061d553d179c028f6db2a9741fe74c4fd12263629e034e2043",
+    "audit/product_recovery_20261001/release-final-patch2/install-v2-acceptance.json": "9b1462fa9f2a3e5b90e5890be176989762f7a5e5b1611a91b3dc578ad1dd5e7d",
+    "audit/product_recovery_20261001/release-final-patch2/quality-controls/results/summary.json": "e7a684b979ee3a6fed11a7a4b4a138de3078172abb62acdddff98ae97f5c556a",
+    "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/final_source_receipt.json": "54f164a1f09e47352ac39e8aee5f5ae986822af175a866ee087838ddbb336ad6",
+    "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/measurement.json": "4ce375f3083ead3c2973e75113f72c71959de203ea5800413b001792a6f4483e",
+    "audit/product_recovery_20261001/scale_runs/20261001T020648Z-30d93469/workload-correction.json": "8a4bc83e033d23d453c6d5b3c88e448afbd239e08cfe60a6c3788c5aec72bc46",
+    "audit/product_recovery_20261001/strict-copy-research-adaptation.json": "a8c0f5d212edad8f9e438aa46c367c984aacfa75191764edff8e26bf145b2987",
+    "audit/product_recovery_20261001/v06-python-requires-rejection-patch2.json": "43b3afc8ea50756cffc37aff164f7b45d49f253eba53a75e51b4dd76941748c9",
+    "tests/test_application_smoke.py": "414052b984c26ae2935409437b71546d5d9d995099b4c1bef253c094c5b84c0a",
+    "tests/test_global_evidence_review.py": "293f96eb80fecf4ea79868ffadb5bec015857d8403d8717e88c60e0e6f467474",
+    "tests/test_graph_transition_bound.py": "4ae9824431e381a71bcec70bbf982309fed7395821dca23bc4132d85877c48cc",
+    "tests/test_product_context.py": "69b7d09028e0aaaa50388d4ba432eb5d46d07e6157e4a7085f6ca6729c23b946",
+    "tests/test_product_contract.py": "53271468d72d32802a7d73da10ca9f77ec27cb2b959260fb9fe23abc6c84b172",
+    "tests/test_product_delivery.py": "9a5aa5167fa1dab6f611599107a585313a5c03865f28a441159ecbce8ea977cf",
+    "tests/test_product_preflight.py": "daa01c2eca2aa404783dae97e06c987fd7f092dc665e3f4c73672a752f7673ca",
+    "tests/test_product_reducer.py": "5e62644f42ae295da9af692f984391513d9a62c77c50bc63b5c5e881bc71a5c0",
+    "tests/test_recovery_commit.py": "8094e4eed93506039ed0af17a51cbbe5139764efcf17beb68dd99a50d11b5443",
+    "tests/test_recovery_dependency_binding.py": "bbc17e7aed8e8c02bf04157494fa467f164a5cc799b3a3adccedc623787d9a6c",
+    "tests/test_recovery_frozen_index_digest.py": "ec559a9371651e649f409725b171bf554df467c63db7a23abc319bbb34419fdf",
+    "tests/test_recovery_graph_paths.py": "b6b77de094b427135a68b34654f747f6e72bf93e3214f77377959cb60e8062be",
+    "tests/test_recovery_local_evidence.py": "9ce323b383289e125dfd1a09c26475ebfc8c9c7b3eba6fe5cb5d3caf6baa73fb",
+    "tests/test_recovery_model_copy.py": "5ff73d909b1632d115b2bf1a565fa2bb39ce50579c0606bc1d7dc95026781fcf",
+    "tests/test_recovery_packaged_syntax.py": "b684ad36168f25aa021e31bb2dca27fd454a7bacc30179de66664fd8266723e8",
+    "tests/test_recovery_permission_operations.py": "82173a9f038e10bffa26f8efcf10a3aa4cda61834678a756416984b142d9fecc",
+    "tests/test_recovery_product_v2.py": "1da208f91077e86837f7f7c43c662ecd50936dfefc9502d6f76e64763d161972",
+    "tests/test_recovery_resource_boundary.py": "3ee53016e467e1186ebf4a04536622029c40b20ef266f7a52fa53531d1a77770",
+    "tests/test_recovery_scope_receipt.py": "5bf4d0f03c015cdb6740906191ebb27791f1baa59d73313aba8b8ec4b91c1396",
+    "tests/test_recovery_snapshot_operations.py": "89f81c599eea41ab4d143f34b4fbfa77fef692b7e52bea3febe77c5743fa9004",
+    "tests/test_recovery_v2_failures.py": "562824f4106a71827a31fe43e074d75c7b2101a2d4f6e90ad3262a5aa29fc6a0",
+    "tests/test_source_boundaries.py": "34dbb1e6c66b62d66b81913e931bcc0766bc41d250905cfd220656350cbc107d"
+  },
+  "final_receipts_pending": [],
+  "remaining_user_inputs": [
+    "脱敏原失败命令和日志、输入、运行版本及环境",
+    "授权的新鲜用户源码审查任务与独立参考",
+    "不参与实现的两名人类审阅者及预登记人工试点",
+    "在用户环境运行同一固定发行物的回执"
+  ]
+}

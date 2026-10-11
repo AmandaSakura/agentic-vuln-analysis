@@ -21,7 +21,7 @@ def test_documentation_root_has_only_current_guides():
     assert {p.name for p in DOCS.glob('*.md')} == {
         'README.md', 'ARCHITECTURE.md', 'CURRENT_STATUS.md', 'EXPERIMENTS.md', 'TEST_CONTRACT.md',
     }
-    assert {p.name for p in DOCS.iterdir() if p.is_dir()} == {'reference', 'history'}
+    assert {p.name for p in DOCS.iterdir() if p.is_dir()} == {'reference', 'history', 'reports'}
     assert (DOCS/'reference/HARNESS.md').is_file()
     assert (DOCS/'reference/FULL_SYSTEM_SPEC.md').is_file()
 

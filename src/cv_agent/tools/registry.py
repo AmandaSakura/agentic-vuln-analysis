@@ -56,6 +56,9 @@ class ToolExecutionScope:
     # authorize repeating it. Only the original citation is stored, never proof.
     answered_calls: dict[tuple[str, str], str | None] = field(default_factory=dict)
     budget_exhausted: bool = False
+    # Optional product-v2 operation identity. Legacy callers and tool schemas
+    # retain their line-level behavior when this is absent.
+    operation_locator: dict | None = None
 
     def __post_init__(self) -> None:
         if self.max_observation_tokens < 1:

@@ -1,0 +1,111 @@
+{
+  "schema": "static-dispatch-repair-live-acceptance-v1",
+  "status": "COMPLETED",
+  "run": "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f",
+  "validated_replies": 6,
+  "usage": {
+    "requests": 6,
+    "responses": 6,
+    "invalid_responses": 0,
+    "requests_without_reported_usage": 0,
+    "reported_total_tokens": 8214,
+    "returned_model_ids": [
+      "deepseek-flash"
+    ],
+    "monetary_cost": null,
+    "note": "Token subtotal includes malformed responses with reported usage; unknown usage and pricing are not zero.",
+    "usage_conflicts": 0,
+    "orphaned_responses": 0,
+    "duplicate_request_starts": 0
+  },
+  "ledger_audit": {
+    "schema_version": "event-audit-v1",
+    "requests_started": 6,
+    "responses_received": 6,
+    "uncertain_request_ids": [],
+    "known_reported_tokens": 8214,
+    "reported_tokens": 8214,
+    "reported_totals": {
+      "760eb2a72d9c4a72b98c1d3bd3e566a6": [
+        1353
+      ],
+      "97c2814e015841b486511e12d4e975dd": [
+        1323
+      ],
+      "971c41a40ea54747b707c19af227359d": [
+        1365
+      ],
+      "fc4e78f53ae94b48a7d0ea96a5ea3737": [
+        1384
+      ],
+      "c6220dc429a54da58a1066631705bad7": [
+        1394
+      ],
+      "cd2c0b85fed24010bb9e3621461bd854": [
+        1395
+      ]
+    },
+    "issues": [],
+    "automatic_retry_allowed": false,
+    "recovery_policy": "Manual reconciliation required; this audit never releases reservations or sends requests."
+  },
+  "gate": {
+    "actual_in_process_gate_passed": true,
+    "seconds": 432.6097929980024,
+    "source_fingerprint": "095bfa2cc99dcba7733c0816f427231ef7fe02238bdf655d901e97699ef24652",
+    "saved_stamp_used": false,
+    "credential_loaded_before_gate": false,
+    "passed": 2964,
+    "pytest_seconds": 431.69,
+    "log": "artifacts/pytest_gate/9447d20af9a0420baf81ac48562b1e28/pytest.log"
+  },
+  "canonical_states": [
+    "SUPPORTED",
+    "REFUTED",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN"
+  ],
+  "model_vs_canonical": {
+    "denominator": 6,
+    "exact_matches": 6,
+    "wrong_strong_proposals": 0
+  },
+  "protocol_rejections": [],
+  "public_delivery_verified": 6,
+  "scope": "Explicit v2 static dispatch repair and bounded evidence consumption on benign owned controls",
+  "regressions": {
+    "dispatch_cases": 12,
+    "initial_failures": 4,
+    "initial_positive_passes": 6,
+    "final_dispatch_passes": 12,
+    "combined_passes_before_added_alias_controls": 22
+  },
+  "previous_engine_receipt": "audit/static_pipeline_20261002/result.json",
+  "previous_engine_raw_artifacts_unchanged": true,
+  "limits": {
+    "target_executions": 0,
+    "model_tools": [],
+    "heldout_claim_eligible": false,
+    "human_benefit_measured": false,
+    "production_R17_enabled": false,
+    "G_A_changed": false
+  },
+  "evidence_sha256": {
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/metadata.json": "9c78e736beb87f66c23964f48080ef7a0d47e868aa86a896f83291b5946f723e",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/private-input-manifest.json": "62bc515f605a8189a020e1608a3e279cceb62d0cf4370234d46aa47142bfb898",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/frozen-prompts.json": "49771a6e61e74f5de60ad7d34c5ce6cca5d1c4362e7c65e95904f3385eb7d7b6",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/events.jsonl": "60019fcc16ff519c659dde44ff797a2d29a9ae9646924a6ad168ebb7ba6ff6bb",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/summary.json": "c6e06a1c48b083fbacf2c559860cce0057c8891abc0f3dab039f246e01393ddb",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/gate-receipt.json": "d7ad485f206d3dba1c016603a4c6d746f407f7377fa98771fdf33fbfd04244fa",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/rollout-decision.json": "cfc6f07999d67a830f9b8d49cc11549d59cfccb76ae2d0330a69937e33434029",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/model-review-5.json": "66db42b0358d90e3f4b8c1d0fdfa3210a7e27220a1e2e80066f84b8b38823944",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/model-review-6.json": "deb70cad5006f6011593583cd4b8023dd392904c26cd7fd8ed8f0fe9cc5860c3",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/model-review-2.json": "97edfe14f81f21e360c7ca10b4d2b1a59da544c0a1195f921aef866b92cb7c1f",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/model-review-1.json": "96b8805f3d5d74b1c5514fc4f79a48e7a66f0f71c216eb53b88c175bcdd6510b",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/model-review-3.json": "48af7f6a3115f312ef5d0f6929152f42bc53473f7271ef459c1493147c29e545",
+    "artifacts/static_dispatch_repair_20261002/5e4cb3d80ded43e29021123b9882618f/model-review-4.json": "d762835dfb01bc2caf95c24b9730f6f137e1be8cc755160ad96068ca3b7949a8"
+  },
+  "gate_log_sha256": "fac99affffcbfaa4be0717df2fb5e602e865b97715fae2681912464b1f747241"
+}

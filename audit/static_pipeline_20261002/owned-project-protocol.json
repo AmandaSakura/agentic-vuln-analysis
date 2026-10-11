@@ -1,0 +1,22 @@
+{
+  "version": "owned-project-static-rollout-v1",
+  "authorization": "User requested expansion after verified iterative acceptance",
+  "admission": "Only after the eight-plus-28 static delivery pipeline batch completes with all delivery, protocol and ledger checks passing",
+  "source_root": "src",
+  "profile": "product_triage_v2",
+  "max_files": 1000,
+  "max_source_bytes": 10485760,
+  "max_ast_nodes": 200000,
+  "max_candidates": 1000,
+  "wall_seconds": 120,
+  "cpu_seconds": 120,
+  "memory_bytes": 1073741824,
+  "model_requests": 0,
+  "target_executions": 0,
+  "no_model_credentials_loaded": true,
+  "acceptance": "Public CLI completed within its declared resource policy; all enumerated source and candidate denominators retained; private package and complete copy verify; report/share remain scope-correct",
+  "failure_policy": "Preserve all output and partial counts; a resource or semantic gap is not a safety finding or complete inventory claim",
+  "heldout_claim_eligible": false,
+  "whole_application_security_assessed": false,
+  "G_A_changed": false
+}

@@ -1,0 +1,143 @@
+\section{有界见证、Jev 与最终投票}
+\subsection{为什么需要单独的见证接口}
+静态分析遇到复杂下载、框架分派、对象状态和 helper 副作用时，扩大解释器覆盖面没有自然终点。执行见证选择另一种受限能力：固定一个已经定位的候选和一组完整分类前提，执行真实源码，核对是否在该条件下出现预期的命令消费事实。
+
+工具名为 \code{run_bounded_execution_witness}，proof contract 为 \code{bounded-execution-witness-v1}，性质固定为 \code{command-execution}，支持状态只有 CONFIRMED。未达到确认条件时返回具体 gap 和 UNRESOLVED。它不提供 REFUTED，也不通过有限次未观察到展开来输出 SAFE。
+\loc{tools/validation/bounded_witness.py; runtime/witness/contract.py}
+
+\subsection{清单、执行上下文与准备状态}
+系统从源码、subject 和可信 execution context 构造 \code{WitnessManifest}。清单包含入口及调用方式、参数、构造数据、输入位置、分类场景、解释器、目标模块库存、资源配置、对照和受控记录信息。
+
+\code{WitnessExecutionContext} 承载 checkout、解释器、读取准入、资源和响应方式。模型不能替换这些运行时控制，也不能选择源码摘要、内核策略或证明义务。模型只能按照工具指出的缺失字段补充数据型调用信息。
+
+缺字段时输出 \code{ValidationPreparation}，明确 \code{witness_attempted=false}、缺失字段名、目的位置、是否需要分类及继续动作。准备状态不算验证完成。对已有 dataset 场景，工具要求保留声明场景；对空场景候选，模型提出完整分类假设后才可进入执行。
+\loc{tools/validation/witness_manifest.py; domain/validation_protocol.py}
+
+\subsection{分类场景与双 subject}
+每条前提包含值、分类和 rationale。分类为攻击者可控输入、部署配置或环境条件。输入参数、布尔开关、条件、值、构造数据和预置文件均使用有界数据 schema；布尔值是严格 JSON 布尔，字符串形式的布尔不能冒充真实布尔。
+
+系统保存原始 subject，另生成 \textbf{execution subject} 表示这次场景条件。场景来源和规范 JSON 摘要分别记录。模型假设不能改写原候选身份，不能与未分类外层数据混用，也不能覆盖已有数据集场景。数据集自带的旧场景同样需要可信分类记录才能执行。
+
+分类描述“需要谁控制哪些输入或配置”，没有证明现实部署中的远程调用权限。完整运行时核验仍要验证值、分支、构造对象及预置数据实际满足声明。当前原始观察明确保存 \code{remote_authority_established=false}。
+\loc{tools/validation/witness_scenario.py; runtime/witness/scenario_runtime.py}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=7mm]
+\node[wide] (draft) {候选与可信执行上下文\\系统生成清单};
+\node[wide,below=of draft] (prepare) {准备检查\\分类与调用字段完整，否则返回准备缺口};
+\node[wide,below=of prepare] (bind) {身份准入\\原始 / 执行 subject、源码库存与解释器};
+\node[wide,below=of bind] (worker) {独立受限 worker\\执行真实入口并捕获候选进程边界};
+\node[wide,below=of worker] (verify) {运行时义务 + 良性对照\\值、分支、preexec、来源与受控重放};
+\node[box,below left=9mm and 1mm of verify] (yes) {闭合的正向见证\\CONFIRMED};
+\node[box,below right=9mm and 1mm of verify] (unknown) {字面量、缺口或失败\\UNRESOLVED};
+\draw[arrow] (draft)--(prepare);
+\draw[arrow] (prepare)--(bind);
+\draw[arrow] (bind)--(worker);
+\draw[arrow] (worker)--(verify);
+\draw[arrow] (verify)--(yes);
+\draw[arrow] (verify)--(unknown);
+\end{tikzpicture}
+\caption{正向见证的条件执行链。每个结果同时保存其场景来源和未覆盖范围。}
+\label{fig:witness}
+\end{figure}
+
+\subsection{真实目标、候选帧与源码库存}
+内核在独立解释器中运行目标入口，使用受控观测捕获首个相应命令事件，核对真实 \code{subprocess.Popen}、候选与 emitter 帧、入口源码、加载模块和解释器。目标命令事件受到拦截；解释语义由独立的受限重放检查，不直接运行模型任意命令。
+
+开发配对每侧绑定 977 项源码模块。入口文件文本相同不意味着两版完整执行源码相同，差异可以位于被调用 helper；因此必须对每一侧自己的库存与此前绑定作比较，不能用“两侧入口一样”代替迁移前后身份一致。
+
+未认证的边界、加载源码漂移、候选帧未到达、记录器条件未满足、隔离失败或环境问题，都返回具体缺口，不能被工具封装或模型理由补齐。
+\loc{runtime/witness/kernel.py; runtime/witness/contract.py}
+
+\subsection{运行时义务的四类检查}
+已验收开发控制包含九项义务：三项值、四项条件、preexec 实跑和良性对照。这个数字属于已选开发场景，而不是任意新候选的固定九项配额。\cite{stage2c}
+\begin{longtable}{L{33mm}L{116mm}}
+\caption{见证义务及其需要排除的误解释。}\\
+\toprule 类别 & 核验内容\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 类别 & 核验内容\\\midrule\endhead
+值 & 在匹配源码与入口状态下核对实际实例/模块值及其类型；避免名称猜测、隐式对象协议或外部声明代替值事实。\\
+条件 & 通过完整规范 AST 绑定条件出现处，观测实际执行分支；不重新 eval 模型给出的表达式，不能用子串匹配代替分支测量。\\
+preexec & 对真正绑定的对象在受限子进程中验证正常返回、退出状态和禁止事件；仅凭函数名字不认为其纯净。\\
+良性对照 & 与测试输入保持已声明环境一致，核对控制输入的保留及受控重放；对照失败使正向确认不成立。\\
+\bottomrule
+\end{longtable}
+条件监控还记录源码摘要和实际指令位置，监控占用或篡改属于缺口。preexec 新加载源码、异常、非正常返回或隐藏操作也保留为未解析。工具的 scope note 根据实际到达及义务核验生成，准备假设不会被措辞改写成已证事实。
+\loc{runtime/witness/obligations/values.py; runtime/witness/obligations/branches.py; runtime/witness/obligations/preexec.py}
+
+\subsection{入口适配与环境准备}
+见证支持受约束的普通函数、方法及精确绑定的 Click callback。直接 callback 调用不执行公开 CLI parser，因而没有证明公开参数转换、命令分派或部署调用权限。callback 的限定范围保留在响应中。
+
+K3 环境准备对 commit、Python 版本、锁定依赖、目标 wheel 和运行时 requirements 作显式校验。目标包只安装 metadata，从干净 checkout 导入目标源码，避免 site-packages 中另一份源码替代被审查快照。环境报告保存依赖版本、库存、导入与 kernel bootstrap 结果、读取诊断及准入提案。
+
+读取提案和接受的读取准入分别保存。默认不会把新诊断提案自动生效，也不会对广泛目录开放读取。已核验开发环境每侧 141 个包、977 项源码绑定，沿用四个身份绑定的叶子准入；七个未接受读取提案仍保留。目标导入或 bootstrap 失败，以及结构性追踪缺口，阻止 context loading。
+
+K3 历史准备中存在按原授权、固定索引和 hash locks 进行的联网依赖准备，后来两侧均能以 cache-only、\code{allow_network=false} 重建。它们属于环境准备请求，不是模型请求；不能把 K2 收尾“无联网”的范围扩到项目全部历史准备。\cite{k3}
+\loc{runtime/witness_entry.py; evaluation/preparation/prepare_witness_environment.py; evaluation/preparation/witness_import_worker.py}
+
+\subsection{资源配置与可复现环境}
+资源 profile 包含 CPU soft/hard、地址空间、文件大小、文件描述符和 wall-time。固定 fixture 默认和由测量推导的诊断 profile 分开；软硬限额、序列化字段和实际已安装资源限制都要检查。
+
+开发环境的导入基线采用 CPU soft/hard 15/20 秒、地址空间 2 GiB、64 个文件描述符、30 秒 wall-time。历史 2c 的进程统计以 0.01 秒分辨率记录 probe worker 的 a/b CPU 为 8.04/7.74 秒，control worker 为 7.66/7.43 秒。CLI 聚合子进程 CPU 为 17.737/17.267 秒，包含 worker、重放和已回收后代，不能当成单个目标 CPU 或墙钟。这是少量开发观测的资源画像，不是任意目标的固定性能承诺。\citep{stage2c,k3}
+
+目标自身原生扩展的源码构建尚未被当前 metadata-only 准备覆盖。公开入口若需要可写临时目录，也会被现有只读隔离阻止。context 的 import ready 不保证所有分支可执行；分支和见证仍需单独检查。
+\loc{runtime/witness_resources.py; runtime/witness/accounting.py; runtime/witness/tracer.py}
+
+\subsection{compact 投递与私有完整产物}
+见证可以使用紧凑投递，在模型响应中保留规范场景引用、摘要、状态、缺口、有限命令观测及范围说明，而完整 subject、清单、前提理由和 worker/control/replay 记录保存在私有产物。
+
+compact 是投递表示，不是弱化证明的捷径。分类不完整、摘要缺失或范围错误时拒绝压缩；如果完整外层序列化响应仍被裁剪，确认资格不能保留。生产者完整结果同时进入可靠性遥测，使隐藏或失败投递中的固定侧误确认仍能触发停止条件。
+\loc{tools/validation/witness_response.py; tools/validation/bounded_witness.py}
+
+\subsection{Jev 的调度定位}
+以下分流用于有限动作选择；其输出不是性质证明。
+\subsubsection{定位与传输契约}
+Jev 用于选择验证动作或规划补丁，输出 scheduling decision，不输出专家票或漏洞证据。该协议通过同一 \code{OpenAICompatibleChatModel} 和完整测试门禁传输，记录其自身模型 ID、请求、usage 和延迟。
+
+结构化请求提供 state 和有限 choice questions；响应为每个问题的 choice、概率分布与 provider confidence。分布需包含全部声明选项、概率有限且处于区间内、总和近似为 1、被选选项为最大概率项。决定采用与否使用被选项概率，而 provider confidence 另行记录。
+\loc{runtime/jev.py; agents/routing.py::decide_validator}
+
+\subsubsection{off、shadow、active 与版本差异}
+off 不发 routing 请求；shadow 记录决策但不改执行；active 可在符合政策时应用任务选择。历史 V2 配置将门槛声明为 0.85，实际运行必须使用自身配置的概率门槛，不能把不同版本视为同一消融臂。
+
+V3 先锁定确定性必需任务，再让 Jev 选择可选验证。未覆盖部分只允许 scoped planner patch，不回退为不受约束的整份新计划。一个决定“被接受”与“实际应用”是两个状态，结果分别记录 accepted、applied 和理由。判断 routing 是否节省规划请求，必须检查实际 planner 调用和 applied 状态，不能仅凭最终标签正确。
+
+独立 \code{E4_RULE_V1} 只使用政策任务构造计划，不调用规划模型。它用于区分政策覆盖与 routing 增量；即使计划完整，最终实质票依然需要同一证据门槛。Jev 分流决策本身不提供有界见证成功的证据。
+\loc{agents/routing.py::route_plan_v3; agents/workflow.py::_plan; agents/workflow.py::_plan_patch}
+
+\subsection{最终投票与共享记录}
+最终裁决先约束证据，再按声明系统的票数规则聚合。
+\subsubsection{单票与 quorum 规则}
+E1--E3 使用单张最终 scan 票。E4/E5 默认 quorum 为 2，ABSTAIN 不计入实质标签票数，重复专家票直接拒绝。设 $n_V,n_S$ 分别为两类实质票数，在默认三专家设置下，最终规则可写为
+\begin{equation}
+\hat y=\begin{cases}
+\mathrm{VULNERABLE}, & n_V\ge 2,\\
+\mathrm{SAFE}, & n_S\ge 2,\\
+\mathrm{ABSTAIN}, & \text{其他情况}.
+\end{cases}
+\end{equation}
+两张相互冲突票加一张弃权不形成 quorum；一张 CONFIRMED 票也不会因为验证状态强而产生额外票。形成实质 quorum 判决时，输出 confidence 是被选标签专家 confidence 的算术平均；ABSTAIN 分支取已有实质票 confidence 的最大值，无实质票时为 0。这些值不是经校准的正确概率。
+\loc{agents/voting.py}
+
+\subsubsection{E5 的提前终止保证}
+E5 先用当前全局证据重新准入既有实质票，再在声明顺序中前两名专家的\textbf{最终}票均形成后尝试早停，并检查未完成必需依赖。若两张通过准入的实质票同标签且达到配置阈值，在固定已准入票集合中，第三张票无法改变默认三票多数标签，因而可以输出 fast；否则继续 slow。
+
+当前通用 \code{fast_confidence} 默认值为 0.0，实际“高置信”约束取决于显式 profile，不能从旧叙述推断默认已经采用较高门槛。固定票序列的标签不变性有有限组合测试，但真实模型改变任务调度后可能生成不同响应，故回放一致性不证明独立 live E5 与 E4 总是同标签或低成本。
+
+早停前已经执行的全部任务都计入成本，包括已经开始的其他专家任务。被阻塞必需任务不能被 fast 掩盖。多数机制提供受约束聚合，不具有分布式故障共识的协议保证，也不证明多票来自统计独立证据。
+
+\subsubsection{共享票与原始观察计数}
+K4 引入两个明确字段：
+\begin{itemize}
+\item \code{material_votes_sharing_validator_observation}：引用同一充分原始验证观察的共享最终实质票数。
+\item \code{independent_validator_observations}：不同原始生产者观察数，名称中的 independent 不表示统计独立。
+\end{itemize}
+原始生产者身份是 task execution ordinal 与 trace step ordinal。citation 别名、跨任务引用和累积轨迹副本映射回原始观察；manifest 或场景摘要标识内容，不标识某一次执行，因此相同 manifest 的两次物理执行不能被误合并。
+
+准备、未解析、失败、截断、抑制及私有未投递遥测都不能增加证明票数。K4 的开发 a 控制由 scan 和 taint 解读同一见证形成两票，计为共享票 2、原始观察 1。它验证共享记账正确，没有建立两份独立见证。\cite{k4}
+\loc{agents/validator_accounting.py; domain/review.py::AgenticVerdict}
+
+
+\subsection{当前产品没有调用以上组件}
+本节描述保留研究能力与历史工程验证。product\_triage\_v1 不调用见证、Jev、planner、多专家或 quorum。当前私有 scratch/native build 的新能力仍未启用；原见证只读执行边界和历史批准场景继续保留。K1--K4 的正向开发控制不能覆盖自主场景提出、公开入口、外部迁移或人工产品价值。\citep{acceptance,gate}

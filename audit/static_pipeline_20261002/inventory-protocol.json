@@ -1,0 +1,19 @@
+{
+  "version": "owned-component-inventory-diagnostic-v1",
+  "authorization": "User authorized iterative inspection; strict rollout failures remain preserved and this diagnostic does not change their acceptance criteria",
+  "source_root": "src",
+  "units": ["root", "agents", "application", "baselines", "code_adapters", "domain", "evaluation", "harness", "presentation", "retrieval", "runtime", "tools"],
+  "purpose": "Enumerate complete owned source coverage and classify all remaining static blocks without calling them rollout successes",
+  "profile": "product_triage_v2",
+  "limits": "Unchanged product-resource-limits-v2 per component; at most twelve static review workers",
+  "accepted_diagnostic_outputs": "COMPLETED/exit0 or PARTIAL/exit2 with complete source inventory, zero parse or analysis failures, and explicitly blocked candidates; readiness remains false for every PARTIAL result",
+  "cross_component_context": "Not admitted; component records are not a whole-repository proof",
+  "model_requests": 0,
+  "target_executions": 0,
+  "automatic_retry": false,
+  "fallback": false,
+  "strict_rollout_gate_changed": false,
+  "full_matrix_admitted": false,
+  "heldout_claim_eligible": false,
+  "whole_application_security_assessed": false
+}

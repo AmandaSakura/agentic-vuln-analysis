@@ -4,23 +4,33 @@ import argparse
 import json
 from pathlib import Path
 
-from cv_agent.evaluation.datasets.owasp_live import run_agentic_owasp_live
-from cv_agent.evaluation.smoke import run_agentic_smoke
-from cv_agent.evaluation.scripted import run_agentic_scripted_eval
-from cv_agent.evaluation.protocols.readiness import assess_run_readiness
-from cv_agent.baselines.synthetic_experiment import run_synthetic_experiment
 from cv_agent.harness import AgentSystemVersion, command_policy, describe_project_harness
-from cv_agent.code_adapters.java import profile_owasp_java_ast
-from cv_agent.baselines.owasp import run_owasp_static_baseline
-from cv_agent.baselines.owasp_rag import run_owasp_rag_experiment
-from cv_agent.evaluation.datasets.profile import profile_public_data
-from cv_agent.evaluation.datasets.vulngym_subset import describe_vulngym_subjects, fetch_vulngym_subjects
-from cv_agent.evaluation.datasets.vulngym_retrieval import run_vulngym_retrieval_experiment
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(*, product_only: bool = False) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cv-agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    review = subparsers.add_parser("review", help="review explicitly selected local Python source offline")
+    review.add_argument("source_root", type=Path)
+    review.add_argument("--output", type=Path, required=True, help="new output directory for result.json and report.md")
+    review.add_argument("--language", default="python")
+    review.add_argument("--observation-bytes", type=int, default=None)
+    review.add_argument("--profile", choices=("product_triage_v1", "product_triage_v2"), default="product_triage_v1")
+    review.add_argument("--summary-bytes", type=int, default=None)
+    review.add_argument("--context-grants", type=Path, help="explicit source-grants-v1 JSON manifest")
+    review.add_argument("--context-bytes", type=int, default=8192)
+    doctor = subparsers.add_parser("doctor", help="check local review capabilities without provider requests")
+    doctor.add_argument("source_root", type=Path)
+    doctor.add_argument("--language", default="python")
+    doctor.add_argument("--property-id")
+    verify = subparsers.add_parser("verify", help="verify a user-owned local v2 package without executing source")
+    verify.add_argument("run_dir", type=Path)
+    view = subparsers.add_parser("view", help="show an exact authorized local operation after verifying source identity")
+    view.add_argument("run_dir", type=Path)
+    view.add_argument("--candidate-id", required=True)
+    view.add_argument("--source-root", type=Path, required=True)
+    if product_only:
+        return parser
     subparsers.add_parser("harness-check", help="validate and print the project experiment contract")
     readiness = subparsers.add_parser("readiness", help="audit a completed run artifact for operational and claim readiness")
     readiness.add_argument("run_dir", type=Path, help="completed experiment run directory")
@@ -82,12 +92,63 @@ def _emit(command: str, payload: dict[str, object]) -> int:
     return 0
 
 
-def main() -> int:
-    arguments = build_parser().parse_args()
+def main(*, product_only: bool = False) -> int:
+    arguments = build_parser(product_only=product_only).parse_args()
     command_policy(arguments.command)
+    if arguments.command in {"verify", "view"}:
+        from cv_agent.application.service_v2 import verify_bundle, view_finding
+        try:
+            result = (verify_bundle(arguments.run_dir) if arguments.command == "verify" else
+                view_finding(arguments.run_dir, arguments.candidate_id, arguments.source_root))
+        except (ValueError, OSError) as error:
+            print(json.dumps({"valid":False,"reason_code":str(error),"model_requests":0})); return 2
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result.get("valid", True) else 2
+    if arguments.command == "review":
+        from cv_agent.application.service import run_review, _protected_root
+        context_manifest = None
+        if arguments.context_grants is not None:
+            try:
+                if _protected_root(arguments.context_grants):
+                    raise ValueError("Protected context input")
+                context_manifest = json.loads(arguments.context_grants.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                context_manifest = {"invalid_manifest": True}
+        try:
+            if arguments.profile == "product_triage_v2":
+                if arguments.language != "python":
+                    print(json.dumps({"run_state":"BLOCKED","reason_code":"language_not_supported",
+                        "model_requests":0,"target_executions":0})); return 2
+                if arguments.observation_bytes is not None:
+                    print(json.dumps({"run_state":"FAILED","reason_code":"ambiguous_v2_observation_budget",
+                        "required_argument":"--summary-bytes","model_requests":0})); return 2
+                from cv_agent.application.product_boundary import run_bounded_review
+                envelope = run_bounded_review(arguments.source_root, arguments.output, options={
+                    "summary_bytes":8192 if arguments.summary_bytes is None else arguments.summary_bytes,
+                    "context_manifest":context_manifest, "context_bytes":arguments.context_bytes})
+                payload = envelope.get("result") or envelope
+                print(json.dumps(payload, ensure_ascii=False, indent=2))
+                return 0 if payload["run_state"] == "COMPLETED" else 2
+            if arguments.summary_bytes is not None:
+                raise ValueError("summary bytes require explicit product_triage_v2")
+            result = run_review(arguments.source_root, arguments.output, language=arguments.language,
+                                observation_bytes=8192 if arguments.observation_bytes is None else arguments.observation_bytes, context_manifest=context_manifest,
+                                context_bytes=arguments.context_bytes)
+        except (FileExistsError, OSError, ValueError) as error:
+            print(json.dumps({"run_state": "FAILED", "reason_code": "review_output_or_configuration_error",
+                              "error_type": type(error).__name__, "model_requests": 0}, sort_keys=True))
+            return 2
+        print(result.model_dump_json(indent=2))
+        return 0 if result.run_state == "COMPLETED" else 2
+    if arguments.command == "doctor":
+        from cv_agent.application.diagnostics import doctor
+        result = doctor(arguments.source_root, language=arguments.language, property_id=arguments.property_id)
+        print(json.dumps(result, sort_keys=True, indent=2))
+        return 0 if result["ready"] else 2
     if arguments.command == "harness-check":
         return _emit(arguments.command, describe_project_harness())
     if arguments.command == "readiness":
+        from cv_agent.evaluation.protocols.readiness import assess_run_readiness
         assessment = assess_run_readiness(arguments.run_dir)
         _emit(arguments.command, assessment)
         if arguments.require_claim and not assessment["claim_ready"]:
@@ -96,12 +157,16 @@ def main() -> int:
             return 2
         return 0
     if arguments.command == "synthetic":
+        from cv_agent.baselines.synthetic_experiment import run_synthetic_experiment
         return _emit(arguments.command, run_synthetic_experiment())
     if arguments.command == "agentic-smoke":
+        from cv_agent.evaluation.smoke import run_agentic_smoke
         return _emit(arguments.command, run_agentic_smoke())
     if arguments.command == "agentic-eval":
+        from cv_agent.evaluation.scripted import run_agentic_scripted_eval
         return _emit(arguments.command, run_agentic_scripted_eval())
     if arguments.command == "agentic-live-owasp":
+        from cv_agent.evaluation.datasets.owasp_live import run_agentic_owasp_live
         return _emit(
             arguments.command,
             run_agentic_owasp_live(
@@ -112,17 +177,29 @@ def main() -> int:
             ),
         )
     if arguments.command == "profile":
+        from cv_agent.evaluation.datasets.profile import profile_public_data
         return _emit(arguments.command, profile_public_data(arguments.raw))
     if arguments.command == "owasp-baseline":
+        from cv_agent.baselines.owasp import run_owasp_static_baseline
         return _emit(arguments.command, run_owasp_static_baseline(arguments.raw))
     if arguments.command == "owasp-ast-profile":
+        from cv_agent.code_adapters.java import profile_owasp_java_ast
         return _emit(arguments.command, profile_owasp_java_ast(arguments.raw))
     if arguments.command == "owasp-rag":
+        from cv_agent.baselines.owasp_rag import run_owasp_rag_experiment
         return _emit(arguments.command, run_owasp_rag_experiment(arguments.raw))
     if arguments.command == "vulngym-subset":
+        from cv_agent.evaluation.datasets.vulngym_subset import describe_vulngym_subjects
         return _emit(arguments.command, describe_vulngym_subjects(arguments.raw))
     if arguments.command == "vulngym-fetch":
+        from cv_agent.evaluation.datasets.vulngym_subset import fetch_vulngym_subjects
         return _emit(arguments.command, fetch_vulngym_subjects(arguments.data))
     if arguments.command == "vulngym-retrieval":
+        from cv_agent.evaluation.datasets.vulngym_retrieval import run_vulngym_retrieval_experiment
         return _emit(arguments.command, run_vulngym_retrieval_experiment(arguments.data))
     raise AssertionError(f"unhandled command: {arguments.command}")
+
+
+def product_main() -> int:
+    """The minimal installed product shares dispatch while exposing no research runner."""
+    return main(product_only=True)

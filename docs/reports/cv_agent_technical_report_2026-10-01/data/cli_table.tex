@@ -1,0 +1,13 @@
+\begin{table}[htbp]\centering\footnotesize
+\begin{tabularx}{\textwidth}{Y L{21mm}c c L{25mm}r}
+\toprule 用例 & 运行态 & 源/解析 & 候选/验证/充分 & 性质状态 & 毫秒\\\midrule
+\code{literal-mode} & COMPLETED & 1/1 & 1/1/1 & REFUTED & 276.39\\
+\code{unknown-mode} & COMPLETED & 1/1 & 1/1/0 & UNKNOWN & 262.45\\
+\code{zero-candidates} & COMPLETED & 1/1 & 0/0/0 & -- & 262.43\\
+\code{parse-error} & PARTIAL & 1/0 & 0/0/0 & -- & 263.21\\
+\code{budget-limited} & PARTIAL & 1/1 & 2/0/0 & UNKNOWN, UNKNOWN & 291.71\\
+\code{missing-source} & BLOCKED & 0/0 & 0/0/0 & -- & 256.96\\
+\code{unsupported-language} & BLOCKED & 0/0 & 0/0/0 & -- & 272.15\\
+\bottomrule\end{tabularx}
+\caption{七个真实 CLI 验收用例。每格是单次、自有小源码；0 分母需按预检/清单阶段解释。所有用例均交付 JSON 和 Markdown，模型/目标执行计数均为零。}\label{tab:cli}
+\end{table}

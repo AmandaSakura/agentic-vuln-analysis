@@ -1,0 +1,21 @@
+{
+  "version": "owned-component-static-coverage-v1",
+  "authorization": "User requested iterative validation and expansion; this is a separately registered response to the preserved monolithic AST resource boundary",
+  "source_root": "src",
+  "units": ["root", "agents", "application", "baselines", "code_adapters", "domain", "evaluation", "harness", "presentation", "retrieval", "runtime", "tools"],
+  "membership": "root owns src/cv_agent/*.py; each named unit owns every Python file recursively under src/cv_agent/<unit>; preserve original src-relative paths",
+  "profile": "product_triage_v2",
+  "limits": "Unchanged product-resource-limits-v2 per component; aggregate maximum twelve review workers, 1440 wall/CPU seconds reserved and 1 GiB address-space cap per worker",
+  "model_requests": 0,
+  "target_executions": 0,
+  "automatic_retry": false,
+  "fallback": false,
+  "stop_on_failed_component": true,
+  "acceptance": "Each public review and verify/copy-verify completes; all frozen source paths and bytes occur in exactly one component; source remains unchanged; reports retain unsupported states and sharing authority",
+  "cross_component_context": "Not admitted. Missing imports/callees remain unproven; independent component states are not a whole-repository proof.",
+  "heldout_claim_eligible": false,
+  "human_independent": false,
+  "whole_application_security_assessed": false,
+  "production_R17_enabled": false,
+  "G_A_changed": false
+}

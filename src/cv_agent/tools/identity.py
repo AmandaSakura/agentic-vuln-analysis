@@ -7,6 +7,7 @@ import re
 
 from cv_agent.domain.evidence import ValidationSubject
 from cv_agent.retrieval import RepositoryIndex
+from cv_agent.retrieval.index import FrozenRepositoryIndex
 from cv_agent.domain.types import Candidate
 
 
@@ -18,6 +19,14 @@ def local_source_line(path: str, line: int | None) -> int | None:
 
 
 def repository_source_digest(index: RepositoryIndex) -> str:
+    # Exact recognized class only: an arbitrary attribute or subclass is not
+    # authority to reuse a source digest for potentially mutable documents.
+    if type(index) is FrozenRepositoryIndex:
+        return index.source_digest
+    return _uncached_repository_source_digest(index)
+
+
+def _uncached_repository_source_digest(index: RepositoryIndex) -> str:
     return hashlib.sha256(json.dumps(
         [index.documents[path].model_dump(
             mode="json",

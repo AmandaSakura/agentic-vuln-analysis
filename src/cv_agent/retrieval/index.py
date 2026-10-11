@@ -11,6 +11,7 @@ import math
 import re
 import symtable
 import textwrap
+from types import MappingProxyType
 
 from cv_agent.harness import RetrievalBudget, RetrievalMode
 from cv_agent.domain.types import Candidate, CodeDocument, Evidence
@@ -754,3 +755,38 @@ class RepositoryIndex:
                 "source_resolved_direct_callee" if path in admitted else "augmentation_context_budget",
             )
         return [*base, *limited_augmentation], admission_records
+
+
+class FrozenRepositoryIndex(RepositoryIndex):
+    """A v2 source view with sealed documents and one historical-format digest.
+
+    Only supported public mutation is refused. Private Python reflection and
+    arbitrary modifications of implementation storage are outside this API.
+    Graph construction runs once, before sealing the document mapping.
+    """
+
+    def __init__(self, documents: Iterable[CodeDocument] = ()) -> None:
+        self._source_sealed = False
+        super().__init__(documents)
+        self.documents = MappingProxyType(dict(self.documents))
+        from cv_agent.tools.identity import _uncached_repository_source_digest
+        self._sealed_source_digest = _uncached_repository_source_digest(self)
+        self._source_sealed = True
+
+    def __setattr__(self, name, value):
+        if getattr(self, "_source_sealed", False) and name in {
+            "documents", "source_digest", "_sealed_source_digest", "_source_sealed",
+        }:
+            raise AttributeError("the frozen source index refuses document or identity reassignment")
+        super().__setattr__(name, value)
+
+    def __delattr__(self, name):
+        if getattr(self, "_source_sealed", False) and name in {
+            "documents", "source_digest", "_sealed_source_digest", "_source_sealed",
+        }:
+            raise AttributeError("the frozen source index refuses document or identity deletion")
+        super().__delattr__(name)
+
+    @property
+    def source_digest(self) -> str:
+        return self._sealed_source_digest

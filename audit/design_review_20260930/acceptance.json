@@ -1,0 +1,514 @@
+{
+  "schema_version": "design-review-acceptance-v1",
+  "profile": "product_triage_v1",
+  "status": "ENABLED_PROFILE_ACCEPTED",
+  "enabled": [
+    "offline_python_source_review",
+    "static_property_reduction",
+    "explicit_context_grants",
+    "durable_event_audit"
+  ],
+  "not_enabled": [
+    "model_explanation",
+    "target_execution",
+    "private_scratch",
+    "native_build"
+  ],
+  "baseline": {
+    "passed": 2560,
+    "failed": 2,
+    "seconds": 478.78
+  },
+  "full_suite": {
+    "command": "uv run --no-sync pytest",
+    "exit_code": 0,
+    "passed": 2684,
+    "failed": 0,
+    "skipped": 0,
+    "xfailed": 0,
+    "seconds": 414.2,
+    "path": "artifacts/design_review_repair_20260930/final_full_pytest.log",
+    "sha256": "d3a2bc10a5e0d9480039c18486c74689d8a3970fa20a19ab4af445c7efd1c341",
+    "pytest_tail": [
+      "........................................................................ [ 99%]",
+      "....................                                                     [100%]",
+      "2684 passed in 414.20s (0:06:54)"
+    ]
+  },
+  "harness": {
+    "status": "PASS",
+    "exit_code": 0,
+    "command": "uv run --no-sync cv-agent harness-check",
+    "path": "artifacts/design_review_repair_20260930/final_harness.json"
+  },
+  "matrix": [
+    {
+      "id": "A01",
+      "task": "T00",
+      "behavior": "actual baseline, preserved archives, final full suite and characterization",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_refactor_characterization.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A02",
+      "task": "T01",
+      "behavior": "20 run/property combinations plus illegal states and counters",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_contract.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A03",
+      "task": "T01",
+      "behavior": "exact subject/property/line/source/analysis binding",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_contract.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A04",
+      "task": "T01",
+      "behavior": "application NOT_ASSESSED and remote/public flags remain false",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_contract.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A05",
+      "task": "T02",
+      "behavior": "static capability available without provider or witness",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_preflight.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A06",
+      "task": "T02",
+      "behavior": "registered owned capability missing dependency then explicit restoration",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_preflight.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A07",
+      "task": "T03",
+      "behavior": "real console CLI and rejecting provider/socket/gate spies",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_application_smoke.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A08",
+      "task": "T03",
+      "behavior": "zero candidates and parse error have distinct denominators and artifacts",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_application_smoke.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A09",
+      "task": "T03",
+      "behavior": "internal producer failure retains prior proof and partial artifacts",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_application_smoke.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A10",
+      "task": "T04",
+      "behavior": "F4 environment versus F1 preparation, retained F1-F6 definitions",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_diagnostics.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A11",
+      "task": "T04",
+      "behavior": "explicit waiting input, supplement, dependency restoration; preparation is not completion",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_diagnostics.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A12",
+      "task": "T05",
+      "behavior": "five demonstrated nested-alias regressions plus source controls",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_identity_snapshot.py",
+        "tests/test_product_identity.py",
+        "tests/test_evidence_subject.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A13",
+      "task": "T05",
+      "behavior": "source/helper/import and approved environment drift; view independence",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_identity_snapshot.py",
+        "tests/test_product_identity.py",
+        "tests/test_evidence_subject.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A14",
+      "task": "T08",
+      "behavior": "one producer with aliases versus two original IDs, retained validator accounting",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_delivery.py",
+        "tests/test_tool_response_budget.py",
+        "tests/test_validator_observation_accounting.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A15",
+      "task": "T06",
+      "behavior": "late conflict in both orders, existing slow and fast material ballot re-admission",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_global_evidence_review.py",
+        "tests/test_product_reducer.py",
+        "tests/test_expert_applicability.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A16",
+      "task": "T06",
+      "behavior": "local counterfact does not erase complete independent property support",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_global_evidence_review.py",
+        "tests/test_product_reducer.py",
+        "tests/test_expert_applicability.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A17",
+      "task": "T06",
+      "behavior": "three aliases do not add observations or strength",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_global_evidence_review.py",
+        "tests/test_product_reducer.py",
+        "tests/test_expert_applicability.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A18",
+      "task": "T06",
+      "behavior": "unknown cannot erase earlier proof, producer-owned helper refs retained",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_global_evidence_review.py",
+        "tests/test_product_reducer.py",
+        "tests/test_expert_applicability.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A19",
+      "task": "T07",
+      "behavior": "unavailable optional task and independent static task; true dependent blocked",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_graph_transition_bound.py",
+        "tests/test_product_diagnostics.py",
+        "tests/test_planner_dependencies.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A20",
+      "task": "T07",
+      "behavior": "UNRESOLVED completion unlocks; preparation/error do not",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_graph_transition_bound.py",
+        "tests/test_product_diagnostics.py",
+        "tests/test_planner_dependencies.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A21",
+      "task": "T07",
+      "behavior": "fixed invalid-action limit and finite no-progress graph",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_graph_transition_bound.py",
+        "tests/test_product_diagnostics.py",
+        "tests/test_planner_dependencies.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A22",
+      "task": "T08",
+      "behavior": "exact 2500+1000+1000+1000 complete JSON certificates within 8192",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_delivery.py",
+        "tests/test_tool_response_budget.py",
+        "tests/test_validator_observation_accounting.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A23",
+      "task": "T08",
+      "behavior": "outer JSON and IDs billed; clipped/suppressed/local/error cannot prove",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_delivery.py",
+        "tests/test_tool_response_budget.py",
+        "tests/test_validator_observation_accounting.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A24",
+      "task": "T08",
+      "behavior": "cached delivery charges bytes, one original execution; required reservation protected",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_delivery.py",
+        "tests/test_tool_response_budget.py",
+        "tests/test_validator_observation_accounting.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A25",
+      "task": "T09",
+      "behavior": "granted owned helper delivered/billed; failed extension does not admit source",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_context.py",
+        "tests/test_application_smoke.py",
+        "tests/test_agent_budget_units.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A26",
+      "task": "T09",
+      "behavior": "same path does not grant other line spans; legacy E budgets unchanged",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_product_context.py",
+        "tests/test_application_smoke.py",
+        "tests/test_agent_budget_units.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A27",
+      "task": "T10",
+      "behavior": "private scratch capability not enabled",
+      "required_for_enabled_profile": false,
+      "status": "NOT_ENABLED_NOT_RUN",
+      "tests": [
+        "tests/test_refactor_characterization.py"
+      ],
+      "full_suite_receipt": null
+    },
+    {
+      "id": "A28",
+      "task": "T10",
+      "behavior": "new private scratch lifecycle capability not enabled; old readonly controls retained",
+      "required_for_enabled_profile": false,
+      "status": "NOT_ENABLED_NOT_RUN",
+      "tests": [
+        "tests/test_refactor_characterization.py"
+      ],
+      "full_suite_receipt": null
+    },
+    {
+      "id": "A29",
+      "task": "T11",
+      "behavior": "trusted native build capability not enabled",
+      "required_for_enabled_profile": false,
+      "status": "NOT_ENABLED_NOT_RUN",
+      "tests": [
+        "tests/test_refactor_characterization.py"
+      ],
+      "full_suite_receipt": null
+    },
+    {
+      "id": "A30",
+      "task": "T12",
+      "behavior": "existing full-gate mock controls: one per process, drift/failure denial",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_runtime_recovery_review.py",
+        "tests/test_live_gate.py",
+        "tests/test_model_runtime.py",
+        "tests/test_experiment_guard.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A31",
+      "task": "T07",
+      "behavior": "eight actual task executions plus loop stops at graph limit 16",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_graph_transition_bound.py",
+        "tests/test_product_diagnostics.py",
+        "tests/test_planner_dependencies.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A32",
+      "task": "T12",
+      "behavior": "six concurrent last-slot contenders, malformed model content retains usage",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_runtime_recovery_review.py",
+        "tests/test_live_gate.py",
+        "tests/test_model_runtime.py",
+        "tests/test_experiment_guard.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A33",
+      "task": "T12",
+      "behavior": "partial/uncommitted journal, unknown reservation, cancellation without later calls",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_runtime_recovery_review.py",
+        "tests/test_live_gate.py",
+        "tests/test_model_runtime.py",
+        "tests/test_experiment_guard.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    },
+    {
+      "id": "A34",
+      "task": "T12",
+      "behavior": "fake status and source key are data/private; fake transport key redacted",
+      "required_for_enabled_profile": true,
+      "status": "PASS",
+      "tests": [
+        "tests/test_runtime_recovery_review.py",
+        "tests/test_live_gate.py",
+        "tests/test_model_runtime.py",
+        "tests/test_experiment_guard.py"
+      ],
+      "full_suite_receipt": "artifacts/design_review_repair_20260930/final_full_pytest.log"
+    }
+  ],
+  "GP0": "PASS",
+  "GP1": "PASS_FOR_ENABLED_STATIC_PROFILE",
+  "GP2": "NOT_ENABLED",
+  "GP3": "NOT_MEASURED",
+  "GP4": "NOT_MEASURED",
+  "historical_G_A": "NO",
+  "new_real_model_requests": 0,
+  "completed_at_utc": "2026-09-30T16:30:30.060482+00:00",
+  "enabled_test_group": {
+    "path": "artifacts/design_review_repair_20260930/T13_enabled_capabilities_final.log",
+    "exit_code": 0,
+    "sha256": "a9ae1b92187f1d5e628fcb5b444b25b88b026fc6004257d6516a9623cdee1d0a",
+    "pytest_tail": [
+      "........................................................................ [ 57%]",
+      "......................................................                   [100%]",
+      "126 passed in 3.96s"
+    ]
+  },
+  "required_matrix_count": 31,
+  "required_passed": 31,
+  "conditional_not_run": 3,
+  "cli_acceptance": "audit/design_review_20260930/cli-acceptance.json",
+  "transport_guard": "audit/design_review_20260930/transport-guard.json",
+  "original_dirty_preservation": {
+    ".hermes/plans/2026-09-30-remaining-work-final-summary.json": {
+      "baseline_sha256": "e6bd7ea46a947f4205bcab8548ee50c165235ebe615aae448aedac5fceab1a0e",
+      "current_sha256": "e6bd7ea46a947f4205bcab8548ee50c165235ebe615aae448aedac5fceab1a0e",
+      "unchanged": true
+    },
+    "docs/README.md": {
+      "baseline_sha256": "5dd0d1ee04e8e38c7cc4b465b0d05654febe9373893e2bba1202f8c0bb223e9b",
+      "current_sha256": "c074684e2baac72ac7c70a8893e3c37590b33c673a48fb8257e23c4a59e75130",
+      "unchanged": false
+    },
+    "docs/reports/cv_agent_design_review_and_repair_plan_2026-09-30.pdf": {
+      "baseline_sha256": "e4fbc3115ca527c57c10e616eb505f808a19928683c420354b28c265a580935c",
+      "current_sha256": "e4fbc3115ca527c57c10e616eb505f808a19928683c420354b28c265a580935c",
+      "unchanged": true
+    },
+    "docs/reports/cv_agent_technical_report_2026-09-30.pdf": {
+      "baseline_sha256": "0e4c69cc71e8b38083b63f20a63e88f3ba56a3e3b72f285f28e31780eb41d29a",
+      "current_sha256": "0e4c69cc71e8b38083b63f20a63e88f3ba56a3e3b72f285f28e31780eb41d29a",
+      "unchanged": true
+    },
+    "docs/reports/cv_agent_technical_report_2026-09-30.tex": {
+      "baseline_sha256": "f6d3811658abb9802a320569b42040efbaf5e7da935eee69b4eebdc818e22b57",
+      "current_sha256": "f6d3811658abb9802a320569b42040efbaf5e7da935eee69b4eebdc818e22b57",
+      "unchanged": true
+    }
+  }
+}

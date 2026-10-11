@@ -101,7 +101,11 @@ def test_unregistered_profile_and_extra_limit_rejected():
 def test_unvalidated_model_copy_cannot_install_mutated_default(monkeypatch):
     installed = []
     monkeypatch.setattr(resource, "setrlimit", lambda *args: installed.append(args))
-    invalid = WitnessResourceProfile.fixture_default().model_copy(update={"open_files": 128})
+    with pytest.raises(ValueError, match="fixture_default"):
+        WitnessResourceProfile.fixture_default().model_copy(update={"open_files": 128})
+    # Trusted internal fault injection also exercises the installation boundary;
+    # model_construct is deliberately outside the validated public input API.
+    invalid = WitnessResourceProfile.model_construct(**{**DEFAULT, "open_files": 128})
     with pytest.raises(ValueError, match="fixture_default"):
         invalid.apply()
     assert installed == []

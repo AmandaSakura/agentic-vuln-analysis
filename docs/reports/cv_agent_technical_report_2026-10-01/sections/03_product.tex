@@ -1,0 +1,68 @@
+\section{默认产品路径：本地源码到可复核产物}
+\label{sec:product}
+\subsection{输入、默认行为与入口}
+\cmd{cv-agent review} 接受显式源码根、一个尚不存在的输出目录，以及可选的语言、观察字节预算和上下文 grant manifest。默认语言为 Python；模型、planner、Jev、多专家、quorum、early stop、执行见证、scratch 和 native build 均不属于默认必经环节。
+
+\begin{lstlisting}[caption={默认静态入口；路径由使用者明确选择，输出目录不得已经存在。}]
+uv run --no-sync cv-agent doctor /path/to/authorized/source
+uv run --no-sync cv-agent review /path/to/authorized/source \
+  --output /path/to/new-review-run
+\end{lstlisting}
+完成返回 0；PARTIAL、BLOCKED、FAILED 或 CANCELLED 返回 2。已有输出目录被拒绝，历史文件不覆盖；不可用输出或配置参数本身产生结构化错误。分析已登记的事实可在内部失败或取消时继续交付。
+
+\subsection{服务编排和静态能力选择}
+应用先运行预检，再以原始字节清单建立源码身份，复用 \code{discover_python_repository} 发现候选。候选身份从源码操作位置派生，不从期望标签或 corpus 映射派生。针对权限 mode、命令构造和动态求值选择现有对应工具，其余性质仅运行静态线索检查。
+
+每次调用使用已有 \code{ToolRegistry}、\code{ModelToolCall} 数据协议和精确 candidate subject；工具观察的完整序列化封装包含 producer、状态、subject、引用与内容。可投递预算不足时保留私有生产者结果和公开缺口；归并只使用可接纳观察。默认工具物理执行计数为 0，因为这里的检查是静态/AST 分析，不是目标进程运行。
+
+\begin{pseudocode}{alg:product}{离线产品审查的确定性主链}
+\Pinput{授权源根 $R$；新产物目录 $O$；profile；预算 $B$；可选显式行区间 grants。}
+\Poutput{版本化 ReviewResult、人工报告、私有观察与完成记录。}
+\Pstep{检查源、语言和 profile 能力；失败写出 BLOCKED 诊断，不尝试 provider。}
+\Pstep{边界读取源字节；保存可读/解析失败分母；建立文档、符号和中性候选。}
+\Pstep{封存源/分析身份；建立初始准入视图，并对显式扩展逐项核验与收费。}
+\Pstep{\textbf{for each} 源码候选 $c$，构造 $J_c$，选择已注册适用静态工具。}
+\Pstep{\quad 若候选 span 不准入或能力缺失，登记缺项；不删除该候选。}
+\Pstep{\quad 否则运行有限控制任务；保存原始观察和独立 producer ID。}
+\Pstep{\quad 完整封装按共享 byte pool 投递；失败时保留 UNKNOWN 及实际费用。}
+\Pstep{\quad 从全部相关受信观察确定性质状态；绑定源/分析身份及 evidence refs。}
+\Pstep{取消停止后续调用；已完成性质事实保留，未处理分母明确。}
+\Pstep{核对计数、证明和引用；在同一 staging 目录生成 JSON 和 Markdown。}
+\Pstep{原子提交两份公共产物；保留权限为 0600 的私有原始观察。}
+\end{pseudocode}
+\loc{application/service.py; application/preflight.py; presentation/report.py}
+
+\subsection{运行、性质、验证和任务控制状态}
+产品运行状态为
+\begin{equation}
+r\in\{\text{COMPLETED, PARTIAL, BLOCKED, FAILED, CANCELLED}\},
+\end{equation}
+性质状态为
+\begin{equation}
+z\in\{\text{SUPPORTED, REFUTED, UNKNOWN, CONFLICT}\}.
+\end{equation}
+原工具验证状态仍为 CONFIRMED、REFUTED、UNRESOLVED；任务控制还区分 READY、WAITING\_INPUT、BLOCKED、FINISHED 和 FAILED。这四组状态回答“运行怎样结束”“性质依据怎样”“验证器怎样表述”“当前操作能否推进”。FINISHED+UNKNOWN 不等于失败，更不等于安全。
+
+\begin{table}[htbp]\centering
+\begin{tabularx}{\textwidth}{L{28mm}L{33mm}Y}
+\toprule 组合 & 合法解释 & 边界\\\midrule
+COMPLETED + UNKNOWN & 静态检查完成，性质仍未建立 & 不把弱线索升级。\\
+PARTIAL + REFUTED & 某候选有充分有限否定，其他工作未完 & 不抹掉已登记证明，不宣称整个 run 完整。\\
+BLOCKED + UNKNOWN & 输入或能力使本次工作不能推进 & 零候选计数可能表示未做 inventory，而非“没有问题”。\\
+CANCELLED + 混合状态 & 保留先前事实，后续工具不启动 & 未处理候选仍留在分母。\\
+任意 run + CONFLICT & 同身份同完整范围充分证明互斥 & 要求核对 producer，不靠专家信心消解。\\
+\bottomrule
+\end{tabularx}
+\caption{状态分离的实例。schema 检查 20 个独立组合和不可接受的引用、计数与能力组合。}
+\end{table}
+
+\subsection{输出字段、分母与可追溯性}
+\code{FindingView} 包含候选、subject、版本化性质契约、性质状态、事实、缺项、下一步和引用。\code{ReviewCounts} 分别保存源文件、解析成功/失败、候选、完成静态验证、充分性质证据、未处理候选和文档准入数量。\code{ReviewAccounting} 将工具调用、物理执行、观察/context 字节与分阶段墙钟分开。
+
+\code{application_security} 固定 NOT\_ASSESSED，公共入口与远程权限标志固定 false。源码文本和凭据值不直接复制到公共报告；原始工具内容和内部异常保存在 \code{.private/observations.jsonl}，与 producer、内容 SHA-256 和交付状态对应。声明路径和范围本身仍是公共信息。
+
+\subsection{原子产物与计时的精度}
+JSON 与 Markdown 在同一个临时目录中写入、flush/fsync，再用目录 rename 提交。产物指向同一 \code{ReviewResult}，presentation 不创建新证明。\code{accounting.output_seconds} 记录最终提交前的准备范围；提交结束后的实际输出墙钟在私有 completion receipt 中，避免自引用计时造成虚假精度。CLI 进程时间还包括启动、导入、输出和返回，不等同内部分析时间。
+
+\subsection{能力声明的真实边界}
+默认静态 capability AVAILABLE 只说明相应工具可调用，不说明当前候选已被证明。Python 之外的产品 inventory 当前 BLOCKED，虽然研究适配器保留其他语言。模型配置存在性只检查环境键名，不读取值或 probe provider。未注册的 owned fixture check 不能执行；显式注册的无害功能检查缺依赖时只阻塞对应能力。\cite{productguide}

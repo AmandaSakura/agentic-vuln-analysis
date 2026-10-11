@@ -5,7 +5,7 @@ description = "Reproducible Code-RAG and multi-expert vulnerability-agent experi
 requires-python = ">=3.12"
 dependencies = [
   "langgraph",
-  "pydantic>=2",
+  "pydantic>=2.11",
   "tree-sitter>=0.25,<0.26",
   "tree-sitter-go>=0.25,<0.26",
   "tree-sitter-java>=0.23.5,<0.24",

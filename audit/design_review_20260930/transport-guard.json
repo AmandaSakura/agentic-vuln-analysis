@@ -1,0 +1,14 @@
+{
+  "schema_version": "offline-transport-guard-v1",
+  "passed": true,
+  "entrypoint": "cv_agent.cli:main",
+  "counts": {
+    "http_attempts": 0,
+    "socket_attempts": 0,
+    "live_gate_attempts": 0
+  },
+  "source_import_control": "module-level exception was never triggered",
+  "model_credentials": "not supplied",
+  "exit_code": 0,
+  "result_path": "artifacts/design_review_repair_20260930/transport_guard/result.json"
+}

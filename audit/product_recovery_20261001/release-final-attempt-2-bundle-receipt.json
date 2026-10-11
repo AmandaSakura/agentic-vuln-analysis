@@ -1,0 +1,22 @@
+{
+  "schema": "product-offline-bundle-v1",
+  "archive": "cv_agent_product_recovery_2026-10-01_linux_x86_64.zip",
+  "sha256": "9e9ee40204279ec7facfd8ee9d7af20d4609e549c6c80838cbab7b3b9f53f19e",
+  "bytes": 4714143,
+  "wheel_sha256": "820687521f31409a0b46edeea2138bd2c546719176719b0c72305bfdea3b16d0",
+  "source_tree_sha256": "16b149422511b995f63dfcf29b929d87dbadedb94bdaf5b9d08cdcb2f81eaec4",
+  "source_files_match_frozen_root": true,
+  "included_source_files": 103,
+  "v1_clean_install_pass": true,
+  "v2_clean_install_pass": true,
+  "fresh_owned_quality": {
+    "case_count": 36,
+    "exact_state_matches": 22,
+    "wrong_strong_states": 0,
+    "missing_or_duplicate_locations": 0
+  },
+  "human_product_quality": "NOT_MEASURED",
+  "model_requests": 0,
+  "target_executions": 0,
+  "network": false
+}

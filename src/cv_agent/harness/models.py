@@ -98,7 +98,7 @@ class RetrievalEvaluationHarness(FrozenModel):
 
 class CommandPolicy(FrozenModel):
     command: str
-    kind: Literal["experiment", "diagnostic", "data-preparation", "harness"]
+    kind: Literal["experiment", "diagnostic", "data-preparation", "harness", "product-review"]
     claim_eligible: bool
     harness_id: str | None = None
 

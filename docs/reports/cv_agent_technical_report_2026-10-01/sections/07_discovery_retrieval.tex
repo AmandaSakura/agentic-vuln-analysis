@@ -1,0 +1,87 @@
+\section{源码发现、适配与 Code-RAG}
+\subsection{仓库级候选发现}
+\code{discover_python_repository} 以确定性的路径顺序遍历 Python 文件，排除版本库、虚拟环境、依赖和构建目录；通过源码读取边界读取字节，记录文件 SHA-256，检测编码并解析函数切片。同时增加完整模块文档，用于保留导入时操作和类体。
+
+\code{StaticScanner} 根据 AST 调用、已解析别名、路由装饰器和有限规则，生成命令执行、动态求值、数据库操作、模板操作、权限 mode、授权边界、动态属性和进程控制等候选。重叠模块与函数切片按最小适用 span 去重。稳定候选标识由仓库、源文件、行号和规则生成，标识不是期望标签。
+
+解析失败作为清单的一部分保留，不从分母中静默消失。扫描报告明确 \code{discovery_is_validation=false}。一些 pilot 明确采用有限候选前缀；这属于被记录的实验选择，不能被说成全仓所有候选已审查。源码发现、位置匹配、候选标签判断和运行时见证必须分别统计。
+\loc{agents/discovery.py; agents/scanner.py; evaluation/discovery.py}
+
+\subsection{多语言解析层级}
+Python 适配器基于 AST 保存函数范围、调用、导入别名和模块绑定；Java、JavaScript/TypeScript、Go 使用对应解析支持构造文档与调用元数据。对不具有相同语义覆盖的格式，系统保留显式 fallback 文档。
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{L{32mm}Y}
+\toprule 层级 & 实际提供的信息及限制\\\midrule
+Python AST & 函数与方法切片、别名与调用元数据；部分有界值、数据流、命令和权限语义。\\
+Java 解析 & 方法文档、调用、完整原文件摘要与有界项目夹具；不代表一般 Java 应用验证。\\
+JS/TS 与 Go 解析 & 定义、形式参数、调用和路由等结构；当前非 Python flow 仍包含有限逐行近似。\\
+Fallback & 文件级或文本级的 imports、配置、轨迹相关上下文；不得报告为完整 AST 调用图或深层语义证明。\\
+\bottomrule
+\end{tabularx}
+\caption{适配器层级说明。解析能力与漏洞证明能力是两个不同维度。}
+\end{table}
+
+源文件读取使用相对目录描述符并拒绝符号链接，包括路径中的链接父目录。这样可以阻止普通索引步骤通过 symlink 越出源码树。这个读取约束不替代执行环境中的资源与文件系统隔离。
+\loc{code_adapters/source_files.py; code_adapters/repository.py}
+
+
+\Needspace{6\baselineskip}
+\subsection{文档索引和图构造}
+\code{RepositoryIndex} 拒绝重复文档路径，保存源码词频、路径词频、定义表、前向及反向调用边。图边必须根据已知限定名、导入别名和源文件关系建立；已知外部调用不得连接到无关的同名本地函数。一个图邻居表示检索候选关系，不自动证明动态调用可达。
+
+检索支持 local、text、graph 和 hybrid。graph 在声明方向上进行有界遍历，再按词法相关性或距离排序；\code{both} 模式保留前向路径优先信息。直接解析出的相关 callee 可以优先准入，并记录跳过原因、调用来源、符号、图距离和文档摘要。
+\loc{retrieval/index.py; retrieval/context.py; retrieval/dependencies.py}
+
+\subsection{默认文本评分与 BM25 诊断}
+保留研究路径的默认文本排序是 TF-IDF 风格的词法评分。设查询词次数为 $q_t$，文档词频为 $f_{t,d}$，文档总数为 $N$，文档频率为 $df_t$，基本项为
+\begin{align}
+\operatorname{idf}(t)&=\log\frac{N+1}{df_t+1}+1,\\
+s_{\mathrm{text}}(q,d)&=\sum_{t:f_{t,d}>0}q_t\,(1+\log f_{t,d})\,\operatorname{idf}(t).
+\end{align}
+路径形式的查询还加入路径词、完整路径子串和路径片段加权。这些都是可复核的词法启发式。
+
+\code{MetadataBM25Index} 是独立的增强词法诊断，使用源码、路径和符号，代码常数对应 $k_1=1.2$、$b=0.75$。它没有替换冻结的默认 E2。旧概述把所有文本检索都简称 BM25 时，本文以实际实现为准。
+\loc{retrieval/index.py::_lexical_scores; retrieval/bm25.py}
+
+\subsection{同一局部基底与图、文本增强}
+所有系统先取得同一候选局部文档。增强结果经过确定性的去重、数量上限与上下文裁剪，避免扩大一个系统的隐藏取证范围。对于较长代码，context 模块可围绕候选、源、sink 及赋值依赖保留局部窗口，并显式标明非相邻上下文省略。
+
+hybrid 将候选出发的图检索、文本检索及词法 seed 出发的图检索按分支上限合并，再受共享文本预算限制。因此，hybrid 的 \code{top_k} 是分支限额，其联合条数语义与普通 text/graph 的全局条数限额不能混为一谈。与不同检索方法比较时应同时报告实际文档数和序列化预算。
+
+\subsection{两层文本预算与 API 用量}
+旧的确定性实验使用词法上下文单位；当前 agent 对模型可见的序列化文本使用 UTF-8 字节上界。对完整序列化载荷 $s$，计数为
+\begin{equation}
+B(s)=|\operatorname{UTF8}(s)|.
+\end{equation}
+它将候选投影、引用、路径、JSON 转义和内容一起计入相应文本预算。裁剪是在完整序列化后判定能否容纳，长标识符不会被当作一个免费单位。
+
+此计数不是模型服务商的精确 tokenizer 计费。系统指令、工具 schema、历史消息、规划和输出还会增加实际请求 tokens。检索预算、观察预算与 provider usage 应分别记录。
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{L{48mm}L{26mm}Y}
+\toprule 通用 E 系列默认项 & 默认值 & 语义\\\midrule
+候选局部基底 & 4096 & 模型可见序列化文本的上界单位。\\
+增强上下文 & 12288 & E2--E5 的声明增强预算；E1 为 0。\\
+增强条数 & 12 & 普通文本/图检索的默认 top-k。\\
+图距离上限 & 4 & E3--E5 默认最大跳数。\\
+ReAct 步数 & 8 & 一次任务循环的最大模型步数。\\
+工具观察预算 & 8192 & 同一专家多个子任务累计共享。\\
+规划子任务上限 & 8 & 计划的有限规模约束。\\
+任务图递归上限 & 16 & 显式业务流程上限；控制无进展循环。\\
+\bottomrule
+\end{tabularx}
+\caption{默认值来自 Harness；专项 profile 可声明不同策略，报告实验时必须使用其实际配置。}
+\end{table}
+\loc{harness/defaults.py; retrieval/tokens.py; agents/workflow.py::_bounded_context_prompt}
+
+\subsection{模型投影与路径准入}
+初始模型上下文仅包含显式候选投影及被选中的检索文档。候选投影包含中性身份、仓库、路径、行号和明确的性质、分析范围；私有 query 与任意 caller metadata 不直接复制给模型。
+
+工具作用域的 admitted paths 来自最终实际投递的文档集合。工具可以重读、搜索或遍历其中已准入的路径，但不能将 local 系统扩成全仓检索。证据路径准入只约束 agent 的取证范围；见证内核执行目标时另有真实源码闭包绑定与文件系统读取准入，二者的用途不同。
+
+
+\subsection{产品与研究取证范围的关系}
+产品默认只接受 Python 本地源码，研究适配器的多语言结构能力没有被自动纳入产品能力承诺。新 SourceReadView 的行区间扩展与研究 admitted paths 是两种声明边界；旧 E 系列的上下文预算和检索定义保持冻结。第\ref{sec:delivery}节的扩展机制不能用来解释历史 E1 已经具备全仓取证。

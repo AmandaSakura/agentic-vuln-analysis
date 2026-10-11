@@ -1,0 +1,46 @@
+\section{静态分析器与类型化验证工具}
+\subsection{命令分析的有界语义}
+命令分析器使用有限抽象值结构，包括字符串片段、有限 choice、来源及安全处理信息，并维护执行路径、绑定和副作用缺口。普通未知字符串与已经建立的输入来源不同；转义只在已经解析的消费上下文中有意义。
+
+分析按 Python 求值顺序处理已支持的赋值、参数传递、有限分支与展开 helper。确定不能成功的解包不产生正常后继；有限备选同时包含成功和失败时保留成功路径；未知迭代协议保留可能相关副作用。未知对象的 truth、比较、属性访问，以及未知函数即使返回值未使用，也不能默认纯净。
+
+整函数候选包含实际调用链中相关的操作。未经解析的前置调用可能改变后续值、绑定或可达性时，分析不能把后面的猜测 sink 当作完整危险链。独立、已经完整建立的危险链则不因另一条无关未解析路径而被删除。
+
+\code{inspect_command_construction} 负责将分析事实封装成范围、来源、路径和缺口记录。该静态工具保留验证状态 UNRESOLVED；其完整分析事实可按准入规则支持特定预测，但不被描述为真实应用执行见证。
+\loc{tools/analysis/commands.py; tools/validation/commands.py}
+
+\subsection{数据流与消费上下文}
+\code{trace_dataflow} 在已准入文档和调用图内追踪来源、sink、sanitizer、变量及调用参数绑定。Python 主链使用 AST 表达式和分支合并；其他语言包含有限逐行近似。工具返回可能到达或尚未建立，并保持 UNRESOLVED。
+
+一个名称像 sanitizer 的调用并不证明防护有效。消费上下文改变、后续原始片段追加、解释器消费参数或输入、容器修改和未知转换，都需要重新核对。非 shell argv 和 shell 参数转义是不同的性质事实，不能仅凭 \code{shell=False} 字样给出宽范围 SAFE。
+\loc{tools/analysis/python_flow.py; tools/analysis/sanitizers.py; tools/validation/dataflow.py}
+
+\subsection{权限 mode 验证}
+\code{validate_permission_mode} 对有界声明的 chmod mode 性质执行静态语义检查。受支持的常量和路径条件可以产生匹配的 CONFIRMED 或 REFUTED，但相关未解析副作用、绑定变化、未知对象协议和范围失配仍保持未决。
+
+不同资源的权限设置不能彼此抵消；先宽后窄不能证明不存在时间窗口。一个明确调用的位模式证明不覆盖完整目录竞态，也不覆盖整个函数的授权安全。工具在产生实质状态时核对位置、输入前提和 \code{chmod-mode-others-write} 性质，消费端再次核对。
+\loc{tools/validation/permissions.py}
+
+\subsection{动态求值的 AST 探针}
+\code{probe_python_eval} 是有界 AST 解释器的输入控制检查。它在准入的 Python 切片和调用跳数内处理有限参数、常量、局部赋值、分支与返回，具有 256 步解释上限。它不会执行仓库 Python、导入目标模块或调用任意宿主函数。
+
+该工具需要确认具体输入到同一 builtin eval 参数的关系；builtin shadowing、未知外部调用、装饰器、参数展开或未支持构造保持 UNRESOLVED。CONFIRMED 是声明模型下的函数切片见证，不能被扩成完整应用执行或远程输入权限证明。
+\loc{tools/analysis/python_probe.py; tools/validation/probes.py}
+
+\subsection{授权事实、差分与 registered fixtures}
+授权工具提取主体、动作、资源范围、ownership 比较和路由/服务守卫。参数名或不明上游策略不是具体授权证明；没有找到守卫不等于已建立绕过。源码 diff 可以描述两版变更，不能自行确认漏洞或补丁安全。
+
+registered fixture 声明其 subject 和 proof scope，包括性质、candidate/local 覆盖、方法和支持的状态。\code{source_pattern} 方法不能作为充分候选 fixture 证明。一个不匹配的 fixture、另一个 helper 的结果，或者固定 token 夹具的成功，都不能通过通用 CONFIRMED 字段证明任意性质。
+
+项目自有 loopback HTTP 验证比较已声明的授权与未授权响应，且只适配相应 \code{authorization-boundary} 范围。HTTP 状态码不能被注册者文字声明成命令执行或权限证明。其驱动禁用代理与重定向，应用回调置于受限子进程，网络仅保留预绑定本地 listener。
+\loc{tools/validation/authorization.py; tools/validation/comparison.py; tools/validation/fixtures.py}
+
+\subsection{执行隔离的适用假设}
+受控 fixture 和 witness 使用可抛弃的 Linux 子进程，配置有限资源、截止时间、文件描述符及系统调用、文件系统访问约束；隔离不可用时拒绝执行。文件读取需要显式 read roots 或身份绑定的叶子准入；目标侧文件系统写入被禁止。
+
+这些边界为项目拥有、明确注册的有界验证服务提供控制。源码索引、AST 探针、registered callback 与真实目标 worker 具有不同执行模型，不能笼统把它们都称为在同一个通用沙箱里运行。模型接口始终只提出 schema 允许的数据与工具调用。
+\loc{runtime/fixture_isolation.py; runtime/fixture_syscalls.py; runtime/witness/isolation_policy.py}
+
+
+\subsection{为何保留正例和未解析状态}
+对已支持构造，完整正向和否定控制必须继续通过；对未支持构造，结果保留具体缺项。将所有分析统一返回 UNRESOLVED 虽能避免某些假确认，却会抹掉真实能力，违反测试契约。当前验收既要求拒绝错误范围、未知副作用和不匹配来源，也要求充分、匹配的已知语义仍可形成有界结论。完整 Python 异常控制流、任意动态分派和外部库语义没有因此获得完备保证。

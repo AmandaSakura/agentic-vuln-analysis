@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import Field, StrictBool
 
-from cv_agent.domain.types import FrozenModel
+from cv_agent.domain.types import FrozenModel, SnapshotModel
 from cv_agent.domain.chat import ModelToolCall
 
 
@@ -15,7 +15,7 @@ class ValidationStatus(StrEnum):
     REFUTED = "REFUTED"
     UNRESOLVED = "UNRESOLVED"
 
-class ValidationSubject(FrozenModel):
+class ValidationSubject(SnapshotModel):
     # Machine-readable proof obligation; never inferred from identifiers.
     property_id: str | None = None
     input_parameters: tuple[str, ...] = ()
@@ -48,7 +48,7 @@ class FixtureCapability(FrozenModel):
     proof_scope: FixtureProofScope | None = None
 
 
-class ToolObservation(FrozenModel):
+class ToolObservation(SnapshotModel):
     tool: str
     status: Literal["ok", "error", "blocked"]
     content: str

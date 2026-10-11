@@ -1,0 +1,38 @@
+{
+  "schema": "strict-copy-research-adaptation-v1",
+  "before": {
+    "log": "r13-copy-adaptation-before.log",
+    "failed": 13,
+    "passed": 62
+  },
+  "after": {
+    "log": "r13-copy-adaptation-after.log",
+    "passed": 100
+  },
+  "changes": {
+    "neutral_source_view": "validated literal neutral-entry with commit/relative source paths/positive line; no revision role; private original cases retained only in evaluation identity",
+    "callers": [
+      "scenario matrix",
+      "single scripted witness acceptance",
+      "multi-expert scripted witness acceptance"
+    ],
+    "resource_internal_fault": "public copy is rejected; deliberate internal malformed input uses trusted model_construct, apply must still reject before any setrlimit"
+  },
+  "strict_public_copy_unchanged": true,
+  "existing_neutrality_budget_request_assertions_retained": true,
+  "actual_model_requests": 0,
+  "network": false,
+  "third_party_target_execution": false,
+  "source_sha256": {
+    "src/cv_agent/evaluation/datasets/advisory_source.py": "19d3829d58775d775eea9b77a7d3be6d1cf27d53650e64c6b0f9da626f7a1ef6",
+    "src/cv_agent/evaluation/runners/run_witness_scenario_matrix.py": "84b20032d6639e187f43502f57d221a6374cabf666bef7438831f644f163a8c7",
+    "src/cv_agent/evaluation/diagnostics/scripted_witness_acceptance.py": "3b6ce8048a818a629221b3e343c05ac32357ae40b76b82d577b603ed5c5274c5",
+    "src/cv_agent/evaluation/diagnostics/scripted_witness_multiexpert_acceptance.py": "94a55433a458419034ec5d0a25052050ac1f20a1f80840efab9e1f2bea47c882",
+    "tests/test_witness_resource_profiles.py": "24981c2f07fb7ca9a4aebf44c509ee79dd5b5137b980076e7ef63a20d472ccc9",
+    "tests/test_recovery_neutral_source_view.py": "42cd495bc9f7607168571749032810bd46e1ba10f25664d4256f8ef85f17f0e6"
+  },
+  "logs_sha256": {
+    "r13-copy-adaptation-before.log": "5c6609ae7f67b0cd4e1e239bfd902acc2f6e264482db7f8b6bc7cd4699b30a0b",
+    "r13-copy-adaptation-after.log": "3196d8bd4b40ee31d1e6f5c8a00d49a7b0510ce286aea8cbffbc2902b2260c7c"
+  }
+}

@@ -1,0 +1,73 @@
+\section{产品接口、字段与状态速查}
+\subsection{命令行参数}
+\begin{longtable}{L{42mm}L{24mm}L{83mm}}
+\caption{当前产品 CLI 参数。研究命令沿用独立协议，不在此扩张实验授权。}\\
+\toprule 参数 & 默认 / 要求 & 含义\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 参数 & 默认 / 要求 & 含义\\\midrule\endhead
+\cmd{review source_root} & 必需 & 明确选择的本地授权源码根。\\
+\code{--output} & 必需 & 新目录；已存在则拒绝覆盖。\\
+\code{--language} & python & 默认产品只提供 Python；其他语言阻塞。\\
+\code{--observation-bytes} & 8192 & 完整工具观察公共投递池，单位 bytes。\\
+\code{--context-grants} & 无 & 显式 source-grants-v1 manifest。\\
+\code{--context-bytes} & 8192 & 上下文扩展的完整封装预算。\\
+\cmd{doctor source_root} & 必需 & 预检能力和输入，输出 JSON。\\
+\cmd{doctor --language} & python & 预检的语言。\\
+\cmd{doctor --property-id} & 可选 & 预检声明的性质；不推导标签。\\
+\bottomrule\end{longtable}
+\code{review} 仅在 COMPLETED 时返回 0，其他运行态返回 2；\code{doctor} ready 返回 0，非 ready 返回 2。参数语法错误由 argparse 明确处理。harness-check 和 readiness 是研究契约/产物诊断，不能当作 review 的模型旁路。
+
+\subsection{显式 grant manifest}
+以下使用中性路径和解释理由，仅描述接口，不包含漏洞输入：
+\begin{lstlisting}[caption={source-grants-v1 的初始范围与显式扩展。}]
+{
+  "version": "source-grants-v1",
+  "initial": [
+    {"path": "entry.py", "start_line": 1, "end_line": 4,
+     "reason": "selected entry"}
+  ],
+  "extensions": [
+    {"path": "helper.py", "start_line": 1, "end_line": 2,
+     "reason": "explicit helper context"}
+  ]
+}
+\end{lstlisting}
+start/end 是包含端点的正整数。规范路径必须属于授权清单；后续扩展重读字节并核对摘要。每条准入回执包含 admission ID、路径、行号、reason、ADMITTED/REJECTED、reason code 和 delivered bytes。文件名可见不表示该文件其他 span 已准入。
+
+\Needspace{14\baselineskip}
+\subsection{ReviewResult 字段}
+\begin{longtable}{L{45mm}L{104mm}}
+\caption{公共结果的顶层字段与约束。}\\
+\toprule 字段 & 内容和约束\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 字段 & 内容和约束\\\midrule\endhead
+\code{schema_version} & product-review-v1；非法版本拒绝。\\
+\code{profile_id} & product\_triage\_v1；不伪装为研究 E 系统。\\
+\code{run_id/run_state} & 独立运行标识和五种运行态。\\
+\code{identity} & product-identity-v1；源码/分析/视图摘要与可选执行摘要。\\
+\code{findings} & 候选、subject、性质契约、四值状态、事实、缺项、下一步及证据引用。\\
+\code{evidence_receipts} & 原生产者、工具、原验证状态、独立静态投影、方法、范围、投递、内容哈希及产品身份。\\
+\code{capabilities} & 语言、性质、方法、AVAILABLE/UNSUPPORTED/BLOCKED、required、reason 和检查版本。\\
+\code{diagnoses} & 阶段、原因码、消息、责任方、重试政策、必需输入、影响候选及私有日志引用。\\
+\code{scope_admissions} & 每条准入或拒绝的行范围、理由和 bytes。\\
+\code{counts} & 源清单、解析、候选、验证完成、充分证据、未处理、索引及准入文档的独立分母。\\
+\code{accounting} & 模型请求固定 0；工具/物理执行、观察/context bytes、分阶段耗时与可用 token 字段。\\
+\code{artifacts} & 同一次运行的 JSON、Markdown、私有观察等引用。\\
+\bottomrule\end{longtable}
+
+\subsection{回执与诊断的最小解释}
+\code{EvidenceReceipt} 中 \code{observation_id} 是公开引用，\code{producer_id} 是调用身份，\code{content_sha256} 对应原始内容。\code{method_version=tool-contract-v1} 约束方法，\code{coverage=candidate/local} 约束范围。\code{delivered} 不等于执行发生；\code{validation_status} 不等于产品性质状态；\code{accepted_static_status} 只适配注册命令静态逻辑。proof 必须再次通过同 subject、合法方法和完整投递检查。
+
+诊断 stage 取 input、preflight、index、analysis、validation、reduction、presentation 或 runtime；owner 为 user、environment、runtime 或 analyzer；retry policy 为 never、after\_input、after\_environment\_change 或 manual。历史 F1--F6 映射字段可空，不强迫每个产品故障归入模型场景失败。公共诊断保持缺项可行动，内部 traceback 留在私有产物。
+
+\subsection{语义与操作不变量}
+\begin{enumerate}
+\item candidate、subject、性质契约、产品 source 和 analysis 身份一致；纯展示别名不增加权威。
+\item 完整投递、充分范围和合法证明方法是强状态的必要条件；UNKNOWN 不抹去已有充分 proof。
+\item 同身份同完整范围正反 proof 都存在时只能 CONFLICT；局部事实不升级。
+\item parsed + parse\_errors 不超过 source\_files；候选数与 findings 数相等；充分证据数与非 UNKNOWN finding 数一致。
+\item COMPLETED 不允许隐藏解析失败、未处理候选或不可用必需能力；可完整完成一个仍为 UNKNOWN 的验证。
+\item 模型、目标执行、planner、Jev 和早停不属于默认产品；可选能力缺失不阻塞独立静态任务。
+\item 预算投递和上下文扩展先计费成功后更新权威视图；缓存不隐式再执行。
+\item application\_security=NOT\_ASSESSED，remote/public 标志为 false；任何 finding 不证明整个应用安全。
+\end{enumerate}

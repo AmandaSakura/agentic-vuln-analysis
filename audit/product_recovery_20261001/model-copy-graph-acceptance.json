@@ -1,0 +1,63 @@
+{
+  "schema": "public-copy-and-graph-characterization-v1",
+  "issues": {
+    "R08": {
+      "status": "REPAIRED",
+      "before": "r08-before.log",
+      "before_failed": 10,
+      "before_positive_controls_passed": 3,
+      "after": "r08-final-copy.log",
+      "after_passed_with_existing_snapshot_controls": 20,
+      "implementation": "src/cv_agent/domain/types.py::FrozenModel.model_copy",
+      "public_update": "full reconstruction from declared fields; field and cross-field validation; no-update copy semantics retained",
+      "trust_boundary_excludes": [
+        "model_construct",
+        "private reflection",
+        "arbitrary in-process memory mutation"
+      ],
+      "alias_regression": "r08-alias-before.log",
+      "alias_regression_failed": 1,
+      "alias_regression_positive_controls_passed": 15,
+      "alias_after": "r08-alias-after.log",
+      "alias_after_passed": 42,
+      "internal_alias_reconstruction": "native model_validate(by_name=True), current locked Pydantic2.13.5",
+      "latest_implementation_sha256": "66ccc16e36a6bfe8b8aa38ea14dfa7e8058b7ef75dab85d40281ca8166f2e2ea"
+    },
+    "R13": {
+      "status": "CHARACTERIZED_NO_FAILURE",
+      "log": "r13-graph-paths-final.log",
+      "junit": "r13-graph-paths.xml",
+      "passing_cases": 72,
+      "representative_legal_topologies": 70,
+      "role_patterns": 7,
+      "dependency_patterns": 5,
+      "systems": [
+        "E4",
+        "E5"
+      ],
+      "graph_limit": 16,
+      "graph_node_execution_min": 11,
+      "graph_node_execution_max": 14,
+      "expert_execution_min": 8,
+      "expert_execution_max": 10,
+      "fast_nodes_max": 1,
+      "graph_implementation_modified": false,
+      "exhaustive_all_dags": false
+    },
+    "compatibility": {
+      "log": "r08-r13-extended-compatibility.log",
+      "pass_count": 238,
+      "full_suite_owner": "parent after integration"
+    }
+  },
+  "model_requests": 0,
+  "network": false,
+  "third_party_execution": false,
+  "evidence_files": {
+    "r08-after.log": "b8ca048f0946101b9accfffdabe21a0018aba495fc55f437a1d4cb99053365c0",
+    "r08-compatibility.log": "f53e558c0d8ad3c6f8dfdd3b23d6986f9ba6782f8751d7a5360841a8bf13b46e",
+    "r08-before.log": "5acda7962a6365da296962d160742bb4584a4c49d3d1a5fd784d19982cf8cbc8",
+    "r08-final-copy.log": "db3988c5aa61c1f984246df6ea9d0e2032da7e891357d094b54e240a3ea50fe1",
+    "r08-r13-extended-compatibility.log": "b4cdc542af67f08f1cd5718300e5cfdf2dd4e803d4f72db440f12ef8f496bf57"
+  }
+}

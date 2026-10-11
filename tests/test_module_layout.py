@@ -31,7 +31,7 @@ def test_source_tests_and_launchers_import_canonical_modules():
 
 def test_package_root_has_only_public_api_and_cli():
     package = ROOT/'src/cv_agent'
-    assert {path.name for path in package.glob('*.py')} == {'__init__.py', 'cli.py'}
+    assert {path.name for path in package.glob('*.py')} == {'__init__.py', 'cli.py', '__main__.py'}
     assert not (package/'experts').exists()
     assert not (package/'validation_tools').exists()
 

@@ -1,0 +1,24 @@
+{
+  "schema_version": "report-visual-verification-v1",
+  "method": "Independent all-page visual and grayscale review, followed by revised-item recheck and parent review of delivery changes",
+  "independent_review_pages": 49,
+  "final_delivery_pages": 47,
+  "material_issues_corrected": [
+    "Command spaces preserved",
+    "State arrows and labels separated",
+    "Horizontal category axes padded",
+    "Primary chart labels enlarged to about 8.3–9.1 pt",
+    "Short pseudocode boxes kept together",
+    "Table starts and subsection opening blocks kept together",
+    "Section hierarchy restored",
+    "Exact historical bar labels",
+    "Continuation table number and caption repeated"
+  ],
+  "final_polish": [
+    "Attached semantic citation to table caption",
+    "Removed duplicated GP table leaving figure and prose definitions",
+    "Compact bibliography and final prose avoid mostly empty pages"
+  ],
+  "remaining_material_issues": [],
+  "no_clip_or_unresolved_latex_warnings": true
+}

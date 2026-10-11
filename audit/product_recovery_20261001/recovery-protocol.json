@@ -1,0 +1,85 @@
+{
+  "version": "product-recovery-protocol-v1",
+  "frozen_date": "2026-10-01",
+  "purpose": "Prospective narrow static trial; observed engineering controls are separate from missing human evaluation",
+  "profile": "product_triage_v2",
+  "default_profile_changed": false,
+  "old_protocols_and_results_overwritten": false,
+  "release_class": "ENGINEERING_TRIAL_ONLY",
+  "historic_gates": {"G_A": "NO", "GP2": "NOT_ENABLED", "GP3": "NOT_MEASURED", "GP4": "NOT_MEASURED"},
+  "scope": {
+    "input": "Explicit user-owned local Python source; no protected evaluation roots",
+    "positive_and_negative_property": "Existing exact-candidate bounded static contracts, including literal-in-call chmod mode",
+    "named_mode_variable_assignment": "NOT_SUPPORTED; retain UNKNOWN even if a human knows the integer",
+    "other_syntax": "Review lead or unresolved unless existing complete registered semantics establish the stated property",
+    "excluded_claims": ["whole-application-security", "public-entry-reachability", "remote-authority", "held-out-detection-rate", "overall-false-positive-rate"],
+    "model_requests": 0,
+    "target_executions": 0,
+    "scratch_and_native_build": "NOT_ENABLED",
+    "R17_optional_model": "NOT_ENABLED"
+  },
+  "engineering_resource_policy": {
+    "version": "product-resource-limits-v2",
+    "max_files": 1000,
+    "max_source_bytes": 10485760,
+    "max_candidates_analyzed": 1000,
+    "max_ast_nodes": 200000,
+    "max_record_bytes": 67108864,
+    "max_single_tool_output_bytes": 2097152,
+    "wall_seconds": 120,
+    "cpu_soft_seconds": 120,
+    "cpu_hard_seconds": 121,
+    "address_space_bytes": 1073741824,
+    "platform": "Linux",
+    "rss_is_separately_measured": true,
+    "all_within_cap_inputs_guaranteed_complete": false,
+    "verify_and_view_have_review_worker_caps": false,
+    "unknown_inventory_after_early_stop": "Explicit incomplete inventory; unenumerated remainder is unknown, not zero"
+  },
+  "engineering_controls": {
+    "source": "Separate agent-designed neutral source fixtures; references never enter detector input",
+    "count": 36,
+    "reference_groups": {"positive": 12, "negative": 12, "unknown_or_reject": 12},
+    "reference_file": "quality_reference.json",
+    "references_rewritten_to_match_output": false,
+    "not_human_independent_quality": true,
+    "status": "ENGINEERING_ONLY; final release receipts determine exact output",
+    "any_incorrect_strong_state_blocks_trial": true,
+    "every_known_supported_control_required": true,
+    "unsupported_construct_miss_is_reported": true
+  },
+  "human_quality_protocol": {
+    "status": "NOT_RUN_MISSING_AUTHORIZED_REPOSITORIES_AND_REVIEWERS",
+    "at_least_new_authorized_repositories": 2,
+    "nonimplementing_human_controls": {"supported_positive": 12, "supported_negative": 12, "unknown_or_reject": 12},
+    "requirements": ["freeze actual supported constructs and references before execution", "preserve disagreements, failures, missing inputs and timeouts", "keep labels outside CLI source and prompts", "report repository tasks separately from synthetic controls", "no FPR or accuracy without matching negative references"]
+  },
+  "human_task_and_value_protocol": {
+    "status": "NOT_RUN_MISSING_AUTHORIZED_REPOSITORIES_AND_REVIEWERS",
+    "usability_readthrough": {"repositories": 2, "reviewers": 2, "effect_claim_allowed": false},
+    "exploratory_comparison": {"repositories": 6, "reviewers": 4, "unit": "repository", "formal_sample_size": "requires future pilot variance and target precision"},
+    "arm_A": "Current human and existing-tool workflow",
+    "arm_B": "Same workflow plus the frozen cv-agent report",
+    "equal_source_access": true,
+    "same_person_repeats_same_task_in_both_arms": false,
+    "allocation": "Different reviewers for each task's arms, rotate allocation across different tasks; stratify complexity before results",
+    "recorded_measures": ["correct task completion", "serious factual error", "misleading recommendation", "human seconds", "first exact location time", "additional input rounds", "block reason", "final maintainer decision", "failure or timeout"],
+    "predeclared_continuation_targets": {
+      "serious_misleading_strong_conclusions": 0,
+      "completion_quality_below_baseline": false,
+      "repository_level_median_time_saving_fraction_at_least": 0.20,
+      "top_10_actionable_next_step_fraction_at_least": 0.70
+    },
+    "targets_are_results": false,
+    "no_significance_or_generalization_claim_from_small_pilot": true,
+    "quality_improves_but_time_increases": "User decides task value from costs; no automatic benefit declaration",
+    "narrow_property_only_benefit": "Retain narrow-use release scope"
+  },
+  "gate_decisions": {
+    "PR0": "Clean-install component is measurable; actual user failure and user-environment minimum task remain missing",
+    "PR1": "Engineering evidence/invariants only; actual independent human quality remains missing",
+    "PR2": "NOT_MEASURED",
+    "PR3": "NOT_MEASURED"
+  },
+  "stopping_rules": ["No new real model API or target-execution experiment in this recovery task", "Do not enable R17 while PR2/PR3 are unmeasured", "Do not change thresholds after seeing pilot results; create a new protocol version", "Do not replace failed, timed-out, disputed or unsupported controls with convenient successes", "Do not count candidates as independent repository samples"]
+}

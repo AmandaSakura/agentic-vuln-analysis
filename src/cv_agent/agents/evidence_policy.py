@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from dataclasses import dataclass
+from typing import Literal
 
 from cv_agent.domain.evidence import (
     FixtureProofScope,
@@ -12,7 +14,7 @@ from cv_agent.domain.evidence import (
     ValidationStatus,
     ValidationSubject,
 )
-from cv_agent.domain.review import AgentExpertConclusion
+from cv_agent.domain.review import AgentExpertConclusion, AgentExpertVote, ValidationTaskExecution
 from cv_agent.domain.validation_protocol import PREPARATION_METADATA_KEY, ValidationPreparation
 from cv_agent.tools.identity import local_source_line
 
@@ -30,6 +32,107 @@ class IncompleteValidationTaskError(ValueError):
     def __init__(self, message: str, *, missing_validators: tuple[str, ...] = ()):
         super().__init__(message)
         self.missing_validators = tuple(missing_validators)
+
+
+GLOBAL_BALLOT_ADMISSION_VERSION = "global-evidence-v2"
+
+
+@dataclass(frozen=True)
+class AcceptanceDecision:
+    """Read-only projection of the existing candidate proof qualification.
+
+    This is not a ballot and does not replace cross-observation conflict,
+    citation, task-completion or prediction admission checks.
+    """
+
+    version: str
+    admissible: bool
+    direction: Literal["SUPPORT", "REFUTE"] | None
+    method: str
+    coverage: Literal["candidate", "local"]
+    delivered: bool
+    reasons: tuple[str, ...]
+    subject: ValidationSubject
+    original_validation_status: ValidationStatus | None
+    accepted_static_status: Literal["CONFIRMED", "REFUTED"] | None
+
+
+def acceptance_decision(observation: ToolObservation, subject: ValidationSubject) -> AcceptanceDecision:
+    """Describe proof eligibility using only the established shared rules."""
+    delivered = not (observation.metadata.get("observation_truncated")
+                     or observation.metadata.get("model_payload_suppressed"))
+    matched = _matches_validator_subject(observation, subject)
+    method = "source_pattern"
+    coverage = "local"
+    static_status = None
+    if observation.fixture_proof is not None:
+        method = observation.fixture_proof.method
+        coverage = observation.fixture_proof.coverage if matched else "local"
+    elif observation.tool == "validate_permission_mode":
+        method, coverage = "complete_static_analysis", "candidate" if matched else "local"
+    elif observation.tool == "probe_python_eval":
+        method, coverage = "ast_model", "candidate" if matched else "local"
+    elif observation.tool == "inspect_command_construction":
+        method = "complete_static_analysis"
+        if delivered and observation.status == "ok" and observation.subject == subject:
+            static_status = {"UNSANITIZED": "CONFIRMED", "SANITIZED": "REFUTED"}.get(
+                _command_status(observation, subject))
+            if static_status is not None:
+                coverage = "candidate"
+    elif observation.tool == "read_span":
+        method = "source_read"
+    status = ValidationStatus(static_status) if static_status else observation.validation_status
+    reasons = []
+    if observation.subject != subject:
+        reasons.append("subject_mismatch")
+    if observation.status != "ok":
+        reasons.append("observation_not_successful")
+    if not delivered:
+        reasons.append("observation_not_completely_delivered")
+    if coverage != "candidate":
+        reasons.append("candidate_coverage_not_established")
+    if method in {"source_pattern", "source_read"}:
+        reasons.append("context_is_not_property_proof")
+    if status not in {ValidationStatus.CONFIRMED, ValidationStatus.REFUTED}:
+        reasons.append("property_direction_not_established")
+    admissible = not reasons
+    direction = ({ValidationStatus.CONFIRMED: "SUPPORT", ValidationStatus.REFUTED: "REFUTE"}.get(status)
+                 if admissible else None)
+    return AcceptanceDecision(version="observation-admission-v1", admissible=admissible,
+        direction=direction, method=method, coverage=coverage, delivered=delivered,
+        reasons=tuple(reasons), subject=subject, original_validation_status=observation.validation_status,
+        accepted_static_status=static_status)
+
+
+def revalidate_global_ballots(
+    votes: list[AgentExpertVote], executions: list[ValidationTaskExecution],
+    initial_evidence_ids: frozenset[str], subject: ValidationSubject,
+) -> tuple[list[AgentExpertVote], tuple[str, ...]]:
+    """Recheck final material ballots against every actually delivered fact.
+
+    Task records preserve proposals admitted at the time. Observations, usage
+    and producer identity stay intact; invalid protocols are explicit errors.
+    """
+    trace = [step for execution in executions for step in execution.vote.trace]
+    checked = []
+    rejected = []
+    for vote in votes:
+        if vote.label == "ABSTAIN":
+            checked.append(vote)
+            continue
+        try:
+            validate_conclusion(vote, trace, initial_evidence_ids,
+                                current_trace=list(vote.trace), subject=subject)
+        except InsufficientEvidenceError as error:
+            reason = f"{GLOBAL_BALLOT_ADMISSION_VERSION}: {error.reason_code}: {error}"
+            rejected.append(f"{vote.expert}: {error.reason_code}")
+            checked.append(vote.model_copy(update={
+                "label": "ABSTAIN", "validation_status": ValidationStatus.UNRESOLVED,
+                "confidence": 0.0, "rationale": reason[:360],
+            }))
+        else:
+            checked.append(vote)
+    return checked, tuple(rejected)
 
 
 def validation_preparation(observation: ToolObservation) -> ValidationPreparation | None:

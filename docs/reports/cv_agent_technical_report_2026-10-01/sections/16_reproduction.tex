@@ -1,0 +1,45 @@
+\section{复现、产物目录与事实更新}
+\subsection{可直接复用的默认产品入口}
+在项目 uv 环境中，\code{doctor} 给出能力与输入诊断，\code{review} 生成离线结果。选择拥有或明确授权的本地 Python 源码，输出目录应尚不存在：
+\begin{lstlisting}[language=bash,caption={默认静态产品入口；路径由使用者明确选择。}]
+uv run --no-sync cv-agent doctor /path/to/authorized/source
+uv run --no-sync cv-agent review /path/to/authorized/source \
+  --output /path/to/new-review-run
+\end{lstlisting}
+默认观察预算 8192 bytes，可显式设置；初始范围与扩展通过 grants 文件声明，字段见附录。命令没有默认目标执行或真实模型调用。真实模型研究入口仍遵守完整 pytest gate、独立实验授权、请求账本和数据角色。
+
+\subsection{本报告的构建}
+源码包包括 \code{main.tex}、分节正文、\code{references.bib}、规范数据、矢量图的 PDF/PGFPlots 源码及构建脚本。字体使用已安装的 Source Han Serif SC、Noto Sans SC 和 TeX Gyre；伪代码框由 tcolorbox 编排。图中数值来自冻结回执，不从截图读数。引用的 OneReason 只提供单栏技术报告版式参考。\citep{onereason}
+
+\begin{lstlisting}[language=bash,caption={从项目根目录编译；不安装依赖、不开启 shell escape。}]
+python3 docs/reports/cv_agent_technical_report_2026-10-01/scripts/build.py
+# Optional: regenerate only vector charts from the frozen report_data.json
+python3 docs/reports/cv_agent_technical_report_2026-10-01/scripts/plot_figures.py
+\end{lstlisting}
+构建运行 XeLaTeX、BibTeX 和稳定交叉引用所需重复编译。不会运行检测器、模型或 witness。重新收集项目数据是独立离线操作，\code{scripts/collect_data.py} 从既有回执及当前源码统计生成数据，测试用例数读取已归档的 collect-only 日志；它不自动替换报告结论或重跑历史模型实验。
+
+\subsection{来源与复核文件}
+\begin{longtable}{L{76mm}L{73mm}}
+\caption{报告事实的主要来源；路径相对项目根。已收集输入与逐 CLI 结果的 SHA-256 在 data/report\_data.json，文档产物哈希另记于构建回执。}\\
+\toprule 文件或目录 & 用途\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 文件或目录 & 用途\\\midrule\endhead
+\code{audit/design_review_20260930/baseline.json} & 核查基线、初始失败与已有文件保护。\\
+\code{audit/design_review_20260930/verification.md} & 已复现问题、正反控制、边界和失败解释。\\
+\code{audit/design_review_20260930/tasks.json} & T00--T14 实际文件、命令和前后日志。\\
+\code{audit/design_review_20260930/acceptance.json} & 完整套件、harness、34 项验收及 GP 状态。\\
+\code{audit/design_review_20260930/cli-acceptance.json} & 七个实际 console 用例的状态、计数与墙钟。\\
+\code{audit/design_review_20260930/transport-guard.json} & HTTP/socket/live gate 的拒绝式零尝试控制。\\
+\code{audit/design_review_20260930/final-source-manifest.json} & 修复工作树源码清单。\\
+\code{.hermes/plans/2026-09-30-E-iter-results.json} & 四格请求、token、物理场景与失败归因。\\
+\code{.hermes/plans/2026-09-30-G-A-decision.json} & 原门槛的正式 NO 和不计入救回的范围。\\
+\code{.hermes/plans/2026-09-30-remaining-work-final-summary.json} & K2、历史分阶段账本和来源修正。\\
+\code{.hermes/plans/2026-09-30-product-increment-preregistration.json} & 尚未执行的 GP3/GP4 前瞻协议。\\
+\code{docs/reports/cv_agent_technical_report_2026-10-01/data/report_data.json} & 本文数字、聚合源码摘要与输入文件哈希。\\
+\code{artifacts/technical_report_20261001/build_receipt.json} & 本报告源码/PDF 哈希、结构与编译/视觉验证。\\
+\bottomrule\end{longtable}
+
+\subsection{文档复核与更新纪律}
+LaTeX 编译、数值核对和 PDF 渲染审查验证这份文档能被阅读与追溯，不是模型实验准入回执。完整测试 2684 passed 属于本次报告引用的已归档最终修复源码，报告工作不修改分析源代码，也不使用历史 pass stamp 发出请求。
+
+本轮检索并下载公开版式参考；项目层面没有新增模型 API 实验、目标执行或安装。旧报告与审查 PDF 原样保留。后续更新保留原请求、失败日志、来源披露和门槛决策。

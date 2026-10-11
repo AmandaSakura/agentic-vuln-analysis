@@ -1,0 +1,55 @@
+\section{数据契约、快照与四种身份}
+\label{sec:identity}
+\subsection{从结构合法到事实稳定}
+Pydantic 的冻结模型约束字段赋值，但字段内部的可变容器仍可能由外部别名修改。修复前，将同一个嵌套字典交给候选、文档或 subject 后再修改该字典，可以改变已建立的语义身份。这是已复现的程序缺陷，不是抽象风险。当前 \code{SnapshotModel} 对构造和 \code{model_copy} 的嵌套字典、列表封存，并对公开读取返回深复制。\code{Candidate}、\code{CodeDocument}、\code{ValidationSubject} 和 \code{ToolObservation} 继承这一行为。普通 JSON 类型和原有序列化摘要保持兼容。
+
+这一保证适用于声明的公共数据接口。它没有将同进程 Python 对象变成能抵抗任意反射、私有 \code{__dict__} 修改或内存篡改的安全容器。其他 \code{FrozenModel} 的字段赋值限制也不能自动解释为任意嵌套对象深层不可变。回归用例分别覆盖外部输入别名、公开读取、复制更新和源码身份的正反控制。
+\loc{domain/types.py::SnapshotModel; domain/evidence.py; application/identity.py}
+
+\begin{longtable}{L{38mm}L{111mm}}
+\caption{跨研究与产品路径的核心数据对象。}\\
+\toprule 对象 & 含义与权威边界\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 对象 & 含义与权威边界\\\midrule\endhead
+\code{Candidate} & 中性候选身份、仓库、路径、行号、query、性质、范围、输入和前提；标识不编码期望标签。\\
+\code{CodeDocument} & 源码切片及解析结构：定义、调用、导入、路由、别名和重绑定；解析能力不等于动态语义覆盖。\\
+\code{ValidationSubject} & 候选、源码索引摘要、位置、性质、范围和前提的共同证明对象。\\
+\code{ToolObservation} & 原始工具状态、内容、引用、元数据、验证状态和 subject；仅生产者声明的有界语义可参与准入。\\
+\code{EvidenceReceipt} & 产品的投递、原生产者、内容摘要、方法、覆盖范围与身份回执；保留原验证器状态。\\
+\code{FindingView} & 性质契约、四值状态、事实、证据引用、缺项及下一步；应用安全固定未评估。\\
+\code{ReviewResult} & 同一次运行的身份、finding、能力、诊断、范围准入、分母、费用与产物引用。\\
+\code{AgentExpertVote} & 研究专家的标签、置信度、验证状态、引用角色、轨迹和用量；经过准入后才能投票。\\
+\code{AgenticVerdict} & 研究的最终路径、最终票、原始任务执行、阻塞、检索准入、共享观察计数和总用量。\\
+\bottomrule
+\end{longtable}
+
+\subsection{旧 subject 摘要与产品字节身份同时保留}
+研究与已有 fixture 共用的 \code{candidate_subject(index,candidate)} 对按路径排序的文档模型作规范 JSON 序列化，计算 SHA-256。它覆盖被索引的文本和元数据；适配器提供的 \code{source_sha256} 也参与摘要。Java 方法文档包含完整文件摘要；其他格式不因此自动获得同样的完整文件保证。修复没有静默替换这个历史算法。
+
+新产品另外定义以下身份，避免将源码内容、分析规则、执行环境和可见上下文混成一个摘要：
+\begin{align}
+H_s &= H(\texttt{source-bytes-v1},\operatorname{sort}\{(p,H(\operatorname{bytes}(p)))\}),\\
+H_a &= H(\texttt{analysis-contract-v1},\text{profile, contracts, rules, budgets, code, parser}),\\
+H_e &= H(\texttt{approved-execution-v1},\text{trusted environment manifest}),\\
+H_v &= H(\texttt{retrieval-view-v1},\operatorname{sort}\{(p,l_0,l_1)\}).
+\end{align}
+$H$ 的实现是带算法名的规范 JSON SHA-256；非有限浮点数被拒绝。$H_s$ 使用授权根内 Python 文件的完整原始字节，编码差异、helper 与 import 所在文件的变化都能改变清单；不可读取文件的摘要显式为 null，并通过诊断说明。路径要求规范根相对形式，拒绝绝对路径、父目录跳转和反斜线别名。
+
+$H_a$ 将分析实现和实际 Python、parser、Pydantic 版本纳入绑定，同时包含 profile、性质契约、规则及预算/排除政策。它绑定的是分析所依赖的实现范围，不是整个 Git 仓库的提交哈希。全仓源码清单另在报告数据中保存。默认静态产品 $H_e=\mathrm{null}$；有一个执行环境摘要函数不表示当前产品启用了执行。扩大获准行范围可以改变 $H_v$，在源码和分析配置相同时保持 $H_s,H_a$ 不变。
+
+\begin{table}[htbp]\centering\small
+\begin{tabularx}{\textwidth}{L{35mm}L{40mm}Y}
+\toprule 变化 & 必须失效的身份 & 不应作出的推断\\\midrule
+同一文件字节、helper 或 import 改变 & 源码字节身份 & 路径相同不表示证据仍有效。\\
+分析规则、实现、parser 或预算改变 & 分析契约身份 & 工具名相同不表示语义相同。\\
+获准行范围增加 & 视图版本 & 可见 helper 不表示已绑定运行时 callee。\\
+可信环境清单改变 & 执行身份（如启用） & 静态结果不建立执行环境证明。\\
+增加 citation 别名或专家角色 & 不增加原生产者 & 引用数量不表示独立证据数量。\\
+\bottomrule\end{tabularx}
+\caption{身份变化与失效关系。行范围和分析身份的分离以分析配置不变为前提。}
+\end{table}
+
+\subsection{结果构造阶段的交叉检查}
+\code{ReviewResult} 拒绝重复 finding 和 observation 引用，校验候选分母、充分证据数量与性质状态，并要求强状态的回执匹配当前产品源码与分析身份。\code{FindingView} 的候选、subject 和性质契约必须一致；契约必须等于当前注册版本。缺引用、错误 source、错误 analysis、非法计数和手写强状态都不能只凭 JSON 格式合法通过。
+
+这些检查将身份约束从工具调用点延伸到最终产物，降低 presentation 或外部消费方误组装结果的可能性。它们不能证明生产者实现没有缺陷；生产者的有界语义还需要回归控制和独立审查。\citep{contract,productguide,acceptance}

@@ -240,20 +240,27 @@ class OpenAICompatibleChatModel:
         messages: Sequence[ChatMessage],
         tools: Sequence[dict[str, Any]],
     ) -> ModelReply:
+        gate_started = time.monotonic()
         require_passing_tests()
+        gate_seconds = time.monotonic() - gate_started
         token = _request_id.set(uuid4().hex)
         try:
             self._observe({
                 "event": "model_start",
                 "messages": [message.model_dump(mode="json") for message in messages],
                 "tools": list(tools),
+                "phase_timings": {"gate_seconds": gate_seconds},
             })
+            model_started = time.monotonic()
             try:
                 reply = self._complete(messages, tools)
             except BaseException as error:
-                self._observe({"event": "model_error", "error_type": type(error).__name__, "error": str(error)})
+                self._observe({"event": "model_error", "error_type": type(error).__name__,
+                               "error": self._redact_text(str(error)),
+                               "phase_timings": {"model_seconds": time.monotonic() - model_started}})
                 raise
-            self._observe({"event": "model_reply", "reply": reply.model_dump(mode="json")})
+            self._observe({"event": "model_reply", "reply": reply.model_dump(mode="json"),
+                           "phase_timings": {"model_seconds": time.monotonic() - model_started}})
             return reply
         finally:
             _request_id.reset(token)
@@ -262,10 +269,12 @@ class OpenAICompatibleChatModel:
         if self.observer is not None:
             self.observer({**event, 'request_id': _request_id.get()})
 
+    def _redact_text(self, text: str) -> str:
+        return text.replace(self._api_key, "[REDACTED]") if self._api_key else text
+
     def _record_response(self, raw: object) -> tuple[dict[str, Any], object]:
         safe = json.dumps(raw, ensure_ascii=False)
-        if self._api_key:
-            safe = safe.replace(self._api_key, "[REDACTED]")
+        safe = self._redact_text(safe)
         redacted = json.loads(safe)
         summary = ({key: redacted[key] for key in ("id", "model", "usage", "error") if key in redacted}
                    if isinstance(redacted, dict) else {"response_type": type(redacted).__name__})
@@ -307,8 +316,7 @@ class OpenAICompatibleChatModel:
                 raw = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as error:
             detail = error.read(4_096).decode("utf-8", errors="replace")
-            if self._api_key:
-                detail = detail.replace(self._api_key, "[REDACTED]")
+            detail = self._redact_text(detail)
             self._observe({'event': 'model_http_error', 'status_code': error.code})
             try:
                 payload = json.loads(detail)
@@ -324,7 +332,7 @@ class OpenAICompatibleChatModel:
                            'summary': {'response_type': 'invalid_json_or_encoding'}})
             raise
         except (urllib.error.URLError, TimeoutError) as error:
-            raise RuntimeError(f"model endpoint request failed: {error}") from error
+            raise RuntimeError(self._redact_text(f"model endpoint request failed: {error}")) from error
 
         # Record usage before validating content, tool JSON, or the reply schema.
         summary, raw = self._record_response(raw)

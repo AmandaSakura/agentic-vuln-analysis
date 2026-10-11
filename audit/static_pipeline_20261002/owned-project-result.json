@@ -1,0 +1,9 @@
+{
+  "status": "OWNED_STATIC_ROLLOUT_STOPPED",
+  "error_type": "AssertionError",
+  "run": "artifacts/owned_static_rollout_20261002/32fd6fd6e3e44c579d18603344f58a7a",
+  "model_requests": 0,
+  "target_executions": 0,
+  "whole_application_security_assessed": false,
+  "finished_at": "2026-10-02T00:57:32.648713+00:00"
+}

@@ -434,6 +434,10 @@ FULL_SYSTEM_HARNESS = EndToEndHarness(
 
 
 COMMAND_POLICIES = (
+    CommandPolicy(command="review", kind="product-review", claim_eligible=False),
+    CommandPolicy(command="doctor", kind="harness", claim_eligible=False),
+    CommandPolicy(command="verify", kind="harness", claim_eligible=False),
+    CommandPolicy(command="view", kind="product-review", claim_eligible=False),
     CommandPolicy(command="harness-check", kind="harness", claim_eligible=False),
     CommandPolicy(command="readiness", kind="harness", claim_eligible=False),
     CommandPolicy(command="synthetic", kind="diagnostic", claim_eligible=False),

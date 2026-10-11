@@ -1,0 +1,62 @@
+{
+  "task_id": "T00",
+  "status": "DONE",
+  "head": "4dba622db459d4487bc8493b9af3a6a5f40a3387",
+  "report_baseline_matches_head": true,
+  "python_version": "3.13.5 (main, Jul 23 2025, 00:37:22) [Clang 20.1.4 ]",
+  "installed_dependencies": {
+    "pydantic": "2.13.5",
+    "langgraph": "1.2.11",
+    "pytest": "9.1.1",
+    "tree-sitter": "0.25.2"
+  },
+  "initial_dirty_paths": [
+    " M .hermes/plans/2026-09-30-remaining-work-final-summary.json",
+    " M docs/README.md",
+    "?? docs/reports/cv_agent_design_review_and_repair_plan_2026-09-30.pdf",
+    "?? docs/reports/cv_agent_technical_report_2026-09-30.pdf",
+    "?? docs/reports/cv_agent_technical_report_2026-09-30.tex"
+  ],
+  "initial_file_sha256": {
+    ".hermes/plans/2026-09-30-remaining-work-final-summary.json": "e6bd7ea46a947f4205bcab8548ee50c165235ebe615aae448aedac5fceab1a0e",
+    "docs/README.md": "5dd0d1ee04e8e38c7cc4b465b0d05654febe9373893e2bba1202f8c0bb223e9b",
+    "docs/reports/cv_agent_design_review_and_repair_plan_2026-09-30.pdf": "e4fbc3115ca527c57c10e616eb505f808a19928683c420354b28c265a580935c",
+    "docs/reports/cv_agent_technical_report_2026-09-30.pdf": "0e4c69cc71e8b38083b63f20a63e88f3ba56a3e3b72f285f28e31780eb41d29a",
+    "docs/reports/cv_agent_technical_report_2026-09-30.tex": "f6d3811658abb9802a320569b42040efbaf5e7da935eee69b4eebdc818e22b57"
+  },
+  "locked_dependencies": {
+    "langgraph": "1.2.11",
+    "pydantic": "2.13.5",
+    "pytest": "9.1.1",
+    "tree-sitter": "0.25.2"
+  },
+  "test_collection_exit_code": 0,
+  "collected_tests": 2562,
+  "collection_log": "artifacts/design_review_repair_20260930/baseline_collection.log",
+  "conditional_test_markers": [
+    {
+      "path": "tests/test_langchain_pair_reproduction.py",
+      "test": "test_langchain_isolated_probe_differential_outcomes",
+      "marker": "pytest.mark.skipif(not (PYTHON_ENV_BIN.exists() and VULN_CHECKOUT.is_dir() and FIXED_CHECKOUT.is_dir()), reason='Diagnostic langchain checkouts or python env missing')"
+    },
+    {
+      "path": "tests/test_langchain_pair_reproduction.py",
+      "test": "test_reproduce_pair_creates_valid_artifacts",
+      "marker": "pytest.mark.skipif(not (PYTHON_ENV_BIN.exists() and VULN_CHECKOUT.is_dir() and FIXED_CHECKOUT.is_dir()), reason='Diagnostic langchain checkouts or python env missing')"
+    }
+  ],
+  "live_model_requests": 0,
+  "protected_evaluation_contents_read": false,
+  "baseline_full_suite_log": "artifacts/design_review_repair_20260930/baseline_full_pytest.log",
+  "baseline_full_suite_exit_code": 1,
+  "baseline_full_suite_result": {
+    "passed": 2560,
+    "failed": 2,
+    "seconds": 478.78
+  },
+  "baseline_failed_tests": [
+    "tests/test_documentation_layout.py::test_documentation_root_has_only_current_guides",
+    "tests/test_witness_worker_cleanup.py::test_timeout_group_disappearing_during_kill_preserves_diagnostic"
+  ],
+  "plan_path": ".hermes/plans/2026-09-30-design-review-repair.md"
+}

@@ -13,7 +13,7 @@ from pydantic import Field, model_validator
 
 from cv_agent.domain.types import Candidate, FrozenModel
 from cv_agent.evaluation.datasets.advisory_source import (
-    build_pair_input, case_identity, require_clean_checkout,
+    NeutralDetectorSourceCase, build_pair_input, case_identity, require_clean_checkout,
 )
 from cv_agent.evaluation.datasets.composition import load_advisory_config
 from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
@@ -138,7 +138,7 @@ def prepare_cells(root: Path, config: ScenarioMatrixConfig, *,
             # Evaluation identities and revision labels remain private to the
             # journal. Source paths are the same repository-relative paths on
             # both versions; no a/b aliases or commit directories reach prompts.
-            neutral = case.model_copy(update={"case_id": "neutral-entry"})
+            neutral = NeutralDetectorSourceCase.from_case(case)
             index, candidate, hashes = build_pair_input(
                 root, pair, neutral,
                 include_scenario_assumptions=origin == "dataset_provided",

@@ -1,0 +1,90 @@
+\section{研究系统变体、计划与 ReAct}
+\subsection{E1--E5 的受控差异}
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{L{12mm}L{23mm}L{18mm}L{42mm}Y}
+\toprule 系统 & 检索 & Planner & 专家 & 最终规则\\\midrule
+E1 & local & 关闭 & scan & 单票\\
+E2 & text & 关闭 & scan & 单票\\
+E3 & graph & 关闭 & scan & 单票\\
+E4 & graph & 开启 & scan、taint、authz & 完整 quorum\\
+E5 & graph & 开启 & scan、taint、authz & 前两张最终票可尝试早停；否则完整 quorum\\
+\bottomrule
+\end{tabularx}
+\caption{当前 E 系列默认定义。真实运行使用独立声明的模型与实验配置。}
+\end{table}
+
+V1--V5 是保留的确定性开发基线，其专家规则、预算和输出不等同 E 系列真实模型循环。V 系列、synthetic 和 scripted 结果用于机制对照，不能充当 live 模型结果。
+
+\subsection{三种专家职责}
+scan 检查源码结构、候选操作和适用的受控验证；taint 分析输入到消费边界的来源、传递、转换与缺边；authz 分析主体、动作、资源或租户、守卫与执行位置。不同任务允许的工具来自各自 Harness，不能让一个不适用专家为了凑票而强行输出实质判断。
+
+各专家可以共享被合法投递的依赖观察，但必须自行形成结构化结论。专家角色不同不意味着其数据或证据统计独立。共享见证的票数和原始见证观察数在结果中另行记账。
+
+默认 E4/E5 使用固定专家集合。可选 \code{applicable_v1} 将适用性表示为 applicable、not applicable 或 undetermined；明确计划任务仍必须执行，未能排除的专家仍保留。可选政策不会降低 quorum：适用专家不足两名时返回弃权。它是单独实验选项，不能默默替换固定基线。
+\loc{harness/defaults.py; agents/applicability.py}
+
+\subsection{类型化计划与确定性义务}
+\code{ValidationPlan} 要求至少一个可执行任务，任务标识唯一，目标、专家、验证器和成功条件非空。依赖必须引用之前出现的已知任务，因此提交的计划本身具有拓扑顺序；未知和前向依赖直接拒绝。
+
+计划不是任意自然语言待办表。policy 层推导必要验证义务：符合完整候选性质范围的 registered fixture 可以替代对应命令检查；适用见证可生成独立 witness 任务，并让后续命令分析依赖其完成；权限 mode 的必要验证义务仍单独保留。任务必须使用专家可调用且已注册的验证器。
+
+\code{compose_plan} 将政策锁定任务和合法外部提案组合，记录 policy、jev 或 llm 来源。成功条件描述要完成的取证动作，不能被解释为已经满足了漏洞成功标准。
+\loc{agents/planning.py; agents/plan_policy.py; domain/review.py::ValidationPlan}
+
+\subsection{LangGraph 的实际执行方式}
+当前图注册 retrieve、plan、scan、taint、try\_fast、authz 和 adjudicate 节点。从 retrieve 到 plan 后，由当前依赖状态选择下一节点。图不是把三名专家无条件同时启动的固定并行流程。
+
+就绪任务需要其所有依赖的 \code{validator_completed=true}，声明专家顺序只对多个就绪任务作 tie-break。某个专家可以在其他专家执行后恢复；同一专家各子任务的中间判断都保存在 task executions，直到自身全部任务处理完，才使用最后的累积判断生成一张最终票。
+
+\begin{pseudocode}{alg:schedule}{保留研究路径的依赖调度}
+\Pinput{类型化计划、任务执行记录、专家顺序、既有同专家预算}
+\Poutput{下一任务或有限终止，以及每位专家至多一张最终票}
+\Pstep{从执行记录取得 validator\_completed=true 的任务集合。}
+\Pstep{传播未完成的必需依赖，建立 blocked tasks。}
+\Pstep{找出尚未执行且全部依赖完成的任务，按专家顺序作 tie-break。}
+\Pstep{执行一个就绪 ReAct 子任务，记录观察、验证完成与累计成本。}
+\Pstep{专家全部子任务处理后，生成一张累积最终票。}
+\Pstep{在 fast/slow 判定前，以所有已收到相关观察重新准入实质票。}
+\Pstep{无可运行任务、达到业务限额或存在必需阻塞时，按协议有限收尾。}
+\end{pseudocode}
+
+终止与验证完成分别记录。合法 ABSTAIN 可以结束一个任务，但如果必需验证器没有完成，依赖任务仍被阻塞；一个已经完成而结果为 UNRESOLVED 的验证器可满足调度依赖，却不会因此支持实质漏洞判断。有阻塞必需任务时，工作流最终弃权。
+\loc{agents/workflow.py::_next_task; agents/workflow.py::_blocked_tasks}
+
+
+\subsection{从模型动作到最终 JSON}
+ReAct 输入包含专家 mandate、任务提示、允许工具 schema、最终输出 schema、剩余观察预算和必需验证器。每一步模型可请求类型化工具，或提交最终 JSON。工具结果经过运行时引用生成、投递裁剪及状态封装后，以 tool message 返回给模型。
+
+最终 JSON 需要通过 schema、专家身份、引用、验证完成与证据准入检查。模型提出的 VULNERABLE 或 SAFE 不是最终获准的票；拒绝原因会作为结构化反馈进入有限的剩余循环。所有已发送模型请求仍计入用量。
+\loc{agents/react.py; domain/chat.py}
+
+\subsection{工具边界的处理顺序}
+注册表首先检查剩余观察预算，再检查专家工具 allowlist、注册与可用性、输入 schema、任务绑定的 fixture ID 和重复调用。执行器只接受已注册工具及数据型参数，不提供任意模型生成 shell 命令的运行接口。
+
+同一子任务中，相同工具名和规范化参数若已成功执行，或生产者已完成，不再次物理执行。后续重复得到 blocked 观察并指向先前引用。重复执行记忆基于\textbf{执行事实}，不能因为先前结果在投递时被裁剪而遗忘。另一个子任务有自身 scope，仍可执行其分配的验证器。
+
+工具异常通过类型化边界变成 error 观察；错误工具身份等协议不一致则显式报错。工具调用数是尝试数，包含被拒绝或失败的调用，不能被等同成功验证次数。
+\loc{tools/registry.py::invoke; runtime/journal.py::RecordedTools}
+
+\subsection{完整观察与模型可见载荷}
+生产者的完整结果和模型实际收到的结果是两个记录面。注册表对完整序列化工具响应计数，必要时结构化裁剪。截断、抑制、error 或 blocked 观察不能作为充分证明。发生截断时，传给模型的确认资格及 proof scope 被移除，原始产物则保留供审计。
+
+观察预算耗尽后，诊断信息必须能够到达模型。当前用单独的 Harness 诊断说明预算已尽，且该说明不消耗其报告已经耗尽的预算，避免出现“空 tool message”诱发重复调用。模型随即进入不能新增工具的收尾阶段，证据门槛不降低。
+
+\subsection{多个子任务的共享预算}
+同一专家总观察预算为 $B_e$，已执行子任务保留累计用量。计划含 $n_e$ 个该专家任务时，第 $k$ 个任务的累计可用上限按任务份额开放，可概括为
+\begin{equation}
+ B_{e,k}=\left\lfloor B_e\frac{k}{n_e}\right\rfloor.
+\end{equation}
+这给后续任务保留预算，而前面未用完的份额仍可被后续使用。规划和可选 routing 也有明确计数，不作为免费上下文。该机制不保证模型会采用最有效动作，只保证已声明资源边界可审计。
+
+\subsection{正常收尾、弃权与错误}
+证据充分时可以形成实质票；经过至少一次工具尝试后可以自愿弃权；预算末尾反复坚持证据不足实质标签时，运行时按契约有界弃权，并保留 proposed label、拒绝原因及终止类型。零工具尝试且无法满足 vote schema 的执行返回显式失败或未完成，不伪造工具调用。
+
+未知 citation、subject 漂移、非法协议、模型传输异常和内部错误不能统统归为普通“证据不足”。相反，未解析语义和可说明的预算终止需要保留具体原因，使后续分析可以区分能力、基础设施、协议和资源限制。
+
+
+\subsection{新增的全局证据与任务图边界}
+修复后的共享 workflow 启用 global-evidence-v2，并将 LangGraph 的业务递归上限明确设为 16。回归同时包含八个真实任务执行的正例和强制无进展循环的负例；没有将上限扩大来掩盖循环。全局准入规则见算法\ref{alg:global}。原规划义务、必需 witness 依赖、E 系列累计均分观察政策均保留；产品路径的真实数据依赖控制不被回填成原研究实验的新定义。
+\loc{agents/workflow.py; harness/models.py; harness/defaults.py}

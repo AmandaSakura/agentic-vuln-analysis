@@ -1,0 +1,91 @@
+{
+  "schema": "recovery-final-validation-v1",
+  "recorded_at_utc": "2026-10-01T01:47:37.902775+00:00",
+  "source_tests_freeze_sha256": "d777adfb356e01deec8c845830eac9c7fb7f120f3fc44496f6fa707383f75ace",
+  "unchanged_during_final_validation": true,
+  "full_pytest": {
+    "command": "uv run --no-sync pytest",
+    "exit_code": 0,
+    "passed": 2940,
+    "seconds": 427.22,
+    "log": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt2.log",
+    "log_sha256": "4e55d4f959edeff3f6d5e4694c742c7006b1d625a7877130b95269c5b96be778"
+  },
+  "harness": {
+    "command": "uv run --no-sync cv-agent harness-check",
+    "passed": true,
+    "receipt": "audit/product_recovery_20261001/final-harness-check.json",
+    "sha256": "3c01ce4bcb8b42a237acc8cf5daed0e000cb9c38856076809e67adccdcc4a596"
+  },
+  "prior_full_suite": {
+    "failed": 15,
+    "passed": 2904,
+    "log": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log"
+  },
+  "preservation": {
+    "all_previous_reports_unchanged": true,
+    "historical_report_files": 45,
+    "previous_config_and_script_files_unchanged": true,
+    "config_script_files": 73
+  },
+  "logs": {
+    "final_full_pytest_attempt1.log": {
+      "path": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt1.log",
+      "sha256": "009003c43f3bc81f029c956af1424b87521d3e7d500cf1d581b4cba80d01bdf2"
+    },
+    "final_full_pytest_attempt2.log": {
+      "path": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt2.log",
+      "sha256": "4e55d4f959edeff3f6d5e4694c742c7006b1d625a7877130b95269c5b96be778"
+    },
+    "v2_stage_failures_before.log": {
+      "path": "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+      "sha256": "065d5061e419beb7ed4c958f1e439ddebc61f0bd281e27ca84b70cad1dd557e1"
+    },
+    "v2_presentation_failure_before.log": {
+      "path": "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+      "sha256": "754349999b29df65e937e2db4ef17208821b7797bc140c350caf8e2deddc5e0f"
+    },
+    "v2_stage_count_before.log": {
+      "path": "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+      "sha256": "7872a4bbc8b4a2cade015332c3009399d29b29ecd1ebdfbfdf6c81d8522d06b7"
+    },
+    "final_v2_controls.log": {
+      "path": "artifacts/design_review_recovery_20261001/final_v2_controls.log",
+      "sha256": "928a3a93dd46108b262a422b5d6b19d8e0ea01fb13c51304e04b5a13c9906842"
+    },
+    "dependency_binding_before.log": {
+      "path": "artifacts/design_review_recovery_20261001/dependency_binding_before.log",
+      "sha256": "7e4da2d5aef8a696e579014501579b672bb3411dcb4d17930856769eb5bf6925"
+    },
+    "dependency_cli_layout_after.log": {
+      "path": "artifacts/design_review_recovery_20261001/dependency_cli_layout_after.log",
+      "sha256": "5417293d010d4fb11d9a3f2ee6b98ebaa1502dff8498629c88ec5546df1a5218"
+    }
+  },
+  "real_model_requests": 0,
+  "network": false,
+  "third_party_target_execution": false,
+  "missing_actual_user_failure": "NOT_REPRODUCED_MISSING_INPUT",
+  "human_quality_and_value": "NOT_MEASURED",
+  "fresh_additional_reviewer": "NOT_COMPLETED; no independent review pass claimed",
+  "fixed_trial_release": {
+    "archive": "audit/product_recovery_20261001/release-final-patch1/cv_agent_product_recovery_2026-10-01_patch1_linux_x86_64.zip",
+    "sha256": "409539b478c243d2bb63d55801cdc9973bf0bfe1e5cd0f46d7a480092b8ecdf4",
+    "bytes": 4719472,
+    "wheel_sha256": "72119c195fbfe9e7f56ccbf06c6092e08f13f0a046333166c5566c8a891ae79c",
+    "source_tree_sha256": "86c1766fb0f39c8e63f88adf41d52cf799e5d4ee47fd2c3a9e1490abb9eba574",
+    "included_source_files": 104,
+    "same_final_source": true,
+    "external_clean_installs": 2,
+    "matched_hashes_per_extraction": [
+      246,
+      246
+    ]
+  },
+  "historic_gates": {
+    "G_A": "NO",
+    "GP2": "NOT_ENABLED",
+    "GP3": "NOT_MEASURED",
+    "GP4": "NOT_MEASURED"
+  }
+}

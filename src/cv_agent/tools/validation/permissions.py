@@ -157,7 +157,32 @@ def _os_shadowed_after_statement(statement: ast.stmt, shadowed_os: bool) -> bool
     return shadowed_os
 
 
-def _collect_permission_mode_calls(document: CodeDocument, *, entry_boolean_arguments: dict[str, bool] | None = None) -> tuple[
+def _operation_locator_issue(document: CodeDocument, locator: dict) -> str | None:
+    if not isinstance(locator, dict):
+        return "permission operation locator must be a declared mapping"
+    keys = {"source_path", "start_line", "end_line", "start_col_utf8", "end_col_utf8",
+            "node_kind", "rule_version", "file_sha256", "source_digest"}
+    if set(locator) != keys:
+        return "permission operation locator fields do not match the supported contract"
+    if locator["source_path"] != document.path.split("::", 1)[0]:
+        return "permission operation locator source path does not match"
+    if locator["node_kind"] != "Call" or locator["rule_version"] != "static-operation-rules-v2":
+        return "permission operation locator node or rule version is unsupported"
+    for key in ("file_sha256", "source_digest"):
+        if not isinstance(locator[key], str) or re.fullmatch(r"[0-9a-f]{64}", locator[key]) is None:
+            return "permission operation locator lacks a valid source identity"
+    if document.source_sha256 is not None and locator["file_sha256"] != document.source_sha256:
+        return "permission operation locator file bytes do not match"
+    for key in ("start_line", "end_line", "start_col_utf8", "end_col_utf8"):
+        if type(locator[key]) is not int or locator[key] < (1 if "line" in key else 0):
+            return "permission operation locator coordinates are invalid"
+    if (locator["start_line"], locator["start_col_utf8"]) >= (locator["end_line"], locator["end_col_utf8"]):
+        return "permission operation locator range is empty or reversed"
+    return None
+
+
+def _collect_permission_mode_calls(document: CodeDocument, *, entry_boolean_arguments: dict[str, bool] | None = None,
+                                   operation_locator: dict | None = None) -> tuple[
     tuple[_PermissionModeCall, ...],
     tuple[str, ...],
     tuple[str, ...],
@@ -171,11 +196,17 @@ def _collect_permission_mode_calls(document: CodeDocument, *, entry_boolean_argu
     visited; the verdict may still type the collected literal mode sequence
     under those caveats. No caller may decide based on issue text.
     """
+    if operation_locator is not None:
+        issue = _operation_locator_issue(document, operation_locator)
+        if issue is not None:
+            return (), (issue,), ()
+    dedented = textwrap.dedent(document.text)
     try:
-        tree = ast.parse(textwrap.dedent(document.text))
+        tree = ast.parse(dedented)
     except SyntaxError as error:
         return (), (f"syntax error: {error}",), ()
     lines = document.text.splitlines()
+    dedented_lines = dedented.splitlines()
     issues: list[str] = []
     control_notes: list[str] = []
     calls: list[_PermissionModeCall] = []
@@ -183,6 +214,23 @@ def _collect_permission_mode_calls(document: CodeDocument, *, entry_boolean_argu
     unknown = object()
     lost = object()
     values: dict[str, object] = {}
+
+    def selected_operation(node: ast.Call) -> bool:
+        if operation_locator is None:
+            return True
+        # AST columns count UTF-8 bytes of decoded Python text, not source
+        # encoding bytes or expanded tab columns. Recover the indentation
+        # removed from each endpoint before adding the full-file slice offset.
+        offset = 1 - cast(int, local_source_line(document.path, 1))
+        first, last = node.lineno, cast(int, node.end_lineno)
+        def original_column(line: int, column: int) -> int:
+            return column + len(lines[line - 1].encode("utf-8")) - len(dedented_lines[line - 1].encode("utf-8"))
+        coordinates = (first + offset, last + offset,
+                       original_column(first, node.col_offset),
+                       original_column(last, cast(int, node.end_col_offset)))
+        expected = tuple(operation_locator[key] for key in
+                         ("start_line", "end_line", "start_col_utf8", "end_col_utf8"))
+        return coordinates == expected
 
     def merge_values(*states: dict[str, object]) -> None:
         values.clear()
@@ -331,17 +379,20 @@ def _collect_permission_mode_calls(document: CodeDocument, *, entry_boolean_argu
                 issues.append("os.chmod requires exactly two supported positional arguments")
                 return unknown
             mode, mode_text = _literal_mode(node.args[1])
-            mode_text = ast.get_source_segment(document.text, node.args[1]) or mode_text
-            calls.append(
-                _PermissionModeCall(
+            mode_text = ast.get_source_segment(dedented if operation_locator is not None else document.text,
+                                               node.args[1]) or mode_text
+            selected = selected_operation(node)
+            if operation_locator is not None and not selected and mode is None:
+                issues.append("another chmod mode in the declared execution scope is unresolved")
+            if selected:
+                calls.append(_PermissionModeCall(
                     line=getattr(node, "lineno", 0),
                     target=ast.unparse(node.args[0]),
                     mode=mode,
                     mode_text=mode_text,
                     text=source_line(node),
                     branch_conditions=tuple(branch_conditions),
-                )
-            )
+                ))
 
         return unknown
 
@@ -508,8 +559,11 @@ def _collect_permission_mode_calls(document: CodeDocument, *, entry_boolean_argu
     return tuple(calls), merged, tuple(control_notes)
 
 
-def _permission_mode_assessment(document: CodeDocument, *, call_line: int | None = None, entry_boolean_arguments: dict[str, bool] | None = None) -> dict[str, Any]:
-    calls, issues, control_notes = _collect_permission_mode_calls(document, entry_boolean_arguments=entry_boolean_arguments)
+def _permission_mode_assessment(document: CodeDocument, *, call_line: int | None = None,
+                                entry_boolean_arguments: dict[str, bool] | None = None,
+                                operation_locator: dict | None = None) -> dict[str, Any]:
+    calls, issues, control_notes = _collect_permission_mode_calls(document,
+        entry_boolean_arguments=entry_boolean_arguments, operation_locator=operation_locator)
     if call_line is not None:
         calls = tuple(call for call in calls if call.line == call_line)
     fatal_issues = [issue for issue in issues if issue not in set(control_notes)]
@@ -612,6 +666,12 @@ def permission_mode(index: RepositoryIndex, arguments: FrozenModel, scope: ToolE
     if error is not None:
         return error
     source = cast(CodeDocument, document)
+    if scope.operation_locator is not None:
+        locator_issue = _operation_locator_issue(source, scope.operation_locator)
+        if (locator_issue is not None or scope.subject is None
+                or scope.operation_locator["start_line"] != scope.subject.entry_line):
+            return ToolObservation(tool="validate_permission_mode", status="blocked",
+                content=locator_issue or "permission operation locator does not match the candidate entry line")
     local_line = local_source_line(value.path, scope.subject.entry_line) if scope.subject else None
     if scope.subject is not None and (
         scope.subject.entry_path != value.path
@@ -634,6 +694,7 @@ def permission_mode(index: RepositoryIndex, arguments: FrozenModel, scope: ToolE
     assessment = _permission_mode_assessment(
         source, call_line=None if local_line in headers else local_line,
         entry_boolean_arguments=scope.subject.entry_boolean_arguments if scope.subject else None,
+        operation_locator=scope.operation_locator,
     )
     assessment["entry_boolean_arguments"] = dict(scope.subject.entry_boolean_arguments) if scope.subject else {}
     assessment["property_id"] = "chmod-mode-others-write"

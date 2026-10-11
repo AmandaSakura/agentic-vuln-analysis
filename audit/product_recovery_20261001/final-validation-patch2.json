@@ -1,0 +1,73 @@
+{
+  "schema": "recovery-final-validation-v1",
+  "revision": "patch2",
+  "recorded_at_utc": "2026-10-01T02:18:09.415917+00:00",
+  "source_tests_freeze_sha256": "ddb6e09675dacc8f884ab52f1719b51fe7ad170696406496405b8791a0eae26a",
+  "source_test_files": 423,
+  "unchanged_during_final_validation": true,
+  "full_pytest": {
+    "command": "uv run --no-sync pytest",
+    "exit_code": 0,
+    "passed": 2941,
+    "seconds": 422.98,
+    "log": "artifacts/design_review_recovery_20261001/final_full_pytest_attempt3.log",
+    "log_sha256": "8b600238b385583f859e40c99186b75706daf31743d6e00e9c141ef11e9d4d8c"
+  },
+  "harness": {
+    "command": "uv run --no-sync cv-agent harness-check",
+    "passed": true,
+    "receipt": "audit/product_recovery_20261001/final-harness-check-patch2.json",
+    "sha256": "3c01ce4bcb8b42a237acc8cf5daed0e000cb9c38856076809e67adccdcc4a596"
+  },
+  "previous_verified_patch1_receipt": "audit/product_recovery_20261001/final-validation.json",
+  "preservation": {
+    "all_previous_reports_unchanged": true,
+    "historical_report_files": 45,
+    "previous_config_and_script_files_unchanged": true,
+    "config_script_files": 73
+  },
+  "RF06": {
+    "before_failed": 1,
+    "after_affected_passed": 37,
+    "after_seconds": 5.32,
+    "returned_receipt_immutable": true,
+    "persisted_package_mutation_claim": false,
+    "logs": {
+      "scope_receipt_before.log": {
+        "path": "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+        "sha256": "c2716f6b4c65e8c0dae5166919cd743b9d1797b3d69142623d954fdc56bbed47"
+      },
+      "scope_receipt_after.log": {
+        "path": "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+        "sha256": "2451a5fbc77ca9ca22b181fbf42a2ae11ad73cc1cd815938491aebe3eceaeba9"
+      }
+    }
+  },
+  "fixed_trial_release": {
+    "archive": "audit/product_recovery_20261001/release-final-patch2/cv_agent_product_recovery_2026-10-01_patch2_linux_x86_64.zip",
+    "sha256": "56732ac312e5fc00ab9a3a971ed09b32d0b215565bbad58d64803afbab84c31e",
+    "bytes": 4719542,
+    "wheel_sha256": "835287e4acc6b2423eb3aaa0d10fb000ce5d2cc8fb6937be041066197336247c",
+    "source_tree_sha256": "cf209e48e0c60e0c9e8ba59243eaa52baab28eb6b9707bc703be07c461d6dc4e",
+    "included_source_files": 104,
+    "same_final_source": true,
+    "external_clean_installs": 2,
+    "matched_hashes_per_extraction": [
+      246,
+      246
+    ]
+  },
+  "quality_receipt": "audit/product_recovery_20261001/quality-final-patch2/summary.json",
+  "real_model_requests": 0,
+  "external_network_requests": 0,
+  "target_execution_experiments": 0,
+  "missing_actual_user_failure": "NOT_REPRODUCED_MISSING_INPUT",
+  "human_quality_and_value": "NOT_MEASURED",
+  "fresh_additional_reviewer": "NOT_COMPLETED; no independent review pass claimed",
+  "historic_gates": {
+    "G_A": "NO",
+    "GP2": "NOT_ENABLED",
+    "GP3": "NOT_MEASURED",
+    "GP4": "NOT_MEASURED"
+  }
+}

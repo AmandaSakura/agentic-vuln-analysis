@@ -1,0 +1,39 @@
+\section{核查协议、回归修复与测量方法}
+\label{sec:protocol}
+\subsection{工程验收与研究效果分别提出问题}
+本次工程核查回答三个问题：用户报告提出的缺陷能否在实际代码中复现；修复是否保留充分证据的正向能力和原研究边界；独立离线 CLI 能否在正常及失败状态交付一致产物。历史研究回答的是自主场景提出、外部迁移和预算行为。前者通过回归与受控 CLI 验证，不能替代后者的真实模型或独立评测。
+
+输入审查报告为 32 个物理页面，编号正文 30 页。核查基线是 \code{4dba622db459d4487bc8493b9af3a6a5f40a3387} 的已有工作树，保留进入任务前的汇总 JSON 修订和报告。缺陷判断先阅读实际实现，再运行有行为意义的回归；没有要求每项 H 假设都必须成立。H04/H06/H07 中原有身份、收费和锁控制得到保留，而非为了报告措辞推倒重写。\citep{reviewplan,verification}
+
+\Needspace{12\baselineskip}
+\begin{longtable}{L{12mm}L{47mm}L{90mm}}
+\caption{已验证共享问题与修复证据。缺陷、控制边界和新增能力分别报告。}\\
+\toprule 编号 & 修复前观察 & 修复后及其范围\\\midrule\endfirsthead
+\caption[]{（续）}\\
+\toprule 编号 & 修复前观察 & 修复后及其范围\\\midrule\endhead
+H01 & 后到同 subject 充分反证未约束既有实质票；两种顺序复现 & slow/fast 前 global-evidence-v2 重新准入；保留原提案、成本和协议错误。\\
+H02 & 已交付冲突仍能进入 fast & 已知冲突修复；未知未来证据不属于固定票保证，产品关闭早停。\\
+H03 & 五项嵌套输入别名回归失败 & 四类公共快照对象封存、公开读视图复制及复制更新控制通过。\\
+H08 & URL/传输错误回显已知 fake API key & 公共异常及 model\_error 事件脱敏；原正常和 HTTP 控制保留。\\
+H09 & 无显式业务图限额，注入循环超过冻结边界 & 显式上限 16；八个任务正例和无进展循环负例通过。\\
+\bottomrule\end{longtable}
+
+\subsection{原测试契约仍为规范入口}
+\code{docs/TEST_CONTRACT.md} 的 C1--C6 约束判断对象、值与副作用、求值顺序、路径合并、证据准入和收尾。其语义回归 T01--T16 与本次实施任务卡 T00--T14 是\emph{不同编号空间}。附录列出本次任务和 A01--A34 验收矩阵；不会将同名 T10 当成同一工作。
+
+每个已复现语义问题添加拒绝误判的回归和充分证明正例。不弱化 assertion，不把所有结果改成 UNRESOLVED，不在 gate 中加入旁路。测试使用 scripted models、mock HTTP 与项目自有 loopback/源码夹具；不加载真实凭据。修复过程中没有新的真实项目模型请求、第三方目标执行或依赖安装。报告构建只读取现有结果并检索版式参考文献。
+
+\subsection{完整套件失败也保留}
+最初完整套件 2560 passed、2 failed，耗时 478.78 秒。第一项来自新增报告目录与严格目录白名单冲突，修复仅增加已授权 \code{reports}。第二项来自清理夹具 2 秒墙钟在 traced import 阶段耗尽，未到预期调用；采用已有 wall-timeout 控制的 6 秒预算，原 SIGKILL、UNRESOLVED、worker\_timeout、invoke、wall\_timeout 和 accounting 断言全部保留。生产资源与隔离政策不变。
+
+修复首轮完整套件为 2682 passed、1 failed，耗时 414.94 秒。旧 applicable quorum 夹具没有 evidence，实质 ballot 也没有 trace；全局重新准入不能接受裸票。夹具迁为实际静态命令观察，原两票胜出、单票弃权及固定策略继续调度 authz 的断言保留。新归并器也通过回归纠正了 producer-owned helper 引用的保留。最终源码再跑完整套件，结果见第\ref{sec:results}节。所有失败日志和最终回执均归档，不把设置错误日志称作已复现语义缺陷。\citep{verification,acceptance}
+
+\subsection{七个 CLI 用例的单位和环境}
+CLI 验收使用七个作者自有、无害的极小本地源码用例，各启动一次真实 console 子进程，要求新的输出目录、正确退出码、JSON/Markdown 一致、规定状态/分母以及模型与目标执行计数为零。这些用例有意覆盖失败路径，未按真实仓库总体抽样。墙钟从启动 console 到退出测量，包括解释器启动、预检、索引、分析和产物处理；内部 \code{accounting} 只用于阶段解释。
+
+另一次拒绝式 transport guard 在调用公共 CLI main 前替换 HTTP、socket 和 live gate 入口；任何尝试都会失败并计数，同时拒绝导入 evaluation 或执行目标模块。该结果加强默认路径隔离证据，但不是对整台主机所有系统调用进行无限范围证明。
+
+\subsection{数值分析原则}
+测试通过数用于描述当前收集用例与回归；测试数量增长不等于语义覆盖率增长。七个 CLI 的均值、中位数、范围和样本标准差只是这七次观测的描述。历史 E-iter 的四格具有配对、同 advisory 和单次运行相关性。本文不对这些数据报告总体置信区间、显著性检验或泛化成功率。
+
+完整套件前后耗时差受测试组成、缓存、进程负载和夹具预算影响，不能归因性能提升。精确字节反例可证明该受控分配计划可行，但不能代表复杂语义证书长度分布。所有百分比给出分子、分母和适用范围；未测量值明确标为未测量。数值冻结在 \code{data/report_data.json}，其中保存原始输入 SHA-256。\citep{clireceipt,transportguard}

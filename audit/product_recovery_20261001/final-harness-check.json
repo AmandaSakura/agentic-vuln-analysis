@@ -1,0 +1,517 @@
+{
+  "command_policy": {
+    "claim_eligible": false,
+    "command": "harness-check",
+    "harness_id": null,
+    "kind": "harness"
+  },
+  "commands": [
+    {
+      "claim_eligible": false,
+      "command": "review",
+      "harness_id": null,
+      "kind": "product-review"
+    },
+    {
+      "claim_eligible": false,
+      "command": "doctor",
+      "harness_id": null,
+      "kind": "harness"
+    },
+    {
+      "claim_eligible": false,
+      "command": "verify",
+      "harness_id": null,
+      "kind": "harness"
+    },
+    {
+      "claim_eligible": false,
+      "command": "view",
+      "harness_id": null,
+      "kind": "product-review"
+    },
+    {
+      "claim_eligible": false,
+      "command": "harness-check",
+      "harness_id": null,
+      "kind": "harness"
+    },
+    {
+      "claim_eligible": false,
+      "command": "readiness",
+      "harness_id": null,
+      "kind": "harness"
+    },
+    {
+      "claim_eligible": false,
+      "command": "synthetic",
+      "harness_id": null,
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "agentic-smoke",
+      "harness_id": "agentic-vulnerability-system-v1",
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "agentic-eval",
+      "harness_id": "agentic-vulnerability-system-v1",
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "agentic-live-owasp",
+      "harness_id": "agentic-vulnerability-system-v1",
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "profile",
+      "harness_id": null,
+      "kind": "data-preparation"
+    },
+    {
+      "claim_eligible": false,
+      "command": "owasp-baseline",
+      "harness_id": "owasp-development-v3",
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "owasp-ast-profile",
+      "harness_id": null,
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "owasp-rag",
+      "harness_id": "owasp-development-v3",
+      "kind": "experiment"
+    },
+    {
+      "claim_eligible": false,
+      "command": "vulngym-subset",
+      "harness_id": null,
+      "kind": "diagnostic"
+    },
+    {
+      "claim_eligible": false,
+      "command": "vulngym-fetch",
+      "harness_id": null,
+      "kind": "data-preparation"
+    },
+    {
+      "claim_eligible": false,
+      "command": "vulngym-retrieval",
+      "harness_id": "vulngym-oracle-retrieval-v3",
+      "kind": "diagnostic"
+    }
+  ],
+  "full_system": {
+    "claim_runtime_mode": "live",
+    "development_repositories": [
+      "https://github.com/google/adk-python",
+      "https://github.com/PrefectHQ/fastmcp",
+      "https://github.com/jlowin/fastmcp",
+      "https://github.com/langchain-ai/langchain",
+      "https://github.com/nltk/nltk"
+    ],
+    "experts": [
+      {
+        "expert": "scan",
+        "mandate": "Locate externally reachable security-sensitive operations and produce candidate vulnerability categories without deciding safety from absence. Validate candidates with a concrete Python eval probe or a registered fixture when applicable; sink presence alone is not confirmation. Distinguish an evidence-backed prediction (UNRESOLVED validation status) from successful typed validation. An exact-scope run_fixture_test CONFIRMED or REFUTED observation is typed validation for the declared candidate property; keep that label and validation_status in later same-expert tasks unless another exact-scope typed validator contradicts it. Static checks remain UNRESOLVED. For filesystem permission candidates, prefer validate_permission_mode over static chmod matching. For command injection candidates, inspect_command_construction status SANITIZED is affirmative counter-evidence for SAFE/UNRESOLVED and UNSANITIZED supports VULNERABLE/UNRESOLVED; do not require a typed REFUTED status from that static command inspector. These command facts must establish the declared candidate property under its source, location and input assumptions; a local helper status is not a caller proof. Other declared properties also require matching supporting proof. A source-bound run_bounded_execution_witness CONFIRMED observation is positive candidate command evidence; its literal or incomplete UNRESOLVED observation never proves SAFE. Supply only its reported missing call data in the preparation state's field destinations; preserve declared dataset scenarios, and supply classified hypotheses only for scenario-empty candidates. Runtime settings are system-owned. Inspect your own evidence rather than adopting another vote. When making a SAFE prediction based on an authorization or ownership check, first collect guard evidence with get_guards.",
+        "require_react_trace": true,
+        "tools": [
+          "search_symbols",
+          "read_span",
+          "find_references",
+          "get_callers",
+          "get_callees",
+          "get_guards",
+          "run_static_check",
+          "inspect_command_construction",
+          "validate_permission_mode",
+          "probe_python_eval",
+          "run_fixture_test",
+          "run_bounded_execution_witness"
+        ]
+      },
+      {
+        "expert": "taint",
+        "mandate": "Assess a source-to-sink path with transformations, sanitizers, and missing graph edges stated explicitly. For command injection candidates, inspect_command_construction status SANITIZED is affirmative counter-evidence for a SAFE/UNRESOLVED vote, while UNSANITIZED supports a VULNERABLE/UNRESOLVED vote. Your label is an evidence-backed prediction, not a requirement for a concrete exploit witness. A validator returning UNRESOLVED does not by itself require ABSTAIN. Evaluate static MAY_REACH traces together with the actual caller, selected branch, helper interpolation and sanitizers. A material vote requires supporting proof bound to the candidate's declared property, source snapshot, location and input assumptions. Do not bridge an unresolved upstream transformation with source-reading inference or repeated expert votes. MAY_REACH, sink presence and local helper return values alone do not establish a complete dangerous path. An independent complete dangerous path may remain usable despite an unrelated unresolved path; SAFE requires coverage of all relevant paths. Conflicting proofs for the same scope require ABSTAIN. For dynamic evaluation, cite a matching candidate-bound proof; static flow alone does not support either material label. For command-execution tasks, a dependency's candidate-bound run_fixture_test CONFIRMED or REFUTED observation, or run_bounded_execution_witness CONFIRMED observation, is concrete command evidence for your dataflow judgment; your trace_dataflow MAY_REACH/UNRESOLVED result supplies path context and does not erase that matching fixture proof. Abstain when the required proof is missing. A complete static command proof can still support a prediction with UNRESOLVED validation status.",
+        "require_react_trace": true,
+        "tools": [
+          "read_span",
+          "get_callers",
+          "get_callees",
+          "find_sources",
+          "find_sinks",
+          "trace_dataflow",
+          "inspect_command_construction",
+          "find_sanitizers",
+          "compare_vulnerable_and_fixed"
+        ]
+      },
+      {
+        "expert": "authz",
+        "mandate": "Model principal, action, resource or tenant scope, and enforcement guards. Treat filesystem permission bits as resource access-control semantics when validate_permission_mode applies; abstain when the candidate is outside authorization semantics. A literal chmod mode proof covers only chmod-mode-others-write, not a directory race or a broader authorization boundary. Require proof of the declared candidate property before submitting a material vote. An exact-scope run_fixture_test observation for authorization-boundary, temporary-directory-race, or permission resource-access candidates is concrete access-control evidence; a narrower UNRESOLVED guard or chmod helper check does not erase that matching fixture proof.",
+        "require_react_trace": true,
+        "tools": [
+          "read_span",
+          "get_routes",
+          "get_callers",
+          "get_callees",
+          "get_guards",
+          "inspect_principal",
+          "inspect_resource_scope",
+          "compare_route_and_service_guard",
+          "validate_permission_mode",
+          "run_loopback_http_case"
+        ]
+      }
+    ],
+    "fallback_suffixes": [
+      ".swift",
+      ".vue",
+      ".yaml",
+      ".yml",
+      ".ini",
+      ".jsx",
+      ".sh",
+      ".svelte"
+    ],
+    "harness_id": "agentic-vulnerability-system-v1",
+    "held_out_positive_dataset": "VulnGym v0.1.4 verified entries excluding development repositories",
+    "model": {
+      "api_key_env": "CV_AGENT_MODEL_API_KEY",
+      "base_url_env": "CV_AGENT_MODEL_BASE_URL",
+      "max_tokens_env": "CV_AGENT_MODEL_MAX_TOKENS",
+      "model_env": "CV_AGENT_MODEL_NAME",
+      "protocol": "openai-compatible-chat",
+      "request_timeout_seconds": 180,
+      "temperature": 0.0,
+      "thinking_mode_env": "CV_AGENT_MODEL_THINKING"
+    },
+    "paired_negative_sources": [
+      "OSV same-repository verified fixed Git descendants",
+      "OWASP Benchmark positive/negative executable cases",
+      "PrimeVul paired C/C++ optional external discrimination set"
+    ],
+    "planner_max_subtasks": 8,
+    "react_loop": {
+      "final_schema": "AgentExpertVote",
+      "max_steps": 8,
+      "max_tool_observation_tokens": 8192,
+      "require_model_action": true,
+      "require_tool_observation": true
+    },
+    "required_metrics": [
+      "advisory_recall",
+      "entry_recall",
+      "precision",
+      "population_false_positive_rate",
+      "covered_false_positive_rate",
+      "coverage",
+      "abstain_rate",
+      "paired_graph_text_outcomes",
+      "validation_status_counts",
+      "expert_model_tool_calls",
+      "fast_slow_path_counts",
+      "clustered_uncertainty"
+    ],
+    "runtime_modes": [
+      "scripted",
+      "live"
+    ],
+    "systems": [
+      {
+        "budget": {
+          "augmentation_context_tokens": 0,
+          "base_context_tokens": 4096,
+          "graph_direction": "forward",
+          "graph_hops": 0,
+          "graph_ranking": "lexical",
+          "top_k": 0
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan"
+        ],
+        "fast_confidence": 0.0,
+        "full_review_policy": "single",
+        "planner_enabled": false,
+        "quorum": 2,
+        "retrieval": "local",
+        "system": "E1"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 12288,
+          "base_context_tokens": 4096,
+          "graph_direction": "forward",
+          "graph_hops": 0,
+          "graph_ranking": "lexical",
+          "top_k": 12
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan"
+        ],
+        "fast_confidence": 0.0,
+        "full_review_policy": "single",
+        "planner_enabled": false,
+        "quorum": 2,
+        "retrieval": "text",
+        "system": "E2"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 12288,
+          "base_context_tokens": 4096,
+          "graph_direction": "forward",
+          "graph_hops": 4,
+          "graph_ranking": "lexical",
+          "top_k": 12
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan"
+        ],
+        "fast_confidence": 0.0,
+        "full_review_policy": "single",
+        "planner_enabled": false,
+        "quorum": 2,
+        "retrieval": "graph",
+        "system": "E3"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 12288,
+          "base_context_tokens": 4096,
+          "graph_direction": "forward",
+          "graph_hops": 4,
+          "graph_ranking": "lexical",
+          "top_k": 12
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan",
+          "taint",
+          "authz"
+        ],
+        "fast_confidence": 0.0,
+        "full_review_policy": "majority",
+        "planner_enabled": true,
+        "quorum": 2,
+        "retrieval": "graph",
+        "system": "E4"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 12288,
+          "base_context_tokens": 4096,
+          "graph_direction": "forward",
+          "graph_hops": 4,
+          "graph_ranking": "lexical",
+          "top_k": 12
+        },
+        "early_quorum_after": 2,
+        "expert_order": [
+          "scan",
+          "taint",
+          "authz"
+        ],
+        "fast_confidence": 0.0,
+        "full_review_policy": "majority",
+        "planner_enabled": true,
+        "quorum": 2,
+        "retrieval": "graph",
+        "system": "E5"
+      }
+    ],
+    "tier1_languages": [
+      "python",
+      "typescript",
+      "javascript",
+      "go"
+    ],
+    "validation": {
+      "command_policy": "typed-allowlist",
+      "max_output_bytes": 1000000,
+      "network_policy": "disabled-or-loopback",
+      "subject_mode": "read-only",
+      "timeout_seconds": 120,
+      "validators": [
+        "run_static_check",
+        "probe_python_eval",
+        "run_fixture_test",
+        "run_bounded_execution_witness",
+        "run_loopback_http_case",
+        "compare_vulnerable_and_fixed",
+        "trace_dataflow",
+        "inspect_command_construction",
+        "validate_permission_mode",
+        "compare_route_and_service_guard"
+      ]
+    }
+  },
+  "owasp": {
+    "candidate_protocol": "One source-derived servlet doGet method per BenchmarkTest case, retrieved against one repository-wide method corpus containing every BenchmarkJava main-source file, including shared helpers; the identical local method is the base context for every system.",
+    "claim_eligible": false,
+    "dataset_name": "OWASP BenchmarkJava 1.2beta",
+    "dataset_role": "development",
+    "harness_id": "owasp-development-v3",
+    "primary_scope": [
+      "cmdi",
+      "ldapi",
+      "pathtraver",
+      "sqli",
+      "xpathi"
+    ],
+    "primary_scope_rationale": "Predeclared API families targeted by the current command, LDAP, path, SQL, and XPath sink patterns; pattern coverage within those families is intentionally incomplete.",
+    "required_metrics": [
+      "coverage",
+      "abstain_rate",
+      "strict_recall",
+      "covered_recall",
+      "population_false_positive_rate",
+      "conservative_false_positive_rate",
+      "covered_false_positive_rate",
+      "covered_fpr_reduction",
+      "precision",
+      "recall_delta",
+      "coverage_delta",
+      "expert_call_count_by_name",
+      "verdict_path_by_label_count"
+    ],
+    "systems": [
+      {
+        "budget": {
+          "augmentation_context_tokens": 0,
+          "base_context_tokens": 512,
+          "graph_direction": "forward",
+          "graph_hops": 0,
+          "graph_ranking": "lexical",
+          "top_k": 0
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan"
+        ],
+        "fast_score": 0.0,
+        "full_review_policy": "single",
+        "quorum": 2,
+        "retrieval": "local",
+        "system": "V1"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 1488,
+          "base_context_tokens": 512,
+          "graph_direction": "forward",
+          "graph_hops": 0,
+          "graph_ranking": "lexical",
+          "top_k": 10
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan"
+        ],
+        "fast_score": 0.0,
+        "full_review_policy": "single",
+        "quorum": 2,
+        "retrieval": "text",
+        "system": "V2"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 1488,
+          "base_context_tokens": 512,
+          "graph_direction": "forward",
+          "graph_hops": 4,
+          "graph_ranking": "lexical",
+          "top_k": 10
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan"
+        ],
+        "fast_score": 0.0,
+        "full_review_policy": "single",
+        "quorum": 2,
+        "retrieval": "graph",
+        "system": "V3"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 1488,
+          "base_context_tokens": 512,
+          "graph_direction": "forward",
+          "graph_hops": 4,
+          "graph_ranking": "lexical",
+          "top_k": 10
+        },
+        "early_quorum_after": null,
+        "expert_order": [
+          "scan",
+          "taint",
+          "verify"
+        ],
+        "fast_score": 0.0,
+        "full_review_policy": "majority",
+        "quorum": 2,
+        "retrieval": "graph",
+        "system": "V4"
+      },
+      {
+        "budget": {
+          "augmentation_context_tokens": 1488,
+          "base_context_tokens": 512,
+          "graph_direction": "forward",
+          "graph_hops": 4,
+          "graph_ranking": "lexical",
+          "top_k": 10
+        },
+        "early_quorum_after": 2,
+        "expert_order": [
+          "scan",
+          "taint",
+          "verify"
+        ],
+        "fast_score": 0.0,
+        "full_review_policy": "majority",
+        "quorum": 2,
+        "retrieval": "graph",
+        "system": "V5"
+      }
+    ]
+  },
+  "status": "PASS",
+  "vulngym_retrieval": {
+    "budget": {
+      "augmentation_context_tokens": 3488,
+      "base_context_tokens": 512,
+      "graph_direction": "forward",
+      "graph_hops": 4,
+      "graph_ranking": "lexical",
+      "top_k": 8
+    },
+    "candidate_protocol": "A verified VulnGym entry point is an explicit oracle seed; the identical containing function is the base context for local, text, graph, and hybrid retrieval. Hybrid retrieval unions text, entry-graph, and lexical-seed graph branches under the same total token budget; top_k is a per-branch cap for hybrid.",
+    "claim_eligible": false,
+    "critical_hit_policy": "full-critical-line-retained",
+    "dataset_name": "VulnGym v0.1.4 verified Python subset",
+    "dataset_role": "oracle-diagnostic",
+    "experiment_name": "oracle-seeded critical-context retrieval coverage",
+    "harness_id": "vulngym-oracle-retrieval-v3",
+    "hybrid_aggregation": "per-branch-union-under-shared-token-budget",
+    "limitation": "VulnGym entry_point is used only as the retrieval seed; this is not end-to-end vulnerability recall.",
+    "retrieval_modes": [
+      "local",
+      "text",
+      "graph",
+      "hybrid"
+    ]
+  }
+}

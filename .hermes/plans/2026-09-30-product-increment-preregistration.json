@@ -1,0 +1,39 @@
+{
+  "schema_version": "product-increment-protocol-v1",
+  "recorded_date": "2026-09-30",
+  "status": "FROZEN_PROTOCOL_NOT_EXECUTED",
+  "profile": "product_triage_v1",
+  "historical_G_A": "NO",
+  "new_gates": {
+    "GP0": "Real offline CLI produces consistent artifacts for normal, empty, parse-error, blocked and budget-limited runs with zero provider requests.",
+    "GP1": "All enabled capability acceptance checks and retained admission positive/negative controls execute and pass.",
+    "GP2": "Conditional: scratch/native remain unavailable until their approved owned-fixture capability gates pass.",
+    "GP3": "Not measured: authorized real tasks require paired human review timing, fact-error counts and actionable missing-obligation assessment.",
+    "GP4": "Not measured: optional model explanation must improve paired quality or review effort at explicitly reported additional cost. No benefit is a valid result."
+  },
+  "sample_admission": {
+    "status": "NO_REVIEW_SAMPLE_SET_SUPPLIED",
+    "scope": "Fresh project-owned or explicitly authorized local source; no third-party execution or payload generation.",
+    "statistical_unit": "repository",
+    "stratification": ["language", "property", "source-size", "initial-context-gap"],
+    "exclude": ["oracle-seeded material", "development-only evidence", "previously exposed held-out material", "unconsented repositories"],
+    "labels": "Private evaluator records never enter detector prompts, aliases or source selection."
+  },
+  "paired_arms": [
+    {"id": "human-original-flow", "model_requests": 0},
+    {"id": "offline-product-report", "profile": "product_triage_v1", "model_requests": 0},
+    {"id": "optional-explanation", "status": "DISABLED_WITHOUT_SEPARATE_AUTHORIZATION", "model_request_cap": null, "reported_token_cap": null}
+  ],
+  "invariants": [
+    "Freeze source, property contracts, admitted context and baseline evidence before paired assessment.",
+    "Explanation may reference accepted evidence and gaps but cannot change property states.",
+    "Balance arm order across reviewers; use repository-level paired summaries and retain exclusions.",
+    "Record review seconds, fact errors, correct missing-obligation identification, actionability, all requests, reported usage, unknown usage and wall time.",
+    "Separate replay savings from live costs; confidence is not probability of correctness.",
+    "Planner/Jev/multiple experts require a separately preregistered reproducible net benefit before product inclusion."
+  ],
+  "stop_conditions": ["evaluation leakage", "unapproved request", "missing request/usage accounting", "source or contract drift"],
+  "component_decision_now": "The default product keeps models/planner/Jev/quorum/early-stop/target execution disabled; original research profiles and artifacts remain available as historical research.",
+  "measurements": null,
+  "new_model_requests": 0
+}

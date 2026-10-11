@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from copy import deepcopy
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
@@ -12,6 +13,52 @@ VerdictLabel = Literal["VULNERABLE", "SAFE", "ABSTAIN"]
 class FrozenModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    def model_copy(self, *, update=None, deep: bool = False):
+        """Validate public updates as a new instance of the declared model.
+
+        Pydantic's default copy treats update values as trusted. These models
+        expose copying to callers, so changed fields must also pass field and
+        cross-field contracts. A copy without updates retains normal copy
+        semantics; internal reflection/model_construct are not public inputs.
+        """
+        if update is None:
+            return super().model_copy(deep=deep)
+        fields = {name: getattr(self, name) for name in type(self).model_fields}
+        fields.update(update)
+        if deep:
+            fields = deepcopy(fields)
+        # Stored attributes use declared field names even when construction
+        # uses aliases. Accept those names for this internal reconstruction.
+        return type(self).model_validate(fields, by_name=True)
+
+
+class SnapshotModel(FrozenModel):
+    """Seal public JSON containers without changing legacy serialized shapes.
+
+    Ordinary field reads return detached views. Internal model dictionaries are
+    implementation storage, not a supported mutation interface.
+    """
+
+    def model_post_init(self, context: Any) -> None:
+        self._seal_containers()
+
+    def _seal_containers(self) -> None:
+        for name in type(self).model_fields:
+            value = self.__dict__.get(name)
+            if isinstance(value, (dict, list)):
+                object.__setattr__(self, name, deepcopy(value))
+
+    def __getattribute__(self, name: str) -> Any:
+        value = super().__getattribute__(name)
+        if name in type(self).model_fields and isinstance(value, (dict, list)):
+            return deepcopy(value)
+        return value
+
+    def model_copy(self, *, update=None, deep: bool = False):
+        result = super().model_copy(update=update, deep=deep)
+        result._seal_containers()
+        return result
+
 
 class SystemVersion(StrEnum):
     V1_LOCAL_SINGLE = "V1"
@@ -21,7 +68,7 @@ class SystemVersion(StrEnum):
     V5_GRAPH_FAST_SLOW = "V5"
 
 
-class Candidate(FrozenModel):
+class Candidate(SnapshotModel):
     # Machine-readable proof obligation; never inferred from identifiers.
     property_id: str | None = None
     input_parameters: tuple[str, ...] = ()
@@ -39,7 +86,7 @@ class Candidate(FrozenModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-class CodeDocument(FrozenModel):
+class CodeDocument(SnapshotModel):
     # Full original file identity, when supplied by the adapter. A method slice
     # alone does not bind imports, fields or static initializers in that file.
     source_sha256: str | None = None

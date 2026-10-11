@@ -1,0 +1,83 @@
+{
+  "schema": "recovery-parent-integration-findings-v1",
+  "scope": "Additional demonstrated internal data and delivery defects; not a replacement for the PDF's F/R/V classification",
+  "findings": [
+    {
+      "id": "RF05",
+      "problem": "Static identity omitted tools/identity.py and shared registry dependencies",
+      "before_log": "artifacts/design_review_recovery_20261001/dependency_binding_before.log",
+      "before": "2 failed: changing relevant helper or registry bytes did not change the semantic implementation digest",
+      "change": "Bind the entire installed tools directory in analysis_implementation_digest",
+      "test": "tests/test_recovery_dependency_binding.py",
+      "positive_control": "Source identity is independent of engine identity; normal unchanged implementation digest stays stable",
+      "status": "FIXED_AND_FULL_SUITE_VERIFIED"
+    },
+    {
+      "id": "RF01",
+      "problem": "A failed persisted evidence reread left its descriptor available for reduction, then the strong-state DTO rejected the whole package",
+      "before_log": "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+      "before": "The second owned record read failed and the previously completed first fact could not be returned",
+      "change": "Discard the unverified descriptor from reduction, mark its persistence failed, retain earlier fact and stop subsequent work",
+      "test": "tests/test_recovery_v2_failures.py::test_complete_evidence_read_failure_retains_earlier_fact_without_strong_second_state",
+      "positive_control": "First complete literal-mode observation remains SUPPORTED; the incomplete second is UNKNOWN",
+      "status": "FIXED_AND_FULL_SUITE_VERIFIED"
+    },
+    {
+      "id": "RF02",
+      "problem": "Unexpected internal analysis exception did not stop future producers",
+      "before_log": "artifacts/design_review_recovery_20261001/v2_stage_failures_before.log",
+      "before": "The third owned producer completed after the second raised an internal exception",
+      "change": "Record FAILED for the failed analysis and NOT_STARTED for later candidates; retain the first complete proof",
+      "test": "tests/test_recovery_v2_failures.py::test_unexpected_internal_failure_preserves_first_and_stops_later_tools",
+      "positive_control": "Prior fact survives; analysis stage counters conserve all three candidates",
+      "status": "FIXED_AND_FULL_SUITE_VERIFIED"
+    },
+    {
+      "id": "RF03",
+      "problem": "Public artifact write failure escaped as an undifferentiated worker error",
+      "before_log": "artifacts/design_review_recovery_20261001/v2_presentation_failure_before.log",
+      "before": "Owned result.json write failure exposed no presentation stage on the error",
+      "change": "Typed ProductDeliveryError distinguishes preparation, package validation, existing output and commit errors; retain private stage",
+      "test": "tests/test_recovery_v2_failures.py::test_public_artifact_failure_has_presentation_stage_and_keeps_private_material",
+      "positive_control": "No output is declared committed; already written private records remain available for conservative audit",
+      "status": "FIXED_AND_FULL_SUITE_VERIFIED"
+    },
+    {
+      "id": "RF04",
+      "problem": "The v2 result accepted a persisted-candidate counter inconsistent with its findings",
+      "before_log": "artifacts/design_review_recovery_20261001/v2_stage_count_before.log",
+      "before": "Three complete findings with a declared zero persisted denominator were accepted",
+      "change": "Validate actual persistence totals, source conservation and finding-stage compatibility on construction/public copy",
+      "test": "tests/test_recovery_v2_failures.py::test_public_copy_rejects_false_persisted_denominator_and_incomplete_verified_stage",
+      "positive_control": "Valid complete-stage copies remain identical and the working partial/zero/quota controls stay valid",
+      "status": "FIXED_AND_FULL_SUITE_VERIFIED"
+    },
+    {
+      "id": "RF06",
+      "problem": "Returned v2 scope admission receipts were mutable dict elements inside a tuple",
+      "before_log": "artifacts/design_review_recovery_20261001/scope_receipt_before.log",
+      "before": "Public field access could rewrite the returned completed context accounting receipt; one control failed",
+      "change": "Use the existing frozen ScopeAdmission model for tuple elements; serialized JSON shape unchanged",
+      "test": "tests/test_recovery_scope_receipt.py::test_public_scope_receipts_cannot_rewrite_completed_context_accounting",
+      "positive_control": "Valid receipt copies and the literal-mode REFUTED result remain valid; invalid negative bytes are rejected",
+      "after_log": "artifacts/design_review_recovery_20261001/scope_receipt_after.log",
+      "after_affected_passed": 37,
+      "persisted_package_mutation_claim": false,
+      "status": "FIXED_AND_PATCH2_FULL_SUITE_VERIFIED"
+    }
+  ],
+  "further_consistency_work": {
+    "serialized_syntax_metadata": "Regenerated from sealed bytes, including import binding metadata",
+    "candidate_inventory": "Regenerated in exact ordered operation identities from full sealed modules",
+    "tests": "tests/test_recovery_packaged_syntax.py",
+    "classification": "Data-invariant strengthening; no external-origin authentication or reproduced third-party exploit claim"
+  },
+  "previous_patch1_full_suite": {"passed": 2940, "seconds": 427.22, "exit_code": 0, "receipt": "final-validation.json"},
+  "final_full_suite": {"passed": 2941, "seconds": 422.98, "exit_code": 0, "receipt": "final-validation-patch2.json"},
+  "actual_user_failure": "NOT_REPRODUCED_MISSING_INPUT",
+  "human_value": "NOT_MEASURED",
+  "additional_independent_reviewer": "NOT_COMPLETED; no review-pass assertion",
+  "real_model_requests": 0,
+  "external_network_requests": 0,
+  "target_execution_experiments": 0
+}

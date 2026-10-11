@@ -1,0 +1,33 @@
+{
+  "source_manifest": "source/source-manifest.json",
+  "source_manifest_sha256": "ab0da540e78cf67118aea280401d9a1f6100450dd018cb424fa757be1b26f115",
+  "command": [
+    "uv",
+    "build",
+    "--offline",
+    "--no-python-downloads",
+    "--python",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/.venv/bin/python3",
+    "--out-dir",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/audit/product_recovery_20261001/release-final/dist",
+    "/home/joker/AAA_NUS_SEM3/cv_agent/audit/product_recovery_20261001/release-final/source"
+  ],
+  "return_code": 0,
+  "artifacts": [
+    {
+      "path": "dist/.gitignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+      "bytes": 1
+    },
+    {
+      "path": "dist/cv_agent-0.1.0+recovery.20261001-py3-none-any.whl",
+      "sha256": "820687521f31409a0b46edeea2138bd2c546719176719b0c72305bfdea3b16d0",
+      "bytes": 283938
+    },
+    {
+      "path": "dist/cv_agent-0.1.0+recovery.20261001.tar.gz",
+      "sha256": "a8ea4cf534f85d9862b79a371da72a6d6cea500c8d9eeafb7e939d34eacdfd8f",
+      "bytes": 236012
+    }
+  ]
+}

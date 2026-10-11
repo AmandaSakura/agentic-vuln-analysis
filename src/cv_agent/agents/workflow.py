@@ -16,10 +16,15 @@ from cv_agent.agents.voting import QuorumPolicy, SingleExpertPolicy
 from cv_agent.harness import FULL_SYSTEM_HARNESS, AgentRuntimeMode, AgentSystemHarness, AgentSystemVersion, ExpertAgentHarness
 from cv_agent.runtime.model import ChatModel, OpenAICompatibleChatModel, trusted_runtime_mode
 from cv_agent.agents.react import ReActEngine, run_expert, run_planner
-from cv_agent.agents.evidence_policy import validator_observation_completed
+from cv_agent.agents.evidence_policy import revalidate_global_ballots, validator_observation_completed
 from cv_agent.agents.validator_accounting import account_validator_observations
 from cv_agent.retrieval import RepositoryIndex, prompt_token_upper_bound as context_text_token_count, fit_text_to_serialized_context
 from cv_agent.domain.types import Candidate, Evidence, ExpertVote, FrozenModel
+
+
+# At most eight task nodes, three unassigned expert nodes, retrieve/plan,
+# one fast check and adjudication, plus completion accounting in LangGraph.
+GRAPH_TRANSITION_LIMIT = FULL_SYSTEM_HARNESS.planner_max_subtasks + len(FULL_SYSTEM_HARNESS.experts) + 5
 
 
 class PlannerPatch(FrozenModel):
@@ -917,17 +922,24 @@ class AgenticPipeline:
         }
 
     def _try_fast(self, state: AgentWorkflowState) -> dict[str, object]:
+        checked, _ = revalidate_global_ballots(
+            state["votes"], state["task_executions"],
+            frozenset(item.evidence_id for item in state["evidence"]),
+            candidate_subject(self.index, state["candidate"]),
+        )
+        state = {**state, "votes": checked}
         if self._blocked_tasks(state):
-            return {"verdict": None, "fast_checked": True}
+            return {"verdict": None, "fast_checked": True, "votes": checked}
         verdict = QuorumPolicy(
             fast_enabled=True,
             quorum=self.system_spec.quorum,
             fast_confidence=self.system_spec.fast_confidence,
         ).try_fast(self._consensus_votes(state["votes"]))
         if verdict is None:
-            return {"verdict": None, "fast_checked": True}
+            return {"verdict": None, "fast_checked": True, "votes": checked}
         return {
             "fast_checked": True,
+            "votes": checked,
             "verdict": self._result(
                 state,
                 label=verdict.label,
@@ -938,6 +950,12 @@ class AgenticPipeline:
         }
 
     def _adjudicate(self, state: AgentWorkflowState) -> dict[str, object]:
+        checked, rejected = revalidate_global_ballots(
+            state["votes"], state["task_executions"],
+            frozenset(item.evidence_id for item in state["evidence"]),
+            candidate_subject(self.index, state["candidate"]),
+        )
+        state = {**state, "votes": checked}
         if self._blocked_tasks(state):
             return {"verdict": self._result(
                 state, label="ABSTAIN", confidence=0.0, path="slow",
@@ -973,7 +991,8 @@ class AgenticPipeline:
                 label=verdict.label,
                 confidence=verdict.confidence,
                 path=verdict.path,
-                rationale=verdict.rationale,
+                rationale=("global-evidence-v2: " + "; ".join(rejected) + ". " + verdict.rationale
+                           if rejected else verdict.rationale),
             )
         }
 
@@ -994,7 +1013,8 @@ class AgenticPipeline:
                 "verdict": None,
                 "task_executions": [],
                 "fast_checked": False,
-            }
+            },
+            config={"recursion_limit": GRAPH_TRANSITION_LIMIT},
         )
         verdict = result["verdict"]
         if verdict is None:

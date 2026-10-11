@@ -7,7 +7,13 @@ import stat
 from pathlib import Path, PurePosixPath
 
 
-def read_source_bytes(root: Path, relative_path: str) -> bytes:
+class SourceReadLimitError(ValueError):
+    """A bounded source read encountered more bytes than its admitted limit."""
+
+
+def read_source_bytes(root: Path, relative_path: str, *, max_bytes: int | None = None) -> bytes:
+    if max_bytes is not None and (type(max_bytes) is not int or max_bytes < 0):
+        raise ValueError("source byte limit must be a nonnegative integer")
     parts = PurePosixPath(relative_path).parts
     if not parts or PurePosixPath(relative_path).is_absolute() or ".." in parts:
         raise ValueError("source path must be relative to the repository")
@@ -28,7 +34,10 @@ def read_source_bytes(root: Path, relative_path: str) -> bytes:
             if not stat.S_ISREG(os.fstat(descriptor).st_mode):
                 raise ValueError("repository source is not a regular file")
             with os.fdopen(descriptor, "rb", closefd=False) as source:
-                return source.read()
+                raw = source.read() if max_bytes is None else source.read(max_bytes + 1)
+                if max_bytes is not None and len(raw) > max_bytes:
+                    raise SourceReadLimitError("source exceeds the admitted byte limit")
+                return raw
         finally:
             os.close(descriptor)
     finally:

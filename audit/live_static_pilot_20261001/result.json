@@ -1,0 +1,82 @@
+{
+  "schema": "live-static-pilot-reconciliation-v1",
+  "status": "STOPPED_REFERENCE_NAMESPACE_MISMATCH",
+  "run": "artifacts/live_static_pilot_20261001/9930210894134fe29f99da8657c25d3c",
+  "gate": {
+    "passed": 2941,
+    "seconds": 427.49,
+    "actual_in_process": true,
+    "credential_loaded_before_gate": false,
+    "log": "artifacts/pytest_gate/b59fc1446f454259ae3e59d4f25560c5/pytest.log",
+    "sha256": "6a6a5654e8244e189abf393ac57e3b89bc58fa14a8bec7b3c04dfa2e3ac77d55"
+  },
+  "requests": 2,
+  "provider_replies": 2,
+  "reported_tokens": 3759,
+  "accepted_candidates": 1,
+  "parsed_but_protocol_rejected_candidates": 1,
+  "unrun_candidates": 3,
+  "zero_wrong_strong_states_observed_in_two_replies": true,
+  "completed_planned_five_case_trial": false,
+  "cases": [
+    {
+      "request_id": "dc6771bd8182472e91ff369aa50862df",
+      "candidate_id": "operation-40d6e501c3299aae5a39bd9bc348d6bb",
+      "canonical_state": "UNKNOWN",
+      "proposed_state": "UNKNOWN",
+      "candidate_identity_matches": true,
+      "state_matches": true,
+      "allowed_observation_refs": [
+        "observation-0649b1b532e33c4d7be3b3a30b13fdd4b7cc6bda84461b28ec67e3484947b45f"
+      ],
+      "cited_refs": [
+        "observation-0649b1b532e33c4d7be3b3a30b13fdd4b7cc6bda84461b28ec67e3484947b45f"
+      ],
+      "observation_namespace_valid": true,
+      "out_of_namespace_ids_are_supplied_tool_evidence_ids": false,
+      "reported_usage": {
+        "input_tokens": 862,
+        "output_tokens": 216,
+        "total_tokens": 1078
+      }
+    },
+    {
+      "request_id": "fb60662752c848ee95e450952f74dca9",
+      "candidate_id": "operation-16a30dd4e05c2260a78925851d92a2d3",
+      "canonical_state": "UNKNOWN",
+      "proposed_state": "UNKNOWN",
+      "candidate_identity_matches": true,
+      "state_matches": true,
+      "allowed_observation_refs": [
+        "observation-9751451f2337af3dcd02033bc806d57dc6737eae2b0ca1851036b255c8325017"
+      ],
+      "cited_refs": [
+        "permission_mode:product_boundary.py::run_bounded_review@128-216"
+      ],
+      "observation_namespace_valid": false,
+      "out_of_namespace_ids_are_supplied_tool_evidence_ids": true,
+      "reported_usage": {
+        "input_tokens": 2487,
+        "output_tokens": 194,
+        "total_tokens": 2681
+      }
+    }
+  ],
+  "diagnosis": "The second response cited a supplied tool-internal source/fact evidence ID instead of an allowed producer observation reference. Its UNKNOWN state was consistent with the canonical static result, but its reference namespace did not satisfy the frozen output protocol.",
+  "prompt_limitation": "The wording original evidence reference IDs can be read ambiguously because both namespaces occur in the payload. This is a protocol/prompt usability issue, not demonstrated vulnerability misclassification.",
+  "no_posthoc_acceptance_rule_change": true,
+  "remaining_budget_is_not_authorization_to_retry": true,
+  "next_offline_work": "Explicitly distinguish available_evidence_refs from tool-internal evidence_ids in a prospective protocol version; retain the original failed run and do not weaken original producer identity checks.",
+  "source_or_target_executions": 0,
+  "claim_eligible": false,
+  "production_R17_enabled": false,
+  "G_A_changed": false,
+  "evidence_sha256": {
+    "metadata.json": "5b7fccb246c763bfdecfa76c577ea968dff20de361e2cfc707afa59638c7d22b",
+    "frozen-prompts.json": "f09ef3597dc2d8329aad1038e3acd9df152cfd63ef37e50939b4d9a1a5bb818f",
+    "private-input-manifest.json": "be2c66faaab66287918e2e09072ab41cb1a68785a15ebd70665e0ba4a5141e79",
+    "events.jsonl": "a040848a8d62d3a13b9c481c1d028c165825eebe2bc5f7fe4f55ab18ee970e3a",
+    "summary.json": "6affdf249134b767db8e1935a04842922026a4c86f73076a91cec4805b60f6ed",
+    "gate-receipt.json": "d7661b7b67f5c382f7272f1f58fb2572ed322604b8169d80ef8cd8d6c83ecde3"
+  }
+}

@@ -1,0 +1,61 @@
+\section{性质契约与全局证据归并}
+\label{sec:reduction}
+\subsection{性质、范围和量词先于结论}
+一个结论应回答明确的性质 $P$，并声明输入域、前提 $\Gamma$、范围 $\Omega$、量词及允许的证明方法。当前权限性质检查所选 mode 是否包含 others-write 位；命令性质关注已建立的可控输入是否能改变声明消费边界的语法或可执行选择；动态求值性质限定在获准函数切片和内建绑定的有界模型中。授权性质必须有主体、资源、动作与政策。这些契约均排除应用整体安全、公共入口可达性和远程权限。
+
+未注册性质只能留下 source-derived review lead，不能因为规则名称听起来像漏洞就得到 SUPPORTED。性质正向证据通常是存在性证明；范围有限的否定事实不能外推到未检查输入或应用整体。当前系统对范围包含关系采用规范字段精确匹配，不通过自然语言判断一个局部范围是否足以覆盖更大范围。
+
+\subsection{完整投递是强结论的必要条件}
+对原生产者观察 $o$，定义证明资格 $Q(o,J)$：
+\begin{equation}\begin{aligned}
+Q={}&\operatorname{exactSubject}\land\operatorname{identityBound}\land\operatorname{ok}\\
+&\land\operatorname{completeDelivery}\land\operatorname{candidateCoverage}\\
+&\land\operatorname{supportedMethod}\land\operatorname{materialStatus}.
+\end{aligned}\end{equation}
+\code{source_pattern} 和 \code{source_read} 不属于充分证明方法。生产者私有完整结果存在，而公共证书被截断、抑制、预算拒绝或未投递时，公共结果仍不能升级。error、blocked 和局部观察可提供诊断，但不作为同候选完整证明。
+
+命令检查是一个需要保留双层状态的例子。原 \code{inspect_command_construction} 观察仍可报告 \code{UNRESOLVED}；共享准入逻辑在严格的输入控制、消费语义、绑定及完整范围条件下，能够建立有界静态性质结论。产品单独记录 \code{accepted_static_status}，不改写原验证器状态，也不把静态分析改称执行见证。该投影只允许注册命令工具、特定方法和性质组合。
+
+\subsection{原生产者去重与四值归并}
+归并按原 producer ID 去重。忽略展示 citation，并将生产者拥有的 \code{evidence_ids} 规范为去重排序集合；helper/source 引用的内容保留。相同 producer ID 对应不同事实是协议错误。同一证书被三名专家引用仍是一个原观察；两个不同 producer ID 也不自动保证统计独立。
+
+设 $S^+=\{o:Q(o,J),v(o)=\mathrm{CONFIRMED}\}$，$S^-=\{o:Q(o,J),v(o)=\mathrm{REFUTED}\}$，则
+\begin{equation}
+z(J)=\begin{cases}
+\mathrm{CONFLICT},&S^+\ne\varnothing\land S^-\ne\varnothing,\\
+\mathrm{SUPPORTED},&S^+\ne\varnothing\land S^-=\varnothing,\\
+\mathrm{REFUTED},&S^+=\varnothing\land S^-\ne\varnothing,\\
+\mathrm{UNKNOWN},&S^+=\varnothing\land S^-=\varnothing.
+\end{cases}
+\end{equation}
+充分证明相互矛盾时显式 CONFLICT；新的无关 UNKNOWN 不覆盖已存在的充分证明。这里的顺序不敏感成立于同一组规范观察，不意味着生产者发现新事实之前系统已知道该事实。
+
+\begin{pseudocode}{alg:reduce}{确定性的候选性质归并}
+\Pinput{精确 subject、注册性质契约、当前身份、已交付观察集合}
+\Poutput{四值性质状态、原生产者回执、事实与缺项}
+\Pstep{对每个观察检查 subject；不同 subject 不进入该候选的证明集合。}
+\Pstep{去除展示 citation；规范引用集合；以原 producer ID 去重。}
+\Pstep{若同一 producer 对应不同规范事实，显式报告协议错误。}
+\Pstep{按 producer ID 排序，构造内容摘要、方法、覆盖范围、投递和身份回执。}
+\Pstep{保留原验证器状态；仅为注册命令静态逻辑计算独立的准入投影。}
+\Pstep{只对满足 $Q(o,J)$ 的回执收集正向与否定证明。}
+\Pstep{依据 $S^+,S^-$ 输出 SUPPORTED、REFUTED、UNKNOWN 或 CONFLICT。}
+\Pstep{保留不充分观察的事实、缺项与建议；应用安全状态固定 NOT\_ASSESSED。}
+\end{pseudocode}
+\loc{application/evidence.py::reduce_observations; domain/product_result.py}
+
+\subsection{研究路径的晚到证据重新准入}
+修复前，研究专家票可能在早期通过准入；后续相关矛盾观察到达后，最终投票仍使用既有票。当前 \code{global-evidence-v2} 在 slow adjudication 和 fast 判断前，以所有\emph{已经实际投递}的相关任务轨迹重新检查各实质票。证据不足导致该票降为 ABSTAIN；非法协议和其他内部错误继续显式传播。原始模型提案、任务记录、观察和成本保留。
+
+\begin{pseudocode}{alg:global}{研究最终票的全局重新准入}
+\Pinput{固定时点的最终专家票与所有已收到任务轨迹}
+\Poutput{用于本次 slow/fast 判定的合法票集合}
+\Pstep{建立候选和性质一致的全局已投递证据上下文。}
+\Pstep{对每张 VULNERABLE/SAFE 票重跑原准入规则。}
+\Pstep{若仅发生 InsufficientEvidenceError，保留原提案并将当前票降为 ABSTAIN。}
+\Pstep{若发生协议、身份或内部错误，显式失败，不伪装成语义 UNKNOWN。}
+\Pstep{用重新准入后的票计算 quorum 或固定票早停条件。}
+\end{pseudocode}
+\loc{agents/evidence_policy.py; agents/workflow.py}
+
+E5 的 guarantee 仍限于固定、实际已知票集合的判决不变性。尚未取到的未来证据没有被量化或穷尽，因此不能声称早停能保证后续永不出现矛盾事实。产品路径没有专家投票和早停，直接归并全部已投递静态结果。\citep{acceptance,contract}

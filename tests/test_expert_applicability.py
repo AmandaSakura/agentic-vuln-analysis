@@ -434,31 +434,35 @@ def test_shared_evaluation_entry_forwards_opted_in_policy(tmp_path, monkeypatch)
 
 def test_applicable_quorum_needs_two_material_ballots_and_fixed_still_schedules_authz():
     from cv_agent.agents.workflow import AgenticPipeline
-    from cv_agent.domain.chat import ModelUsage
+    from cv_agent.domain.chat import ModelUsage, ModelToolCall
+    from cv_agent.domain.evidence import ReActStep
     from cv_agent.domain.review import AgentExpertVote, RoutingResult, ValidationTaskExecution
     from cv_agent.domain.types import CodeDocument
     from cv_agent.harness import AgentRuntimeMode, AgentSystemVersion
     from cv_agent.retrieval import RepositoryIndex
     from cv_agent.runtime.model import ScriptedChatModel
-    from cv_agent.tools.registry import ToolRegistry
+    from cv_agent.tools.registry import ToolExecutionScope, ToolRegistry
     from cv_agent.tools.validation import full_agent_tools
 
-    doc = CodeDocument(repository_id="r", path="entry.py", text="def entry(): pass\n")
+    # Material ballots must have admissible observations under the global gate.
+    # Parse this owned source; the tool does not execute its command.
+    doc = CodeDocument(repository_id="r", path="entry.py",
+        text='import os\ndef entry(value):\n    os.system("echo " + value)\n')
     index = RepositoryIndex([doc])
     candidate = Candidate(
         candidate_id="c1", case_id="c1", repository_id="r", path=doc.path,
-        line=1, query="command", property_id="command-execution",
+        line=2, query="command", property_id="command-execution", input_parameters=("value",),
         analysis_scope="Shell command execution only.",
     )
     plan = ValidationPlan(
         candidate_id="c1", vulnerability_hypotheses=("Check command.",),
         subtasks=(
             ValidationSubtask(
-                task_id="scan-task", expert="scan", allowed_validator="run_static_check",
+                task_id="scan-task", expert="scan", allowed_validator="inspect_command_construction",
                 objective="Scan.", dependencies=(), success_condition="Record scan.",
             ),
             ValidationSubtask(
-                task_id="taint-task", expert="taint", allowed_validator="trace_dataflow",
+                task_id="taint-task", expert="taint", allowed_validator="inspect_command_construction",
                 objective="Trace.", dependencies=(), success_condition="Record flow.",
             ),
         ),
@@ -476,11 +480,17 @@ def test_applicable_quorum_needs_two_material_ballots_and_fixed_still_schedules_
     )
 
     def make_vote(role, label):
+        call = ModelToolCall(call_id=f"{role}-owned", name="inspect_command_construction",
+                             arguments={"source_path": doc.path})
+        observed = tools.invoke(call, allowed=(call.name,), citation_id=f"{role}/owned:1",
+            scope=ToolExecutionScope(admitted_paths=frozenset({doc.path}), candidate_path=doc.path,
+                subject=candidate_subject(index, candidate), max_observation_tokens=8192))
         return AgentExpertVote(
             expert=role, label=label, confidence=0.9,
-            validation_status="UNRESOLVED", evidence_ids=(),
+            validation_status="UNRESOLVED", evidence_ids=(observed.citation_id,),
             rationale="Synthetic ballot for adjudication policy.",
-            runtime_mode=AgentRuntimeMode.SCRIPTED, trace=(), model_ids=(role,),
+            runtime_mode=AgentRuntimeMode.SCRIPTED,
+            trace=(ReActStep(step=1, model_id="owned-static", tool_call=call, observation=observed),), model_ids=(role,),
             model_calls=1, tool_calls=1, tool_observation_token_count=0,
             usage=ModelUsage(input_tokens=1, output_tokens=1, total_tokens=2),
         )
@@ -488,7 +498,7 @@ def test_applicable_quorum_needs_two_material_ballots_and_fixed_still_schedules_
     def state(second_label):
         votes = [make_vote("scan", "VULNERABLE"), make_vote("taint", second_label)]
         return {
-            "candidate": candidate, "planner": None,
+            "candidate": candidate, "planner": None, "evidence": [],
             "routing": RoutingResult(
                 runtime_mode=AgentRuntimeMode.SCRIPTED, mode="off",
                 model_calls=0, tool_calls=0, plan=plan,

@@ -1,0 +1,177 @@
+{
+  "schema_version": "owned-cli-acceptance-v1",
+  "cases": [
+    {
+      "case": "literal-mode",
+      "exit_code": 0,
+      "run_state": "COMPLETED",
+      "counts": {
+        "source_files": 1,
+        "parsed_files": 1,
+        "parse_errors": 0,
+        "candidate_count": 1,
+        "validated_candidates": 1,
+        "sufficient_evidence_candidates": 1,
+        "unprocessed_candidates": 0,
+        "indexed_documents": 2,
+        "admitted_documents": 2
+      },
+      "property_states": [
+        "REFUTED"
+      ],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.2763914429815486,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/literal-mode/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/literal-mode/report.md",
+      "passed": true
+    },
+    {
+      "case": "unknown-mode",
+      "exit_code": 0,
+      "run_state": "COMPLETED",
+      "counts": {
+        "source_files": 1,
+        "parsed_files": 1,
+        "parse_errors": 0,
+        "candidate_count": 1,
+        "validated_candidates": 1,
+        "sufficient_evidence_candidates": 0,
+        "unprocessed_candidates": 0,
+        "indexed_documents": 2,
+        "admitted_documents": 2
+      },
+      "property_states": [
+        "UNKNOWN"
+      ],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.2624468000140041,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/unknown-mode/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/unknown-mode/report.md",
+      "passed": true
+    },
+    {
+      "case": "zero-candidates",
+      "exit_code": 0,
+      "run_state": "COMPLETED",
+      "counts": {
+        "source_files": 1,
+        "parsed_files": 1,
+        "parse_errors": 0,
+        "candidate_count": 0,
+        "validated_candidates": 0,
+        "sufficient_evidence_candidates": 0,
+        "unprocessed_candidates": 0,
+        "indexed_documents": 2,
+        "admitted_documents": 2
+      },
+      "property_states": [],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.2624291539832484,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/zero-candidates/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/zero-candidates/report.md",
+      "passed": true
+    },
+    {
+      "case": "parse-error",
+      "exit_code": 2,
+      "run_state": "PARTIAL",
+      "counts": {
+        "source_files": 1,
+        "parsed_files": 0,
+        "parse_errors": 1,
+        "candidate_count": 0,
+        "validated_candidates": 0,
+        "sufficient_evidence_candidates": 0,
+        "unprocessed_candidates": 0,
+        "indexed_documents": 0,
+        "admitted_documents": 0
+      },
+      "property_states": [],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.2632102130155545,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/parse-error/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/parse-error/report.md",
+      "passed": true
+    },
+    {
+      "case": "budget-limited",
+      "exit_code": 2,
+      "run_state": "PARTIAL",
+      "counts": {
+        "source_files": 1,
+        "parsed_files": 1,
+        "parse_errors": 0,
+        "candidate_count": 2,
+        "validated_candidates": 0,
+        "sufficient_evidence_candidates": 0,
+        "unprocessed_candidates": 2,
+        "indexed_documents": 2,
+        "admitted_documents": 2
+      },
+      "property_states": [
+        "UNKNOWN",
+        "UNKNOWN"
+      ],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.2917137640179135,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/budget-limited/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/budget-limited/report.md",
+      "passed": true
+    },
+    {
+      "case": "missing-source",
+      "exit_code": 2,
+      "run_state": "BLOCKED",
+      "counts": {
+        "source_files": 0,
+        "parsed_files": 0,
+        "parse_errors": 0,
+        "candidate_count": 0,
+        "validated_candidates": 0,
+        "sufficient_evidence_candidates": 0,
+        "unprocessed_candidates": 0,
+        "indexed_documents": 0,
+        "admitted_documents": 0
+      },
+      "property_states": [],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.2569638910063077,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/missing-source/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/missing-source/report.md",
+      "passed": true
+    },
+    {
+      "case": "unsupported-language",
+      "exit_code": 2,
+      "run_state": "BLOCKED",
+      "counts": {
+        "source_files": 0,
+        "parsed_files": 0,
+        "parse_errors": 0,
+        "candidate_count": 0,
+        "validated_candidates": 0,
+        "sufficient_evidence_candidates": 0,
+        "unprocessed_candidates": 0,
+        "indexed_documents": 0,
+        "admitted_documents": 0
+      },
+      "property_states": [],
+      "model_requests": 0,
+      "physical_executions": 0,
+      "wall_seconds": 0.272154739999678,
+      "result_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/unsupported-language/result.json",
+      "report_path": "artifacts/design_review_repair_20260930/cli_acceptance_final/unsupported-language/report.md",
+      "passed": true
+    }
+  ],
+  "source_provenance": "authored harmless local source; parsed only",
+  "provider_requests": 0,
+  "target_executions": 0,
+  "passed": true
+}

@@ -25,7 +25,9 @@ def test_timeout_group_disappearing_during_kill_preserves_diagnostic(
                 time.sleep(30)
     """).model_copy(update={"resource_profile": WitnessResourceProfile(
         name="cpu_diagnostic", cpu_soft_seconds=10, cpu_hard_seconds=12,
-        wall_seconds=2.0,
+        # Match the existing traced wall-timeout control: interpreter/import
+        # startup needs room before this cleanup test reaches the 30s sleep.
+        wall_seconds=6.0,
     )})
     real_killpg = os.killpg
     attempts: list[tuple[int, int]] = []

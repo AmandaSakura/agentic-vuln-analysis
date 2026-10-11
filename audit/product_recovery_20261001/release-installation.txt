@@ -1,0 +1,55 @@
+CV-AGENT product recovery: offline source and wheel bundle
+
+Acceptance platform
+  Linux x86-64, Python 3.13.5. Metadata declares Python >=3.12, but acceptance
+  of other Python/platform combinations has not been measured.
+
+Scope
+  The product distribution retains actual static analysis source and its shared
+  import closure. It excludes evaluation, baselines, LangGraph workflow, model
+  orchestration and provider transport. Dormant witness/fixture definitions in
+  the shared tool registry remain; default static review does not execute them.
+  The root research pyproject.toml and uv.lock have not been modified.
+
+Dependency provenance
+  Runtime startup currently eagerly loads the Tree-sitter Go, Java, JavaScript
+  and TypeScript grammars through code_adapters imports. They are included as
+  pinned runtime dependencies; this artifact does not claim pydantic-only use.
+  The local wheelhouse contains 10 exact versions already installed in the
+  project environment. Every file was checked against the installed original
+  RECORD hash/size. Local wheels retain those unchanged files and platform tags;
+  their zip container/RECORD is locally generated. They are not represented as
+  original upstream wheel archives, and no upstream wheel hash is invented.
+
+Installation (from an extracted release directory, outside the source checkout)
+  uv venv --python python3.13 product-env
+  uv pip install --offline --no-index --require-hashes \
+    --python product-env/bin/python --find-links local-wheelhouse \
+    --find-links dist -r install-requirements.lock
+  uv pip check --python product-env/bin/python
+
+Usage
+  product-env/bin/cv-agent doctor /absolute/path/to/explicit-owned-source
+  product-env/bin/cv-agent review /absolute/path/to/explicit-owned-source \
+    --output /absolute/path/to/new-output-directory
+
+  Source files are read and parsed. They are never imported as target modules.
+  Default profile behavior is the retained product_triage_v1 behavior. Any
+  additional profile must be selected through its explicit public CLI option.
+  Static property states do not establish whole-application security, remote
+  authority, public-entry reachability or general vulnerability recall.
+
+Evidence
+  source/source-manifest.json records every included source hash, exclusions,
+  current HEAD and the fact that the source snapshot included uncommitted work.
+  build-receipt.json records wheel and source archive hashes.
+  local-wheelhouse/dependency-manifest.json records all dependency bytes and
+  local repack identity. install-acceptance.json records fresh environment
+  installation, no source checkout/PYTHONPATH/pytest credentials, absence of
+  research dependency modules, and owned SUPPORTED/REFUTED/UNKNOWN CLI controls.
+
+Fresh quality controls
+  quality_reference.json is a separate scoring manifest; detector input trees
+  contain only neutral names and owned source. These controls were designed by
+  an agent other than the implementation owner. They are engineering controls,
+  not human-independent tasks or held-out research/generalization evidence.

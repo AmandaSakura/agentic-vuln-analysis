@@ -1,0 +1,39 @@
+{
+  "schema": "product-release-install-v1",
+  "wheel": "cv_agent-0.1.0+recovery.20261001-py3-none-any.whl",
+  "wheel_sha256": "d20512c6006ccfad343741883750e99c14a91ccd0110f79ec5c5155134f5b2d9",
+  "external_working_directory": "/home/joker/.cache/claude-tmp/cv-agent-product-install-msh_zav5",
+  "pythonpath": "absent",
+  "credentials": "not inherited",
+  "network": "disabled by uv --offline",
+  "calls": [
+    {
+      "command": [
+        "/home/joker/.local/bin/uv",
+        "venv",
+        "--no-python-downloads",
+        "--python",
+        "/home/joker/AAA_NUS_SEM3/cv_agent/.venv/bin/python3",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-msh_zav5/environment"
+      ],
+      "return_code": 0,
+      "stdout": "",
+      "stderr": "Using CPython 3.13.5 interpreter at: /home/joker/AAA_NUS_SEM3/cv_agent/.venv/bin/python3\nCreating virtual environment at: environment\n"
+    },
+    {
+      "command": [
+        "/home/joker/.local/bin/uv",
+        "pip",
+        "install",
+        "--offline",
+        "--python",
+        "/home/joker/.cache/claude-tmp/cv-agent-product-install-msh_zav5/environment/bin/python",
+        "/home/joker/AAA_NUS_SEM3/cv_agent/audit/product_recovery_20261001/release-baseline/dist/cv_agent-0.1.0+recovery.20261001-py3-none-any.whl"
+      ],
+      "return_code": 1,
+      "stdout": "",
+      "stderr": "Using Python 3.13.5 environment at: environment\n  \u00d7 No solution found when resolving dependencies:\n  \u2570\u2500\u25b6 Because tree-sitter-go==0.25.0 needs to be downloaded from a registry\n      and cv-agent==0.1.0+recovery.20261001 depends on tree-sitter-go==0.25.0,\n      we can conclude that cv-agent==0.1.0+recovery.20261001 cannot be used.\n      And because only cv-agent==0.1.0+recovery.20261001 is available and\n      you require cv-agent, we can conclude that your requirements are\n      unsatisfiable.\n\n      hint: Packages were unavailable because the network was disabled. When\n      the network is disabled, registry packages may only be read from the\n      cache.\n"
+    }
+  ],
+  "accepted": false
+}

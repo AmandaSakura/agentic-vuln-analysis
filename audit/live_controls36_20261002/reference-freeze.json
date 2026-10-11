@@ -1,0 +1,6 @@
+{
+  "path": "audit/product_recovery_20261001/quality_reference.json",
+  "sha256": "3fa07e5df67035177de13f88ad7e5bfe2261f6603cb6f461ab7e4b1eaecabe3a",
+  "frozen_at_phase": "full_pytest_gate_before_any_live_request",
+  "method": "mechanical file-byte SHA256 only; reference labels are not loaded by runner"
+}

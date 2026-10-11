@@ -1,0 +1,341 @@
+{
+  "protocol": "fresh-agent-designed-static-controls-v1",
+  "seed": 20261001,
+  "design_owner": "agent other than product implementation owner",
+  "human_independent": false,
+  "held_out_claim_eligible": false,
+  "model_requests": 0,
+  "target_execution": 0,
+  "labels_allowed_in_detector_inputs": false,
+  "declared_counts": {
+    "SUPPORTED": 12,
+    "REFUTED": 12,
+    "UNKNOWN": 12
+  },
+  "cases": [
+    {
+      "case_id": "case-c61de6c7f93e37fc",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "85024fc9de5c91e7a6a54db8da570be5da450c2ba8b9247ea065c4d52ffe818d",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-c35ad85a911bf8e3",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "23d34335a8e2756d378666ec7a9adcbb158ed5e1bd2e3258e639a0c1ab10a90c",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-087be0e744f28972",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 5,
+      "source_sha256": "4d99957b8a42f52eb7cf4b161c249eb6d93f4921832d6261f8e066f217318443",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-7e2f62666b1aa969",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "6b661da89c0ee65a0abf928d27d739ed8d0e0ecc4d176a2f7ee0ceea3a6370ce",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-e03abda2294be5ee",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "33a398ea0d1e6aeab6cd11463c9b052b2ee7c5b4cff0c0c5cb719a4a23d16aa4",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-f9beff874a62b9e3",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "63bc01904fee191c1c437a2632745e99f4610e230abf8503955d9115cc24ffad",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-18ef73741cc0e543",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "aaf357749a408827a7b15d128dafd2b2432cb58da7827f47928e62641bbbcc9f",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-23775df09e705f64",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "c1d9f8bf0941403a0f53fdda1ab6b79f0afa00966c8b70b992ca0c9ff649c842",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-b4b9694f8e5233e9",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "0356cc9ffb8753c3c6348940b93edb874967ba99140870b2d455de6538e65d3d",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-f25d5d5b47a5cd80",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "0f022cbbdd46f6cd0a4faef4b5168646afacaa933859aac39de7cb421e0a1476",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-12717008ce166e4c",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "7b2cc3c834e87eba207cd67e866106e238d86ddc974ce75a1e8dd5678bcb729a",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-f54ded37aba0eb91",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 6,
+      "source_sha256": "ab43e147c0bc9a424c95d08650e81cab772056d45845e50ff917fdbabb2f6363",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-95ca67ba7cac03a6",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 5,
+      "source_sha256": "5a69196e4775f4e232a3ea9b79dfe4c09d3d61635b76017aca67402e1eb8fcbb",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-65e63bd4fd48a9be",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "42be77be7ddb8afad9da9bdc9a43e8d0c1030e7098ea543da050ef93f5bee5d6",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-4148b588510cc14e",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "0979479a6664ab1a8b0b0bcf0683efaaa3134f92d519ee07bf3dcc7d5c666c08",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-3b51ba81e16e522c",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "36fdaf8bf626f28b78ec48a262012533ff01ea925f62ee6eb6dae07dfac49a9c",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-f4354451af81d901",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "15643a09cc617d79a5f31f0b8937db05159bffc76c441c4c06ff6555465a75e0",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-9f488ecd0960444c",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "4b71e8447fcc709589263cc3b42ccf22b0f0a2977ea32cfa285e77d809e6a765",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-8a98e25404e25c31",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "13ec75c43e2014cc0074f567393a92c7b2e63206d5d128985166d161f646ad61",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-4d38095c1be1d07f",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "91d1291c6c2f687922bd417ea5710b19f7949f51259693f106965ab0615db73c",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-a1717d1abd36fe19",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "61ce88b9201fc838658daa7b4ffc28977151581f37a853ea35506f36dd58a1d8",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-4b0cb45dd3e4cd6a",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "89191fbfc9db675ceb977680266c596a0d40a51ad81de63d2aa2c732bdc5a9cc",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-9ab3fde599223ba0",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "a0f93e909a61d2ac667f96b2baf91ac492f07ccc7c36cc92031786216f5f18a4",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-cd39a7c441288d99",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "7ee6534a38c51bc5db46b54d7e22fc113f28305dfd8f40ba7e4dee671e3efe9f",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-34fc33066cf5f845",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 5,
+      "source_sha256": "951816f4f02ca8ca59253ccdcb82876d39e6de6ad4bd6228cc09378512620568",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-2bad9a48eb372596",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "a0cc7601cf612a5a2274fe3a92fd8825180b9ffa2565887b32a029ee69905df2",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-36a15f2cb0c826ab",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "03c4d26f9504087c6ee711f2ccae44e4eecb6e12edbbd885f63eebc3b37d4f5c",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-9eec4d8f411acbb9",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 3,
+      "source_sha256": "94e1f14cc3aa1f5e502e149fd57c052ed54d34867583558daa9dad7f9e3191e5",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-7df152662cba6cbd",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "8aec62e26b881c84b714de03a43f44070d57e5740d6fcd4f7d7ae6c96bc66f6e",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-b3b912ac229c8299",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 5,
+      "source_sha256": "ff598da8ac7f95fabaa95833ad94b2ad4fcf2c82abcd3afea401a3101a87117e",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-f2b3b6db0e59ac9f",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "448bcc43753150d1a05499b2567d6ebe7a8c8f305cf9520a8a41f334bad5e41a",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-ee51218f5fed3c82",
+      "expected_state": "SUPPORTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "ecfff37ff5ef0286a57611284b84857ec540a0e295e9b05684eb608c7363d7d5",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-27c6b4779209ff8b",
+      "expected_state": "UNKNOWN",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "b9c9b262a1fb6087be01b2b0a84096a87f6659c3735f861e9d86ece1f1fdcc85",
+      "reference_explanation": "Unsupported or unproven value, execution or related effects require unresolved semantics."
+    },
+    {
+      "case_id": "case-731a04cb7d4bca11",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "d226fd14aaea25e6b5e56ec21d94bcaeae1ce228bd57543576a91be95c20e4be",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-1f3836e07cb5ae48",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 4,
+      "source_sha256": "a0a7ab43523c3ffc832909973c85e1b50564a595098fce66e2fde43cea226f81",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    },
+    {
+      "case_id": "case-400aa54c73e599d0",
+      "expected_state": "REFUTED",
+      "property_id": "chmod-mode-others-write",
+      "source_path": "entry.py",
+      "selected_line": 6,
+      "source_sha256": "22316ec97e47ce5d2e376b75d5cf46f13f6ba4361ef79f411aa5a66db9c95236",
+      "reference_explanation": "Resolved selected chmod mode with constant control and builtin integer bindings."
+    }
+  ]
+}

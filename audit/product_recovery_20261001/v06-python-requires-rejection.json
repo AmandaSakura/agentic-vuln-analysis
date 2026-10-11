@@ -1,0 +1,83 @@
+{
+  "schema": "requires-python-offline-negative-control-v1",
+  "criterion": "V06",
+  "wheel": "/home/joker/AAA_NUS_SEM3/cv_agent/audit/product_recovery_20261001/release-final-patch1/dist/cv_agent-0.1.0+recovery.20261001-py3-none-any.whl",
+  "wheel_sha256": "72119c195fbfe9e7f56ccbf06c6092e08f13f0a046333166c5566c8a891ae79c",
+  "temporary_environment_root": "/home/joker/.cache/claude-tmp/cv-agent-python-version-negative-pgc8dy_n",
+  "interpreter_already_installed": "/usr/bin/python3.10",
+  "interpreter_downloads": false,
+  "dependencies_installed": false,
+  "network": false,
+  "model_requests": 0,
+  "target_executions": 0,
+  "status": "PASS_REQUIRES_PYTHON_REJECTED",
+  "commands": [
+    {
+      "command": [
+        "/usr/bin/python3.10",
+        "-I",
+        "-c",
+        "import sys,json; print(json.dumps({\"version\":list(sys.version_info[:3]),\"executable\":sys.executable}))"
+      ],
+      "return_code": 0,
+      "stdout": "{\"version\": [3, 10, 12], \"executable\": \"/usr/bin/python3.10\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/joker/.local/bin/uv",
+        "venv",
+        "--offline",
+        "--no-python-downloads",
+        "--python",
+        "/usr/bin/python3.10",
+        "/home/joker/.cache/claude-tmp/cv-agent-python-version-negative-pgc8dy_n/environment"
+      ],
+      "return_code": 0,
+      "stdout": "",
+      "stderr": "Using CPython 3.10.12 interpreter at: /usr/bin/python3.10\nCreating virtual environment at: environment\n"
+    },
+    {
+      "command": [
+        "/home/joker/.local/bin/uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--python",
+        "/home/joker/.cache/claude-tmp/cv-agent-python-version-negative-pgc8dy_n/environment/bin/python",
+        "/home/joker/AAA_NUS_SEM3/cv_agent/audit/product_recovery_20261001/release-final-patch1/dist/cv_agent-0.1.0+recovery.20261001-py3-none-any.whl"
+      ],
+      "return_code": 1,
+      "stdout": "",
+      "stderr": "Using Python 3.10.12 environment at: environment\n  \u00d7 No solution found when resolving dependencies:\n  \u2570\u2500\u25b6 Because the current Python version (3.10.12) does not satisfy\n      Python>=3.12 and cv-agent==0.1.0+recovery.20261001 depends on\n      Python>=3.12, we can conclude that cv-agent==0.1.0+recovery.20261001\n      cannot be used.\n      And because only cv-agent==0.1.0+recovery.20261001 is available and\n      you require cv-agent, we can conclude that your requirements are\n      unsatisfiable.\n"
+    },
+    {
+      "command": [
+        "/home/joker/.cache/claude-tmp/cv-agent-python-version-negative-pgc8dy_n/environment/bin/python",
+        "-I",
+        "-c",
+        "import importlib.util,json; print(json.dumps({\"product_installed\":importlib.util.find_spec(\"cv_agent\") is not None}))"
+      ],
+      "return_code": 0,
+      "stdout": "{\"product_installed\": false}\n",
+      "stderr": ""
+    }
+  ],
+  "positive_control_receipt": "release-final-patch1/install-acceptance.json",
+  "positive_control_scope": "Previously accepted fresh Python 3.13.5 install of this exact wheel",
+  "not_actual_user_environment": true,
+  "bundle_unchanged": true,
+  "actual_interpreter": {
+    "version": [
+      3,
+      10,
+      12
+    ],
+    "executable": "/usr/bin/python3.10"
+  },
+  "installation_exit_code": 1,
+  "product_installed": false,
+  "bundle_sha256": "409539b478c243d2bb63d55801cdc9973bf0bfe1e5cd0f46d7a480092b8ecdf4"
+}

@@ -12,7 +12,7 @@ from cv_agent.agents.validator_accounting import account_validator_observations
 from cv_agent.agents.workflow import AgenticPipeline
 from cv_agent.domain.chat import ModelReply, ModelToolCall
 from cv_agent.domain.review import ValidationPlan, ValidationSubtask
-from cv_agent.evaluation.datasets.advisory_source import build_pair_input, require_clean_checkout
+from cv_agent.evaluation.datasets.advisory_source import NeutralDetectorSourceCase, build_pair_input, require_clean_checkout
 from cv_agent.evaluation.datasets.composition import load_advisory_config
 from cv_agent.runtime.witness.isolation_policy import IsolationReadGrant
 from cv_agent.evaluation.metrics import replay_fast_prefix
@@ -169,7 +169,7 @@ def run_pair(root:Path,configuration:Path,output:Path)->Path:
             raise ValueError("K4 selection must identify one declared development snapshot")
         pair,case=matches[0]
         require_clean_checkout(root/case.checkout,case.commit)
-        neutral=case.model_copy(update={"case_id":"neutral-entry"})
+        neutral=NeutralDetectorSourceCase.from_case(case)
         index,candidate,_=build_pair_input(root,pair,neutral,include_scenario_assumptions=False,
             include_scoped_operation=False,advisory_text=settings["advisory_text"])
         context=WitnessExecutionContext(checkout_root=(root/case.checkout).resolve(),

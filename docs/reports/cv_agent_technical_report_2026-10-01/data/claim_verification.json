@@ -1,0 +1,32 @@
+{
+  "schema_version": "report-claim-verification-v1",
+  "method": "fresh-context, independent read-only review of complete draft and raw receipts",
+  "verified": [
+    "2684 full passes, 414.20s; 126 enabled subset",
+    "31 required PASS and 3 conditional NOT_ENABLED_NOT_RUN",
+    "7 CLI exact denominators, states and timing aggregates",
+    "72 requests, 447812 reported tokens; E-iter 26/166482 all deepseek-flash",
+    "230 source files, 38385 physical lines, aggregate source digest",
+    "K2 bounded migration equivalence; historical G-A NO; GP3/GP4 unmeasured"
+  ],
+  "corrections_applied": [
+    "Removed untraceable inherited 400.78s and witness wall/RSS approximations",
+    "Qualified material quorum mean confidence and stated ABSTAIN branch",
+    "Removed unsupported six-cell Jev claim",
+    "Expanded input/CLI hashes and clarified provenance caption"
+  ],
+  "review_scope_limits": [
+    "External references and PDF visual quality are verified separately",
+    "No new tests/model/target experiments were performed by this verifier"
+  ],
+  "status": "CORRECTIONS_APPLIED",
+  "parent_final_checks": {
+    "input_hashes": 27,
+    "all_match": true,
+    "additional_sources": [
+      "docs/CURRENT_STATUS.md",
+      "docs/TEST_CONTRACT.md"
+    ],
+    "additional_history_paragraph": "Old archives are retained but not re-audited or pooled; matches the cited current-status limitations."
+  }
+}

@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import os
+import hashlib
 from pathlib import Path
 from threading import RLock
 
@@ -13,6 +14,72 @@ from cv_agent.tools.validation import full_agent_tools
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def audit_journal(path: Path) -> dict:
+    """Read durable events conservatively; never repair, refund or replay calls.
+
+    A record without its terminating newline is uncommitted even if it happens
+    to contain valid JSON. Corrupt records are retained as numbered hash-backed
+    issues. Unknown usage is distinct from a reported zero.
+    """
+    issues = []
+    starts = set()
+    totals: dict[str, list[int]] = {}
+    responses = set()
+
+    def issue(number, raw, reason):
+        issues.append({"line": number, "reason_code": reason,
+                       "record_sha256": hashlib.sha256(raw).hexdigest()})
+
+    for number, raw in enumerate(path.read_bytes().splitlines(keepends=True), 1):
+        if not raw.endswith(b"\n"):
+            issue(number, raw, "unterminated_record")
+            continue
+        try:
+            record = json.loads(raw)
+        except (ValueError, UnicodeError):
+            issue(number, raw, "invalid_record")
+            continue
+        if not isinstance(record, dict) or not isinstance(record.get("event"), str):
+            issue(number, raw, "invalid_event_schema")
+            continue
+        event = record["event"]
+        if event not in {"model_start", "model_response_received"}:
+            continue
+        request = record.get("request_id")
+        if not isinstance(request, str) or not request:
+            issue(number, raw, "missing_request_identity")
+            if event == "model_start":
+                starts.add(f"unidentified/{number}")
+            continue
+        if event == "model_start":
+            if request in starts:
+                issue(number, raw, "duplicate_request_start")
+            starts.add(request)
+            continue
+        responses.add(request)
+        summary = record.get("summary")
+        usage = summary.get("usage") if isinstance(summary, dict) else None
+        total = usage.get("total_tokens") if isinstance(usage, dict) else None
+        if total is None and isinstance(usage, dict):
+            counts = [usage.get("prompt_tokens", usage.get("input_tokens")),
+                      usage.get("completion_tokens", usage.get("output_tokens"))]
+            if all(type(value) is int and value >= 0 for value in counts):
+                total = sum(counts)
+        if type(total) is int and total >= 0:
+            previous = totals.setdefault(request, [])
+            if previous and total not in previous:
+                issue(number, raw, "conflicting_reported_usage")
+            if total not in previous:
+                previous.append(total)
+    uncertain = sorted(request for request in starts if request not in totals or len(totals[request]) != 1)
+    known = sum(max(values) for values in totals.values())
+    return {"schema_version": "event-audit-v1", "requests_started": len(starts),
+        "responses_received": len(responses), "uncertain_request_ids": uncertain,
+        "known_reported_tokens": known, "reported_tokens": None if uncertain or issues else known,
+        "reported_totals": totals, "issues": issues, "automatic_retry_allowed": False,
+        "recovery_policy": "Manual reconciliation required; this audit never releases reservations or sends requests."}
 
 
 class Journal:

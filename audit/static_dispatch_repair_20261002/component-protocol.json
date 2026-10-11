@@ -1,0 +1,21 @@
+{
+  "version": "owned-components-after-dispatch-repair-v1",
+  "authorization": "User requested fix-and-rerun iterations and expansion after validation",
+  "admission": "New-engine complete pytest gate and all six tools-disabled benign live controls pass",
+  "source_root": "src",
+  "units": ["root", "agents", "application", "baselines", "code_adapters", "domain", "evaluation", "harness", "presentation", "retrieval", "runtime", "tools"],
+  "membership": "Exactly one component per src-relative Python file, retaining original paths and frozen bytes",
+  "limits": "Unchanged finite product-resource-limits-v2 per component; at most twelve review workers",
+  "model_requests": 0,
+  "target_executions": 0,
+  "automatic_retry": false,
+  "fallback": false,
+  "stop_on_failed_component": true,
+  "acceptance": "All twelve public CLI runs COMPLETED; complete source inventory with zero parse or analysis failures/blocks; verified full packages and copies; exact complete source coverage and no source drift",
+  "cross_component_context": "Not admitted; this is component-scoped static coverage, not a combined whole-repository proof",
+  "heldout_claim_eligible": false,
+  "human_independent": false,
+  "whole_application_security_assessed": false,
+  "production_R17_enabled": false,
+  "G_A_changed": false
+}

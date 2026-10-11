@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "created_at_utc": "2026-09-29T17:07:01.180890+00:00",
+  "updated_at_utc": "2026-09-30T12:26:07+00:00",
   "dataset_role": "development",
   "claim_eligible": false,
   "heldout_evaluation_performed": false,
@@ -243,8 +244,15 @@
       "harness": "PASS"
     },
     "K2": {
-      "complete": false,
-      "formal_G_A_awaits_completion": true
+      "complete": true,
+      "formal_G_A_awaits_completion": false,
+      "code_commit": "af7024d",
+      "results_report": "2026-09-30-K2-results.md",
+      "results_summary": "2026-09-30-K2-results.json",
+      "full_pytest_passed": 2562,
+      "full_pytest_log": "artifacts/remaining_work_20260929/k2_full_pytest.log",
+      "harness": "PASS",
+      "harness_check_log": "artifacts/remaining_work_20260929/k2_harness_check.json"
     },
     "K3": {
       "complete_for_hp003_pair": true,
@@ -267,8 +275,11 @@
     "K5_to_K8_started": false
   },
   "G_A": {
-    "formal_status": "pending_K2",
-    "predicted_result": "NO",
+    "formal_status": "NO",
+    "decision_date": "2026-09-30",
+    "decision_report": "2026-09-30-G-A-decision.md",
+    "decision_summary": "2026-09-30-G-A-decision.json",
+    "positioning_report": "2026-09-30-positioning-report.md",
     "original_M0_B_a_autonomous_confirmed": false,
     "phase3b_migrated_qualified_pair_count": 0,
     "conjunction_met": false,
@@ -284,13 +295,21 @@
   },
   "heldout_scope": {
     "heldout_claim": false,
-    "user_provided_unverified_aggregate": {
+    "statistics_source": "architect_query_relayed_by_user",
+    "statistics_independently_verified_by_executor": false,
+    "architect_exposure_disclosure": "2026-09-30-architect-exposure-disclosure.md",
+    "non_blind_scopes": [
+      "command_injection_related_conclusions",
+      "python_category_composition",
+      "language_composition"
+    ],
+    "architect_queried_unverified_aggregate": {
       "entries": 361,
       "typescript": 295,
       "python": 36,
       "python_command_at_most": 1
     },
-    "separate_repository_commit_input_count_user_provided": 146,
+    "separate_repository_commit_input_count": 146,
     "denominators_not_equated": true,
     "protected_contents_not_reopened_for_report": true
   },
@@ -301,6 +320,42 @@
     "2026-09-29-phase3b-results.md",
     "2026-09-29-k1-results.md",
     "2026-09-30-K3-results.md",
-    "2026-09-30-K4-results.md"
-  ]
+    "2026-09-30-K4-results.md",
+    "2026-09-30-E-iter-results.md",
+    "2026-09-30-K2-results.md",
+    "2026-09-30-G-A-decision.md",
+    "2026-09-30-positioning-report.md",
+    "2026-09-30-architect-exposure-disclosure.md"
+  ],
+  "pre_closeout_update": {
+    "role": "historical_snapshot_only",
+    "source_commit": "4dba622db459d4487bc8493b9af3a6a5f40a3387",
+    "summary_created_at_utc": "2026-09-29T17:07:01.180890+00:00",
+    "offline_milestones": {
+      "K2": {
+        "complete": false,
+        "formal_G_A_awaits_completion": true
+      }
+    },
+    "G_A": {
+      "formal_status": "pending_K2",
+      "predicted_result": "NO",
+      "original_M0_B_a_autonomous_confirmed": false,
+      "phase3b_migrated_qualified_pair_count": 0,
+      "conjunction_met": false,
+      "E_iter_can_change_original_gate": false
+    },
+    "heldout_scope": {
+      "heldout_claim": false,
+      "user_provided_unverified_aggregate": {
+        "entries": 361,
+        "typescript": 295,
+        "python": 36,
+        "python_command_at_most": 1
+      },
+      "separate_repository_commit_input_count_user_provided": 146,
+      "denominators_not_equated": true,
+      "protected_contents_not_reopened_for_report": true
+    }
+  }
 }
