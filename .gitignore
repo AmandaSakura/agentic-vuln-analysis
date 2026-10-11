@@ -26,6 +26,27 @@ data/diagnostics/
 /artifacts/python_heldout_pair_result_review_2026-09-20/*
 !/artifacts/python_heldout_pair_result_review_2026-09-20/ledger_audit.json
 !/artifacts/python_heldout_pair_result_review_2026-09-20/offline_reproductions.json
+# Generated audit runs stay local; keep scripts, controls and acceptance summaries.
+/audit/*/copy_runs/
+/audit/*/scale_runs/
+/audit/*/quality-*/
+/audit/*/display-invariance-run*/
+/audit/*/owned-application-review*/
+/audit/*/owned-application-review*.stdout.json
+/audit/*/owned-application-review*.verify.json
+/audit/*/local-wheelhouse/
+/audit/**/*.log
+/audit/**/*.exit
+/audit/**/*.xml
+/audit/**/*.zip
+# Retain release instructions, dependency locks and receipts, but not built bundles.
+/audit/*/release-*/*
+!/audit/*/release-*/*.md
+!/audit/*/release-*/*.json
+!/audit/*/release-*/*.lock
+!/audit/*/release-*/SHA256SUMS
+# Report source archives duplicate the versioned report directories.
+/docs/reports/*_sources.zip
 .env.deepseek
 .env.experiments
 data/heldout-pair-git/
